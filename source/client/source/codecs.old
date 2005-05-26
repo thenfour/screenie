@@ -1,0 +1,119 @@
+// this code doesn't work, and i don't really have time to fix it.
+////////////////////////////////////////////////////////////////////////////////////////////
+
+// this structure mirrors Gdiplus::ImageCodecInfo because it's impossible
+// to work with. the below APIs interface with GDI+ on behalf of this structure.
+
+struct GdiplusCodecInfo
+{
+	CLSID clsid;
+	GUID formatID;
+
+	tstd::tstring codecName;
+	tstd::tstring dllName;
+	tstd::tstring formatDescription;
+	tstd::tstring filenameExtension;
+	tstd::tstring mimeType;
+
+	DWORD flags;
+	DWORD version;
+	DWORD signatureCount;
+	DWORD signatureSize;
+
+	std::vector<std::vector<BYTE> > signaturePatterns;
+	std::vector<std::vector<BYTE> > signatureMasks;
+};
+
+// the GDI+ GetImageEncoders API really doesn't make sense to me. the way
+// you're supposed to allocate this array of structures is stupid. (it sure
+// as hell doesn't really allow for goodbear C++!) this function hides all the
+// nastiness from the caller, hopefully without hurting anything.
+
+bool GetImageCodecsInfo(std::vector<GdiplusCodecInfo>& imageCodecInfo)
+{
+	UINT sizeInBytes;
+	UINT numEncoders;
+
+	bool success = false;
+
+	if (Gdiplus::GetImageEncodersSize(&numEncoders, &sizeInBytes) == Gdiplus::Ok)
+	{
+		Gdiplus::ImageCodecInfo* imageCodecs = (Gdiplus::ImageCodecInfo*)::HeapAlloc(::GetProcessHeap(),
+			HEAP_ZERO_MEMORY, sizeInBytes);
+
+		if (imageCodecs != NULL)
+		{
+			if (Gdiplus::GetImageEncoders(numEncoders, sizeInBytes, imageCodecs) == Gdiplus::Ok)
+			{
+				imageCodecInfo.clear();
+				imageCodecInfo.reserve(numEncoders);
+
+				for (size_t i = 0; i < numEncoders; ++i)
+				{
+					GdiplusCodecInfo codecInfo;
+
+					codecInfo.clsid = imageCodecs[i].Clsid;
+					codecInfo.formatID = imageCodecs[i].FormatID;
+
+					if (imageCodecs[i].CodecName)
+						codecInfo.codecName = tstd::convert<tstd::tchar_t>(std::wstring(imageCodecs[i].CodecName));
+					if (imageCodecs[i].DllName)
+						codecInfo.dllName = tstd::convert<tstd::tchar_t>(std::wstring(imageCodecs[i].DllName));
+					if (imageCodecs[i].FormatDescription)
+						codecInfo.formatDescription = tstd::convert<tstd::tchar_t>(std::wstring(imageCodecs[i].FormatDescription));
+					if (imageCodecs[i].FilenameExtension)
+						codecInfo.filenameExtension = tstd::convert<tstd::tchar_t>(std::wstring(imageCodecs[i].FilenameExtension));
+					if (imageCodecs[i].MimeType)
+						codecInfo.mimeType = tstd::convert<tstd::tchar_t>(std::wstring(imageCodecs[i].MimeType));
+
+					codecInfo.flags = imageCodecs[i].Flags;
+					codecInfo.version = imageCodecs[i].Version;
+					codecInfo.signatureCount = imageCodecs[i].SigCount;
+					codecInfo.signatureSize = imageCodecs[i].SigSize;
+
+					codecInfo.signaturePatterns.reserve(codecInfo.signatureCount);
+					codecInfo.signatureMasks.reserve(codecInfo.signatureCount);
+
+					for (DWORD sig = 0; sig < codecInfo.signatureCount; ++sig)
+					{
+						codecInfo.signaturePatterns[i] = std::vector<BYTE>(codecInfo.signatureSize);
+
+						std::copy(imageCodecs[i].SigPattern + (codecInfo.signatureCount * sig),
+							imageCodecs[i].SigPattern + (codecInfo.signatureCount * (sig + 1)),
+							codecInfo.signaturePatterns[i].begin());
+
+						codecInfo.signatureMask[i] = std::vector<BYTE>(codecInfo.signatureSize);
+
+						std::copy(imageCodecs[i].SigMask + (codecInfo.signatureCount * sig),
+							imageCodecs[i].SigMask + (codecInfo.signatureCount * (sig + 1)),
+							codecInfo.signatureMasks[i].begin());
+					}
+
+					imageCodecInfo.push_back(codecInfo);
+				}
+
+				success = true;
+			}
+
+			::HeapFree(::GetProcessHeap(), 0, imageCodecs);
+		}
+	}
+
+	return true;
+}
+
+bool GetImageCodecCLSID(const tstd::tstring& extension,
+	const std::vector<GdiplusCodecInfo>& imageCodecs, CLSID& clsidOut)
+{
+	for (size_t i = 0; i < imageCodecs.size(); ++i)
+	{
+		if (::PathMatchSpec(extension.c_str(), imageCodecs[i].filenameExtension.c_str()))
+		{
+			clsidOut = imageCodecs[i].clsid;
+
+			return true;
+		}
+	}
+
+	return false;
+}

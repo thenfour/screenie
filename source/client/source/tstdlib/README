@@ -1,0 +1,3 @@
+This library is intended to be used as a mechanism to make the TCHAR type play nice with the standard library where proper. Mostly, it defines a namespace called tstd that contains lookalike symbols to the standard library iostream and string objects, but using tchar instead of seperate objects for char and wchar.
+
+You cannot, for ambiguity reasons, using this namespace wholesale in a scope where you have usinged the std namespace, as that creates ambiguity. Renaming stuff in here to t* instead of just mimicing the name given to the char version in the std namespace would make this possible and may be a wise thing to do for other reasons in the long run.

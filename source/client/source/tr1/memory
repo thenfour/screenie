@@ -1,0 +1,489 @@
+#ifndef _SSTL_TR1_MEMORY_
+#define _SSTL_TR1_MEMORY_
+
+// This is an implementation of some or all of the classes expected to be included in the Library Technical Report in 2003.
+// These are likely to end up in the standard. Until they do, they rest in the std::tr1 namespace.
+
+// shared_ptr and weak_ptr are described at http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/papers/2003/n1450.html
+
+#include <iosfwd>
+#include <typeinfo>
+
+namespace std
+{namespace tr1 {
+
+	namespace memory_impl
+	{
+		template <typename tValue>
+		struct deleter_impl
+		{
+			void operator()(tValue *ptr) const
+			{
+				delete ptr;
+			}
+		};
+
+		struct shared_ref_base
+		{
+			unsigned int mCount;
+			unsigned int mWeakCount;
+
+			shared_ref_base()
+			 : mCount(1), // initialization of this object always means one reference.
+			   mWeakCount(0)
+			{}
+
+			virtual void *get_deleter(const type_info &id) = 0;
+			virtual void free_ptr() = 0;
+
+			shared_ref_base *acquire_ref()
+			{
+				mCount++;
+				return this;
+			}
+			void free_ref()
+			{
+				// avoid wrapping the reference count
+				if (mCount != 0 && --mCount == 0)
+				{
+					// reference count hit zero, so we free the pointer.
+					free_ptr();
+
+					if (mWeakCount == 0)
+					{
+						// if both reference counts hit zero, we delete this;
+						delete this;
+					}
+				}
+			}
+			shared_ref_base *acquire_weak_ref()
+			{
+				mWeakCount++;
+				return this;
+			}
+			void free_weak_ref()
+			{
+				// if mWeakCount wasn't already zero, and decrementing mWeakCount results in zero,
+				// and mCount is 0, we delete this.
+				if (mWeakCount != 0 &&
+					--mWeakCount == 0 &&
+					mCount == 0)
+				{
+					delete this;
+				}
+			}
+		};
+
+		template <typename tValue, typename tDeleter>
+		struct shared_ref : public shared_ref_base
+		{
+			tValue *mPointer;
+			tDeleter mDeleter;
+
+			shared_ref(tValue *ptr, const tDeleter &deleter)
+			 : mPointer(ptr), mDeleter(deleter)
+			{}
+
+			void free_ptr()
+			{
+				mDeleter(mPointer);
+			}
+
+			void *get_deleter(const type_info &id)
+			{
+				if (typeid(tDeleter) == id)
+					return &mDeleter;
+				else
+					return 0;
+			}
+		};
+
+		template <typename tValue, typename tDeleter>
+		shared_ref<tValue, tDeleter> *make_ref(tValue *ptr, const tDeleter &deleter)
+		{
+			if (ptr)
+				return new shared_ref<tValue, tDeleter>(ptr, deleter);
+			else
+				return NULL;
+		}
+		template <typename tValue>
+		shared_ref<tValue, deleter_impl<tValue> > *make_ref(tValue *ptr)
+		{
+			if (ptr)
+				return new shared_ref<tValue, deleter_impl<tValue> >(ptr, deleter_impl<tValue>());
+			else
+				return NULL;
+		}
+	}
+
+	// forward declare weak_ptr
+	template <typename tValue>
+	class weak_ptr;
+
+	template <typename tValue> 
+	class shared_ptr {
+	private:
+		memory_impl::shared_ref_base        *mReference;
+		tValue                              *mPointer;
+
+		class bool_like 
+		{
+			void operator delete(void*);
+		};
+			
+
+	protected:
+		explicit shared_ptr(memory_impl::shared_ref_base *ref, tValue *ptr)
+		 : mReference( ref->acquire_ref() ),
+		   mPointer(ptr)
+		{}
+
+	public:
+        typedef tValue element_type;
+
+		// constructors
+		shared_ptr()
+		 : mReference(NULL),
+		   mPointer(NULL)
+		{}
+		template<typename tOtherValue> 
+		explicit shared_ptr(tOtherValue *ptr)
+		 : mReference( memory_impl::make_ref(ptr) ),
+		   mPointer(ptr)
+		{}
+		template<typename tOtherValue, typename tDeleter>
+		shared_ptr(tOtherValue *ptr, const tDeleter &deleter)
+		 : mReference( memory_impl::make_ref(ptr, deleter) ),
+		   mPointer(ptr)
+		{}
+		shared_ptr(const shared_ptr &y)
+		 : mReference( y.mReference ),
+		   mPointer( y.mPointer )
+		{
+			if (mReference && mPointer)
+				mReference->acquire_ref();
+			else
+				reset();
+		}
+		template<typename tOtherValue>
+		shared_ptr(const shared_ptr<tOtherValue> &y)
+		 : mReference( y.mReference ),
+		   mPointer( y.mPointer )
+		{
+			if (mReference && mPointer)
+				mReference->acquire_ref();
+			else
+				reset();
+		}
+		template<typename tOtherValue>
+		explicit shared_ptr(const weak_ptr<tOtherValue> &y)
+		{
+			(*this) = y.lock();
+		}
+
+		template<typename tOtherValue> 
+		explicit shared_ptr(auto_ptr<tOtherValue> &ptr)
+		 : mReference( 0 ),
+		   mPointer( ptr.get() )
+		{
+			mReference = memory_impl::make_ref(ptr.release());
+		}
+
+		// destructor
+		~shared_ptr()
+		{
+			reset();
+		}
+
+		// assignment
+		shared_ptr &operator=(const shared_ptr &y)
+		{
+			reset();
+
+			if (y.mReference && y.mPointer)
+			{
+				mReference = y.mReference->acquire_ref();
+				mPointer = y.mPointer;
+			} else
+				reset();
+			return *this;
+		}
+		template<typename tOtherValue>
+		shared_ptr &operator=(const shared_ptr<tOtherValue> &y)
+		{
+			reset();
+
+			if (y.mReference && y.mPointer)
+			{
+				mReference = y.mReference->acquire_ref();
+				mPointer = y.mPointer;
+			} else
+				reset();
+			return *this;
+		}
+		template<typename tOtherValue>
+		shared_ptr &operator=(auto_ptr<tOtherValue> &y)
+		{
+			reset();
+
+			mPointer = y.release();
+			mReference = memory_impl::make_ref(mPointer);
+			return *this;
+		}
+		// modifiers
+		void swap(shared_ptr &y)
+		{
+			::std::swap(mReferences, y.mReferences);
+			::std::swap(mPointer, y.mPointer);
+		}
+		void reset()
+		{
+			// we only want to free the reference if we have both pointers,
+			// if we don't, it means we're backing off from a broken state.
+			if (mReference && mPointer)
+			{
+				mReference->free_ref();
+			}
+			mReference = NULL;
+			mPointer = NULL;
+		}
+		template<typename tOtherValue>
+		void reset(tOtherValue *ptr)
+		{
+			reset();
+
+			mReference = memory_impl::make_ref(ptr);
+			mPointer = ptr;
+		}
+		template<typename tOtherValue, typename tDeleter>
+		void reset(tOtherValue *ptr, const tDeleter &deleter)
+		{
+			reset();
+
+			mReference = memory_impl::make_ref(ptr, deleter);
+			mPointer = ptr;
+		}
+
+		// observers
+		element_type *get() const
+		{
+			return mPointer;
+		}
+		element_type &operator*() const
+		{
+			return *mPointer;
+		}
+		element_type *operator->() const
+		{
+			return mPointer;
+		}
+		long use_count() const
+		{
+			if (mReference)
+				return mReference->mCount;
+			else
+				return 0;
+		}
+		bool unique() const
+		{
+			return mReference && (mReference->mCount == 1);
+		}
+		operator bool_like*() const
+		{
+			bool_like strue;
+			return mReference? &strue : NULL;
+		}
+
+		template <typename tValue1, typename tValue2>
+		friend bool operator<(const shared_ptr<tValue1> &x, const shared_ptr<tValue2> &y);
+
+		template<typename tValue1, typename tValue2>
+		friend shared_ptr<tValue1> static_pointer_cast(const shared_ptr<tValue2> &y);
+
+		template<typename tValue1, typename tValue2>
+		friend shared_ptr<tValue1> dynamic_pointer_cast(const shared_ptr<tValue2> &y);
+
+		template<typename tDeleter, typename tOtherValue>
+		friend tDeleter *get_deleter(shared_ptr<tOtherValue> &ptr);
+
+		friend class weak_ptr<tValue>;
+	};
+
+	// comparison
+	template<typename tValue1, typename tValue2>
+	bool operator==(const shared_ptr<tValue1> &x, const shared_ptr<tValue2> &y)
+	{
+		return x.get() == y.get();
+	}
+	template<typename tValue1, typename tValue2>
+	bool operator!=(const shared_ptr<tValue1> &x, const shared_ptr<tValue2> &y)
+	{
+		return x.get() != y.get();
+	}
+	template<typename tValue1, typename tValue2>
+	bool operator<(const shared_ptr<tValue1> &x, const shared_ptr<tValue2> &y)
+	{
+		return x.mReference < y.mReference;
+	}
+	// other operators
+	template<typename tCharType, typename tTraits, typename tValueType>
+	basic_ostream<tCharType, tTraits> & operator<< (basic_ostream<tCharType, tTraits> &stream, shared_ptr<tValueType> &ptr)
+	{ 
+		stream << ptr.get();
+	}
+
+	// specialized algorithms
+	template<typename tValue> 
+	void swap(shared_ptr<tValue> &x, shared_ptr<tValue> &y)
+	{
+		x.swap(y);
+	}
+
+	// casts
+	template<typename tValue1, typename tValue2>
+	shared_ptr<tValue1> static_pointer_cast(const shared_ptr<tValue2> &y)
+	{
+		if (y.use_count() > 0)
+			return shared_ptr<tValue1>(y.mReference, static_cast<tValue1*>(y.get()));
+		else
+			return shared_ptr<tValue1>();
+	}
+	template<typename tValue1, typename tValue2>
+	shared_ptr<tValue1> dynamic_pointer_cast(const shared_ptr<tValue2> &y)
+	{
+		if (y.use_count() > 0)
+			return shared_ptr<tValue1>( y.mReference, dynamic_cast<tValue1*>(y.get()) );
+		else
+			return shared_ptr<tValue1>();
+	}
+
+	// get_deleter
+	template<typename tDeleter, typename tValue>
+	tDeleter *get_deleter(shared_ptr<tValue> &ptr) // draft says const, but that seems stupid. Getting a non-const object from a const object is ugly.
+	{
+		if (ptr.mReference != 0)
+			return static_cast<tDeleter*>( ptr.mReference->get_deleter(typeid(tDeleter)) );
+		else
+			return 0;
+	}
+
+	template <typename tValue>
+	class weak_ptr
+	{
+	private:
+		memory_impl::shared_ref_base        *mReference;
+		tValue                              *mPointer;
+
+	public:
+		typedef tValue element_type;
+
+		weak_ptr()
+		 : mReference(0),
+		   mPointer(0)
+		{}
+
+		template <typename tOtherValue>
+		weak_ptr(const shared_ptr<tOtherValue> &y)
+		 : mReference( y.mReference ),
+		   mPointer( y.mPointer )
+		{
+			if (mReference && mPointer)
+				mReference->acquire_weak_ref();
+			else
+				reset();
+		}
+
+		weak_ptr(const weak_ptr &y)
+		 : mReference( y.mReference ),
+		   mPointer( y.mPointer )
+		{
+			if (mReference && mPointer)
+				mReference->acquire_weak_ref();
+			else
+				reset();
+		}
+
+		template <typename tOtherValue>
+		weak_ptr(const weak_ptr<tOtherValue> &y)
+		 : mReference( y.mReference ),
+		   mPointer( y.mPointer )
+		{
+			if (mReference && mPointer)
+				mReference->acquire_weak_ref();
+			else
+				reset();
+		}
+
+		~weak_ptr()
+		{
+			reset();
+		}
+
+		template <typename tOtherValue>
+		weak_ptr &operator=(const weak_ptr<tOtherValue> &y)
+		{
+			if (y.mReference == 0 && y.mPointer == 0)
+				reset();
+			else {
+				mReference = y.mReference->acquire_weak_ref();
+				mPointer = y.mPointer;
+			}
+		}
+		template <typename tOtherValue>
+		weak_ptr &operator=(const shared_ptr<tOtherValue> &y)
+		{
+			if (y.mReference == 0 && y.mPointer == 0)
+				reset();
+			else {
+				mReference = y.mReference->acquire_weak_ref();
+				mPointer = y.mPointer;
+			}
+		}
+
+		void reset()
+		{
+			if (mReference && mPointer)
+				mReference->free_weak_ref();
+			mReference = 0;
+			mPointer = 0;
+		}
+		void swap(weak_ptr &y)
+		{
+			::std::swap(mReference, y.mReference);
+			::std::swap(mPointer, y.mPointer);
+		}
+
+		long use_count() const
+		{
+			if (mReference != 0)
+				return mReference->mCount;
+			else
+				return 0;
+		}
+        bool expired() const
+		{
+			return use_count() == 0;
+		}
+		shared_ptr<element_type> lock() const
+		{
+			return shared_ptr<element_type>(mReference, mPointer);
+		}
+
+		template <typename tValue1, typename tValue2>
+		friend bool operator<(const weak_ptr<tValue1> &x, const weak_ptr<tValue2> &y);
+	};
+
+	template <typename tValue1, typename tValue2>
+	bool operator<(const weak_ptr<tValue1> &x, const weak_ptr<tValue2> &y)
+	{
+		return x.mReference < y.mReference;
+	}
+
+	template <typename tValue>
+	void swap(weak_ptr<tValue> &x, weak_ptr<tValue> &y)
+	{
+		x.swap(y);
+	}
+}}
+
+#endif
