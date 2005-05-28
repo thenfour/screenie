@@ -154,6 +154,11 @@ LRESULT CDestinationDlg::OnItemChanged(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 	return 0;
 }
 
+LRESULT CDestinationDlg::OnItemActivated(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
+{
+  return OnEditDestination(0,0,0,bHandled);
+}
+
 LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	ScreenshotDestination destination;
@@ -227,12 +232,14 @@ LRESULT CDestinationDlg::OnRemoveDestination(WORD /*wNotifyCode*/, WORD /*wID*/,
 	if ((selectedIndex = GetSelectedDestination()) != -1)
 	{
 		// remove the destination from the collection
-		m_screenshotOptions.RemoveDestination(selectedIndex);
-
-		// update the destination listview
-		PopulateDestinationList();
-	}
-
+    if(IDYES == MessageBox(LibCC::Format("Are you sure you want to remove destination %").qs(m_screenshotOptions.GetDestination(selectedIndex).general.name).CStr(),
+      _T("Delete destination"), MB_YESNO | MB_ICONQUESTION))
+    {
+      m_screenshotOptions.RemoveDestination(selectedIndex);
+		  // update the destination listview
+		  PopulateDestinationList();
+	  }
+  }
 	return 0;
 }
 

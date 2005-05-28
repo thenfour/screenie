@@ -38,6 +38,7 @@ struct ScreenshotDestination
 			imageFormat = rightHand.imageFormat;
 			filenameFormat = rightHand.filenameFormat;
 			path = rightHand.path;
+      localTime = rightHand.localTime;
 
 			return (*this);
 		}
@@ -45,6 +46,7 @@ struct ScreenshotDestination
 		Type type;
 		tstd::tstring name;
 		tstd::tstring imageFormat;
+    bool localTime;
 		tstd::tstring filenameFormat;
 		tstd::tstring path;
 	};

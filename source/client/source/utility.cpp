@@ -13,6 +13,7 @@
 #include "codec.hpp"
 #include "utility.hpp"
 
+using namespace LibCC;
 
 bool MakeDestinationFilename(tstd::tstring& filename, const tstd::tstring& mimeType, const tstd::tstring& formatString)
 {
@@ -257,29 +258,33 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 
 			switch (nextCharacter)
 			{
+      case 'a':
+        outputStream << ((systemTime.wHour >= 12) ? _T("PM") : _T("AM"));
+        break;
+
 				case TEXT('m'):
-					outputStream << std::setprecision(2) << systemTime.wMonth;
+          outputStream << Format().ui<10,2>(systemTime.wMonth).Str();
 					break;
 				case TEXT('M'):
 					outputStream << MonthNameFromNumber(systemTime.wMonth);
 					break;
 				case TEXT('d'):
-					outputStream << std::setprecision(2) << systemTime.wDay;
+          outputStream << Format().ui<10,2>(systemTime.wDay).Str();
 					break;
 				case TEXT('D'):
 					outputStream << WeekdayNameFromNumber(systemTime.wDayOfWeek);
 					break;
 				case TEXT('y'):
-					outputStream << std::setw(2) << std::setfill('0') << (systemTime.wYear % 100);
+					outputStream << Format().ui<10,2>(systemTime.wYear % 100).Str();
 					break;
 				case TEXT('Y'):
-					outputStream << systemTime.wYear;
+					outputStream << Format().ui<10,4>(systemTime.wYear).Str();
 					break;
 				case TEXT('h'):
-					outputStream << std::setw(2) << std::setfill('0') << systemTime.wHour;
+					outputStream << Format().ui<10,2>(systemTime.wHour).Str();
 					break;
 				case TEXT('H'):
-					outputStream << std::setw(2) << std::setfill('0') << (systemTime.wHour % 12);
+					outputStream << Format().ui<10,2>(systemTime.wHour % 12).Str();
 					break;
 				case TEXT('c'):
 					if (systemTime.wHour == 0)
@@ -288,10 +293,10 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 						outputStream << (systemTime.wHour >= 12) ? TEXT("PM") : TEXT("AM");
 					break;
 				case TEXT('i'):
-					outputStream << std::setw(2) << std::setfill('0') << systemTime.wMinute;
+          outputStream << Format().ui<10,2>(systemTime.wMinute).Str();
 					break;
 				case TEXT('s'):
-					outputStream << std::setw(2) << std::setfill('0') << systemTime.wSecond;
+          outputStream << Format().ui<10,2>(systemTime.wSecond).Str();
 					break;
 				default:
 					// this isn't a format specifier character.

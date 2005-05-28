@@ -39,6 +39,7 @@
 #define IDC_RESIZE                      1013
 #define IDC_URL_COPY                    1013
 #define IDC_FTP_COPYURL                 1013
+#define IDC_FILENAME_LOCAL              1013
 #define IDC_FTP_PORT                    1014
 #define IDC_FTP_HOSTNAME                1015
 #define IDC_FTP_REMOTEPATH              1016
@@ -50,6 +51,7 @@
 #define IDC_RESIZE_SCALE_VALUE          1021
 #define IDC_RADIO2                      1022
 #define IDC_RESIZE_LIMIT                1022
+#define IDC_FILENAME_UTC                1022
 #define IDC_EDIT3                       1023
 #define IDC_RESIZE_LIMIT_VALUE          1023
 #define IDC_THUMB_SIZING_SCALE          1024

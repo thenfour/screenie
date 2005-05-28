@@ -25,6 +25,7 @@ const TCHAR* KEY_DESTINATIONS = TEXT("Destinations");
 
 const TCHAR* KEY_DEST_ENABLED = TEXT("Enabled");
 const TCHAR* KEY_DEST_GENERAL_NAME = TEXT("Name");
+const TCHAR* KEY_DEST_GENERAL_LOCALTIME = TEXT("LocalTime");
 const TCHAR* KEY_DEST_GENERAL_TYPE = TEXT("Type");
 const TCHAR* KEY_DEST_GENERAL_IMAGEFORMAT = TEXT("Image Format");
 const TCHAR* KEY_DEST_GENERAL_FILENAMEFORMAT = TEXT("Filename Format");
@@ -68,6 +69,8 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKe
 	key.GetString(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
 	key.GetString(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
 	key.GetString(KEY_DEST_GENERAL_PATH, destination.general.path);
+  key.GetDWORD(KEY_DEST_GENERAL_LOCALTIME, &temp);
+  destination.general.localTime = temp == 1 ? true : false;
 
 	////////////////////////////////////////
 	// image settings
@@ -186,6 +189,7 @@ bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegis
 	key.SetString(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
 	key.SetString(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
 	key.SetString(KEY_DEST_GENERAL_PATH, destination.general.path);
+  key.SetDWORD(KEY_DEST_GENERAL_LOCALTIME, destination.general.localTime ? 1 : 0);
 
 	////////////////////////////////////////
 	// image settings

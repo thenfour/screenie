@@ -38,6 +38,7 @@ public:
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 
 		NOTIFY_HANDLER(IDC_DESTINATIONS, LVN_ITEMCHANGED, OnItemChanged)
+		NOTIFY_HANDLER(IDC_DESTINATIONS, LVN_ITEMACTIVATE, OnItemActivated)
 
 		COMMAND_HANDLER(IDC_SHOWSTATUS, BN_CLICKED, OnCheckboxClicked)
 		COMMAND_HANDLER(IDC_CONFIRM, BN_CLICKED, OnCheckboxClicked)
@@ -73,7 +74,8 @@ public:
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 	LRESULT OnItemChanged(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
-
+	LRESULT OnItemActivated(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
+  
 	LRESULT OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnEditDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnRemoveDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);

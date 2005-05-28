@@ -169,7 +169,7 @@ namespace LibCC
     template<size_t Base>
     _This& ui(unsigned long n)
     {
-      return ul<Base, Width>(n);
+      return ul<Base>(n);
     }
     _This& ui(unsigned long n)
     {

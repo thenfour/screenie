@@ -107,6 +107,8 @@ void CDestinationPropertiesGeneral::ShowSettings()
 	SetImageFormat(m_settings.imageFormat);
 
 	SetDlgItemText(IDC_FILENAME_FORMAT, m_settings.filenameFormat.c_str());
+
+  CheckDlgButton(m_settings.localTime ? IDC_FILENAME_LOCAL : IDC_FILENAME_UTC, BST_CHECKED);
 }
 
 LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -185,7 +187,14 @@ LRESULT CDestinationPropertiesGeneral::OnFilenameFormatChanged(WORD /*wNotifyCod
 	tstd::tstring formatString = GetWindowString(GetDlgItem(IDC_FILENAME_FORMAT));
 
 	SYSTEMTIME systemTime = { 0 };
-	::GetSystemTime(&systemTime);
+  if(BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL))
+  {
+	  ::GetLocalTime(&systemTime);
+  }
+  else
+  {
+	  ::GetSystemTime(&systemTime);
+  }
 
 	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString);
 	SetDlgItemText(IDC_FILENAME_FORMATPREVIEW, formattedOutput.c_str());
@@ -219,6 +228,8 @@ void CDestinationPropertiesGeneral::GetSettings(ScreenshotDestination& destinati
 		destination.general.imageFormat = GetImageFormat();
 		destination.general.filenameFormat = GetWindowString(GetDlgItem(IDC_GENERAL_FILENAME));
 		destination.general.path = GetWindowString(GetDlgItem(IDC_FILE_FOLDER));
+
+    destination.general.localTime = (BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL));
 	}
 }
 
@@ -232,7 +243,8 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER_BROWSE), FALSE);
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER), FALSE);
 	}
-	else if (type == ScreenshotDestination::TYPE_CLIPBOARD)
+	
+  if (type == ScreenshotDestination::TYPE_CLIPBOARD)
 	{
 		// the clipboard doesn't have 'files.' the filename formatting and related
 		// settings are pretty irrelevant when that's the destination type.
@@ -245,6 +257,8 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMAT), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATDESC), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATPREVIEW), enableControls);
+		::EnableWindow(GetDlgItem(IDC_FILENAME_LOCAL), enableControls);
+		::EnableWindow(GetDlgItem(IDC_FILENAME_UTC), enableControls);
 	}
 }
 

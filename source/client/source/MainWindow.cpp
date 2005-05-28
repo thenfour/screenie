@@ -120,8 +120,11 @@ LRESULT CMainWindow::OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 {
 	switch (lParam)
 	{
-		case WM_CONTEXTMENU:
-		case WM_RBUTTONUP:
+  case WM_LBUTTONDBLCLK:
+    OnConfigure(0,0,0,handled);
+    break;
+  case WM_CONTEXTMENU:
+	case WM_RBUTTONUP:
 		{
 			DisplayTrayMenu();
 			break;
