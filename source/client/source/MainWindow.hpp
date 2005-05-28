@@ -30,6 +30,11 @@ public:
 		WM_TAKESCREENSHOT = WM_APP + 3
 	};
 
+  CMainWindow() :
+    m_statusDialog(m_screenshotOptions)
+  {
+  }
+
 	bool IsProcessing() { return m_processing; }
 
 	BEGIN_MSG_MAP(CMainWindow)

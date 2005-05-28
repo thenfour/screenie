@@ -10,6 +10,8 @@
 #include "CroppingWnd.hpp"
 #include "ZoomWnd.hpp"
 
+#include "ScreenshotOptions.hpp"
+
 class CCropDlg :
 	public CDialogImpl<CCropDlg>,
 	public CDialogResize<CCropDlg>
@@ -17,8 +19,13 @@ class CCropDlg :
 public:
 	enum { IDD = IDD_CROPDLG };
 
-	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap)
-		: m_bitmap(bitmap), m_didCropping(false), m_croppingWnd(bitmap), m_zoomWnd(bitmap) { }
+	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
+    m_bitmap(bitmap),
+    m_didCropping(false),
+    m_croppingWnd(bitmap),
+    m_zoomWnd(bitmap),
+    m_options(options)
+  { }
 	~CCropDlg() { }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
@@ -59,6 +66,12 @@ public:
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
 		DlgResize_Init(true, true, WS_CLIPCHILDREN);
+
+    // Load window placement settings.
+    if(m_options.HaveCroppingPlacement())
+    {
+      SetWindowPlacement(&m_options.GetCroppingPlacement());
+    }
 
 		m_croppingWnd.SubclassWindow(GetDlgItem(IDC_IMAGE));
 		m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
@@ -165,6 +178,11 @@ public:
 			}
 		}
 
+    // save window placement
+    WINDOWPLACEMENT wp;
+    GetWindowPlacement(&wp);
+    m_options.SetCroppingPlacement(wp);
+
 		EndDialog(nVal); 
 	}
 private:
@@ -173,6 +191,7 @@ private:
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
 	CZoomWindow m_zoomWnd;
 	CCroppingWindow m_croppingWnd;
+  ScreenshotOptions& m_options;
 };
 
 #endif

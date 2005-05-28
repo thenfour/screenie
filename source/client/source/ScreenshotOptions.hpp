@@ -12,7 +12,16 @@ class ScreenshotOptions
 public:
 	typedef std::vector<ScreenshotDestination> DestinationCollection;
 
-	ScreenshotOptions() { }
+  ScreenshotOptions() :
+    m_haveStatusPlacement(false),
+    m_haveCroppingPlacement(false),
+    m_haveConfigPlacement(false),
+	  m_includeCursor(true),
+	  m_showStatus(true),
+	  m_confirmOptions(true),
+	  m_showCropWindow(true)
+  {
+  }
 
 	ScreenshotOptions(const ScreenshotOptions& copy)
 	{
@@ -22,6 +31,13 @@ public:
 		m_showStatus = copy.m_showStatus;
 		m_confirmOptions = copy.m_confirmOptions;
 		m_showCropWindow = copy.m_showCropWindow;
+
+    m_haveStatusPlacement = copy.m_haveStatusPlacement;
+    m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
+    m_haveConfigPlacement = copy.m_haveConfigPlacement;
+    memcpy(&m_statusPlacement, &copy.m_statusPlacement, sizeof(m_statusPlacement));
+    memcpy(&m_croppingPlacement, &copy.m_croppingPlacement, sizeof(m_croppingPlacement));
+    memcpy(&m_configPlacement, &copy.m_configPlacement, sizeof(m_configPlacement));
 	}
 
 	~ScreenshotOptions()
@@ -32,7 +48,9 @@ public:
 
 	ScreenshotOptions& operator=(const ScreenshotOptions& rightHand)
 	{
-		m_destinations.clear();
+    const ScreenshotOptions& copy = rightHand;
+
+    m_destinations.clear();
 
 		m_destinations = rightHand.m_destinations;
 
@@ -40,6 +58,13 @@ public:
 		m_showStatus = rightHand.m_showStatus;
 		m_confirmOptions = rightHand.m_confirmOptions;
 		m_showCropWindow = rightHand.m_showCropWindow;
+
+    m_haveStatusPlacement = copy.m_haveStatusPlacement;
+    m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
+    m_haveConfigPlacement = copy.m_haveConfigPlacement;
+    memcpy(&m_statusPlacement, &copy.m_statusPlacement, sizeof(m_statusPlacement));
+    memcpy(&m_croppingPlacement, &copy.m_croppingPlacement, sizeof(m_croppingPlacement));
+    memcpy(&m_configPlacement, &copy.m_configPlacement, sizeof(m_configPlacement));
 
 		return (*this);
 	}
@@ -57,6 +82,28 @@ public:
 
 	bool ShowCropWindow() { return m_showCropWindow; }
 	void ShowCropWindow(bool newval) { m_showCropWindow = newval; }
+
+  bool HaveStatusPlacement() const { return m_haveStatusPlacement; }
+  bool HaveCroppingPlacement() const { return m_haveCroppingPlacement; }
+  bool HaveConfigPlacement() const { return m_haveConfigPlacement; }
+  const WINDOWPLACEMENT& GetStatusPlacement() const { return m_statusPlacement; }
+  const WINDOWPLACEMENT& GetCroppingPlacement() const { return m_croppingPlacement; }
+  const WINDOWPLACEMENT& GetConfigPlacement() const { return m_configPlacement; }
+  void SetStatusPlacement(const WINDOWPLACEMENT& x)
+  {
+    m_haveStatusPlacement = true;
+    memcpy(&m_statusPlacement, &x, sizeof(x));
+  }
+  void SetCroppingPlacement(const WINDOWPLACEMENT& x)
+  {
+    m_haveCroppingPlacement = true;
+    memcpy(&m_croppingPlacement, &x, sizeof(x));
+  }
+  void SetConfigPlacement(const WINDOWPLACEMENT& x)
+  {
+    m_haveConfigPlacement = true;
+    memcpy(&m_configPlacement, &x, sizeof(x));
+  }
 
 	void AddDestination(ScreenshotDestination& destination)
 	{
@@ -109,6 +156,13 @@ public:
 	}
 private:
 	DestinationCollection m_destinations;
+
+  bool m_haveStatusPlacement;
+  WINDOWPLACEMENT m_statusPlacement;
+  bool m_haveCroppingPlacement;
+  WINDOWPLACEMENT m_croppingPlacement;
+  bool m_haveConfigPlacement;
+  WINDOWPLACEMENT m_configPlacement;
 
 	bool m_includeCursor;
 	bool m_showStatus;

@@ -10,11 +10,16 @@
 #include "options.hpp"
 #include "ScreenshotDestination.hpp"
 #include "ScreenshotOptions.hpp"
+#include "libcc/registry.h"// huhu mixing libraries... very shitty.
 
 const TCHAR* KEY_INCLUDECURSOR = TEXT("Include Cursor");
 const TCHAR* KEY_SHOWCROPPINGWINDOW = TEXT("Show Cropping Window");
 const TCHAR* KEY_CONFIRMOPTIONS = TEXT("Confirm Options");
 const TCHAR* KEY_SHOWSTATUS = TEXT("Show Status Dialog");
+
+const TCHAR* KEY_CONFIGWINDOWPLACEMENT = TEXT("ConfigWindowPlacement");
+const TCHAR* KEY_STATUSWINDOWPLACEMENT = TEXT("StatusWindowPlacement");
+const TCHAR* KEY_CROPPINGWINDOWPLACEMENT = TEXT("CroppingWindowPlacement");
 
 const TCHAR* KEY_DESTINATIONS = TEXT("Destinations");
 
@@ -120,6 +125,8 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
 	if (!MainKey.Init(HKEY_CURRENT_USER, keyName))
 		return false;
 
+  LibCC::RegistryKey MainKey2(HKEY_CURRENT_USER, keyName);
+
 	CRegistryKey DestsKey;
 	if (MainKey.OpenSubKey(KEY_DESTINATIONS, &DestsKey))
 	{
@@ -148,9 +155,22 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
 
 		MainKey.GetDWORD(KEY_SHOWSTATUS, &temp);
 		options.ShowStatus(temp != 0);
-	}
 
-    return true;
+    WINDOWPLACEMENT wpTemp;
+    if(MainKey2[KEY_CONFIGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
+    {
+      options.SetConfigPlacement(wpTemp);
+    }
+    if(MainKey2[KEY_STATUSWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
+    {
+      options.SetStatusPlacement(wpTemp);
+    }
+    if(MainKey2[KEY_CROPPINGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
+    {
+      options.SetCroppingPlacement(wpTemp);
+    }
+  }
+  return true;
 }
 
 bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegistryKey& key)
@@ -204,13 +224,15 @@ bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName
 	bool success = false;
 
 	CRegistryKey MainKey;
-    if(MainKey.Init(root, keyName))
-    {
-        success = true;
+  if(MainKey.Init(root, keyName))
+  {
+    success = true;
 
-        CRegistryKey DestsKey;
-        if(MainKey.OpenSubKey(KEY_DESTINATIONS, &DestsKey))
-        {
+    LibCC::RegistryKey MainKey2(root, keyName);
+
+    CRegistryKey DestsKey;
+    if(MainKey.OpenSubKey(KEY_DESTINATIONS, &DestsKey))
+    {
 			ScreenshotDestination destination;
 			for (size_t i = 0; i < options.GetNumDestinations(); ++i)
 			{
@@ -235,6 +257,19 @@ bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName
 		MainKey.SetDWORD(KEY_CONFIRMOPTIONS, options.ConfirmOptions());
 		MainKey.SetDWORD(KEY_SHOWSTATUS, options.ShowStatus());
 		MainKey.SetDWORD(KEY_SHOWCROPPINGWINDOW, options.ShowCropWindow());
+
+    if(options.HaveConfigPlacement())
+    {
+      MainKey2[KEY_CONFIGWINDOWPLACEMENT].SetValue(&options.GetConfigPlacement(), sizeof(WINDOWPLACEMENT));
+    }
+    if(options.HaveCroppingPlacement())
+    {
+      MainKey2[KEY_CROPPINGWINDOWPLACEMENT].SetValue(&options.GetCroppingPlacement(), sizeof(WINDOWPLACEMENT));
+    }
+    if(options.HaveStatusPlacement())
+    {
+      MainKey2[KEY_STATUSWINDOWPLACEMENT].SetValue(&options.GetStatusPlacement(), sizeof(WINDOWPLACEMENT));
+    }
 
 		MainKey.Uninit();
 	}

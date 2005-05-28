@@ -70,7 +70,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 		if (m_screenshotOptions.ShowCropWindow())
 		{
 			// show cropping dialog
-			CCropDlg cropDialog(screenshot);
+			CCropDlg cropDialog(screenshot, m_screenshotOptions);
 
 			if (cropDialog.DoModal(m_hWnd) == IDOK)
 			{

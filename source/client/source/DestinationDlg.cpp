@@ -17,6 +17,7 @@
 #include "DestinationProperties.hpp"
 
 #include "codec.hpp"
+#include "libcc/registry.h"
 
 BOOL CDestinationDlg::PreTranslateMessage(MSG* pMsg)
 {
@@ -99,6 +100,12 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	SetIcon(hIconSmall, FALSE);
 
 	DlgResize_Init(true, true, WS_CLIPCHILDREN);
+
+  // Load window placement settings.
+  if(m_screenshotOptions.HaveConfigPlacement())
+  {
+    SetWindowPlacement(&m_screenshotOptions.GetConfigPlacement());
+  }
 
 	// set up the list view columns
 	m_listView = GetDlgItem(IDC_DESTINATIONS);
@@ -264,5 +271,10 @@ LRESULT CDestinationDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 
 void CDestinationDlg::CloseDialog(int nVal)
 {
-	EndDialog(nVal);
+  // save window placement
+  WINDOWPLACEMENT wp;
+  GetWindowPlacement(&wp);
+  m_screenshotOptions.SetConfigPlacement(wp);
+
+  EndDialog(nVal);
 }

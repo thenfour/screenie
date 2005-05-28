@@ -1,6 +1,9 @@
 #ifndef SCREENIE_STATUSDLG_HPP
 #define SCREENIE_STATUSDLG_HPP
 
+#include "ScreenshotOptions.hpp"
+
+
 // interface for passing to things that d
 struct StatusWindow
 {
@@ -26,10 +29,11 @@ class CStatusDlg :
 private:
 	CImageList m_imageList;
 	CListViewCtrl m_listView;
+  ScreenshotOptions& m_options;
 public:
 	enum { IDD = IDD_STATUS };
 
-	CStatusDlg() { }
+  CStatusDlg(ScreenshotOptions& options) : m_options(options) { }
 	virtual ~CStatusDlg() { }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);

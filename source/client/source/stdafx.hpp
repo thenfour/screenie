@@ -29,7 +29,7 @@ extern CAppModule _Module;
 #include "tstdlib/tstring.hpp"
 #include "tstdlib/tsstream.hpp"
 
-#include <libcc/ccstr.h>
+#include "libcc/ccstr.h"
 
 // this header contains Graham Batty's implementation of the C++
 // Technical Report 1 smart pointers (shared_ptr and weak_ptr).

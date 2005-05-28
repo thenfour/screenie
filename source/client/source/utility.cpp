@@ -13,6 +13,7 @@
 #include "codec.hpp"
 #include "utility.hpp"
 
+
 bool MakeDestinationFilename(tstd::tstring& filename, const tstd::tstring& mimeType, const tstd::tstring& formatString)
 {
 	ImageCodecsEnum imageCodecs;

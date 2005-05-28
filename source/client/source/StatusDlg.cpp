@@ -49,6 +49,12 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	CenterWindow();
 	DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
+  // Load window placement settings.
+  if(m_options.HaveStatusPlacement())
+  {
+    SetWindowPlacement(&m_options.GetStatusPlacement());
+  }
+
 	// create and populate image list for message icons
 	if (m_imageList.Create(16, 16, ILC_COLOR32, 2, 0))
 	{
@@ -144,6 +150,11 @@ void CStatusDlg::CloseDialog(int nVal)
 	// the next time the user sees this dialog, he probably doesn't want to
 	// see messages pertaining to previously processed screenshots
 	ClearMessages();
+
+  // save window placement
+  WINDOWPLACEMENT wp;
+  GetWindowPlacement(&wp);
+  m_options.SetStatusPlacement(wp);
 
 	// this doesn't actually close the dialog box.
 	ShowWindow(SW_HIDE);
