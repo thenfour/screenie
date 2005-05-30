@@ -79,6 +79,7 @@
 #define IDC_GENERAL_GROUP               1044
 #define IDC_DESTINATIONS_GROUP          1045
 #define IDC_CONFIGURE                   1046
+#define IDC_HYPERLINK                   1047
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -146,7 +147,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        212
 #define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1048
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
