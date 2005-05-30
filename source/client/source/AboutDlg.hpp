@@ -21,6 +21,7 @@ public:
 	LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
 		CenterWindow(GetParent());
+		m_link.SubclassWindow(GetDlgItem(IDC_HYPERLINK));
 
 		return TRUE;
 	}
@@ -31,6 +32,8 @@ public:
 
 		return 0;
 	}
+
+	CHyperLink m_link;
 };
 
 #endif
