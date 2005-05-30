@@ -32,6 +32,7 @@ public:
 	void UpdateSelection(int x, int y);// in SCREEN coords
 	void EndSelection(int x, int y);// in SCREEN coords
 
+  // gets the selection in IMAGE coords
 	bool GetSelection(RECT& selectionRect);
 	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
 

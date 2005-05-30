@@ -134,7 +134,8 @@ void CCroppingWindow::EndSelection(int x, int y)
 bool CCroppingWindow::GetSelection(RECT& selectionRect)
 {
 	if (!m_hasSelection) return false;
-  GetScreenSelection(selectionRect);
+  //GetScreenSelection(selectionRect);
+  CopyRect(&selectionRect, &m_selectionOrg);
 	return true;
 }
 
