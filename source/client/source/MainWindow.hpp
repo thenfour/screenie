@@ -64,6 +64,11 @@ public:
 	LRESULT OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
+
+  // returns true if settings are used ("OK" button was clicked).
+  // returns false if canceled.
+  bool OnConfigure(const tstd::tstring& OKbuttonText);
+
 private:
 	bool m_processing;
 	CStatusDlg m_statusDialog;

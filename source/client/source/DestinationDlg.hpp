@@ -17,8 +17,10 @@ class CDestinationDlg :
 public:
 	enum { IDD = IDD_MAINDLG };
 
-	CDestinationDlg(ScreenshotOptions& options)
-		: m_screenshotOptions(options)
+	CDestinationDlg(ScreenshotOptions& options, const tstd::tstring& OKbuttonText) :
+    m_optionsCopy(options),
+    m_optionsFinal(options),
+    m_OKbuttonText(OKbuttonText)
 	{
 	}
 
@@ -26,10 +28,10 @@ public:
 	{
 	}
 
-	ScreenshotOptions GetOptions() const
-	{
-		return m_screenshotOptions;
-	}
+	//ScreenshotOptions GetOptions() const
+	//{
+	//	return m_optionsCopy;
+	//}
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
@@ -45,6 +47,7 @@ public:
 		COMMAND_HANDLER(IDC_CROPPING, BN_CLICKED, OnCheckboxClicked)
 		COMMAND_HANDLER(IDC_INCLUDECURSOR, BN_CLICKED, OnCheckboxClicked)
 
+		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_NEW, OnNewDestination)
 		COMMAND_ID_HANDLER(IDC_EDIT, OnEditDestination)
 		COMMAND_ID_HANDLER(IDC_REMOVE, OnRemoveDestination)
@@ -54,15 +57,20 @@ public:
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CDestinationDlg)
-		DLGRESIZE_CONTROL(IDC_DESTINATIONS, DLSZ_SIZE_X | DLSZ_SIZE_Y)
-		DLGRESIZE_CONTROL(IDC_CONFIRM, DLSZ_MOVE_Y)
-		DLGRESIZE_CONTROL(IDC_CROPPING, DLSZ_MOVE_Y)
-		DLGRESIZE_CONTROL(IDC_INCLUDECURSOR, DLSZ_MOVE_Y)
-		DLGRESIZE_CONTROL(IDC_SHOWSTATUS, DLSZ_MOVE_Y)
+    DLGRESIZE_CONTROL(IDC_GENERAL_GROUP, DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_CONFIRM, DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_CROPPING, DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_INCLUDECURSOR, DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_SHOWSTATUS, DLSZ_SIZE_X)
+
+    DLGRESIZE_CONTROL(IDC_DESTINATIONS_GROUP, DLSZ_SIZE_Y | DLSZ_SIZE_X)
+    DLGRESIZE_CONTROL(IDC_DESTINATIONS, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_NEW, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_EDIT, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_REMOVE, DLSZ_MOVE_Y)
-		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+
+    DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
 
 	void DisplayListContextMenu();
@@ -82,11 +90,14 @@ public:
 	LRESULT OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
-	void CloseDialog(int nVal);
+	void CloseDialog(bool bSaveOptions);
 private:
 	CListViewCtrl m_listView;
-	ScreenshotOptions& m_screenshotOptions;
+	ScreenshotOptions m_optionsCopy;
+	ScreenshotOptions& m_optionsFinal;// this is the external ref that we copy to when the user hits OK
+  tstd::tstring m_OKbuttonText;
 };
 
 #endif

@@ -7,15 +7,26 @@
 #ifndef SCREENIE_ZOOMWND_HPP
 #define SCREENIE_ZOOMWND_HPP
 
+#include "animbitmap.h"
+
 class CZoomWindow : public CWindowImpl<CZoomWindow>
 {
 public:
 	DECLARE_WND_CLASS("ScreenieCropperWnd")
 
-	CZoomWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap) : m_bitmap(bitmap)
+  CZoomWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap) :
+    m_bitmap(bitmap)  
 	{
-		m_cursorPos.x = 0;
-		m_cursorPos.y = 0;
+    m_dibOriginal.SetSize(m_bitmap->GetWidth(), m_bitmap->GetHeight());
+
+    HDC dc = ::GetDC(0);
+    HBITMAP hbm = (HBITMAP)SelectObject(dc, bitmap);
+    m_dibOriginal.BlitFrom(dc, 0, 0, m_bitmap->GetWidth(), m_bitmap->GetHeight());
+    SelectObject(dc, hbm);
+    ::ReleaseDC(0, dc);
+
+    m_ImageOrigin.x = 0;
+		m_ImageOrigin.y = 0;
 	}
 
 	~CZoomWindow() { }
@@ -28,9 +39,9 @@ public:
 	// this sets the would-be cursor position inside the screenshot
 	// bitmap. the coordinates are only valid in relation to the bitmap.
 
-	void UpdateBitmapCursorPos(const POINT& cursorPos)
+	void UpdateBitmapCursorPos(const POINT& origin)
 	{
-		m_cursorPos = cursorPos;
+		m_ImageOrigin = origin;
 		InvalidateRect(NULL);
 	}
 
@@ -38,11 +49,23 @@ public:
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+		MESSAGE_HANDLER(WM_SIZE, OnSize)
 	END_MSG_MAP()
 
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 	{
 		return 0;
+	}
+
+	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+	{
+	  RECT clientRect;
+	  GetClientRect(&clientRect);
+    if(m_dibOffscreen.GetWidth() < clientRect.right || m_dibOffscreen.GetHeight() < clientRect.bottom)
+    {
+      m_dibOffscreen.SetSize(clientRect.right, clientRect.bottom);
+    }
+	  return 0;
 	}
 
 	LRESULT OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -53,16 +76,15 @@ public:
 		RECT clientRect = { 0 };
 		GetClientRect(&clientRect);
 
-		Gdiplus::Graphics windowGraphics(hdc);
+    m_dibOffscreen.Fill(0);
+    m_dibOriginal.Blit(m_dibOffscreen,
+      m_ImageOrigin.x - (clientRect.right / 2),
+      m_ImageOrigin.y - (clientRect.bottom / 2),
+      clientRect.right,
+      clientRect.bottom);
+    m_dibOffscreen.Blit(hdc, 0, 0);
 
-		windowGraphics.Clear(Gdiplus::Color(0, 0, 0));
-		windowGraphics.DrawImage(m_bitmap.get(), 0, 0,
-			m_cursorPos.x - (clientRect.right / 4),
-			m_cursorPos.y - (clientRect.bottom / 4),
-			clientRect.right, clientRect.bottom,
-			Gdiplus::UnitPixel);
-
-		EndPaint(&paintStruct);
+    EndPaint(&paintStruct);
 
 		return 0;
 	}
@@ -72,8 +94,10 @@ public:
 		return 0;
 	}
 private:
-	POINT m_cursorPos;
+	POINT m_ImageOrigin;
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
+  AnimBitmap<32> m_dibOffscreen;
+  AnimBitmap<32> m_dibOriginal;
 };
 
 #endif

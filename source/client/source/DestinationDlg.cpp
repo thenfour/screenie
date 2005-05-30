@@ -56,10 +56,10 @@ void CDestinationDlg::PopulateDestinationList()
 {
 	m_listView.DeleteAllItems();
 
-	for (size_t i = 0; i < m_screenshotOptions.GetNumDestinations(); ++i)
+	for (size_t i = 0; i < m_optionsCopy.GetNumDestinations(); ++i)
 	{
 		ScreenshotDestination destination;
-		if (m_screenshotOptions.GetDestination(destination, i))
+		if (m_optionsCopy.GetDestination(destination, i))
 		{
 			LVITEM item = { 0 };
 
@@ -102,9 +102,9 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
   // Load window placement settings.
-  if(m_screenshotOptions.HaveConfigPlacement())
+  if(m_optionsCopy.HaveConfigPlacement())
   {
-    SetWindowPlacement(&m_screenshotOptions.GetConfigPlacement());
+    SetWindowPlacement(&m_optionsCopy.GetConfigPlacement());
   }
 
 	// set up the list view columns
@@ -121,14 +121,17 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	// put the destinations on the list
 	PopulateDestinationList();
 
+  // set that OK button text.
+  SetDlgItemText(IDOK, m_OKbuttonText.c_str());
+
 	// if necessary, check the checkboxes
-	if (m_screenshotOptions.IncludeCursor())
+	if (m_optionsCopy.IncludeCursor())
 		CheckDlgButton(IDC_INCLUDECURSOR, BST_CHECKED);
-	if (m_screenshotOptions.ShowCropWindow())
+	if (m_optionsCopy.ShowCropWindow())
 		CheckDlgButton(IDC_CROPPING, BST_CHECKED);
-	if (m_screenshotOptions.ConfirmOptions())
+	if (m_optionsCopy.ConfirmOptions())
 		CheckDlgButton(IDC_CONFIRM, BST_CHECKED);
-	if (m_screenshotOptions.ShowStatus())
+	if (m_optionsCopy.ShowStatus())
 		CheckDlgButton(IDC_SHOWSTATUS, BST_CHECKED);
 
 	return TRUE;
@@ -136,7 +139,7 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 
 LRESULT CDestinationDlg::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	CloseDialog(IDOK);
+	CloseDialog(false);
 
 	return 0;
 }
@@ -148,7 +151,7 @@ LRESULT CDestinationDlg::OnItemChanged(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 	if (nmlv->uChanged & LVIF_STATE)
 	{
 		BOOL checked = m_listView.GetCheckState(nmlv->iItem);
-		m_screenshotOptions.GetDestination(static_cast<size_t>(nmlv->lParam)).enabled = (checked == TRUE);
+		m_optionsCopy.GetDestination(static_cast<size_t>(nmlv->lParam)).enabled = (checked == TRUE);
 	}
 
 	return 0;
@@ -194,7 +197,7 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	if (properties.DoModal(m_hWnd) == IDOK)
 	{
 		destination = properties.GetDestination();
-		m_screenshotOptions.AddDestination(destination);
+		m_optionsCopy.AddDestination(destination);
 
 		PopulateDestinationList();
 	}
@@ -208,12 +211,12 @@ LRESULT CDestinationDlg::OnEditDestination(WORD /*wNotifyCode*/, WORD /*wID*/, H
 	if ((selectedIndex = GetSelectedDestination()) != -1)
 	{
 		ScreenshotDestination destination;
-		if (m_screenshotOptions.GetDestination(destination, selectedIndex))
+		if (m_optionsCopy.GetDestination(destination, selectedIndex))
 		{
 			CDestinationProperties prop(destination, TEXT("Edit Destination"));
 			if (prop.DoModal(m_hWnd) == IDOK)
 			{
-				m_screenshotOptions.SetDestination(prop.GetDestination(), selectedIndex);
+				m_optionsCopy.SetDestination(prop.GetDestination(), selectedIndex);
 
 				// one or more destination has changed. repopulate the
 				// destination list; the info on the list is probably outdated.
@@ -232,10 +235,10 @@ LRESULT CDestinationDlg::OnRemoveDestination(WORD /*wNotifyCode*/, WORD /*wID*/,
 	if ((selectedIndex = GetSelectedDestination()) != -1)
 	{
 		// remove the destination from the collection
-    if(IDYES == MessageBox(LibCC::Format("Are you sure you want to remove destination %").qs(m_screenshotOptions.GetDestination(selectedIndex).general.name).CStr(),
+    if(IDYES == MessageBox(LibCC::Format("Are you sure you want to remove destination %").qs(m_optionsCopy.GetDestination(selectedIndex).general.name).CStr(),
       _T("Delete destination"), MB_YESNO | MB_ICONQUESTION))
     {
-      m_screenshotOptions.RemoveDestination(selectedIndex);
+      m_optionsCopy.RemoveDestination(selectedIndex);
 		  // update the destination listview
 		  PopulateDestinationList();
 	  }
@@ -253,16 +256,16 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 	switch (wID)
 	{
 		case IDC_SHOWSTATUS:
- 			m_screenshotOptions.ShowStatus(checked);
+ 			m_optionsCopy.ShowStatus(checked);
 			break;
 		case IDC_CONFIRM:
-			m_screenshotOptions.ConfirmOptions(checked);
+			m_optionsCopy.ConfirmOptions(checked);
 			break;
 		case IDC_CROPPING:
-			m_screenshotOptions.ShowCropWindow(checked);
+			m_optionsCopy.ShowCropWindow(checked);
 			break;
 		case IDC_INCLUDECURSOR:
-			m_screenshotOptions.IncludeCursor(checked);
+			m_optionsCopy.IncludeCursor(checked);
 			break;
 	}
 
@@ -271,17 +274,29 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 
 LRESULT CDestinationDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	CloseDialog(wID);
+	CloseDialog(true);
 
 	return 0;
 }
 
-void CDestinationDlg::CloseDialog(int nVal)
+LRESULT CDestinationDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	CloseDialog(false);
+
+	return 0;
+}
+
+void CDestinationDlg::CloseDialog(bool bSaveOptions)
 {
   // save window placement
   WINDOWPLACEMENT wp;
   GetWindowPlacement(&wp);
-  m_screenshotOptions.SetConfigPlacement(wp);
+  m_optionsCopy.SetConfigPlacement(wp);
 
-  EndDialog(nVal);
+  if(bSaveOptions)
+  {
+    m_optionsFinal = m_optionsCopy;
+  }
+
+  EndDialog(bSaveOptions ? TRUE : FALSE);
 }

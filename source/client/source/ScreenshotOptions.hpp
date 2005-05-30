@@ -18,7 +18,7 @@ public:
     m_haveConfigPlacement(false),
 	  m_includeCursor(true),
 	  m_showStatus(true),
-	  m_confirmOptions(true),
+	  m_confirmOptions(false),
 	  m_showCropWindow(true)
   {
   }

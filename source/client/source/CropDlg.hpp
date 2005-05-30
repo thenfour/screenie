@@ -9,6 +9,7 @@
 
 #include "CroppingWnd.hpp"
 #include "ZoomWnd.hpp"
+#include "destinationDlg.hpp"
 
 #include "ScreenshotOptions.hpp"
 
@@ -52,6 +53,7 @@ public:
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
+		COMMAND_ID_HANDLER(IDC_CONFIGURE, OnConfigure)    
 
 		CHAIN_MSG_MAP(CDialogResize<CCropDlg>)
 	END_MSG_MAP()
@@ -59,6 +61,8 @@ public:
 	BEGIN_DLGRESIZE_MAP(CCropDlg)
 		DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
+
+    DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
@@ -74,7 +78,10 @@ public:
     }
 
 		m_croppingWnd.SubclassWindow(GetDlgItem(IDC_IMAGE));
+    BOOL temp;
+    m_croppingWnd.OnSize(0,0,0,temp);
 		m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
+    m_zoomWnd.OnSize(0,0,0,temp);
 
 		return 0;
 	}
@@ -93,16 +100,16 @@ public:
 
 		if (::PtInRect(&imageClientRect, cursorPos))
 		{
-			int x = int(cursorPos.x * (float(m_bitmap->GetWidth()) / scaleWidth));
-			int y = int(cursorPos.y * (float(m_bitmap->GetHeight()) / scaleHeight));
+      SetCursor(LoadCursor(0, IDC_CROSS));
 
-			SetWindowText(LibCC::Format(TEXT("Crop Screenshot: (%, %)")).ul(x).ul(y).CStr());
+      CPoint pos = m_croppingWnd.ScreenToImageCoords(CPoint(cursorPos.x,cursorPos.y));
+
+			SetWindowText(LibCC::Format(TEXT("Crop Screenshot: (%, %)")).ul(pos.x).ul(pos.y).CStr());
 
 			if (m_croppingWnd.IsSelecting())
 				m_croppingWnd.UpdateSelection(cursorPos.x, cursorPos.y);
 
-			POINT bitmapCursorPos = { x, y };
-			m_zoomWnd.UpdateBitmapCursorPos(bitmapCursorPos);
+			m_zoomWnd.UpdateBitmapCursorPos(pos);
 		}
 		else
 		{
@@ -129,6 +136,7 @@ public:
 
 		if (PtInRect(&imageClientRect, cursorPos))
 		{
+      SetCursor(LoadCursor(0, IDC_CROSS));
 			m_croppingWnd.BeginSelection(cursorPos.x, cursorPos.y);
 		}
 
@@ -146,6 +154,7 @@ public:
 
 		if (PtInRect(&imageClientRect, cursorPos))
 		{
+      SetCursor(LoadCursor(0, IDC_CROSS));
 			m_croppingWnd.EndSelection(cursorPos.x, cursorPos.y);
 		}
 
@@ -164,6 +173,13 @@ public:
 		CloseDialog(IDCANCEL);
 
 		return 0;
+	}
+
+	LRESULT OnConfigure(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+	  CDestinationDlg dialog(m_options, _T("Ok"));
+	  dialog.DoModal();
+	  return 0;
 	}
 
 	void CloseDialog(int nVal)

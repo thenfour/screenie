@@ -44,7 +44,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 	if (m_screenshotOptions.ConfirmOptions())
 	{
 		BOOL handledDummy = FALSE;
-		OnConfigure(0, 0, NULL, handledDummy);
+    OnConfigure(_T("Next..."));
 	}
 
 	RECT windowRect = { 0 };
@@ -161,21 +161,14 @@ LRESULT CMainWindow::OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handl
 
 LRESULT CMainWindow::OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
-	CDestinationDlg dialog(m_screenshotOptions);
-	dialog.DoModal();
-
-	// previously, the new options were only set if the user pressed OK
-	// on the dialog box, and even then, they were only copied. although this
-	// was a cleaner method than the current one (passing a reference to the
-	// dialog so that the global options can be modified in-place), it was less
-	// flexible.
-
-	//	if (dialog.DoModal(m_hWnd) == IDOK)
-	//	{
-	//		m_screenshotOptions = dialog.GetOptions();
-	//	}
-
+  OnConfigure(_T("Ok"));
 	return 0;
+}
+
+bool CMainWindow::OnConfigure(const tstd::tstring& OKbuttonText)
+{
+	CDestinationDlg dialog(m_screenshotOptions, OKbuttonText);
+	return (TRUE == dialog.DoModal());
 }
 
 LRESULT CMainWindow::OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)

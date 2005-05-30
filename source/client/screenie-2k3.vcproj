@@ -218,6 +218,9 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc">
 			<File
+				RelativePath=".\source\animbitmap.h">
+			</File>
+			<File
 				RelativePath=".\source\autogdi.hpp">
 			</File>
 			<File
@@ -314,6 +317,12 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest">
 			<File
 				RelativePath=".\source\resources\header.bmp">
+			</File>
+			<File
+				RelativePath=".\source\gipsysoft\marqueehorizontal.bmp">
+			</File>
+			<File
+				RelativePath=".\source\gipsysoft\marqueevertical.bmp">
 			</File>
 			<File
 				RelativePath=".\source\resources\screenie.ico">
