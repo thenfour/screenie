@@ -168,3 +168,18 @@ bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const
 
 	return false;
 }
+
+void DumpBitmap(Gdiplus::Bitmap& image, int x, int y)
+{
+  // draw that damn bitmap to the screen.
+  HDC dc = ::GetDC(0);
+  HDC dcc = CreateCompatibleDC(dc);
+  HBITMAP himg;
+  image.GetHBITMAP(0, &himg);
+  HBITMAP hOld = (HBITMAP)SelectObject(dcc, himg);
+  StretchBlt(dc, x, y, image.GetWidth()/2, image.GetHeight()/2, dcc, 0, 0, image.GetWidth(), image.GetHeight(), SRCCOPY);
+  SelectObject(dcc, hOld);
+  DeleteDC(dcc);
+  DeleteObject(himg);
+  ::ReleaseDC(0,dc);
+}

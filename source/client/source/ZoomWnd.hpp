@@ -8,6 +8,7 @@
 #define SCREENIE_ZOOMWND_HPP
 
 #include "animbitmap.h"
+#include "image.hpp"
 
 class CZoomWindow : public CWindowImpl<CZoomWindow>
 {
@@ -17,16 +18,7 @@ public:
   CZoomWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap) :
     m_bitmap(bitmap)  
 	{
-    m_dibOriginal.SetSize(m_bitmap->GetWidth(), m_bitmap->GetHeight());
-
-    HDC dc = ::GetDC(0);
-    HBITMAP hbm = (HBITMAP)SelectObject(dc, bitmap);
-    m_dibOriginal.BlitFrom(dc, 0, 0, m_bitmap->GetWidth(), m_bitmap->GetHeight());
-    SelectObject(dc, hbm);
-    ::ReleaseDC(0, dc);
-
-    m_ImageOrigin.x = 0;
-		m_ImageOrigin.y = 0;
+    CopyImage(m_dibOriginal, *bitmap);
 	}
 
 	~CZoomWindow() { }

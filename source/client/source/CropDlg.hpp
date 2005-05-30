@@ -10,6 +10,7 @@
 #include "CroppingWnd.hpp"
 #include "ZoomWnd.hpp"
 #include "destinationDlg.hpp"
+#include "image.hpp"
 
 #include "ScreenshotOptions.hpp"
 
@@ -26,7 +27,8 @@ public:
     m_croppingWnd(bitmap),
     m_zoomWnd(bitmap),
     m_options(options)
-  { }
+  {
+  }
 	~CCropDlg() { }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)

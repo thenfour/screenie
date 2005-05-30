@@ -8,6 +8,7 @@
 #include "resource.h"
 
 #include <algorithm>
+#include "image.hpp"
 
 #include "CroppingWnd.hpp"
 
@@ -17,13 +18,7 @@ CCroppingWindow::CCroppingWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap) :
   m_selecting(false),
   m_hasSelection(false)
 {
-  m_dibOriginal.SetSize(m_bitmap->GetWidth(), m_bitmap->GetHeight());
-
-  HDC dc = ::GetDC(0);
-  HBITMAP hbm = (HBITMAP)SelectObject(dc, bitmap);
-  m_dibOriginal.BlitFrom(dc, 0, 0, m_bitmap->GetWidth(), m_bitmap->GetHeight());
-  SelectObject(dc, hbm);
-  ::ReleaseDC(0, dc);
+  CopyImage(m_dibOriginal, *bitmap);
 }
 
 CCroppingWindow::~CCroppingWindow()
@@ -158,7 +153,8 @@ LRESULT CCroppingWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& ha
   }
   m_dibStretched.Fill(0);
   m_dibOriginal.StretchBlit(m_dibStretched, g_CropBorder, g_CropBorder, clientRect.right - (g_CropBorder*2), clientRect.bottom - (g_CropBorder*2));
-	return 0;
+
+  return 0;
 }
 
 LRESULT CCroppingWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)

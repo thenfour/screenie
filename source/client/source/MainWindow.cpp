@@ -41,12 +41,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 	if (!m_screenshotOptions.GetNumDestinations())
 		return FALSE;
 
-	if (m_screenshotOptions.ConfirmOptions())
-	{
-		BOOL handledDummy = FALSE;
-    OnConfigure(_T("Next..."));
-	}
-
 	RECT windowRect = { 0 };
 
 	if (altDown)
@@ -57,15 +51,21 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 	HBITMAP screenshotBitmap = NULL;
 	if (GetScreenshotBitmap(screenshotBitmap, windowRect, m_screenshotOptions.IncludeCursor()))
 	{
-		m_processing = true;
+		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
+
+	  if (m_screenshotOptions.ConfirmOptions())
+	  {
+		  BOOL handledDummy = FALSE;
+      OnConfigure(_T("Next..."));
+	  }
+
+    m_processing = true;
 
 		if (m_statusDialog.IsWindow())
 		{
 			if (m_screenshotOptions.ShowStatus())
 				m_statusDialog.ShowWindow(SW_SHOW);
 		}
-
-		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
 
 		if (m_screenshotOptions.ShowCropWindow())
 		{
