@@ -73,7 +73,7 @@ BEGIN
     LTEXT           "Screenie v1.0.0",IDC_STATIC,60,19,108,12
     LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",
                     IDC_STATIC,60,30,108,18
-    LTEXT           "http://www.screenie.com/",IDC_HYPERLINK,18,54,156,12
+    LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,18,54,156,12
 END
 
 IDD_MAINDLG DIALOGEX 0, 0, 210, 222
