@@ -43,13 +43,13 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 
 	RECT windowRect = { 0 };
 
-	if (altDown)
-		::GetWindowRect(::GetForegroundWindow(), &windowRect);
-	else
-		::GetWindowRect(::GetDesktopWindow(), &windowRect);
+	//if (altDown)
+	//	::GetWindowRect(::GetForegroundWindow(), &windowRect);
+	//else
+	//	::GetWindowRect(::GetDesktopWindow(), &windowRect);
 
 	HBITMAP screenshotBitmap = NULL;
-	if (GetScreenshotBitmap(screenshotBitmap, windowRect, m_screenshotOptions.IncludeCursor()))
+	if (GetScreenshotBitmap(screenshotBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 	{
 		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
 

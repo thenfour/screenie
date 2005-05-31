@@ -60,55 +60,161 @@ tstd::tstring GetImageCodecExtension(Gdiplus::ImageCodecInfo* codecInfo, bool do
 	return tstd::tstring();
 }
 
-bool GetScreenshotBitmap(HBITMAP& bitmap, const RECT& rectToCopy, BOOL drawCursor)
+struct GetVirtualScreenBitmap_Info
+{
+  std::vector<std::pair<tstd::tstring, CRect> > monitors;
+  HDC memoryDC;
+  // primary monitor's offset from upper-left virtual screen.  Primary monitor is always (0,0) even if it
+  // is in the middle of the virtual screen.  so to eliminate negative coords, use this shift.
+  int orgx;
+  int orgy;// LOL
+  int vwidth;
+  int vheight;
+};
+
+
+BOOL CALLBACK GetDesktopWindowCaptureAsBitmap_MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT rcMon, LPARAM dwData)
+{
+  GetVirtualScreenBitmap_Info& info(*((GetVirtualScreenBitmap_Info*)dwData));
+  MONITORINFOEX mi;
+  mi.cbSize = sizeof(mi);
+  GetMonitorInfo(hMonitor, &mi);
+  info.monitors.push_back(std::pair<tstd::tstring, CRect>(mi.szDevice, *rcMon));
+  return TRUE;
+}
+
+
+bool GetDesktopWindowCaptureAsBitmap(HBITMAP& bitmap)
+{
+  GetVirtualScreenBitmap_Info info;
+
+  HDC screenDC = ::GetDC(0);
+  info.memoryDC = ::CreateCompatibleDC(screenDC);
+
+  // create a bitmap large enough for the virtual screen
+  info.vwidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+  info.vheight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+  bitmap = CreateCompatibleBitmap(screenDC, info.vwidth, info.vheight);
+
+  HBITMAP hOld = (HBITMAP)SelectObject(info.memoryDC, bitmap);
+
+  // fill with desktop background color
+  RECT rc;
+  SetRect(&rc, 0, 0, info.vwidth, info.vheight);
+  FillRect(info.memoryDC, &rc, (HBRUSH)(COLOR_DESKTOP+1));
+
+  info.orgx = GetSystemMetrics(SM_XVIRTUALSCREEN);
+  info.orgy = GetSystemMetrics(SM_YVIRTUALSCREEN);
+
+  // get monitor info
+  EnumDisplayMonitors(NULL, NULL, GetDesktopWindowCaptureAsBitmap_MonitorEnumProc, (LPARAM)&info);  
+
+  int i = 0;
+  for(std::vector<std::pair<tstd::tstring, CRect> >::iterator it = info.monitors.begin(); it != info.monitors.end(); ++ it)
+  {
+    HDC dcSource = CreateDC(0, it->first.c_str(), 0, 0);
+    CRect& rcScreen = it->second;
+
+    BitBlt(info.memoryDC,
+      rcScreen.left - info.orgx,
+      rcScreen.top - info.orgy,
+      rcScreen.Width(),
+      rcScreen.Height(),
+      dcSource,
+      0, 0, SRCCOPY);
+
+    DeleteDC(dcSource);
+    i++;
+  }
+
+  SelectObject(info.memoryDC, hOld);
+
+  DeleteDC(info.memoryDC);
+  ReleaseDC(0, screenDC);
+
+  return true;
+}
+
+bool GetScreenshotBitmap(HBITMAP& bitmap, BOOL AltPressed, BOOL drawCursor)
 {
 	bool success = false;
 
-	HDC screenDC = ::GetDC(NULL);
-	HDC memoryDC = ::CreateCompatibleDC(screenDC);
+  // get this stuff immediately
+  POINT cursorPos = { 0 };
+  ::GetCursorPos(&cursorPos);
+  // adjust cursor pos so it's always positive
+  cursorPos.x -= GetSystemMetrics(SM_XVIRTUALSCREEN);
+  cursorPos.y -= GetSystemMetrics(SM_YVIRTUALSCREEN);
 
-	if (memoryDC != NULL)
-	{
-		bitmap = ::CreateCompatibleBitmap(screenDC,
-			rectToCopy.right - rectToCopy.left,
-			rectToCopy.bottom - rectToCopy.top);
+  HWND hWnd = GetForegroundWindow();
 
-		if (bitmap != NULL)
-		{
-			HGDIOBJ oldObj = ::SelectObject(memoryDC, reinterpret_cast<HGDIOBJ>(bitmap));
+  GetDesktopWindowCaptureAsBitmap(bitmap);
 
-			::BitBlt(memoryDC, 0, 0,
-				rectToCopy.right - rectToCopy.left,
-				rectToCopy.bottom - rectToCopy.top,
-				screenDC, rectToCopy.left, rectToCopy.top, SRCCOPY);
+  if(AltPressed)
+  {
+    // crop it down to the window.
+    HBITMAP full = bitmap;
+    RECT rc;
+    GetWindowRect(hWnd, &rc);
+    rc.left -= GetSystemMetrics(SM_XVIRTUALSCREEN);
+    rc.right -= GetSystemMetrics(SM_XVIRTUALSCREEN);
+    rc.bottom -= GetSystemMetrics(SM_YVIRTUALSCREEN);
+    rc.top -= GetSystemMetrics(SM_YVIRTUALSCREEN);
 
-			if (drawCursor)
-			{
-				POINT cursorPos = { 0 };
-				::GetCursorPos(&cursorPos);
+    HDC screenDC = ::GetDC(0);
+    HDC sourceDC = ::CreateCompatibleDC(screenDC);
+    HBITMAP sourceOld = (HBITMAP)SelectObject(sourceDC, full);
+    HDC destDC = ::CreateCompatibleDC(screenDC);
+    bitmap = CreateCompatibleBitmap(screenDC, rc.right - rc.left, rc.bottom - rc.top);
+    HBITMAP destOld = (HBITMAP)SelectObject(destDC, bitmap);
 
-				// let's see if the cursor would even be displayed in the
-				// rectangle they gave us
-				if (PtInRect(&rectToCopy, cursorPos))
-				{
-					CURSORINFO cursorInfo = { 0 };
+    // do the copy.
+    BitBlt(destDC, 0, 0, rc.right - rc.left, rc.bottom - rc.top, sourceDC, rc.left, rc.top, SRCCOPY);
 
-					if (::GetCursorInfo(&cursorInfo))
-						::DrawIcon(memoryDC, cursorPos.x, cursorPos.y, cursorInfo.hCursor);
-				}
-			}
+    SelectObject(destDC, destOld);
+    DeleteDC(destDC);
+    SelectObject(sourceDC, sourceOld);
+    DeleteDC(sourceDC);
 
-			// we're all done! tell the troops they can go home.
-			success = true;
+    ReleaseDC(0, screenDC);
 
-			// select the previous object, thereby de-selecting our bitmap
-			::SelectObject(memoryDC, oldObj);
-		}
+    DeleteObject(full);
 
-		::DeleteDC(memoryDC);
-	}
+    // adjust mouse cursor position.
+    cursorPos.x -= rc.left;
+    cursorPos.y -= rc.top;
+  }
 
-	::ReleaseDC(NULL, screenDC);
+  if (drawCursor)
+  {
+    BITMAP bm = {0};
+    GetObject(bitmap, sizeof(bm), &bm);
+
+    // let's see if the cursor would even be displayed in the
+    // rectangle they gave us
+    if(cursorPos.x >= 0 && cursorPos.y >= 0 && cursorPos.y < bm.bmHeight && cursorPos.x < bm.bmWidth)
+    {
+	    HDC screenDC = ::GetDC(0);
+	    HDC memoryDC = ::CreateCompatibleDC(screenDC);
+      ReleaseDC(0, screenDC);
+      HBITMAP hOld = (HBITMAP)SelectObject(memoryDC, bitmap);
+
+      CURSORINFO cursorInfo = { 0 };
+      cursorInfo.cbSize = sizeof(cursorInfo);
+
+      if (::GetCursorInfo(&cursorInfo))
+      {
+        ICONINFO ii = {0};
+        GetIconInfo(cursorInfo.hCursor, &ii);
+        ::DrawIcon(memoryDC, cursorPos.x - ii.xHotspot, cursorPos.y - ii.yHotspot, cursorInfo.hCursor);
+      }
+
+      SelectObject(memoryDC, hOld);
+      DeleteDC(memoryDC);
+    }
+  }
+
+	success = true;
 
 	return success;
 }
@@ -181,5 +287,20 @@ void DumpBitmap(Gdiplus::Bitmap& image, int x, int y)
   SelectObject(dcc, hOld);
   DeleteDC(dcc);
   DeleteObject(himg);
+  ::ReleaseDC(0,dc);
+}
+
+void DumpBitmap(HBITMAP himg, int x, int y)
+{
+  // draw that damn bitmap to the screen.
+  BITMAP bi;
+  GetObject(himg, sizeof(bi), &bi);
+
+  HDC dc = ::GetDC(0);
+  HDC dcc = CreateCompatibleDC(dc);
+  HBITMAP hOld = (HBITMAP)SelectObject(dcc, himg);
+  StretchBlt(dc, x, y, bi.bmWidth/2, bi.bmHeight/2, dcc, 0, 0, bi.bmWidth, bi.bmHeight, SRCCOPY);
+  SelectObject(dcc, hOld);
+  DeleteDC(dcc);
   ::ReleaseDC(0,dc);
 }
