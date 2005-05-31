@@ -92,12 +92,14 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	CenterWindow();
 
 	// set icons
-	HICON hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+  if(m_hIcon) DeleteObject(m_hIcon);
+  if(m_hIconSmall) DeleteObject(m_hIconSmall);
+	m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
-	SetIcon(hIcon, TRUE);
-	HICON hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+	SetIcon(m_hIcon, TRUE);
+	m_hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
-	SetIcon(hIconSmall, FALSE);
+	SetIcon(m_hIconSmall, FALSE);
 
 	DlgResize_Init(true, true, WS_CLIPCHILDREN);
 

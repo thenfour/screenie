@@ -20,12 +20,16 @@ public:
 	CDestinationDlg(ScreenshotOptions& options, const tstd::tstring& OKbuttonText) :
     m_optionsCopy(options),
     m_optionsFinal(options),
-    m_OKbuttonText(OKbuttonText)
+    m_OKbuttonText(OKbuttonText),
+    m_hIconSmall(0),
+    m_hIcon(0)
 	{
 	}
 
 	~CDestinationDlg()
 	{
+    if(m_hIcon) DeleteObject(m_hIcon);
+    if(m_hIconSmall) DeleteObject(m_hIconSmall);
 	}
 
 	//ScreenshotOptions GetOptions() const
@@ -98,6 +102,9 @@ private:
 	ScreenshotOptions m_optionsCopy;
 	ScreenshotOptions& m_optionsFinal;// this is the external ref that we copy to when the user hits OK
   tstd::tstring m_OKbuttonText;
+
+  HICON m_hIcon;
+  HICON m_hIconSmall;
 };
 
 #endif

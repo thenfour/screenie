@@ -47,7 +47,19 @@ void CStatusDlg::PrintMessage(const MessageType type, const tstd::tstring& desti
 LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CenterWindow();
-	DlgResize_Init(true, true, WS_CLIPCHILDREN);
+
+	// set icons
+  if(m_hIcon) DeleteObject(m_hIcon);
+  if(m_hIconSmall) DeleteObject(m_hIconSmall);
+	m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+		IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
+	SetIcon(m_hIcon, TRUE);
+	m_hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+		IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+	SetIcon(m_hIconSmall, FALSE);
+
+  
+  DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
 	// create and populate image list for message icons
 	if (m_imageList.Create(16, 16, ILC_COLOR32, 2, 0))

@@ -25,11 +25,17 @@ public:
     m_bitmap(bitmap),
     m_didCropping(false),
     m_croppingWnd(bitmap),
-    m_zoomWnd(bitmap),
-    m_options(options)
+    m_zoomWnd(bitmap.get()),
+    m_options(options),
+    m_hIconSmall(0),
+    m_hIcon(0)
   {
   }
-	~CCropDlg() { }
+	~CCropDlg()
+  {
+    if(m_hIcon) DeleteObject(m_hIcon);
+    if(m_hIconSmall) DeleteObject(m_hIconSmall);
+  }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
 	{
@@ -71,7 +77,17 @@ public:
 
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
-		DlgResize_Init(true, true, WS_CLIPCHILDREN);
+	  // set icons
+    if(m_hIcon) DeleteObject(m_hIcon);
+    if(m_hIconSmall) DeleteObject(m_hIconSmall);
+	  m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+		  IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
+	  SetIcon(m_hIcon, TRUE);
+	  m_hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+		  IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+	  SetIcon(m_hIconSmall, FALSE);
+
+    DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
     // Load window placement settings.
     if(m_options.HaveCroppingPlacement())
@@ -82,6 +98,7 @@ public:
 		m_croppingWnd.SubclassWindow(GetDlgItem(IDC_IMAGE));
     BOOL temp;
     m_croppingWnd.OnSize(0,0,0,temp);
+    m_croppingWnd.InvalidateRect(0);
 		m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.OnSize(0,0,0,temp);
 
@@ -109,7 +126,10 @@ public:
 			SetWindowText(LibCC::Format(TEXT("Crop Screenshot: (%, %)")).ul(pos.x).ul(pos.y).CStr());
 
 			if (m_croppingWnd.IsSelecting())
+      {
 				m_croppingWnd.UpdateSelection(cursorPos.x, cursorPos.y);
+        SyncZoomWindowSelection();
+      }
 
 			m_zoomWnd.UpdateBitmapCursorPos(pos);
 		}
@@ -120,6 +140,19 @@ public:
 
 		return 0;
 	}
+
+  void SyncZoomWindowSelection()
+  {
+    RECT rc;
+    if(m_croppingWnd.GetSelection(rc))
+    {
+      m_zoomWnd.UpdateBitmapSelectionBox(rc);
+    }
+    else
+    {
+      m_zoomWnd.RemoveSelectionBox();
+    }
+  }
 
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
@@ -140,6 +173,7 @@ public:
 		{
       SetCursor(LoadCursor(0, IDC_CROSS));
 			m_croppingWnd.BeginSelection(cursorPos.x, cursorPos.y);
+      SyncZoomWindowSelection();
 		}
 
 		return 0;
@@ -158,6 +192,7 @@ public:
 		{
       SetCursor(LoadCursor(0, IDC_CROSS));
 			m_croppingWnd.EndSelection(cursorPos.x, cursorPos.y);
+      SyncZoomWindowSelection();
 		}
 
 		return 0;
@@ -210,6 +245,9 @@ private:
 	CZoomWindow m_zoomWnd;
 	CCroppingWindow m_croppingWnd;
   ScreenshotOptions& m_options;
+
+  HICON m_hIcon;
+  HICON m_hIconSmall;
 };
 
 #endif

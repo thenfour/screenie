@@ -33,8 +33,15 @@ private:
 public:
 	enum { IDD = IDD_STATUS };
 
-  CStatusDlg(ScreenshotOptions& options) : m_options(options) { }
-	virtual ~CStatusDlg() { }
+  CStatusDlg(ScreenshotOptions& options) :
+    m_options(options),
+    m_hIconSmall(0),
+    m_hIcon(0)
+  {
+  }
+	virtual ~CStatusDlg()
+  {
+  }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual BOOL OnIdle();
@@ -77,6 +84,9 @@ public:
 	LRESULT OnRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
 	LRESULT OnCopy(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+
+  HICON m_hIcon;
+  HICON m_hIconSmall;
 };
 
 #endif

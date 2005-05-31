@@ -61,12 +61,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 
     m_processing = true;
 
-		if (m_statusDialog.IsWindow())
-		{
-			if (m_screenshotOptions.ShowStatus())
-				m_statusDialog.ShowWindow(SW_SHOW);
-		}
-
 		if (m_screenshotOptions.ShowCropWindow())
 		{
 			// show cropping dialog
@@ -84,6 +78,17 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 					screenshot = croppedScreenshot;
 				}
 			}
+		}
+
+		if (m_statusDialog.IsWindow())
+		{
+			if (m_screenshotOptions.ShowStatus())
+      {
+				m_statusDialog.ShowWindow(SW_SHOW);
+        // for some reason it doesnt like to redraw when it's shown... even non-client area.
+        // so, a little brute force and we're golden... like the shower.
+        m_statusDialog.SetWindowPos(HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+      }
 		}
 
 		for (size_t i = 0; i < m_screenshotOptions.GetNumDestinations(); ++i)

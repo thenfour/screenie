@@ -50,4 +50,26 @@ void CopyImage(AnimBitmap<T>& dest, Gdiplus::Bitmap& src)
   DeleteDC(dcc);
 }
 
+template<int T>
+void CopyImage(AnimBitmap<T>& dest, Gdiplus::Bitmap& src, int zoomFactor)
+{
+  dest.SetSize(src.GetWidth() * zoomFactor, src.GetHeight() * zoomFactor);
+
+  HDC dc = ::GetDC(0);
+  HDC dcc = ::CreateCompatibleDC(dc);
+  ::ReleaseDC(0, dc);
+
+  HBITMAP hScreenshot;
+  src.GetHBITMAP(0, &hScreenshot);
+  HBITMAP hbm = (HBITMAP)SelectObject(dcc, hScreenshot);
+
+  dest.StretchBlitFrom(
+    0, 0, src.GetWidth() * zoomFactor, src.GetHeight() * zoomFactor,
+    dcc, 0, 0, src.GetWidth(), src.GetHeight(), COLORONCOLOR);
+
+  SelectObject(dcc, hbm);
+  DeleteObject(hScreenshot);
+  DeleteDC(dcc);
+}
+
 #endif

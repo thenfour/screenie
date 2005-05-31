@@ -284,9 +284,9 @@ public:
     return r != 0;
   }
 
-  bool StretchBlit(AnimBitmap& dest, long x, long y, long w, long h)
+  bool StretchBlit(AnimBitmap& dest, long x, long y, long w, long h, int mode = HALFTONE)
   {
-    SetStretchBltMode(dest.m_offscreen, HALFTONE);
+    SetStretchBltMode(dest.m_offscreen, mode);
     int r = StretchBlt(dest.m_offscreen, x, y, w, h, m_offscreen, 0, 0, m_x, m_y, SRCCOPY);
     return r != 0;
   }
@@ -329,6 +329,13 @@ public:
     return r != 0;
   }
 
+  bool StretchBlitFrom(int destx, int desty, int destw, int desth, HDC src, int srcx, int srcy, int srcw, int srch, int mode = HALFTONE)
+  {
+    SetStretchBltMode(m_offscreen, mode);
+    int r = StretchBlt(m_offscreen, destx, desty, destw, desth, src, srcx, srcy, srcw, srch, SRCCOPY);
+    return r != 0;
+  }
+
   bool _DrawText(const char* s, long x, long y)
   {
     RECT rc;
@@ -345,7 +352,7 @@ public:
     return m_pbuf;
   }
 
-//private:
+private:
   long m_x;
   long m_y;
   HDC m_offscreen;
