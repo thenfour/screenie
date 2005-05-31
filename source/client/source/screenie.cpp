@@ -50,7 +50,8 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	int retval = 0;
 
-	if (g_mainWindow.Create(NULL, CWindow::rcDefault, TEXT("ScreenieWnd"), WS_OVERLAPPEDWINDOW))
+	RECT display = { 0 };
+	if (g_mainWindow.Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))
 	{
 		NOTIFYICONDATA icondata = { 0 };
 

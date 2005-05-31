@@ -108,7 +108,7 @@ LRESULT CMainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hand
 {
 	LoadOptionsFromRegistry(m_screenshotOptions, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
 
-	if (m_statusDialog.Create(m_hWnd))
+	if (m_statusDialog.Create(m_hWnd, NULL))
 		m_statusDialog.ShowWindow(SW_HIDE);
 
 	m_processing = false;

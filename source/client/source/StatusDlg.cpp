@@ -49,12 +49,6 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	CenterWindow();
 	DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
-  // Load window placement settings.
-  if(m_options.HaveStatusPlacement())
-  {
-    SetWindowPlacement(&m_options.GetStatusPlacement());
-  }
-
 	// create and populate image list for message icons
 	if (m_imageList.Create(16, 16, ILC_COLOR32, 2, 0))
 	{
@@ -78,6 +72,24 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	}
 
 	return TRUE;
+}
+
+LRESULT CStatusDlg::OnShowWindow(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+	static bool firstShow = true;
+
+	// wParam == TRUE if the window is being shown.
+	if (firstShow && wParam)
+	{
+		if(m_options.HaveStatusPlacement())
+		{
+			SetWindowPlacement(&m_options.GetStatusPlacement());
+		}
+
+		firstShow = false;
+	}
+
+	return 0;
 }
 
 LRESULT CStatusDlg::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
