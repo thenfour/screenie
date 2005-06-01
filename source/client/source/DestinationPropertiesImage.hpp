@@ -26,17 +26,13 @@ public:
 	void ShowSettings();
 
 	void EnableSizingControls(BOOL enable);
-	void EnableThumbnailControls(BOOL enable);
-	void EnableFilenameFormatControls(BOOL enable);
 
 	BEGIN_MSG_MAP(CDestinationPropertiesImage)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-		COMMAND_HANDLER(IDC_THUMB_FILEFMT, EN_CHANGE, OnFormatChanged)
 		COMMAND_CODE_HANDLER(BN_CLICKED, OnCheckboxChecked)
 	END_MSG_MAP()
 
 	LRESULT OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
-	LRESULT OnFormatChanged(WORD /*wNotifyCode*/, WORD /*wID*/, HWND hWndCtl, BOOL& /*bHandled*/);
 	LRESULT OnCheckboxChecked(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/);
 
 	//

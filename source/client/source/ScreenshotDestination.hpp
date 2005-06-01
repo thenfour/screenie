@@ -62,12 +62,6 @@ struct ScreenshotDestination
 			scaleType = rightHand.scaleType;
 			scalePercent = rightHand.scalePercent;
 			maxDimension = rightHand.maxDimension;
-			createThumbnail = rightHand.createThumbnail;
-			useFilenameFormat = rightHand.useFilenameFormat;
-			filenameFormat = rightHand.filenameFormat;
-			thumbScaleType = rightHand.thumbScaleType;
-			thumbScalePercent = rightHand.thumbScalePercent;
-			thumbMaxDimension = rightHand.thumbMaxDimension;
 
 			return (*this);
 		}
@@ -75,13 +69,6 @@ struct ScreenshotDestination
 		ScaleType scaleType;
 		int scalePercent;
 		int maxDimension;
-
-		bool createThumbnail;
-		bool useFilenameFormat;
-		tstd::tstring filenameFormat;
-		ScaleType thumbScaleType;
-		int thumbScalePercent;
-		int thumbMaxDimension;
 	};
 
 	struct Ftp

@@ -43,12 +43,6 @@ const TCHAR* KEY_DEST_FTP_COPYURL = TEXT("FTP Copy URL");
 const TCHAR* KEY_DEST_IMAGE_SCALETYPE = TEXT("Scale Type");
 const TCHAR* KEY_DEST_IMAGE_SCALEPERCENT = TEXT("Scale Percent");
 const TCHAR* KEY_DEST_IMAGE_MAXDIMENSION = TEXT("Maximum Width/Height");
-const TCHAR* KEY_DEST_IMAGE_CREATETHUMBNAIL = TEXT("Create Thumbnail");
-const TCHAR* KEY_DEST_IMAGE_THUMBSCALETYPE = TEXT("Thumbnail Scale Type");
-const TCHAR* KEY_DEST_IMAGE_THUMBSCALEPERCENT = TEXT("Thumbnail Scale Percent");
-const TCHAR* KEY_DEST_IMAGE_THUMBMAXDIMENSION = TEXT("Thumbnail Max Width/Height");
-const TCHAR* KEY_DEST_IMAGE_USEFILENAMEFORMAT = TEXT("Use Thumbnail Filename Format");
-const TCHAR* KEY_DEST_IMAGE_THUMBFILENAMEFORMAT = TEXT("Thumbnail Filename Format");
 
 bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKey& key)
 {
@@ -85,23 +79,6 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKe
 
 	key.GetDWORD(KEY_DEST_IMAGE_MAXDIMENSION, &temp);
 	destination.image.maxDimension = static_cast<int>(temp);
-
-	key.GetDWORD(KEY_DEST_IMAGE_CREATETHUMBNAIL, &temp);
-	destination.image.createThumbnail = (temp != 0);
-
-	key.GetDWORD(KEY_DEST_IMAGE_THUMBSCALETYPE, &temp);
-	destination.image.thumbScaleType = static_cast<ScreenshotDestination::ScaleType>(temp);
-
-	key.GetDWORD(KEY_DEST_IMAGE_THUMBSCALEPERCENT, &temp);
-	destination.image.thumbScalePercent = static_cast<int>(temp);
-
-	key.GetDWORD(KEY_DEST_IMAGE_THUMBMAXDIMENSION, &temp);
-	destination.image.thumbMaxDimension = static_cast<int>(temp);
-
-	key.GetDWORD(KEY_DEST_IMAGE_USEFILENAMEFORMAT, &temp);
-	destination.image.useFilenameFormat = (temp != 0);
-
-	key.GetString(KEY_DEST_IMAGE_THUMBFILENAMEFORMAT, destination.image.filenameFormat);
 
 	////////////////////////////////////////
 	// ftp settings
@@ -205,12 +182,6 @@ bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegis
 	key.SetDWORD(KEY_DEST_IMAGE_SCALETYPE, destination.image.scaleType);
 	key.SetDWORD(KEY_DEST_IMAGE_SCALEPERCENT, destination.image.scalePercent);
 	key.SetDWORD(KEY_DEST_IMAGE_MAXDIMENSION, destination.image.maxDimension);
-	key.SetDWORD(KEY_DEST_IMAGE_CREATETHUMBNAIL, destination.image.createThumbnail);
-	key.SetDWORD(KEY_DEST_IMAGE_THUMBSCALETYPE, destination.image.thumbScaleType);
-	key.SetDWORD(KEY_DEST_IMAGE_THUMBSCALEPERCENT, destination.image.thumbScalePercent);
-	key.SetDWORD(KEY_DEST_IMAGE_THUMBMAXDIMENSION, destination.image.thumbMaxDimension);
-	key.SetDWORD(KEY_DEST_IMAGE_USEFILENAMEFORMAT, destination.image.useFilenameFormat);
-	key.SetString(KEY_DEST_IMAGE_THUMBFILENAMEFORMAT, destination.image.filenameFormat);
 
 	////////////////////////////////////////
 	// ftp settings

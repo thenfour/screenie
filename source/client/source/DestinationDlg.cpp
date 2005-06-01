@@ -177,15 +177,9 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.general.imageFormat = TEXT("image/jpeg");
 	destination.general.filenameFormat = TEXT("%Y%m%d-%h%i%s.jpg");
 
-	destination.image.createThumbnail = false;
-	destination.image.useFilenameFormat = false;
-	destination.image.filenameFormat = TEXT("%Y%m%d-%h%i%s-thumb");
 	destination.image.scaleType = ScreenshotDestination::SCALE_LIMITDIMENSIONS;
 	destination.image.scalePercent = 100;
 	destination.image.maxDimension = 320;
-	destination.image.thumbScaleType = ScreenshotDestination::SCALE_LIMITDIMENSIONS;
-	destination.image.thumbMaxDimension = 150;
-	destination.image.thumbScalePercent = 15;
 
 	destination.ftp.hostname = TEXT("ftp.mysite.com");
 	destination.ftp.port = 21;

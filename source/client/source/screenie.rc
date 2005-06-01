@@ -182,7 +182,7 @@ END
 
 IDD_DESTPROP_RESIZING DIALOGEX 0, 0, 235, 262
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
-CAPTION "Resizing and Thumbnailing"
+CAPTION "Resizing"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Resizing Options",IDC_STATIC,7,7,221,77
@@ -195,27 +195,6 @@ BEGIN
                     BS_AUTORADIOBUTTON,36,60,90,12
     EDITTEXT        IDC_RESIZE_LIMIT_VALUE,132,60,54,12,ES_AUTOHSCROLL
     LTEXT           "pixels",IDC_RESIZE_LIMIT_LABEL,192,60,30,12
-    GROUPBOX        "Thumbnail",IDC_THUMB_GROUP,6,90,222,144
-    CONTROL         "Generate thumbnail for screenshot",IDC_THUMB_GENERATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,108,198,12
-    CONTROL         "Use the following format for the filename:",
-                    IDC_THUMB_FILEFMT_USE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,18,120,198,12
-    LTEXT           "Format:",IDC_THUMB_FILEFMT_LABEL,36,138,30,12
-    EDITTEXT        IDC_THUMB_FILEFMT,72,138,144,12,ES_AUTOHSCROLL
-    LTEXT           "Preview:",IDC_THUMB_FILEFMT_PREVIEW_LABEL,36,156,30,12
-    EDITTEXT        IDC_THUMB_FILEFMT_PREVIEW,72,156,144,12,ES_AUTOHSCROLL | 
-                    ES_READONLY
-    LTEXT           "Sizing Options:",IDC_THUMB_SIZINGOPTIONS,18,174,48,12
-    CONTROL         "Scale (in percent):",IDC_THUMB_SIZING_SCALE,"Button",
-                    BS_AUTORADIOBUTTON,36,192,72,12
-    EDITTEXT        IDC_THUMB_SIZING_SCALE_VALUE,132,192,54,12,
-                    ES_AUTOHSCROLL
-    CONTROL         "Limit height or width to:",IDC_THUMB_SIZING_LIMIT,
-                    "Button",BS_AUTORADIOBUTTON,36,211,90,12
-    EDITTEXT        IDC_THUMB_SIZING_LIMIT_VALUE,132,211,54,12,
-                    ES_AUTOHSCROLL
-    LTEXT           "pixels",IDC_THUMB_PIXELS,192,211,30,12
 END
 
 IDD_DESTPROP_EMAIL DIALOGEX 0, 0, 235, 262

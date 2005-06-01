@@ -20,20 +20,6 @@
 #include "path.hpp"
 #include "utility.hpp"
 
-bool GetScreenshotThumbnail(const ScreenshotDestination::Image& options,
-	util::shared_ptr<Gdiplus::Bitmap> screenshot, util::shared_ptr<Gdiplus::Bitmap>& thumbnail)
-{
-	if (!screenshot)
-		return false;
-
-	if (options.thumbScaleType == ScreenshotDestination::SCALE_SCALETOPERCENT)
-		return ScaleBitmap(thumbnail, *screenshot, options.thumbScalePercent / 100.0f);
-	else if (options.thumbScaleType == ScreenshotDestination::SCALE_LIMITDIMENSIONS)
-		return ResizeBitmap(thumbnail, *screenshot, options.thumbMaxDimension);
-
-	return false;
-}
-
 bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
 	util::shared_ptr<Gdiplus::Bitmap> screenshot, util::shared_ptr<Gdiplus::Bitmap>& transformed)
 {
@@ -149,55 +135,6 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 		}
 	}
 
-	if (destination.image.createThumbnail)
-	{
-		tstd::tstring extension = Path::Split(filename).extension;
-		tstd::tstring thumbFilename;
-
-		if (destination.image.useFilenameFormat)
-		{
-			thumbFilename = FormatFilename(systemTime, destination.image.filenameFormat);
-			thumbFilename = LibCC::Format(TEXT("%.%")).s(Path::Split(thumbFilename).filename).s(extension).Str();
-		}
-		else
-		{
-			thumbFilename = LibCC::Format(TEXT("%-thumb.%")).s(Path::Split(filename).filename).s(extension).Str();
-		}
-
-		util::shared_ptr<Gdiplus::Bitmap> thumbnailImage;
-		if (GetScreenshotThumbnail(destination.image, image, thumbnailImage))
-		{
-			temporaryFilename = GetUniqueTemporaryFilename();
-			if (SaveImageToFile(*thumbnailImage, destination.general.imageFormat, temporaryFilename))
-			{
-				if (!::FtpPutFile(ftp.handle, temporaryFilename.c_str(), thumbFilename.c_str(),
-					FTP_TRANSFER_TYPE_BINARY, 0))
-				{
-					status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-						TEXT("FTP: Can't upload thumbnail to server!"));
-				}
-				else
-				{
-					status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
-						TEXT("FTP: Uploaded thumbnail."));
-					status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
-						LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(thumbFilename).Str());
-
-				}
-			}
-			else
-			{
-				status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-					TEXT("FTP: Couldn't save thumbnail image!"));
-			}
-		}
-		else
-		{
-			status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-				TEXT("FTP: couldn't get thumbnail image!"));
-		}
-	}
-
 	return true;
 }
 
@@ -245,45 +182,6 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 			TEXT("File: couldn't save image to disk"));
 
 		return false;
-	}
-
-	if (destination.image.createThumbnail)
-	{
-		tstd::tstring thumbPath;
-		tstd::tstring extension = Path::Split(filename).extension;
-
-		if (destination.image.useFilenameFormat)
-		{
-			tstd::tstring thumbFilename = FormatFilename(systemTime, destination.image.filenameFormat);
-			thumbFilename = LibCC::Format(TEXT("%.%")).s(Path::Split(thumbFilename).filename).s(extension).Str();
-			thumbPath = LibCC::Format(TEXT("%\\%")).s(destination.general.path).s(thumbFilename).Str();
-		}
-		else
-		{
-			thumbPath = LibCC::Format(TEXT("%\\%.%"))
-				.s(destination.general.path)
-				.s(Path::Split(filename).filename)
-				.s(extension).Str();
-		}
-
-		util::shared_ptr<Gdiplus::Bitmap> thumbnailImage;
-		if (GetScreenshotThumbnail(destination.image, image, thumbnailImage))
-		{
-			if (!SaveImageToFile(*thumbnailImage, destination.general.imageFormat, thumbPath))
-			{
-				status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-					TEXT("File: couldn't save thumbnail image!"));
-
-				// don't return false. this isn't exactly fatal.
-			}
-		}
-		else
-		{
-			status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-				TEXT("File: couldn't get thumbnail image!"));
-
-			// don't return false. this isn't exactly fatal.
-		}
 	}
 
 	return success;

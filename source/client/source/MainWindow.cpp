@@ -41,10 +41,12 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 	if (!m_screenshotOptions.GetNumDestinations())
 		return FALSE;
 
+	m_processing = true;
+
 	RECT windowRect = { 0 };
 
-	HBITMAP screenshotBitmap = NULL;
-	if (GetScreenshotBitmap(screenshotBitmap, altDown, m_screenshotOptions.IncludeCursor()))
+	CBitmap screenshotBitmap;
+	if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 	{
 		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
 
@@ -53,8 +55,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 		  BOOL handledDummy = FALSE;
       OnConfigure(_T("Next..."));
 	  }
-
-    m_processing = true;
 
 		if (m_screenshotOptions.ShowCropWindow())
 		{
@@ -72,6 +72,10 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 					// of the previous pointed-to bitmap data
 					screenshot = croppedScreenshot;
 				}
+			}
+			else
+			{
+				return FALSE;
 			}
 		}
 
@@ -99,8 +103,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 
 		m_processing = false;
 	}
-
-	::DeleteObject(screenshotBitmap);
 
 	return TRUE;
 }
