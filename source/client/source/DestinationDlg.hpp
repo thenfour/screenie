@@ -107,4 +107,6 @@ private:
   HICON m_hIconSmall;
 };
 
+bool IsDestinationsDialogVisible();
+
 #endif

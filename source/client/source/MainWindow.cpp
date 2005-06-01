@@ -75,6 +75,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 			}
 			else
 			{
+				m_processing = false;
 				return FALSE;
 			}
 		}
@@ -170,8 +171,13 @@ LRESULT CMainWindow::OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& h
 
 bool CMainWindow::OnConfigure(const tstd::tstring& OKbuttonText)
 {
-	CDestinationDlg dialog(m_screenshotOptions, OKbuttonText);
-	return (TRUE == dialog.DoModal());
+	if (!IsDestinationsDialogVisible())
+	{
+		CDestinationDlg dialog(m_screenshotOptions, OKbuttonText);
+		return (TRUE == dialog.DoModal());
+	}
+
+	return true;
 }
 
 LRESULT CMainWindow::OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)

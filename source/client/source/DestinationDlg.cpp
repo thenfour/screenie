@@ -19,6 +19,13 @@
 #include "codec.hpp"
 #include "libcc/registry.h"
 
+bool g_dialogVisible = false;
+
+bool IsDestinationsDialogVisible()
+{
+	return g_dialogVisible;
+}
+
 BOOL CDestinationDlg::PreTranslateMessage(MSG* pMsg)
 {
 	return CWindow::IsDialogMessage(pMsg);
@@ -88,6 +95,8 @@ void CDestinationDlg::PopulateDestinationList()
 
 LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	g_dialogVisible = true;
+
 	// center the dialog on the screen
 	CenterWindow();
 
@@ -297,4 +306,6 @@ void CDestinationDlg::CloseDialog(bool bSaveOptions)
   }
 
   EndDialog(bSaveOptions ? TRUE : FALSE);
+
+  g_dialogVisible = false;
 }
