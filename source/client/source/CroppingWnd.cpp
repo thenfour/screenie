@@ -187,6 +187,12 @@ LRESULT CCroppingWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPar
     int deltay = GetDeltaMin(cursorPos.y - m_lastSelectionCursorPos.y);
     pt.y = m_lastSelectionPoint.y + deltay;
 
+    if(pt.x < 0) pt.x = 0;
+    if(pt.x > m_bitmap->GetWidth()) pt.x = m_bitmap->GetWidth();
+
+    if(pt.y < 0) pt.y = 0;
+    if(pt.y > m_bitmap->GetHeight()) pt.y = m_bitmap->GetHeight();
+
     // replace the mouse cursor to reflect the slowdown.
     CPoint newCursorPos = ImageToClient(pt);
 
