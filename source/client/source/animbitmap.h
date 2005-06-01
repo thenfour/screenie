@@ -52,11 +52,12 @@ public:
 
   ~AnimBitmap()
   {
-    DeleteDC(m_offscreen);
     if(m_bmp)
     {
+      SelectObject(m_offscreen, m_oldBitmap);
       DeleteObject(m_bmp);
     }
+    DeleteDC(m_offscreen);
   }
 
   //CSize GetSize() const
@@ -87,6 +88,7 @@ public:
       // delete our current bmp.
       if(m_bmp)
       {
+        SelectObject(m_offscreen, m_oldBitmap);
         DeleteObject(m_bmp);
         m_bmp = 0;
       }
@@ -128,7 +130,7 @@ public:
         r = true;
         m_x = bi.bmiHeader.biWidth;
         m_y = bi.bmiHeader.biHeight;
-        SelectObject(m_offscreen, m_bmp);
+        m_oldBitmap = (HBITMAP)SelectObject(m_offscreen, m_bmp);
       }
 
       HeapFree(GetProcessHeap(), 0, pbi);
@@ -276,8 +278,9 @@ public:
     }
   }
 
-  bool StretchBlit(AnimBitmap& dest, long destx, long desty, long destw, long desth, long srcx, long srcy, long srcw, long srch)
+  bool StretchBlit(AnimBitmap& dest, long destx, long desty, long destw, long desth, long srcx, long srcy, long srcw, long srch, int mode = HALFTONE)
   {
+    SetStretchBltMode(dest.m_offscreen, mode);
     int r = StretchBlt(
       dest.m_offscreen, destx, desty, destw, desth,
       m_offscreen, srcx, srcy, srcw, srch, SRCCOPY);
@@ -357,6 +360,7 @@ private:
   long m_y;
   HDC m_offscreen;
   HBITMAP m_bmp;
+  HBITMAP m_oldBitmap;
   RgbPixel* m_pbuf;
 
   template<typename T, typename Tmin, typename Tmax>

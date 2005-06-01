@@ -136,6 +136,8 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	if (m_optionsCopy.ShowStatus())
 		CheckDlgButton(IDC_SHOWSTATUS, BST_CHECKED);
 
+  SetForegroundWindow(*this);
+
 	return TRUE;
 }
 

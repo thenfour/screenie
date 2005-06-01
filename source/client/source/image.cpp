@@ -206,6 +206,8 @@ bool GetScreenshotBitmap(HBITMAP& bitmap, BOOL AltPressed, BOOL drawCursor)
       {
         ICONINFO ii = {0};
         GetIconInfo(cursorInfo.hCursor, &ii);
+        DeleteObject(ii.hbmColor);
+        DeleteObject(ii.hbmMask);
         ::DrawIcon(memoryDC, cursorPos.x - ii.xHotspot, cursorPos.y - ii.yHotspot, cursorInfo.hCursor);
       }
 

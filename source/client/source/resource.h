@@ -81,6 +81,7 @@
 #define IDC_CONFIGURE                   1046
 #define IDC_HYPERLINK                   1047
 #define IDC_SLIDER1                     1048
+#define IDC_ZOOMFACTOR                  1048
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121

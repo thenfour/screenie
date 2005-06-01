@@ -43,11 +43,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 
 	RECT windowRect = { 0 };
 
-	//if (altDown)
-	//	::GetWindowRect(::GetForegroundWindow(), &windowRect);
-	//else
-	//	::GetWindowRect(::GetDesktopWindow(), &windowRect);
-
 	HBITMAP screenshotBitmap = NULL;
 	if (GetScreenshotBitmap(screenshotBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 	{
@@ -88,6 +83,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
         // for some reason it doesnt like to redraw when it's shown... even non-client area.
         // so, a little brute force and we're golden... like the shower.
         m_statusDialog.SetWindowPos(HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+        ::SetFocus(m_statusDialog.GetDlgItem(IDOK));// this doest work either... no idea what's going on.
       }
 		}
 

@@ -19,7 +19,8 @@ public:
 	  m_includeCursor(true),
 	  m_showStatus(true),
 	  m_confirmOptions(false),
-	  m_showCropWindow(true)
+	  m_showCropWindow(true),
+    m_croppingZoomFactor(2)
   {
   }
 
@@ -31,6 +32,7 @@ public:
 		m_showStatus = copy.m_showStatus;
 		m_confirmOptions = copy.m_confirmOptions;
 		m_showCropWindow = copy.m_showCropWindow;
+    m_croppingZoomFactor = copy.m_croppingZoomFactor;
 
     m_haveStatusPlacement = copy.m_haveStatusPlacement;
     m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
@@ -58,6 +60,7 @@ public:
 		m_showStatus = rightHand.m_showStatus;
 		m_confirmOptions = rightHand.m_confirmOptions;
 		m_showCropWindow = rightHand.m_showCropWindow;
+    m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
 
     m_haveStatusPlacement = copy.m_haveStatusPlacement;
     m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
@@ -73,6 +76,9 @@ public:
 
 	bool IncludeCursor() { return m_includeCursor; }
 	void IncludeCursor(bool newval) { m_includeCursor = newval; }
+
+  int CroppingZoomFactor() const { return m_croppingZoomFactor; }
+  void CroppingZoomFactor(int n) { m_croppingZoomFactor = n; }
 
 	bool ShowStatus() { return m_showStatus; }
 	void ShowStatus(bool newval) { m_showStatus = newval; }
@@ -163,6 +169,8 @@ private:
   WINDOWPLACEMENT m_croppingPlacement;
   bool m_haveConfigPlacement;
   WINDOWPLACEMENT m_configPlacement;
+
+  int m_croppingZoomFactor;
 
 	bool m_includeCursor;
 	bool m_showStatus;

@@ -16,7 +16,9 @@
 
 class CCropDlg :
 	public CDialogImpl<CCropDlg>,
-	public CDialogResize<CCropDlg>
+	public CDialogResize<CCropDlg>,
+  public ICroppingWindowEvents,
+  public IZoomWindowEvents
 {
 public:
 	enum { IDD = IDD_CROPDLG };
@@ -24,17 +26,44 @@ public:
 	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
     m_didCropping(false),
-    m_croppingWnd(bitmap),
-    m_zoomWnd(bitmap.get()),
+    m_croppingWnd(bitmap, this),
+    m_zoomWnd(bitmap.get(), this),
     m_options(options),
     m_hIconSmall(0),
     m_hIcon(0)
   {
   }
+
 	~CCropDlg()
   {
     if(m_hIcon) DeleteObject(m_hIcon);
     if(m_hIconSmall) DeleteObject(m_hIconSmall);
+  }
+
+	LRESULT OnMouseWheel(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+  {
+    handled = TRUE;
+    int newFactor = m_zoomWnd.GetFactor() + (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+    m_zoomWnd.SetFactor(newFactor);
+    return 0;
+  }
+
+  // IZoomWindowEvents methods
+  void OnZoomScaleFactorChanged(int factor)
+  {
+    m_options.CroppingZoomFactor(factor);
+    ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
+  }
+
+  // ICroppingWindowEvents methods
+  virtual void OnCroppingSelectionChanged()
+  {
+    SyncZoomWindowSelection();
+  }
+  virtual void OnCroppingPositionChanged(int x, int y)// image coords
+  {
+    m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
+    SyncZoomWindowSelection();
   }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
@@ -55,9 +84,8 @@ public:
 	BEGIN_MSG_MAP(CCropDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
-		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
-		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
-		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
+    MESSAGE_HANDLER(WM_HSCROLL, OnZoomFactorChanged);
+		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
@@ -75,6 +103,29 @@ public:
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
 
+
+	LRESULT OnZoomFactorChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+  {
+    /*
+      A trackbar notifies its parent window of user actions by sending the parent a WM_HSCROLL or WM_VSCROLL message.
+      A trackbar with the TBS_HORZ style sends WM_HSCROLL messages.
+      A trackbar with the TBS_VERT style sends WM_VSCROLL messages.
+      
+      The low-order word of the wParam parameter of WM_HSCROLL or WM_VSCROLL contains the notification code.
+      For the TB_THUMBPOSITION and TB_THUMBTRACK notifications, the high-order word of the wParam parameter specifies the position of the slider.
+      For all other notifications, the high-order word is zero;
+      send the TBM_GETPOS message to determine the slider position.
+      The lParam parameter is the handle to the trackbar. 
+    */
+    if(((HWND)lParam) == GetDlgItem(IDC_ZOOMFACTOR).m_hWnd)
+    {
+      int factor = ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_GETPOS, 0, 0);
+      m_zoomWnd.SetFactor(factor);
+      m_options.CroppingZoomFactor(factor);
+    }
+    return 0;
+  }
+  
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
 	  // set icons
@@ -87,7 +138,19 @@ public:
 		  IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 	  SetIcon(m_hIconSmall, FALSE);
 
+    // create the image window.
+    RECT rcImage;
+    ::GetWindowRect(GetDlgItem(IDC_IMAGE), &rcImage);
+    ScreenToClient(&rcImage);
+    ::DestroyWindow(GetDlgItem(IDC_IMAGE));
+    m_croppingWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_IMAGE);
+
     DlgResize_Init(true, true, WS_CLIPCHILDREN);
+
+    // set up zoom slider
+    HWND hSlider = GetDlgItem(IDC_ZOOMFACTOR);
+    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, 16));
+    SendMessage(hSlider, TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
 
     // Load window placement settings.
     if(m_options.HaveCroppingPlacement())
@@ -95,48 +158,16 @@ public:
       SetWindowPlacement(&m_options.GetCroppingPlacement());
     }
 
-		m_croppingWnd.SubclassWindow(GetDlgItem(IDC_IMAGE));
     BOOL temp;
     m_croppingWnd.OnSize(0,0,0,temp);
     m_croppingWnd.InvalidateRect(0);
-		m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
+
+    m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.OnSize(0,0,0,temp);
+    m_zoomWnd.InvalidateRect(0);
+    m_zoomWnd.SetFactor(m_options.CroppingZoomFactor());
 
-		return 0;
-	}
-
-	LRESULT OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-	{
-		POINT cursorPos;
-		GetCursorPos(&cursorPos);
-
-		RECT imageClientRect = { 0 };
-		m_croppingWnd.GetClientRect(&imageClientRect);
-		m_croppingWnd.ScreenToClient(&cursorPos);
-
-		int scaleWidth = imageClientRect.right - imageClientRect.left;
-		int scaleHeight = imageClientRect.bottom - imageClientRect.top;
-
-		if (::PtInRect(&imageClientRect, cursorPos))
-		{
-      SetCursor(LoadCursor(0, IDC_CROSS));
-
-      CPoint pos = m_croppingWnd.ScreenToImageCoords(CPoint(cursorPos.x,cursorPos.y));
-
-			SetWindowText(LibCC::Format(TEXT("Crop Screenshot: (%, %)")).ul(pos.x).ul(pos.y).CStr());
-
-			if (m_croppingWnd.IsSelecting())
-      {
-				m_croppingWnd.UpdateSelection(cursorPos.x, cursorPos.y);
-        SyncZoomWindowSelection();
-      }
-
-			m_zoomWnd.UpdateBitmapCursorPos(pos);
-		}
-		else
-		{
-			SetWindowText(TEXT("Crop Screenshot"));
-		}
+    SetForegroundWindow(*this);
 
 		return 0;
 	}
@@ -156,45 +187,6 @@ public:
 
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
-		return 0;
-	}
-
-
-	LRESULT OnLButtonDown(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
-	{
-		POINT cursorPos = { 0 };
-		GetCursorPos(&cursorPos);
-
-		RECT imageClientRect = { 0 };
-		m_croppingWnd.GetClientRect(&imageClientRect);
-		m_croppingWnd.ScreenToClient(&cursorPos);
-
-		if (PtInRect(&imageClientRect, cursorPos))
-		{
-      SetCursor(LoadCursor(0, IDC_CROSS));
-			m_croppingWnd.BeginSelection(cursorPos.x, cursorPos.y);
-      SyncZoomWindowSelection();
-		}
-
-		return 0;
-	}
-
-	LRESULT OnLButtonUp(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
-	{
-		POINT cursorPos = { 0 };
-		GetCursorPos(&cursorPos);
-
-		RECT imageClientRect = { 0 };
-		m_croppingWnd.GetClientRect(&imageClientRect);
-		m_croppingWnd.ScreenToClient(&cursorPos);
-
-		if (PtInRect(&imageClientRect, cursorPos))
-		{
-      SetCursor(LoadCursor(0, IDC_CROSS));
-			m_croppingWnd.EndSelection(cursorPos.x, cursorPos.y);
-      SyncZoomWindowSelection();
-		}
-
 		return 0;
 	}
 
@@ -251,3 +243,4 @@ private:
 };
 
 #endif
+

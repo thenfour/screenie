@@ -13,10 +13,11 @@
 #include "CroppingWnd.hpp"
 
 
-CCroppingWindow::CCroppingWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap) :
+CCroppingWindow::CCroppingWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, ICroppingWindowEvents* pNotify) :
   m_bitmap(bitmap),
-  m_selecting(false),
-  m_hasSelection(false)
+  m_hasSelection(false),
+  m_notify(pNotify == 0 ? this : pNotify),
+  m_selectionEntrancy(false)
 {
   CopyImage(m_dibOriginal, *bitmap);
 }
@@ -32,16 +33,16 @@ BOOL CCroppingWindow::PreTranslateMessage(MSG* pMsg)
 
 void CCroppingWindow::ClearSelection()
 {
-	m_selecting = false;
 	m_hasSelection = false;
 
 	RECT rectInvalidate;
   GetScreenSelection(rectInvalidate);
+  m_notify->OnCroppingSelectionChanged();
   ::InflateRect(&rectInvalidate, 5, 5);
 	InvalidateRect(&rectInvalidate);
 }
 
-CPoint CCroppingWindow::ScreenToImageCoords(CPoint x)
+CPoint CCroppingWindow::ClientToImageCoords(CPoint x)
 {
   RECT rcClient;
   GetClientRect(&rcClient);
@@ -58,78 +59,45 @@ CPoint CCroppingWindow::ScreenToImageCoords(CPoint x)
   // x : screen :: ret : image;
   // aka x * image / screen = ret;
   CPoint ret;
-  ret.x = x.x * (m_bitmap->GetWidth()) / rcClient.right;
-  ret.y = x.y * (m_bitmap->GetHeight()) / rcClient.bottom;
+  ret.x = (int)(0.5f + ((float)x.x * (m_bitmap->GetWidth()) / rcClient.right));
+  ret.y = (int)(0.5f + ((float)x.y * (m_bitmap->GetHeight()) / rcClient.bottom));
 
   // bounds checking
-  if(ret.x > m_bitmap->GetWidth()) { ret.x = m_bitmap->GetWidth(); }
-  if(ret.y > m_bitmap->GetHeight()) { ret.y = m_bitmap->GetHeight(); }
+  if(static_cast<DWORD>(ret.x) > m_bitmap->GetWidth()) { ret.x = m_bitmap->GetWidth(); }
+  if(static_cast<DWORD>(ret.y) > m_bitmap->GetHeight()) { ret.y = m_bitmap->GetHeight(); }
 
+  return ret;
+}
+
+CPoint CCroppingWindow::ImageToClient(CPoint p)
+{
+  CPoint ret;
+  RECT rcClient;
+  GetClientRect(&rcClient);
+  rcClient.bottom -= g_CropBorder * 2;
+  rcClient.right -= g_CropBorder * 2;
+
+  // scale p : imagesize :: ret : client
+  // we do need float ops here because we need to do rounding up.  this is to get exact pixel precision.
+  ret.y = (int)(0.5f + ((float)p.y * rcClient.bottom / m_bitmap->GetHeight()));
+  ret.x = (int)(0.5f + ((float)p.x * rcClient.right / m_bitmap->GetWidth()));
+
+  ret.x += g_CropBorder;
+  ret.y += g_CropBorder;
   return ret;
 }
 
 // returns the selection rect in screen coords (relative to client)
 void CCroppingWindow::GetScreenSelection(RECT& rc)
 {
-  RECT rcClient;
-  GetClientRect(&rcClient);
-  rcClient.bottom -= g_CropBorder * 2;
-  rcClient.right -= g_CropBorder * 2;
-
-  // scale m_selectionOrg : rcClient :: rc : orgSIze
-  rc.top = m_selectionOrg.top * rcClient.bottom / m_bitmap->GetHeight();
-  rc.bottom = m_selectionOrg.bottom * rcClient.bottom / m_bitmap->GetHeight();
-  rc.left = m_selectionOrg.left * rcClient.right / m_bitmap->GetWidth();
-  rc.right = m_selectionOrg.right * rcClient.right / m_bitmap->GetWidth();
-
-  rc.top += g_CropBorder;
-  rc.left += g_CropBorder;
-  rc.bottom += g_CropBorder;
-  rc.right += g_CropBorder;
-}
-
-
-void CCroppingWindow::BeginSelection(int x, int y)
-{
-	ClearSelection();
-
-	m_hasSelection = false;
-	m_selecting = true;
-
-	::GetCapture();
-
-  m_selBegin = ScreenToImageCoords(CPoint(x,y));
-}
-
-void CCroppingWindow::UpdateSelection(int x, int y)
-{
-	RECT rectInvalidate;
-  GetScreenSelection(rectInvalidate);
-  ::InflateRect(&rectInvalidate, 5, 5);
-
-  CPoint pt = ScreenToImageCoords(CPoint(x,y));
- 	m_selectionOrg.left = std::min<int>(pt.x, m_selBegin.x);
-	m_selectionOrg.top = std::min<int>(pt.y, m_selBegin.y);
-	m_selectionOrg.bottom = std::max<int>(pt.y, m_selBegin.y);
-	m_selectionOrg.right = std::max<int>(pt.x, m_selBegin.x);
-
-  RedrawWindow(&rectInvalidate);
-}
-
-void CCroppingWindow::EndSelection(int x, int y)
-{
-	::ReleaseCapture();
-
-	m_selecting = false;
-	m_hasSelection = true;
-
-	RedrawWindow(NULL);
+  CPoint ul = ImageToClient(CPoint(m_selectionOrg.left, m_selectionOrg.top));
+  CPoint br = ImageToClient(CPoint(m_selectionOrg.right, m_selectionOrg.bottom));
+  SetRect(&rc, ul.x, ul.y, br.x, br.y);
 }
 
 bool CCroppingWindow::GetSelection(RECT& selectionRect)
 {
-	if (!m_hasSelection && !m_selecting) return false;
-  //GetScreenSelection(selectionRect);
+	if (!m_hasSelection) return false;
   CopyRect(&selectionRect, &m_selectionOrg);
 	return true;
 }
@@ -179,7 +147,7 @@ LRESULT CCroppingWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& h
 
 void CCroppingWindow::DrawSelectionBox(HDC dc)
 {
-	if (m_selecting || m_hasSelection)
+	if(m_hasSelection)
 	{
 	  RECT rcSelection;
     GetScreenSelection(rcSelection);
@@ -190,4 +158,115 @@ void CCroppingWindow::DrawSelectionBox(HDC dc)
 	}
 }
 
+// returns -1, 0, or 1
+int GetDeltaMin(int val)
+{
+  if(!val) return 0;
+  return val < 0 ? -1 : 1;
+}
 
+LRESULT CCroppingWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
+{
+  bHandled = TRUE;
+  if(m_selectionEntrancy) return 0;
+  m_selectionEntrancy = true;
+
+	CPoint cursorPos(0);
+	GetCursorPos(&cursorPos);
+  ScreenToClient(&cursorPos);
+
+  CPoint pt;
+
+  if((wParam & MK_SHIFT) == MK_SHIFT)
+  {
+    // constrain movement by only allowing 1 image pixel movement.
+    // determine if we went left (-1), right (1) or nowhere (0) in the x coordinate
+    int deltax = GetDeltaMin(cursorPos.x - m_lastSelectionCursorPos.x);
+    pt.x = m_lastSelectionPoint.x + deltax;// and add it to the last selection 
+
+    int deltay = GetDeltaMin(cursorPos.y - m_lastSelectionCursorPos.y);
+    pt.y = m_lastSelectionPoint.y + deltay;
+
+    // replace the mouse cursor to reflect the slowdown.
+    CPoint newCursorPos = ImageToClient(pt);
+
+    cursorPos = newCursorPos;
+    ClientToScreen(&newCursorPos);
+    SetCursorPos(newCursorPos.x, newCursorPos.y);
+  }
+  else
+  {
+    pt = ClientToImageCoords(cursorPos);
+  }
+
+  if(::GetCapture() == m_hWnd)
+  {
+    UpdateSelection(pt.x, pt.y);
+  }
+
+  m_lastSelectionPoint = pt;
+  m_lastSelectionCursorPos = cursorPos;
+  m_notify->OnCroppingPositionChanged(pt.x, pt.y);
+  m_selectionEntrancy = false;
+	return 0;
+}
+
+LRESULT CCroppingWindow::OnLButtonDown(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+  if(m_selectionEntrancy) return 0;
+  m_selectionEntrancy = true;
+
+  POINT cursorPos = { 0 };
+	GetCursorPos(&cursorPos);
+  ScreenToClient(&cursorPos);
+  CPoint pt = ClientToImageCoords(cursorPos);
+
+  if(::GetCapture() != m_hWnd)
+  {
+    SetCapture();
+    BeginSelection(pt.x, pt.y);
+  }
+
+  m_lastSelectionPoint = pt;
+  m_lastSelectionCursorPos = cursorPos;
+  m_selectionEntrancy = false;
+	return 0;
+}
+
+LRESULT CCroppingWindow::OnLButtonUp(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+  if(m_selectionEntrancy) return 0;
+  m_selectionEntrancy = true;
+
+  if(::GetCapture() == m_hWnd)
+  {
+    ReleaseCapture();
+  }
+
+  m_selectionEntrancy = false;
+	return 0;
+}
+
+void CCroppingWindow::BeginSelection(int x, int y)
+{
+	ClearSelection();
+	m_hasSelection = true;
+  m_selBegin = CPoint(x,y);
+  m_notify->OnCroppingSelectionChanged();
+}
+
+void CCroppingWindow::UpdateSelection(int imagex, int imagey)
+{
+	RECT rectInvalidate;
+  GetScreenSelection(rectInvalidate);
+  ::InflateRect(&rectInvalidate, 5, 5);
+
+ 	m_selectionOrg.left = std::min<int>(imagex, m_selBegin.x);
+	m_selectionOrg.top = std::min<int>(imagey, m_selBegin.y);
+	m_selectionOrg.bottom = std::max<int>(imagey, m_selBegin.y);
+	m_selectionOrg.right = std::max<int>(imagex, m_selBegin.x);
+
+  m_notify->OnCroppingSelectionChanged();
+
+  RedrawWindow(&rectInvalidate, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+}

@@ -8,6 +8,7 @@
 #include "resource.h"
 
 #include "image.hpp"
+#include "animbitmap.h"
 #include "utility.hpp"
 
 #include "aboutdlg.hpp"

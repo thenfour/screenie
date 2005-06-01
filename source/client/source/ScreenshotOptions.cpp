@@ -16,6 +16,7 @@ const TCHAR* KEY_INCLUDECURSOR = TEXT("Include Cursor");
 const TCHAR* KEY_SHOWCROPPINGWINDOW = TEXT("Show Cropping Window");
 const TCHAR* KEY_CONFIRMOPTIONS = TEXT("Confirm Options");
 const TCHAR* KEY_SHOWSTATUS = TEXT("Show Status Dialog");
+const TCHAR* KEY_CROPPINGZOOMFACTOR = TEXT("Cropping Zoom Factor");
 
 const TCHAR* KEY_CONFIGWINDOWPLACEMENT = TEXT("ConfigWindowPlacement");
 const TCHAR* KEY_STATUSWINDOWPLACEMENT = TEXT("StatusWindowPlacement");
@@ -159,6 +160,12 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
 		MainKey.GetDWORD(KEY_SHOWSTATUS, &temp);
 		options.ShowStatus(temp != 0);
 
+    int nTemp;
+    if(MainKey2[KEY_CROPPINGZOOMFACTOR].GetValue(nTemp))
+    {
+      options.CroppingZoomFactor(nTemp);
+    }
+
     WINDOWPLACEMENT wpTemp;
     if(MainKey2[KEY_CONFIGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
     {
@@ -261,6 +268,8 @@ bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName
 		MainKey.SetDWORD(KEY_CONFIRMOPTIONS, options.ConfirmOptions());
 		MainKey.SetDWORD(KEY_SHOWSTATUS, options.ShowStatus());
 		MainKey.SetDWORD(KEY_SHOWCROPPINGWINDOW, options.ShowCropWindow());
+
+    MainKey2[KEY_CROPPINGZOOMFACTOR] = options.CroppingZoomFactor();
 
     if(options.HaveConfigPlacement())
     {
