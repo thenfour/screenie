@@ -51,6 +51,7 @@ public:
   // IZoomWindowEvents methods
   void OnZoomScaleFactorChanged(int factor)
   {
+    SetDlgItemText(IDC_ZOOM_CAPTION, LibCC::Format("%x zoom view:").i(factor).CStr());
     m_options.CroppingZoomFactor(factor);
     ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
   }
