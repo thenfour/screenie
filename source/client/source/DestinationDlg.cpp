@@ -193,7 +193,7 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.ftp.hostname = TEXT("ftp.mysite.com");
 	destination.ftp.port = 21;
 	destination.ftp.username = TEXT("username");
-	destination.ftp.password = TEXT("password");
+  destination.ftp.SetPassword(TEXT("password"));
 	destination.ftp.remotePath = TEXT("/home/username/public_html/");
 	destination.ftp.resultURL = TEXT("http://mysite.com/~username");
 	destination.ftp.copyURL = false;

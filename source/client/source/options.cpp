@@ -135,12 +135,12 @@ bool CRegistryKey::GetString(const tstd::tstring& Key, tstd::tstring& Value)
 }
 
 
-bool CRegistryKey::GetBytes(const tstd::tstring& Key, CBuffer<BYTE>& b)
+bool CRegistryKey::GetBytes(const tstd::tstring& Key, CBuffer<BYTE>& b, DWORD* pSize)
 {
     bool r = false;
     DWORD dwType = 0;
 
-    if(GetRawData(Key, b, &dwType))
+    if(GetRawData(Key, b, &dwType, pSize))
     {
         if(dwType == REG_BINARY)
         {
@@ -171,7 +171,7 @@ bool CRegistryKey::GetDWORD(const tstd::tstring& Key, DWORD* pdw)
 }
 
 
-bool CRegistryKey::GetRawData(const tstd::tstring& Key, CBuffer<BYTE>& buf, DWORD* pdwType)
+bool CRegistryKey::GetRawData(const tstd::tstring& Key, CBuffer<BYTE>& buf, DWORD* pdwType, DWORD* pdwSizeBytes)
 {
     bool r = false;
     BYTE* pBuffer = 0;
@@ -180,6 +180,11 @@ bool CRegistryKey::GetRawData(const tstd::tstring& Key, CBuffer<BYTE>& buf, DWOR
     // Get the required size and type info.
     if(ERROR_SUCCESS == RegQueryValueEx(m_hKey, Key.c_str(), 0, pdwType, 0, &dwSize))
     {
+      if(pdwSizeBytes)
+      {
+        *pdwSizeBytes = dwSize;
+      }
+
         // allocte the buffer
         if(buf.Realloc(dwSize))
         {

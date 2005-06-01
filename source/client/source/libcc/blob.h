@@ -134,7 +134,8 @@ namespace LibCC
 
     Blob() :
       m_p(_StaticBufferSupport ? m_StaticBuffer : 0),
-      m_size(_StaticBufferSupport ? _StaticBufferSize : 0)
+      m_sizeAllocated(_StaticBufferSupport ? _StaticBufferSize : 0),
+      m_sizeReported(0)
     {
     }
 
@@ -143,9 +144,20 @@ namespace LibCC
       Free();
     }
 
+    bool Assign(const Blob<_El, _Traits>& rhs)
+    {
+      bool r = false;
+      if(Alloc(rhs.Size()))
+      {
+        memcpy(GetBuffer(), rhs.GetBuffer(), rhs.Size());
+        r = true;
+      }
+      return r;
+    }
+
     size_t Size() const
     {
-      return m_size;
+      return m_sizeReported;
     }
 
     // these are just to break up some if() statements.
@@ -172,7 +184,7 @@ namespace LibCC
         {
           HeapFree(GetProcessHeap(), 0, m_p);
           m_p = m_StaticBuffer;
-          m_size = _StaticBufferSize;
+          m_sizeAllocated = _StaticBufferSize;
         }
       }
       else
@@ -181,24 +193,25 @@ namespace LibCC
         {
           HeapFree(GetProcessHeap(), 0, m_p);
           m_p = 0;
-          m_size = 0;
+          m_sizeAllocated = 0;
         }
       }
+      m_sizeReported = 0;
       return true;
     }
 
     bool Alloc(size_t n)
     {
       bool r = false;
-      if(m_size >= n)
+      if(m_sizeAllocated >= n)
       {
-        // no need to allocate;
+        // no need to do anything
         r = true;
       }
       else
       {
         // we definitely need to allocate now.
-        size_t nNewSize = Ttraits::GetNewSize(m_size, n);
+        size_t nNewSize = Ttraits::GetNewSize(m_sizeAllocated, n);
         Tel* pNew;
 
         if(CurrentlyUsingStaticBuffer() || CompletelyUnallocated())
@@ -214,7 +227,7 @@ namespace LibCC
             }
 
             m_p = pNew;
-            m_size = nNewSize;
+            m_sizeAllocated = nNewSize;
 
             r = true;
           }
@@ -226,11 +239,14 @@ namespace LibCC
           if(pNew)
           {
             m_p = pNew;
-            m_size = nNewSize;
+            m_sizeAllocated = nNewSize;
             r = true;
           }
         }
       }
+
+      m_sizeReported = r ? n : 0;
+
       return r;
     }
 
@@ -268,7 +284,8 @@ namespace LibCC
     }
 
   private:
-    size_t m_size;
+    size_t m_sizeReported;
+    size_t m_sizeAllocated;
     Tel* m_p;
     Tel m_StaticBuffer[_StaticBufferSize];
   };

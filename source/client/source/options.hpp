@@ -29,11 +29,11 @@ public:
     bool SetDWORD(const tstd::tstring& Key, DWORD dw);
 
     bool GetString(const tstd::tstring& Key, tstd::tstring& Value);
-    bool GetBytes(const tstd::tstring& Key, CBuffer<BYTE>& b);
+    bool GetBytes(const tstd::tstring& Key, CBuffer<BYTE>& b, DWORD* pSize);
     bool GetDWORD(const tstd::tstring& Key, DWORD* pdw);
 
 private:
-    bool GetRawData(const tstd::tstring& Key, CBuffer<BYTE>& buf, DWORD* pdwType);
+    bool GetRawData(const tstd::tstring& Key, CBuffer<BYTE>& buf, DWORD* pdwType, DWORD* pdwSizeBytes = 0);
 
     HKEY m_hKey;
 

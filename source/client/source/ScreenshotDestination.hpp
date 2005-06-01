@@ -7,6 +7,8 @@
 #ifndef SCREENIE_DESTINATION_HPP
 #define SCREENIE_DESTINATION_HPP
 
+#include "buffer.hpp"
+
 struct ScreenshotDestination
 {
 	enum Type
@@ -73,7 +75,7 @@ struct ScreenshotDestination
 
 	struct Ftp
 	{
-		Ftp() { }
+    Ftp() { }
 		Ftp(const Ftp& copy) { operator=(copy); }
 		~Ftp() { }
 
@@ -82,10 +84,11 @@ struct ScreenshotDestination
 			hostname = rightHand.hostname;
 			port = rightHand.port;
 			username = rightHand.username;
-			password = rightHand.password;
 			remotePath = rightHand.remotePath;
 			resultURL = rightHand.resultURL;
 			copyURL = rightHand.copyURL;
+
+      m_passwordEncrypted.Assign(rightHand.m_passwordEncrypted);
 
 			return (*this);
 		}
@@ -93,11 +96,61 @@ struct ScreenshotDestination
 		tstd::tstring hostname;
 		unsigned short port;
 		tstd::tstring username;
-		tstd::tstring password;
 		tstd::tstring remotePath;
 
 		tstd::tstring resultURL;
 		bool copyURL;
+
+    tstd::tstring DecryptPassword() const
+    {
+      tstd::tstring ret;
+      DATA_BLOB in;
+      DATA_BLOB out;
+      in.pbData = const_cast<BYTE*>(m_passwordEncrypted.GetBuffer());
+      in.cbData = m_passwordEncrypted.Size();
+      if(FALSE == CryptUnprotectData(&in, NULL, NULL, NULL, 0, 0, &out))
+      {
+        // omg error;
+        return _T("");
+      }
+
+      ret = reinterpret_cast<PCTSTR>(out.pbData);
+      LocalFree(out.pbData);
+
+      return ret;
+    }
+
+    const LibCC::Blob<BYTE>& GetEncryptedPassword() const
+    {
+      return m_passwordEncrypted;
+    }
+
+    void SetEncryptedPassword(CBuffer<BYTE>& crap, DWORD size)
+    {
+      m_passwordEncrypted.Alloc(size);
+      memcpy(m_passwordEncrypted.GetBuffer(), crap.buf(), size);
+    }
+
+    void SetPassword(const tstd::tstring& pass)
+    {
+      DATA_BLOB in;
+      DATA_BLOB out;
+      in.pbData = const_cast<BYTE*>(reinterpret_cast<const BYTE*>(pass.c_str()));
+      in.cbData = sizeof(TCHAR) * (pass.size() + 1);
+      if(FALSE == CryptProtectData(&in, NULL, NULL, NULL, 0, 0, &out))
+      {
+        // omg error;
+        return;
+      }
+
+      m_passwordEncrypted.Alloc(out.cbData);
+      memcpy(m_passwordEncrypted.GetBuffer(), out.pbData, m_passwordEncrypted.Size());
+
+      LocalFree(out.pbData);
+    }
+
+  private:
+    LibCC::Blob<BYTE> m_passwordEncrypted;
 	};
 
 	struct Email

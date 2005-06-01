@@ -59,7 +59,7 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 
 	WinInetHandle ftp = ::InternetConnect(internet.handle,
 		destination.ftp.hostname.c_str(), destination.ftp.port,
-		destination.ftp.username.c_str(), destination.ftp.password.c_str(),
+		destination.ftp.username.c_str(), destination.ftp.DecryptPassword().c_str(),
 		INTERNET_SERVICE_FTP, 0, 0);
 
 	if (ftp.handle == NULL)

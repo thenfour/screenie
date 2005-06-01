@@ -90,9 +90,13 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKe
 	destination.ftp.port = static_cast<unsigned short>(temp);
 
 	key.GetString(KEY_DEST_FTP_USERNAME, destination.ftp.username);
-	key.GetString(KEY_DEST_FTP_PASSWORD, destination.ftp.password);
 	key.GetString(KEY_DEST_FTP_REMOTEPATH, destination.ftp.remotePath);
 	key.GetString(KEY_DEST_FTP_RESULTURL, destination.ftp.resultURL);
+
+  CBuffer<BYTE> tempBuffer;
+  DWORD dwTemp;
+  key.GetBytes(KEY_DEST_FTP_PASSWORD, tempBuffer, &dwTemp);
+  destination.ftp.SetEncryptedPassword(tempBuffer, dwTemp);
 
 	key.GetDWORD(KEY_DEST_FTP_COPYURL, &temp);
 	destination.ftp.copyURL = (temp != 0);
@@ -190,10 +194,16 @@ bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegis
 	key.SetString(KEY_DEST_FTP_HOSTNAME, destination.ftp.hostname);
 	key.SetDWORD(KEY_DEST_FTP_PORT, destination.ftp.port);
 	key.SetString(KEY_DEST_FTP_USERNAME, destination.ftp.username);
-	key.SetString(KEY_DEST_FTP_PASSWORD, destination.ftp.password);
 	key.SetString(KEY_DEST_FTP_REMOTEPATH, destination.ftp.remotePath);
 	key.SetString(KEY_DEST_FTP_RESULTURL, destination.ftp.resultURL);
 	key.SetDWORD(KEY_DEST_FTP_COPYURL, destination.ftp.copyURL);
+
+  CBuffer<BYTE> temp;
+  DWORD size = destination.ftp.GetEncryptedPassword().Size();
+  temp.Alloc(size);
+  memcpy(temp.Lock(), destination.ftp.GetEncryptedPassword().GetBuffer(), size);
+  temp.Unlock();
+  key.SetBytes(KEY_DEST_FTP_PASSWORD, temp, size);
 
 	return true;
 }
