@@ -15,7 +15,6 @@
 #define IDB_BITMAP2                     211
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
-#define IDB_WATERMARK                   1003
 #define IDC_NEW                         1004
 #define IDC_EDIT1                       1004
 #define IDC_FTP_USERNAME                1004
