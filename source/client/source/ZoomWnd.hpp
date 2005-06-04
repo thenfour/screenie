@@ -170,12 +170,33 @@ public:
 		RECT clientRect = { 0 };
 		GetClientRect(&clientRect);
 
-    CPoint imgUL = ClientToImage(0);
-    CPoint imgBR = ClientToImage(CPoint(clientRect.right, clientRect.bottom));
+    /*
+      We can't just assume that the upper left corner is the very start of a pixel (think at high zoom levels.)
+      the origin needs to be from the center of the window, since that's where the un-moving crosshair is.
+
+      then from there, just subtract the appropriate pixels in every direction.
+    */
+    // center client coords.
+    CPoint center(clientRect.right / 2, clientRect.bottom / 2);
+    // get the # of image pixels we can draw on the screen (given the zoom factor)
+    CPoint gridCount(clientRect.right / m_nFactor, clientRect.bottom / m_nFactor);
+    gridCount.x /= 2;// because we draw the origin at half the width/height window position
+    gridCount.y /= 2;
+    // subtract the gridcount in order to figure out the UL pixel we will draw.
+    CPoint imgUL = m_ImageOrigin;
+    imgUL.x -= gridCount.x;
+    imgUL.y -= gridCount.y;
+    // same for BR
+    CPoint imgBR = m_ImageOrigin;
+    imgBR.x += gridCount.x;
+    imgBR.y += gridCount.y;
+    // now get the exact screen coords where we will draw them.
+    CPoint clientUL = ImageToClient(imgUL);
+    CPoint clientBR = ImageToClient(imgBR);
 
     m_dibOffscreen.Fill(0);
     m_dibOriginal.StretchBlit(m_dibOffscreen,
-      0, 0, clientRect.right, clientRect.bottom,
+      clientUL.x, clientUL.y, clientBR.x - clientUL.x, clientBR.y - clientUL.y,
       imgUL.x, imgUL.y, imgBR.x - imgUL.x, imgBR.y - imgUL.y,
       COLORONCOLOR);
 
@@ -183,6 +204,7 @@ public:
     if(m_haveSelection)
     {
       CRect rcSelection(ImageToClient(m_selection.TopLeft()), ImageToClient(m_selection.BottomRight()));
+      CRect rcTemp(ClientToImage(rcSelection.TopLeft()), ClientToImage(rcSelection.BottomRight()));
       DrawFocusRect(m_dibOffscreen.GetDC(), &rcSelection);
     }
 

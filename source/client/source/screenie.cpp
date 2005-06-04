@@ -59,9 +59,10 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 		icondata.cbSize = sizeof(icondata);
 		icondata.hWnd = g_mainWindow;
 		icondata.uID = 0x1BADD00D;
-		icondata.uFlags = NIF_ICON | NIF_MESSAGE;
+		icondata.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 		icondata.uCallbackMessage = CMainWindow::WM_NOTIFYICON;
 		icondata.uVersion = NOTIFYICON_VERSION;
+    _tcscpy(icondata.szTip, _T("Screenie Screen Capture Utility"));
 		icondata.hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 			IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 

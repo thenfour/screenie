@@ -336,5 +336,8 @@
 		</Filter>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="source\screenie.rc"/>
 	</Globals>
 </VisualStudioProject>

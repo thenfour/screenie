@@ -229,11 +229,11 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,226,197,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,281,197,50,14
     LTEXT           "Static",IDC_ZOOM,7,33,102,160,WS_BORDER
-    LTEXT           "Static",IDC_IMAGE,110,19,221,174,WS_BORDER
+    LTEXT           "Static",IDC_IMAGE,109,27,221,166,WS_BORDER
     PUSHBUTTON      "Options...",IDC_CONFIGURE,172,197,50,14
     LTEXT           "2x zoom view:",IDC_ZOOM_CAPTION,7,7,102,8
-    LTEXT           "Full view (hold SHIFT for precision, use the mouse wheel to zoom)",
-                    IDC_STATIC,110,7,211,8
+    LTEXT           "Full view (use the mouse wheel to zoom, hold SHIFT for precision, hold SHIFT+CONTROL for extra precision)",
+                    IDC_STATIC,109,7,222,16
     CONTROL         "",IDC_ZOOMFACTOR,"msctls_trackbar32",TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,7,17,102,12
 END
@@ -324,7 +324,7 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 211
         HORZGUIDE, 15
-        HORZGUIDE, 29
+        HORZGUIDE, 23
         HORZGUIDE, 193
     END
 END

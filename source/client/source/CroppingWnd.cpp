@@ -158,11 +158,12 @@ void CCroppingWindow::DrawSelectionBox(HDC dc)
 	}
 }
 
-// returns -1, 0, or 1
-int GetDeltaMin(int val)
+// returns the amount to move the virtual cursor during a constrained move, based on a pixel mouse cursor delta
+float GetDeltaMin(int val, bool bSuperDooper)
 {
   if(!val) return 0;
-  return val < 0 ? -1 : 1;
+  float blah = bSuperDooper ? 0.07f : 1.0f;
+  return val < 0.0f ? -blah : blah;
 }
 
 LRESULT CCroppingWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& bHandled)
@@ -179,19 +180,24 @@ LRESULT CCroppingWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPar
 
   if((wParam & MK_SHIFT) == MK_SHIFT)
   {
+    bool bSuperDooper = ((wParam & MK_CONTROL) == MK_CONTROL);
+
     // constrain movement by only allowing 1 image pixel movement.
     // determine if we went left (-1), right (1) or nowhere (0) in the x coordinate
-    int deltax = GetDeltaMin(cursorPos.x - m_lastSelectionCursorPos.x);
-    pt.x = m_lastSelectionPoint.x + deltax;// and add it to the last selection 
+    float deltax = GetDeltaMin(cursorPos.x - m_lastSelectionCursorPos.x, bSuperDooper);
+    m_lastSelectionPointX += deltax;
 
-    int deltay = GetDeltaMin(cursorPos.y - m_lastSelectionCursorPos.y);
-    pt.y = m_lastSelectionPoint.y + deltay;
+    float deltay = GetDeltaMin(cursorPos.y - m_lastSelectionCursorPos.y, bSuperDooper);
+    m_lastSelectionPointY += deltay;
 
-    if(pt.x < 0) pt.x = 0;
-    if(static_cast<DWORD>(pt.x) > m_bitmap->GetWidth()) pt.x = m_bitmap->GetWidth();
+    if(m_lastSelectionPointX < 0) m_lastSelectionPointX = 0;
+    if(static_cast<DWORD>(m_lastSelectionPointX) > m_bitmap->GetWidth()) m_lastSelectionPointX = static_cast<float>(m_bitmap->GetWidth());
 
-    if(pt.y < 0) pt.y = 0;
-    if(static_cast<DWORD>(pt.y) > m_bitmap->GetHeight()) pt.y = m_bitmap->GetHeight();
+    if(m_lastSelectionPointY < 0) m_lastSelectionPointY = 0;
+    if(static_cast<DWORD>(m_lastSelectionPointY) > m_bitmap->GetHeight()) m_lastSelectionPointY = static_cast<float>(m_bitmap->GetHeight());
+
+    pt.y = static_cast<LONG>(m_lastSelectionPointY);
+    pt.x = static_cast<LONG>(m_lastSelectionPointX);
 
     // replace the mouse cursor to reflect the slowdown.
     CPoint newCursorPos = ImageToClient(pt);
@@ -203,6 +209,8 @@ LRESULT CCroppingWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPar
   else
   {
     pt = ClientToImageCoords(cursorPos);
+    m_lastSelectionPointX = static_cast<float>(pt.x);
+    m_lastSelectionPointY = static_cast<float>(pt.y);
   }
 
   if(::GetCapture() == m_hWnd)
@@ -210,7 +218,6 @@ LRESULT CCroppingWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lPar
     UpdateSelection(pt.x, pt.y);
   }
 
-  m_lastSelectionPoint = pt;
   m_lastSelectionCursorPos = cursorPos;
   m_notify->OnCroppingPositionChanged(pt.x, pt.y);
   m_selectionEntrancy = false;
@@ -222,19 +229,12 @@ LRESULT CCroppingWindow::OnLButtonDown(UINT msg, WPARAM wParam, LPARAM lParam, B
   if(m_selectionEntrancy) return 0;
   m_selectionEntrancy = true;
 
-  POINT cursorPos = { 0 };
-	GetCursorPos(&cursorPos);
-  ScreenToClient(&cursorPos);
-  CPoint pt = ClientToImageCoords(cursorPos);
-
   if(::GetCapture() != m_hWnd)
   {
     SetCapture();
-    BeginSelection(pt.x, pt.y);
+    BeginSelection(static_cast<int>(m_lastSelectionPointX), static_cast<int>(m_lastSelectionPointY));
   }
 
-  m_lastSelectionPoint = pt;
-  m_lastSelectionCursorPos = cursorPos;
   m_selectionEntrancy = false;
 	return 0;
 }
@@ -258,7 +258,7 @@ void CCroppingWindow::BeginSelection(int x, int y)
 	ClearSelection();
 	m_hasSelection = true;
   m_selBegin = CPoint(x,y);
-  m_notify->OnCroppingSelectionChanged();
+  UpdateSelection(x,y);
 }
 
 void CCroppingWindow::UpdateSelection(int imagex, int imagey)

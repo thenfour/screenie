@@ -81,7 +81,8 @@ private:
 	bool m_hasSelection;
 	
   POINT m_selBegin;
-	CPoint m_lastSelectionPoint;// used for "slowing down" selection boxes...
+	float m_lastSelectionPointX;// used for "slowing down" selection boxes...
+	float m_lastSelectionPointY;
   CPoint m_lastSelectionCursorPos;// client coords
   bool m_selectionEntrancy;// to prevent re-entrancy with mouse handlers.
 
