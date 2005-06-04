@@ -63,6 +63,7 @@ public:
   }
   virtual void OnCroppingPositionChanged(int x, int y)// image coords
   {
+    SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
     m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
     SyncZoomWindowSelection();
   }
@@ -89,6 +90,7 @@ public:
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
+    COMMAND_ID_HANDLER(IDC_SELECTALL, OnSelectAll)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_CONFIGURE, OnConfigure)    
 
@@ -99,6 +101,8 @@ public:
 		DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 
+    DLGRESIZE_CONTROL(IDC_SELECTALL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+    DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_MOVE_Y | DLSZ_MOVE_X)
     DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
@@ -166,18 +170,31 @@ public:
     m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.OnSize(0,0,0,temp);
     m_zoomWnd.InvalidateRect(0);
+    OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
     m_zoomWnd.SetFactor(m_options.CroppingZoomFactor());
 
     SetForegroundWindow(*this);
+
+    SyncZoomWindowSelection();
 
 		return 0;
 	}
 
   void SyncZoomWindowSelection()
   {
-    RECT rc;
+    CRect rc;
     if(m_croppingWnd.GetSelection(rc))
     {
+      SetDlgItemText(IDC_SELECTIONSTATIC,
+        LibCC::Format("(%,%)-(%,%)|% x %")
+          .i(rc.left)
+          .i(rc.top)
+          .i(rc.right)
+          .i(rc.bottom)
+          .i(rc.Width())
+          .i(rc.Height())
+          .CStr()
+        );
       m_zoomWnd.UpdateBitmapSelectionBox(rc);
     }
     else
@@ -195,6 +212,12 @@ public:
 	{
 		CloseDialog(IDOK);
 
+		return 0;
+	}
+
+  LRESULT OnSelectAll(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+    m_croppingWnd.ClearSelection();
 		return 0;
 	}
 

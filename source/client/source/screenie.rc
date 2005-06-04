@@ -236,6 +236,8 @@ BEGIN
                     IDC_STATIC,109,7,222,16
     CONTROL         "",IDC_ZOOMFACTOR,"msctls_trackbar32",TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,7,17,102,12
+    LTEXT           "Selection:",IDC_SELECTIONSTATIC,7,195,102,16
+    DEFPUSHBUTTON   "Select All",IDC_SELECTALL,109,197,50,14
 END
 
 

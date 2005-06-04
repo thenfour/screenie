@@ -182,6 +182,9 @@ public:
     CPoint gridCount(clientRect.right / m_nFactor, clientRect.bottom / m_nFactor);
     gridCount.x /= 2;// because we draw the origin at half the width/height window position
     gridCount.y /= 2;
+    // make sure we draw the whole window.
+    gridCount.x += 2;
+    gridCount.y += 2;
     // subtract the gridcount in order to figure out the UL pixel we will draw.
     CPoint imgUL = m_ImageOrigin;
     imgUL.x -= gridCount.x;
@@ -218,7 +221,7 @@ public:
       (clientRect.bottom / 2) - ii.yHotspot,
       LoadCursor(0, IDC_CROSS));
 
-    m_dibOffscreen.Blit(hdc, 0, 0);
+    m_dibOffscreen.Blit(hdc, 0, 0, clientRect.right, clientRect.bottom);
 
     EndPaint(&paintStruct);
 
