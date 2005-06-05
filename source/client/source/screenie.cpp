@@ -25,7 +25,7 @@ LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
 	KBDLLHOOKSTRUCT* ks = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
 	LRESULT result = ::CallNextHookEx(g_keyboardHook, code, wParam, lParam);
 
-	if ((code == HC_ACTION) && !g_mainWindow.IsProcessing())
+	if (code == HC_ACTION)
 	{
 		if ((ks->vkCode == VK_SNAPSHOT) &&
 			((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN)))
@@ -40,7 +40,6 @@ LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-//	return ::CallNextHookEx(g_keyboardHook, code, wParam, lParam);
 	return result;
 }
 
@@ -54,32 +53,13 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	RECT display = { 0 };
 	if (g_mainWindow.Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))
 	{
-		NOTIFYICONDATA icondata = { 0 };
+		g_keyboardHook = ::SetWindowsHookEx(WH_KEYBOARD_LL, PrintScreenProc,
+			_Module.GetModuleInstance(), 0);
 
-		icondata.cbSize = sizeof(icondata);
-		icondata.hWnd = g_mainWindow;
-		icondata.uID = 0x1BADD00D;
-		icondata.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-		icondata.uCallbackMessage = CMainWindow::WM_NOTIFYICON;
-		icondata.uVersion = NOTIFYICON_VERSION;
-    _tcscpy(icondata.szTip, _T("Screenie Screen Capture Utility"));
-		icondata.hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
-			IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
-
-		if (::Shell_NotifyIcon(NIM_ADD, &icondata))
+		if (g_keyboardHook != NULL)
 		{
-			g_keyboardHook = ::SetWindowsHookEx(WH_KEYBOARD_LL, PrintScreenProc,
-				_Module.GetModuleInstance(), 0);
-
-			if (g_keyboardHook != NULL)
-			{
-				retval = theLoop.Run();
-			}
-
-			::Shell_NotifyIcon(NIM_DELETE, &icondata);
+			retval = theLoop.Run();
 		}
-
-		::DestroyIcon(icondata.hIcon);
 	}
 
 	_Module.RemoveMessageLoop();

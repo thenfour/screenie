@@ -40,6 +40,9 @@ void CStatusDlg::PrintMessage(const MessageType type, const tstd::tstring& desti
 		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), (type == MSG_ERROR) ? 1 : 0);
 		m_listView.SetItem(itemID, 1, LVIF_TEXT, message.c_str(), 0, 0, 0, 0);
 	}
+
+  m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
+  m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
 }
 
 //
@@ -49,8 +52,8 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	CenterWindow();
 
 	// set icons
-  if(m_hIcon) DeleteObject(m_hIcon);
-  if(m_hIconSmall) DeleteObject(m_hIconSmall);
+  if(m_hIcon) DestroyIcon(m_hIcon);
+  if(m_hIconSmall) DestroyIcon(m_hIconSmall);
 	m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
 	SetIcon(m_hIcon, TRUE);
@@ -76,7 +79,7 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 			m_listView.SetImageList(m_imageList, LVSIL_SMALL);
 
 			m_listView.AddColumn(TEXT("Destination"), 0);
-			m_listView.SetColumnWidth(0, 75);
+			m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
 
 			m_listView.AddColumn(TEXT("Message"), 1);
 			m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE_USEHEADER);

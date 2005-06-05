@@ -19,6 +19,31 @@
 // for StatusWindow, CStatusDialog
 #include "StatusDlg.hpp"
 
+
+// for entrancy issues around print screen handler & the destinations dialog & such:
+extern LONG g_GUIEntrancyRefs;
+
+
+// a hacky sort of critical section
+class ScopedGUIEntry
+{
+public:
+  ~ScopedGUIEntry()
+  {
+    InterlockedDecrement(&g_GUIEntrancyRefs);
+  }
+  bool Enter() const
+  {
+    if(InterlockedIncrement(&g_GUIEntrancyRefs) > 1)
+    {
+      // oops ref count greater than one. get out.
+      return false;
+    }
+    return true;
+  }
+};
+
+
 class CMainWindow : public CWindowImpl<CMainWindow>
 {
 public:
@@ -33,15 +58,21 @@ public:
   CMainWindow() :
     m_statusDialog(m_screenshotOptions)
   {
+    m_uTaskbarCreatedMsg = RegisterWindowMessage(_T("TaskbarCreated"));
+    m_iconData.hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
+		  IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
   }
-
-	bool IsProcessing() { return m_processing; }
+  ~CMainWindow()
+  {
+    DestroyIcon(m_iconData.hIcon);
+  }
 
 	BEGIN_MSG_MAP(CMainWindow)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_NOTIFYICON, OnNotifyIcon)
 		MESSAGE_HANDLER(WM_TAKESCREENSHOT, OnTakeScreenshot)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+		MESSAGE_HANDLER(m_uTaskbarCreatedMsg, OnTaskbarCreated)
 
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_ABOUT, OnAbout)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_CONFIGURE, OnConfigure)
@@ -56,6 +87,7 @@ public:
 	// message handlers
 	//
 
+	LRESULT OnTaskbarCreated(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
@@ -70,8 +102,12 @@ public:
   bool OnConfigure(const tstd::tstring& OKbuttonText);
 
 private:
-	bool m_processing;
-	CStatusDlg m_statusDialog;
+  UINT m_uTaskbarCreatedMsg;
+
+  bool CreateTrayIcon();
+  NOTIFYICONDATA m_iconData;
+
+  CStatusDlg m_statusDialog;
 	ScreenshotOptions m_screenshotOptions;
 };
 

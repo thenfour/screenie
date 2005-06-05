@@ -28,8 +28,8 @@ public:
 
 	~CDestinationDlg()
 	{
-    if(m_hIcon) DeleteObject(m_hIcon);
-    if(m_hIconSmall) DeleteObject(m_hIconSmall);
+    if(m_hIcon) DestroyIcon(m_hIcon);
+    if(m_hIconSmall) DestroyIcon(m_hIconSmall);
 	}
 
 	//ScreenshotOptions GetOptions() const

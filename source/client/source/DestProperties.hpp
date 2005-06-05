@@ -11,6 +11,7 @@
 
 #include "DestinationProperties.hpp"
 #include "ScreenshotDestination.hpp"
+#include "ScreenshotOptions.hpp"
 #include "utility.hpp"
 
 #include "DestinationPropertiesGeneral.hpp"
@@ -23,7 +24,7 @@ class CDestinationProperties :
 	public DestinationPropertySheet
 {
 public:
-	CDestinationProperties(ScreenshotDestination& destination,
+	CDestinationProperties(ScreenshotDestination& destination, ScreenshotOptions& options,
 		PCTSTR title = TEXT("Destination Properties"));
 	~CDestinationProperties();
 
@@ -51,6 +52,8 @@ private:
 	PropertyPageContainer m_propertyPages;
 	ScreenshotDestination::Type m_currentType;
 	ScreenshotDestination m_screenshotDestination;
+
+  ScreenshotOptions& m_options;
 };
 
 #endif

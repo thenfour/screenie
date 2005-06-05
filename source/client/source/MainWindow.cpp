@@ -19,6 +19,9 @@
 #include "utility.hpp"
 #include "destination.hpp"
 
+LONG g_GUIEntrancyRefs;
+
+
 BOOL CMainWindow::DisplayTrayMenu()
 {
 	CMenu contextMenu(AtlLoadMenu(IDM_CONTEXTMENU));
@@ -32,7 +35,6 @@ BOOL CMainWindow::DisplayTrayMenu()
 	trayMenu.TrackPopupMenu(TPM_LEFTALIGN, cursorPos.x, cursorPos.y, m_hWnd);
 
 	SendMessage(WM_NULL);
-
 	return TRUE;
 }
 
@@ -40,8 +42,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 {
 	if (!m_screenshotOptions.GetNumDestinations())
 		return FALSE;
-
-	m_processing = true;
 
 	RECT windowRect = { 0 };
 
@@ -75,7 +75,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 			}
 			else
 			{
-				m_processing = false;
 				return FALSE;
 			}
 		}
@@ -101,21 +100,25 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 					ProcessDestination(m_hWnd, m_statusDialog, destination, screenshot);
 			}
 		}
-
-		m_processing = false;
 	}
 
 	return TRUE;
 }
 
+LRESULT CMainWindow::OnTaskbarCreated(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+  CreateTrayIcon();
+  return 0;
+}
+
 LRESULT CMainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
+  CreateTrayIcon();
+
 	LoadOptionsFromRegistry(m_screenshotOptions, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
 
 	if (m_statusDialog.Create(m_hWnd, NULL))
 		m_statusDialog.ShowWindow(SW_HIDE);
-
-	m_processing = false;
 
 	return 0;
 }
@@ -125,33 +128,45 @@ LRESULT CMainWindow::OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	switch (lParam)
 	{
   case WM_LBUTTONDBLCLK:
-    OnConfigure(0,0,0,handled);
-    break;
+    {
+      ScopedGUIEntry ee;
+      if(ee.Enter())
+      {
+        OnConfigure(0,0,0,handled);
+      }
+      break;
+    }
   case WM_CONTEXTMENU:
 	case WM_RBUTTONUP:
 		{
-			DisplayTrayMenu();
+      ScopedGUIEntry ee;
+      if(ee.Enter())
+      {
+    	  DisplayTrayMenu();
+      }
 			break;
 		}
 	}
-
 	return 0;
 }
 
 LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
-	POINT cursorPos = { LOWORD(wParam), HIWORD(wParam) };
-	BOOL altDown = static_cast<BOOL>(lParam);
+  ScopedGUIEntry ee;
+  if(ee.Enter())
+  {
+	  POINT cursorPos = { LOWORD(wParam), HIWORD(wParam) };
+	  BOOL altDown = static_cast<BOOL>(lParam);
 
-	TakeScreenshot(cursorPos, altDown);
-
+  	TakeScreenshot(cursorPos, altDown);
+  }
 	return 0;
 
 }
 LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
 	SaveOptionsToRegistry(m_screenshotOptions, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
-
+  ::Shell_NotifyIcon(NIM_DELETE, &m_iconData);
 	return 0;
 }
 
@@ -166,18 +181,13 @@ LRESULT CMainWindow::OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handl
 LRESULT CMainWindow::OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
   OnConfigure(_T("Ok"));
-	return 0;
+  return 0;
 }
 
 bool CMainWindow::OnConfigure(const tstd::tstring& OKbuttonText)
 {
-	if (!IsDestinationsDialogVisible())
-	{
-		CDestinationDlg dialog(m_screenshotOptions, OKbuttonText);
-		return (TRUE == dialog.DoModal());
-	}
-
-	return true;
+	CDestinationDlg dialog(m_screenshotOptions, OKbuttonText);
+	return (TRUE == dialog.DoModal());
 }
 
 LRESULT CMainWindow::OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
@@ -186,4 +196,24 @@ LRESULT CMainWindow::OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handle
 	PostQuitMessage(0);
 
 	return 0;
+}
+
+bool CMainWindow::CreateTrayIcon()
+{
+  bool r = false;
+
+	m_iconData.cbSize = sizeof(m_iconData);
+	m_iconData.hWnd = m_hWnd;
+	m_iconData.uID = 0x1BADD00D;
+	m_iconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	m_iconData.uCallbackMessage = CMainWindow::WM_NOTIFYICON;
+	m_iconData.uVersion = NOTIFYICON_VERSION;
+  _tcscpy(m_iconData.szTip, _T("Screenie Screen Capture Utility"));
+
+	if (::Shell_NotifyIcon(NIM_ADD, &m_iconData))
+	{
+    r = true;
+  }
+
+  return r;
 }

@@ -19,12 +19,6 @@
 #include "codec.hpp"
 #include "libcc/registry.h"
 
-bool g_dialogVisible = false;
-
-bool IsDestinationsDialogVisible()
-{
-	return g_dialogVisible;
-}
 
 BOOL CDestinationDlg::PreTranslateMessage(MSG* pMsg)
 {
@@ -91,18 +85,20 @@ void CDestinationDlg::PopulateDestinationList()
 			m_listView.SetCheckState(itemIndex, destination.enabled);
 		}
 	}
+
+  // auto size those columns
+  m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
+  m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
 }
 
 LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	g_dialogVisible = true;
-
 	// center the dialog on the screen
 	CenterWindow();
 
 	// set icons
-  if(m_hIcon) DeleteObject(m_hIcon);
-  if(m_hIconSmall) DeleteObject(m_hIconSmall);
+  if(m_hIcon) DestroyIcon(m_hIcon);
+  if(m_hIconSmall) DestroyIcon(m_hIconSmall);
 	m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
 	SetIcon(m_hIcon, TRUE);
@@ -200,7 +196,7 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 
 	GetSpecialFolderPath(destination.general.path, CSIDL_MYPICTURES);
 
-	CDestinationProperties properties(destination, TEXT("Create New Destination"));
+	CDestinationProperties properties(destination, m_optionsCopy, TEXT("Create New Destination"));
 	if (properties.DoModal(m_hWnd) == IDOK)
 	{
 		destination = properties.GetDestination();
@@ -220,7 +216,7 @@ LRESULT CDestinationDlg::OnEditDestination(WORD /*wNotifyCode*/, WORD /*wID*/, H
 		ScreenshotDestination destination;
 		if (m_optionsCopy.GetDestination(destination, selectedIndex))
 		{
-			CDestinationProperties prop(destination, TEXT("Edit Destination"));
+			CDestinationProperties prop(destination, m_optionsCopy, TEXT("Edit Destination"));
 			if (prop.DoModal(m_hWnd) == IDOK)
 			{
 				m_optionsCopy.SetDestination(prop.GetDestination(), selectedIndex);
@@ -306,6 +302,4 @@ void CDestinationDlg::CloseDialog(bool bSaveOptions)
   }
 
   EndDialog(bSaveOptions ? TRUE : FALSE);
-
-  g_dialogVisible = false;
 }

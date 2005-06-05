@@ -8,6 +8,7 @@
 #define SCREENIE_DESTINATION_HPP
 
 #include "buffer.hpp"
+#include "utility.hpp"
 
 struct ScreenshotDestination
 {
@@ -29,12 +30,17 @@ struct ScreenshotDestination
 
 	struct General
 	{
-		General() { }
+    General() :
+      localTime(true)
+    {
+      id.CreateNew();
+    }
 		General(const General& copy) { operator=(copy); }
 		~General() { }
 
 		General& operator=(const General& rightHand)
 		{
+      id = rightHand.id;
 			type = rightHand.type;
 			name = rightHand.name;
 			imageFormat = rightHand.imageFormat;
@@ -44,6 +50,8 @@ struct ScreenshotDestination
 
 			return (*this);
 		}
+
+    Guid id;// unique id for this.
 
 		Type type;
 		tstd::tstring name;

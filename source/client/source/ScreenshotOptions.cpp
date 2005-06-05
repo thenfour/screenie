@@ -31,6 +31,7 @@ const TCHAR* KEY_DEST_GENERAL_TYPE = TEXT("Type");
 const TCHAR* KEY_DEST_GENERAL_IMAGEFORMAT = TEXT("Image Format");
 const TCHAR* KEY_DEST_GENERAL_FILENAMEFORMAT = TEXT("Filename Format");
 const TCHAR* KEY_DEST_GENERAL_PATH = TEXT("Path");
+const TCHAR* KEY_DEST_GENERAL_ID = _T("ID");
 
 const TCHAR* KEY_DEST_FTP_HOSTNAME = TEXT("FTP Hostname");
 const TCHAR* KEY_DEST_FTP_PORT = TEXT("FTP Port");
@@ -60,6 +61,10 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKe
 
 	key.GetDWORD(KEY_DEST_GENERAL_TYPE, &temp);
 	destination.general.type = static_cast<ScreenshotDestination::Type>(temp);
+
+  tstd::tstring sTemp;
+  key.GetString(KEY_DEST_GENERAL_ID, sTemp);
+  destination.general.id.Assign(sTemp);
 
 	key.GetString(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
 	key.GetString(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
@@ -178,6 +183,7 @@ bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegis
 	key.SetString(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
 	key.SetString(KEY_DEST_GENERAL_PATH, destination.general.path);
   key.SetDWORD(KEY_DEST_GENERAL_LOCALTIME, destination.general.localTime ? 1 : 0);
+  key.SetString(KEY_DEST_GENERAL_ID, destination.general.id.ToString());
 
 	////////////////////////////////////////
 	// image settings

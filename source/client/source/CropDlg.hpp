@@ -36,8 +36,8 @@ public:
 
 	~CCropDlg()
   {
-    if(m_hIcon) DeleteObject(m_hIcon);
-    if(m_hIconSmall) DeleteObject(m_hIconSmall);
+    if(m_hIcon) DestroyIcon(m_hIcon);
+    if(m_hIconSmall) DestroyIcon(m_hIconSmall);
   }
 
 	LRESULT OnMouseWheel(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -134,8 +134,8 @@ public:
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
 	  // set icons
-    if(m_hIcon) DeleteObject(m_hIcon);
-    if(m_hIconSmall) DeleteObject(m_hIconSmall);
+    if(m_hIcon) DestroyIcon(m_hIcon);
+    if(m_hIconSmall) DestroyIcon(m_hIconSmall);
 	  m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 		  IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
 	  SetIcon(m_hIcon, TRUE);
