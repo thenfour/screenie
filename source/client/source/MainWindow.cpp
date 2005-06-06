@@ -91,18 +91,48 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
       }
 		}
 
-		for (size_t i = 0; i < m_screenshotOptions.GetNumDestinations(); ++i)
+    unsigned threadID;
+    ThreadParams params;
+    params.options = m_screenshotOptions;// creates a copy for thread safety
+    params.pThis = this;
+    params.screenshot = screenshot;
+    HANDLE hThread = (HANDLE)_beginthreadex(0, 0, ProcessDestinationsThreadProc, &params, 0, &threadID);
+    while(WAIT_TIMEOUT == WaitForSingleObject(hThread, 0))
+    {
+      Sleep(1);
+      // cycle the message loop.
+      MSG msg;
+      while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+      {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+      }
+    }
+    CloseHandle(hThread);
+  }
+
+	return TRUE;
+}
+
+unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
+{
+  ThreadParams& params(*((ThreadParams*)p));
+  ScreenshotOptions& options(params.options);
+  CMainWindow* pThis(params.pThis);
+
+	for (size_t i = 0; i < options.GetNumDestinations(); ++i)
+	{
+		ScreenshotDestination destination;
+		if (options.GetDestination(destination, i))
 		{
-			ScreenshotDestination destination;
-			if (m_screenshotOptions.GetDestination(destination, i))
-			{
-				if (destination.enabled)
-					ProcessDestination(m_hWnd, m_statusDialog, destination, screenshot);
-			}
+			if (destination.enabled)
+      {
+        ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot);
+      }
 		}
 	}
 
-	return TRUE;
+  return 0;
 }
 
 LRESULT CMainWindow::OnTaskbarCreated(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)

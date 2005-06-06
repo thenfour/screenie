@@ -2,6 +2,40 @@
 #define SCREENIE_STATUSDLG_HPP
 
 #include "ScreenshotOptions.hpp"
+#include <vector>
+#include "polarlut.h"
+#include "animbitmap.h"
+
+
+class ProgressImages
+{
+public:
+  void InitializeProgressImages(CImageList& img, RgbPixel32 background, RgbPixel32 filled, RgbPixel32 unfilled);
+  int GetImageFromProgress(int pos, int total);
+private:
+  /*
+    this will hold linear from 0-perimiter.
+    assume that the image list indices will not change.
+  */
+  std::vector<int> m_images;
+  AngleLut<float> m_angles;
+
+  void DrawHLine(long x1, long x2, long y);
+  void DrawAlphaPixel(long cx, long cy, long x, long y, long f, long fmax);
+  RgbPixel32 PositionToColor(long x, long y);
+
+  // stuff that we persist between drawing calls
+  AnimBitmap<32>* m_bmp;
+  int m_i;
+
+  float m_pieBlurringSize;
+  int m_perimeter;
+  int m_diameter;
+  int m_radius;
+  RgbPixel32 m_background;
+  RgbPixel32 m_unfilled;
+  RgbPixel32 m_filled;
+};
 
 
 // interface for passing to things that d
@@ -28,8 +62,11 @@ class CStatusDlg :
 {
 private:
 	CImageList m_imageList;
+  ProgressImages m_progress;
 	CListViewCtrl m_listView;
   ScreenshotOptions& m_options;
+
+  CriticalSection m_cs;
 public:
 	enum { IDD = IDD_STATUS };
 
@@ -72,6 +109,18 @@ public:
 	void PrintMessage(const MessageType type, const tstd::tstring& destination,
 		const tstd::tstring& message);
 
+  struct Message
+  {
+    void SetProgress(int pos, int total)
+    {
+      pOwner->MessageSetProgress(this, pos, total);
+    }
+    CStatusDlg* pOwner;
+  };
+
+  // you don't have to create a Message for every item in the listview.  only ones that you need to deal with later.
+  Message* CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message);
+
 	//
 	// message handlers and whatnot
 	//
@@ -87,6 +136,22 @@ public:
 
   HICON m_hIcon;
   HICON m_hIconSmall;
+
+  void MessageSetProgress(Message* msg, int pos, int total)
+  {
+    LVFINDINFO fi = {0};
+    fi.flags = LVFI_PARAM;
+    fi.lParam = (LPARAM)msg;
+    int item = m_listView.FindItem(&fi, -1);
+    if(item != -1)
+    {
+      // it's valid.  first set the new image.
+      m_listView.SetItem(item, 0, LVIF_IMAGE, 0, m_progress.GetImageFromProgress(pos, total), 0, 0, 0);
+    }
+  }
+
+private:
+  std::vector<Message> m_messages;
 };
 
 #endif

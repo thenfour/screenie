@@ -126,6 +126,8 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 			try
 			{
 				Clipboard(hwnd).SetText(url);
+        status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
+          LibCC::Format("Copied URL to clipboard %").qs(url).Str());
 			}
 			catch (const Win32Exception& excp)
 			{
@@ -247,6 +249,8 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 			try
 			{
 				Clipboard(hwnd).SetBitmap(bitmapCopy);
+        status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
+          _T("Copied image to clipboard"));
 			}
 			catch (const Win32Exception& excp)
 			{

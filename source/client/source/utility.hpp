@@ -89,7 +89,28 @@ public:
     CoTaskMemFree(p);
     return ret;
   }
-
 };
+
+// RAII critsec class
+class CriticalSection
+{
+public:
+  CriticalSection() { InitializeCriticalSection(&m_cs); }
+  ~CriticalSection() { DeleteCriticalSection(&m_cs); }
+  bool Enter() { EnterCriticalSection(&m_cs); return true; }
+  bool Leave() { LeaveCriticalSection(&m_cs); return true; }
+
+  class ScopeLock
+  {
+  public:
+    ScopeLock(CriticalSection& x) : m_cs(x) { m_cs.Enter(); }
+    ~ScopeLock() { m_cs.Leave(); }
+  private:
+    CriticalSection& m_cs;
+  };
+private:
+  CRITICAL_SECTION m_cs;
+};
+
 
 #endif

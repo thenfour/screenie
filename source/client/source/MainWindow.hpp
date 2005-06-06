@@ -102,6 +102,17 @@ public:
   bool OnConfigure(const tstd::tstring& OKbuttonText);
 
 private:
+
+  struct ThreadParams
+  {
+    CMainWindow* pThis;
+    ScreenshotOptions options;
+    util::shared_ptr<Gdiplus::Bitmap> screenshot;
+  };
+
+  static unsigned __stdcall ProcessDestinationsThreadProc(void*);
+
+
   UINT m_uTaskbarCreatedMsg;
 
   bool CreateTrayIcon();

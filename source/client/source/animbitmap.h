@@ -1,4 +1,6 @@
 /*
+  Jun 05, 2005 carlc - added more rgbpixel helper crap
+
   Jun 30, 2004 carlc
   This is a class for "animated bitmaps".  Basically the idea is that you get easy low level
   access do a DIB and its meant to be drawn in frames.
@@ -11,6 +13,17 @@
 
 
 #include <windows.h>
+
+
+// compare 2 floating point numbers to see if they are in a certain range.
+template<typename Tl, typename Tr, typename Terr>
+inline bool xequals(const Tl& l, const Tr& r, const Terr& e)
+{
+  Tl d = l - r;
+  if(d < 0) d = -d;
+  if(d > e) return false;
+  return true;
+}
 
 template<long bpp>
 struct BitmapTypes
@@ -29,6 +42,56 @@ struct BitmapTypes<32>
 {
   typedef unsigned __int32 RgbPixel;
 };
+
+typedef BitmapTypes<32>::RgbPixel RgbPixel32;
+
+
+inline BYTE R(RgbPixel32 d)
+{
+  return static_cast<BYTE>((d & 0x00FF0000) >> 16);
+}
+
+inline BYTE G(RgbPixel32 d)
+{
+  return static_cast<BYTE>((d & 0x0000FF00) >> 8);
+}
+
+inline BYTE B(RgbPixel32 d)
+{
+  return static_cast<BYTE>((d & 0x000000FF));
+}
+
+inline RgbPixel32 MakeRgbPixel32(BYTE r, BYTE g, BYTE b)
+{
+  return static_cast<RgbPixel32>((r << 16) | (g << 8) | (b));
+}
+
+template<typename T>
+inline RgbPixel32 MakeRgbPixel32(const T& r, const T& g, const T& b)
+{
+  return MakeRgbPixel32(static_cast<BYTE>(r), static_cast<BYTE>(g), static_cast<BYTE>(b));
+}
+
+inline COLORREF RgbPixel32ToCOLORREF(RgbPixel32 x)
+{
+  return RGB(R(x), G(x), B(x));
+}
+
+inline RgbPixel32 COLORREFToRgbPixel32(COLORREF x)
+{
+  return MakeRgbPixel32(GetRValue(x), GetGValue(x), GetBValue(x));
+}
+
+inline RgbPixel32 MixColorsInt(long fa, long fmax, RgbPixel32 ca, RgbPixel32 cb)
+{
+  BYTE r, g, b;
+  long fmaxminusfa = fmax - fa;
+  r = static_cast<BYTE>(((fa * R(ca)) + (fmaxminusfa * R(cb))) / fmax);
+  g = static_cast<BYTE>(((fa * G(ca)) + (fmaxminusfa * G(cb))) / fmax);
+  b = static_cast<BYTE>(((fa * B(ca)) + (fmaxminusfa * B(cb))) / fmax);
+  return MakeRgbPixel32(r,g,b);
+}
+
 
 
 template<long Tbpp>
@@ -353,6 +416,18 @@ public:
   RgbPixel* GetBuffer()
   {
     return m_pbuf;
+  }
+
+  HBITMAP DetachHandle()
+  {
+    HBITMAP ret = m_bmp;
+    if(m_bmp)
+    {
+      SelectObject(m_offscreen, m_oldBitmap);
+      m_bmp = 0;
+      DeleteDC(m_offscreen);
+    }
+    return ret;
   }
 
 private:
