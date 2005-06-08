@@ -264,13 +264,20 @@ void CCroppingWindow::BeginSelection(int x, int y)
 void CCroppingWindow::UpdateSelection(int imagex, int imagey)
 {
 	RECT rectInvalidate;
-  GetScreenSelection(rectInvalidate);
-  ::InflateRect(&rectInvalidate, 5, 5);
+	RECT rectOldSelection;
+	RECT rectNewSelection;
+  GetScreenSelection(rectOldSelection);
+  ::InflateRect(&rectOldSelection, 1, 1);
 
  	m_selectionOrg.left = std::min<int>(imagex, m_selBegin.x);
 	m_selectionOrg.top = std::min<int>(imagey, m_selBegin.y);
 	m_selectionOrg.bottom = std::max<int>(imagey, m_selBegin.y);
 	m_selectionOrg.right = std::max<int>(imagex, m_selBegin.x);
+  CopyRect(&rectNewSelection, &m_selectionOrg);
+  ::InflateRect(&rectNewSelection, 1, 1);
+
+  // include the new rect in the invalidation
+  UnionRect(&rectInvalidate, &rectOldSelection, &rectNewSelection);
 
   m_notify->OnCroppingSelectionChanged();
 
