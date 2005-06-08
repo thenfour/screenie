@@ -22,6 +22,7 @@ bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const
 
 void DumpBitmap(Gdiplus::Bitmap& image, int x = 0, int y = 0);
 void DumpBitmap(HBITMAP img, int x = 0, int y = 0);
+void DumpIcon(HICON img, int x = 0, int y = 0);
 
 template<int T>
 void DumpBitmap(AnimBitmap<T>& img, int x = 0, int y = 0)

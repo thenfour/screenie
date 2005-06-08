@@ -3,6 +3,7 @@
 #include "stdafx.hpp"
 #include "resource.h"
 #include "geom.h"
+#include "image.hpp"
 
 #include "clipboard.hpp"
 #include "StatusDlg.hpp"
@@ -45,7 +46,7 @@ RgbPixel32 ProgressImages::PositionToColor(long x, long y)
   */
   // get the distance from i to the center of the blurring window.
   float aa = a + (m_pieBlurringSize / 2) - static_cast<float>(m_i);
-  if(aa < 0) return m_filled;
+  if(aa <= 0) return m_filled;
   if(aa > m_pieBlurringSize) return m_unfilled;
   // multiply by 100 because we are casting to integer
   return MixColorsInt(static_cast<long>(aa * 100.0f), static_cast<long>(m_pieBlurringSize * 100.0f), m_unfilled, m_filled);
@@ -67,7 +68,7 @@ void ProgressImages::InitializeProgressImages(CImageList& img, RgbPixel32 backgr
   // add 1 for complete coverage, to be on the safe side.
   m_angles.Resize(m_radius + 1, static_cast<float>(m_perimeter), 0);// the values returned from m_angles will be in the range 0-perimeter, or in other words, 0-m_images.size().
 
-  for(m_i = 0; m_i <= m_perimeter; m_i ++)
+  for(m_i = 0; m_i < m_perimeter; m_i ++)
   {
     m_bmp = new AnimBitmap<32>();
     m_bmp->SetSize(16, 16);
@@ -85,7 +86,7 @@ void ProgressImages::InitializeProgressImages(CImageList& img, RgbPixel32 backgr
 int ProgressImages::GetImageFromProgress(int pos, int total)
 {
   // pos / total = index / m_images.size();
-  int index = pos * m_images.size() / total;
+  int index = (int)(0.05f + (float)pos * (float)m_images.size() / (float)total);
   // bounds checking.
   if(index < 0) index = 0;
   if(index >= (int)m_images.size()) index = m_images.size() - 1;
@@ -124,7 +125,8 @@ void CStatusDlg::PrintMessage(const MessageType type, const tstd::tstring& desti
 	{
 		int itemID = m_listView.GetItemCount() + 1;
 
-		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), (type == MSG_ERROR) ? 1 : 0);
+		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), MessageTypeToIconIndex(type));
+		m_listView.SetItem(itemID, 0, LVIF_PARAM, 0, 0, 0, 0, 0);
 		m_listView.SetItem(itemID, 1, LVIF_TEXT, message.c_str(), 0, 0, 0, 0);
 	}
 
@@ -154,16 +156,24 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	// create and populate image list for message icons
 	if (m_imageList.Create(16, 16, ILC_COLOR32, 2, 0))
 	{
-		m_imageList.AddIcon(::LoadIcon(NULL, IDI_INFORMATION));
-		m_imageList.AddIcon(::LoadIcon(NULL, IDI_ERROR));
-    
-    m_progress.InitializeProgressImages(m_imageList,
-      COLORREFToRgbPixel32(m_listView.GetBkColor()),
-      MakeRgbPixel32(0,179,0),
-      MakeRgbPixel32(204,155,102) );
+		m_iconInfo = m_imageList.AddIcon(::LoadIcon(NULL, IDI_INFORMATION));
+    m_iconWarning = m_imageList.AddIcon(::LoadIcon(NULL, IDI_WARNING));
+		m_iconError = m_imageList.AddIcon(::LoadIcon(NULL, IDI_ERROR));
+
+    HICON hCheck = ::LoadIcon(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_CHECK));
+    m_iconCheck = m_imageList.AddIcon(hCheck);
+    DestroyIcon(hCheck);
 
     // set up the list view for messages
 		m_listView = GetDlgItem(IDC_MESSAGES);
+    
+    m_progress.InitializeProgressImages(m_imageList,
+      COLORREFToRgbPixel32(m_listView.GetBkColor()),
+      MakeRgbPixel32(222,123,16),
+      MakeRgbPixel32(0,40,86));
+
+      //COLORREFToRgbPixel32(GetSysColor(COLOR_ACTIVECAPTION)),
+      //COLORREFToRgbPixel32(GetSysColor(COLOR_GRADIENTACTIVECAPTION)) );
 
 		if (m_listView.IsWindow())
 		{
@@ -278,3 +288,28 @@ void CStatusDlg::CloseDialog(int nVal)
 	// this doesn't actually close the dialog box.
 	ShowWindow(SW_HIDE);
 }
+
+
+LPARAM CStatusDlg::CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message)
+{
+  CriticalSection::ScopeLock lock(m_cs);
+
+  LPARAM ret = m_nextMessageID;
+  m_nextMessageID ++;
+
+  // create the listview item.
+	if (m_listView.IsWindow())
+	{
+		int itemID = m_listView.GetItemCount() + 1;
+    itemID = m_listView.AddItem(itemID, 0, destination.c_str(), m_progress.GetImageFromProgress(0,1));
+		m_listView.SetItem(itemID, 1, LVIF_TEXT, message.c_str(), 0, 0, 0, 0);
+    m_listView.SetItem(itemID, 0, LVIF_PARAM, 0, 0, 0, 0, ret);
+	}
+
+  m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
+  m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
+
+  return ret;
+}
+
+

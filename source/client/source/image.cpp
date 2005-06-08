@@ -301,8 +301,28 @@ void DumpBitmap(HBITMAP himg, int x, int y)
   HDC dc = ::GetDC(0);
   HDC dcc = CreateCompatibleDC(dc);
   HBITMAP hOld = (HBITMAP)SelectObject(dcc, himg);
-  StretchBlt(dc, x, y, bi.bmWidth/2, bi.bmHeight/2, dcc, 0, 0, bi.bmWidth, bi.bmHeight, SRCCOPY);
+  StretchBlt(dc, x, y, bi.bmWidth, bi.bmHeight, dcc, 0, 0, bi.bmWidth, bi.bmHeight, SRCCOPY);
   SelectObject(dcc, hOld);
   DeleteDC(dcc);
   ::ReleaseDC(0,dc);
 }
+
+void DumpIcon(HICON img, int x, int y)
+{
+  HDC dc = ::GetDC(0);
+  ICONINFO ii;
+  GetIconInfo(img, &ii);
+
+  BITMAP bi;
+  GetObject(ii.hbmColor, sizeof(bi), &bi);
+
+  DumpBitmap(ii.hbmColor, x + bi.bmWidth, y);
+  DeleteObject(ii.hbmColor);
+  DumpBitmap(ii.hbmMask, x + bi.bmWidth + bi.bmWidth, y);
+  DeleteObject(ii.hbmMask);
+
+  DrawIcon(dc, x, y, img);
+  ::ReleaseDC(0,dc);
+}
+
+

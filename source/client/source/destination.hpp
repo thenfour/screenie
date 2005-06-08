@@ -14,15 +14,15 @@
 #include "ScreenshotDestination.hpp"
 
 bool ProcessDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image);
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 
 bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image);
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image);
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image);
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 bool ProcessEmailDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image);
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 
 #endif

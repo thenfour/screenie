@@ -44,8 +44,10 @@ bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
 // (or at least this portion) to allow for GUI responsiveness
 
 bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image)
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
+  LPARAM msgid = status.CreateProgressMessage(destination.general.name, _T(""));
+
 	WinInetHandle internet = ::InternetOpen("Screenie v1.0", INTERNET_OPEN_TYPE_DIRECT,
 		NULL, NULL, 0);
 
@@ -123,11 +125,16 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 
 		if (destination.ftp.copyURL)
 		{
+      if(usedClipboard)
+      {
+        status.PrintMessage(StatusWindow::MSG_WARNING, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+      }
 			try
 			{
 				Clipboard(hwnd).SetText(url);
         status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
           LibCC::Format("Copied URL to clipboard %").qs(url).Str());
+        usedClipboard = true;
 			}
 			catch (const Win32Exception& excp)
 			{
@@ -141,7 +148,7 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 }
 
 bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image)
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
 	bool success = false;
 
@@ -216,8 +223,13 @@ HBITMAP DuplicateScreenshotBitmap(HBITMAP sourceBitmap)
 }
 
 bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image)
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
+  if(usedClipboard)
+  {
+    status.PrintMessage(StatusWindow::MSG_WARNING, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+  }
+
 	if (!::OpenClipboard(hwnd))
 	{
 		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
@@ -249,8 +261,9 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 			try
 			{
 				Clipboard(hwnd).SetBitmap(bitmapCopy);
-        status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
+        status.PrintMessage(StatusWindow::MSG_CHECK, destination.general.name,
           _T("Copied image to clipboard"));
+        usedClipboard = true;
 			}
 			catch (const Win32Exception& excp)
 			{
@@ -276,27 +289,27 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 }
 
 bool ProcessEmailDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image)
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
 	return true;
 }
 
 bool ProcessDestination(HWND hwnd, StatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image)
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
 	switch (destination.general.type)
 	{
 		case ScreenshotDestination::TYPE_FILE:
-			return ProcessFileDestination(hwnd, status, destination, image);
+			return ProcessFileDestination(hwnd, status, destination, image, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_FTP:
-			return ProcessFtpDestination(hwnd, status, destination, image);
+			return ProcessFtpDestination(hwnd, status, destination, image, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_CLIPBOARD:
-			return ProcessClipboardDestination(hwnd, status, destination, image);
+			return ProcessClipboardDestination(hwnd, status, destination, image, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_EMAIL:
-			return ProcessEmailDestination(hwnd, status, destination, image);
+			return ProcessEmailDestination(hwnd, status, destination, image, usedClipboard);
 			break;
 	}
 

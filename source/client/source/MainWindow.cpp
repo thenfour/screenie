@@ -91,6 +91,12 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
       }
 		}
 
+    //for(int aoeu = 0; aoeu <= 110; aoeu ++)
+    //{
+    //  LPARAM id = m_statusDialog.CreateProgressMessage(_T("test"), LibCC::Format("%^%").i(aoeu).Str());
+    //  m_statusDialog.MessageSetProgress(id, aoeu, 100);
+    //}
+
     unsigned threadID;
     ThreadParams params;
     params.options = m_screenshotOptions;// creates a copy for thread safety
@@ -120,6 +126,7 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
   ScreenshotOptions& options(params.options);
   CMainWindow* pThis(params.pThis);
 
+  bool bUsedClipboard = false;// used to display warnings about copying things multiply to the clipboard
 	for (size_t i = 0; i < options.GetNumDestinations(); ++i)
 	{
 		ScreenshotDestination destination;
@@ -127,7 +134,7 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
 		{
 			if (destination.enabled)
       {
-        ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot);
+        ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, bUsedClipboard);
       }
 		}
 	}

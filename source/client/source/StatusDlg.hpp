@@ -44,14 +44,19 @@ struct StatusWindow
 	enum MessageType
 	{
 		MSG_INFO,
-		MSG_ERROR
+    MSG_WARNING,
+		MSG_ERROR,
+    MSG_CHECK
 	};
 
 	virtual ~StatusWindow() { }
 
 	virtual void ClearMessages() = 0;
-	virtual void PrintMessage(const MessageType type, const tstd::tstring& destination,
-		const tstd::tstring& message) = 0;
+	virtual void PrintMessage(const MessageType type, const tstd::tstring& destination, const tstd::tstring& message) = 0;
+  virtual LPARAM CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message) = 0;
+  virtual void MessageSetIcon(LPARAM msgID, const MessageType type) = 0;
+  virtual void MessageSetProgress(LPARAM msgID, int pos, int total) = 0;
+  virtual void MessageSetText(LPARAM msgID, const tstd::tstring& msg) = 0;
 };
 
 class CStatusDlg :
@@ -73,7 +78,8 @@ public:
   CStatusDlg(ScreenshotOptions& options) :
     m_options(options),
     m_hIconSmall(0),
-    m_hIcon(0)
+    m_hIcon(0),
+    m_nextMessageID(1)
   {
   }
 	virtual ~CStatusDlg()
@@ -109,17 +115,8 @@ public:
 	void PrintMessage(const MessageType type, const tstd::tstring& destination,
 		const tstd::tstring& message);
 
-  struct Message
-  {
-    void SetProgress(int pos, int total)
-    {
-      pOwner->MessageSetProgress(this, pos, total);
-    }
-    CStatusDlg* pOwner;
-  };
-
   // you don't have to create a Message for every item in the listview.  only ones that you need to deal with later.
-  Message* CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message);
+  LPARAM CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message);
 
 	//
 	// message handlers and whatnot
@@ -137,21 +134,69 @@ public:
   HICON m_hIcon;
   HICON m_hIconSmall;
 
-  void MessageSetProgress(Message* msg, int pos, int total)
+  void MessageSetIcon(LPARAM msgID, const MessageType type)
   {
-    LVFINDINFO fi = {0};
-    fi.flags = LVFI_PARAM;
-    fi.lParam = (LPARAM)msg;
-    int item = m_listView.FindItem(&fi, -1);
-    if(item != -1)
+    int item;
+    if(-1 != (item = MessageIDToItemID(msgID)))
     {
-      // it's valid.  first set the new image.
-      m_listView.SetItem(item, 0, LVIF_IMAGE, 0, m_progress.GetImageFromProgress(pos, total), 0, 0, 0);
+      m_listView.SetItem(item, 0, LVIF_IMAGE, 0, MessageTypeToIconIndex(type), 0, 0, 0);
+    }
+  }
+
+  void MessageSetProgress(LPARAM msgID, int pos, int total)
+  {
+    int item;
+    if(-1 != (item = MessageIDToItemID(msgID)))
+    {
+      int iimage = m_progress.GetImageFromProgress(pos, total);
+      if(pos >= total)
+      {
+        // 100% - use a special image.
+        iimage = MessageTypeToIconIndex(MSG_CHECK);
+      }
+      m_listView.SetItem(item, 0, LVIF_IMAGE, 0, iimage, 0, 0, 0);
+    }
+  }
+
+  void MessageSetText(LPARAM msgID, const tstd::tstring& msg)
+  {
+    int item;
+    if(-1 != (item = MessageIDToItemID(msgID)))
+    {
+      m_listView.SetItemText(item, 1, msg.c_str());
     }
   }
 
 private:
-  std::vector<Message> m_messages;
+  LPARAM m_nextMessageID;
+  int m_iconInfo;
+  int m_iconWarning;
+  int m_iconError;
+  int m_iconCheck;
+
+  int MessageIDToItemID(LPARAM msgID)
+  {
+    LVFINDINFO fi = {0};
+    fi.flags = LVFI_PARAM;
+    fi.lParam = msgID;
+    return m_listView.FindItem(&fi, -1);
+  }
+
+  int MessageTypeToIconIndex(const MessageType& t)
+  {
+    switch(t)
+    {
+    case MSG_INFO:
+      return m_iconInfo;
+    case MSG_WARNING:
+      return m_iconWarning;
+    case MSG_ERROR:
+      return m_iconError;
+    case MSG_CHECK:
+      return m_iconCheck;
+    }
+    return m_iconError;
+  }
 };
 
 #endif

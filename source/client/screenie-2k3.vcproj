@@ -322,6 +322,9 @@
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest">
 			<File
+				RelativePath=".\source\resources\check.ico">
+			</File>
+			<File
 				RelativePath=".\source\resources\header.bmp">
 			</File>
 			<File
@@ -338,6 +341,13 @@
 			</File>
 			<File
 				RelativePath=".\source\resources\watermark.bmp">
+			</File>
+		</Filter>
+		<Filter
+			Name="external"
+			Filter="">
+			<File
+				RelativePath=".\source\tr1\memory">
 			</File>
 		</Filter>
 	</Files>

@@ -55,6 +55,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_SCREENIE            ICON                    "resources\\screenie.ico"
+IDI_CHECK               ICON                    "resources\\check.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -363,7 +364,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
+ FILEVERSION 1,0,0,2
  PRODUCTVERSION 1,0,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -380,7 +381,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Screenie"
-            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "FileVersion", "1, 0, 0, 2"
             VALUE "InternalName", "screenie"
             VALUE "LegalCopyright", "Copyright 2003-2005 Carl Corcoran, Roger Clark"
             VALUE "OriginalFilename", "screenie.exe"

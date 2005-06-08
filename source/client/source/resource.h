@@ -2,7 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by screenie.rc
 //
-#define IDOK2                           3
 #define IDC_SELECTALL                   3
 #define IDI_SCREENIE                    4
 #define IDD_ABOUTBOX                    100
@@ -15,6 +14,8 @@
 #define IDS_FORMATDESCRIPTION           208
 #define IDD_CROPDLG                     209
 #define IDB_BITMAP2                     211
+#define IDI_ICON1                       212
+#define IDI_CHECK                       212
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -150,7 +151,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        212
+#define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         32782
 #define _APS_NEXT_CONTROL_VALUE         1051
 #define _APS_NEXT_SYMED_VALUE           101
