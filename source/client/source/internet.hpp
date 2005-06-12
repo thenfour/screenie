@@ -58,4 +58,25 @@ struct WinInetHandle
 	HINTERNET handle;
 };
 
+inline tstd::tstring InternetGetLastResponseInfoX(DWORD* pdwError = 0)
+{
+  DWORD size = 0;
+  TCHAR temp;
+  DWORD dwError;
+  InternetGetLastResponseInfo(&dwError, &temp, &size);
+  if(size < 100000)// sanity check
+  {
+    LibCC::Blob<TCHAR> buf;
+    size ++;
+    InternetGetLastResponseInfo(&dwError, buf.GetBuffer(size + 2), &size);
+    if(pdwError)
+    {
+      *pdwError = dwError;
+    }
+    return buf.GetBuffer();
+  }
+  return _T("internal error");
+}
+
+
 #endif

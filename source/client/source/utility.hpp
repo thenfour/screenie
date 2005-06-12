@@ -13,7 +13,7 @@
 // for tstd::tstring
 #include "tstdlib/tstring.hpp"
 
-bool MakeDestinationFilename(tstd::tstring& filename,
+bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTime, 
 	const tstd::tstring& mimeType, const tstd::tstring& formatString);
 
 tstd::tstring GetUniqueTemporaryFilename();
@@ -112,5 +112,40 @@ private:
   CRITICAL_SECTION m_cs;
 };
 
+struct Win32Handle
+{
+	Win32Handle(HANDLE h) : val(h) { }
+	Win32Handle(Win32Handle& copy) { operator=(copy); }
+
+	~Win32Handle()
+	{
+		if(val != NULL)
+      CloseHandle(val);
+	}
+
+	Win32Handle& operator=(Win32Handle& rhs)
+	{
+    val = rhs.val;
+    rhs.val = NULL;
+		return (*this);
+	}
+
+	Win32Handle& operator=(HANDLE rhs)
+	{
+		val = rhs;
+		return (*this);
+	}
+
+	HANDLE val;
+};
+
+// return false to cancel uploading
+// return true to continue
+typedef bool (*UploadFTPFileProgressProc_T)(DWORD completed, DWORD total, void* pUser);
+LibCC::Result UploadFTPFile(struct ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFile, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser);
+
 
 #endif
+
+
+

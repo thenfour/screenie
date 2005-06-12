@@ -40,44 +40,31 @@ bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
 	return true;
 }
 
-// FIXME: these WinInet calls block, and they stall processing. multithread the app
-// (or at least this portion) to allow for GUI responsiveness
+
+struct ProcessFtpDestination_Info
+{
+  StatusWindow* status;
+  LPARAM msgid;
+};
+
+bool ProcessFtpDestination_ProgressProc(DWORD completed, DWORD total, void* pUser)
+{
+  ProcessFtpDestination_Info& info(*((ProcessFtpDestination_Info*)pUser));
+  info.status->MessageSetProgress(info.msgid, static_cast<int>(completed), static_cast<int>(total));
+  return true;
+}
 
 bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
-  LPARAM msgid = status.CreateProgressMessage(destination.general.name, _T(""));
-
-	WinInetHandle internet = ::InternetOpen("Screenie v1.0", INTERNET_OPEN_TYPE_DIRECT,
-		NULL, NULL, 0);
-
-	if (internet.handle == NULL)
-	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-			TEXT("FTP: Can't initialize internet connection"));
-
-		return false;
-	}
-
-	WinInetHandle ftp = ::InternetConnect(internet.handle,
-		destination.ftp.hostname.c_str(), destination.ftp.port,
-		destination.ftp.username.c_str(), destination.ftp.DecryptPassword().c_str(),
-		INTERNET_SERVICE_FTP, 0, 0);
-
-	if (ftp.handle == NULL)
-	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-			LibCC::Format(TEXT("FTP: Can't connect to server: %")).s(GetWinInetErrorString()).Str());
-
-		return false;
-	}
+  LPARAM msgid = status.CreateProgressMessage(destination.general.name, _T("Initiating FTP transfer"));
+  status.MessageSetProgress(msgid, 0, 1);// set it to 0%
 
 	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
 	if (!GetTransformedScreenshot(destination.image, image, transformedImage))
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-			TEXT("FTP: Can't resize screenshot!"));
-
+    status.MessageSetText(msgid, TEXT("FTP: Can't resize screenshot!"));
+    status.MessageSetIcon(msgid, StatusWindow::MSG_ERROR);
 		return false;
 	}
 
@@ -85,43 +72,38 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 	tstd::tstring temporaryFilename = GetUniqueTemporaryFilename();
 	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename))
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-			TEXT("FTP: Can't save image to temporary file!"));
-
+    status.MessageSetText(msgid, TEXT("FTP: Can't save image to temporary file!"));
+    status.MessageSetIcon(msgid, StatusWindow::MSG_ERROR);
 		return false;
 	}
 
-	if (!::FtpSetCurrentDirectory(ftp.handle, destination.ftp.remotePath.c_str()))
-	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-			LibCC::Format(TEXT("FTP: Can't navigate to remote path \"%\" (%)")).s(destination.ftp.remotePath).s(GetWinInetErrorString()).Str());
-
-		return false;
-	}
-
-	// format the filename based on the current time
-
+	// format the destination filename based on the current time
 	SYSTEMTIME systemTime = { 0 };
-	::GetSystemTime(&systemTime);
+  destination.GetNowBasedOnTimeSettings(systemTime);
+	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat);
 
-	tstd::tstring filename = FormatFilename(systemTime, destination.general.filenameFormat);
+  LibCC::Result r;
+  // set up info struct to pass to the progress proc.
+  ProcessFtpDestination_Info info;
+  info.msgid = msgid;
+  info.status = &status;
+  if(!(r = UploadFTPFile(destination, temporaryFilename, remoteFileName, 4000, ProcessFtpDestination_ProgressProc, &info)))
+  {
+    status.MessageSetIcon(msgid, StatusWindow::MSG_ERROR);
+    status.MessageSetText(msgid, r.str());
+    return false;
+  }
 
-	if (!::FtpPutFile(ftp.handle, temporaryFilename.c_str(), filename.c_str(),
-		FTP_TRANSFER_TYPE_BINARY, 0))
-	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
-			TEXT("FTP: Can't upload image to server!"));
+  // delete the temp file
+  DeleteFile(temporaryFilename.c_str());
 
-		return false;
-	}
-
-	status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
-		TEXT("FTP: Uploaded screenshot to server."));
+  status.MessageSetText(msgid, TEXT("Upload complete."));
+  status.MessageSetIcon(msgid, StatusWindow::MSG_CHECK);
 
 	if (!destination.ftp.resultURL.empty())
 	{
-		tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(filename).Str();
-		status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name, url);
+		tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
+    status.MessageSetText(msgid, url);
 
 		if (destination.ftp.copyURL)
 		{
@@ -129,6 +111,7 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
       {
         status.PrintMessage(StatusWindow::MSG_WARNING, destination.general.name, _T("Warning: Overwriting clipboard contents"));
       }
+
 			try
 			{
 				Clipboard(hwnd).SetText(url);
@@ -157,7 +140,6 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	{
 		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
 			LibCC::Format(TEXT("File: folder \"%\" doesn't exist")).s(destination.general.path).Str());
-
 		return false;
 	}
 
@@ -167,14 +149,13 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	{
 		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
 			LibCC::Format(TEXT("File: can't get screenshot data!")).s(destination.general.path).Str());
-
 		return false;
 	}
 
 	// let's get the filename and format it.
 
 	SYSTEMTIME systemTime = { 0 };
-	::GetSystemTime(&systemTime);
+  destination.GetNowBasedOnTimeSettings(systemTime);
 
 	tstd::tstring filename = FormatFilename(systemTime, destination.general.filenameFormat);
 	tstd::tstring fullPath = LibCC::Format(TEXT("%\\%")).s(destination.general.path).s(filename).Str();
@@ -182,7 +163,7 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	// do the deed
 	if (SaveImageToFile(*transformedScreenshot, destination.general.imageFormat, fullPath))
 	{
-		status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
+    status.PrintMessage(StatusWindow::MSG_CHECK, destination.general.name,
 			LibCC::Format(TEXT("File: saved image to %\\%")).s(destination.general.path).s(filename).Str());
 	}
 	else

@@ -139,6 +139,15 @@ namespace LibCC
     {
     }
 
+
+    explicit Blob(size_t size) :
+      m_p(_StaticBufferSupport ? m_StaticBuffer : 0),
+      m_sizeAllocated(_StaticBufferSupport ? _StaticBufferSize : 0),
+      m_sizeReported(0)
+    {
+      Alloc(size);
+    }
+
     ~Blob()
     {
       Free();

@@ -193,6 +193,18 @@ struct ScreenshotDestination
 	Ftp ftp;
 	Email email;
 
+  void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
+  {
+    if(general.localTime)
+    {
+	    ::GetLocalTime(&st);
+    }
+    else
+    {
+	    ::GetSystemTime(&st);
+    }
+  }
+
 	static tstd::tstring TypeToString(Type type)
 	{
 		switch (type)
