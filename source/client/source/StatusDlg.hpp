@@ -41,22 +41,30 @@ private:
 // interface for passing to things that d
 struct StatusWindow
 {
-	enum MessageType
+	enum MessageIcon
 	{
 		MSG_INFO,
     MSG_WARNING,
 		MSG_ERROR,
-    MSG_CHECK
+    MSG_CHECK,
+    MSG_PROGRESS
 	};
+  enum MessageType
+  {
+    ITEM_GENERAL,
+    ITEM_FTP,
+    ITEM_FILE
+  };
 
 	virtual ~StatusWindow() { }
 
-	virtual void ClearMessages() = 0;
-	virtual void PrintMessage(const MessageType type, const tstd::tstring& destination, const tstd::tstring& message) = 0;
-  virtual LPARAM CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message) = 0;
-  virtual void MessageSetIcon(LPARAM msgID, const MessageType type) = 0;
+  virtual void ClearMessages() = 0;
+  virtual LPARAM CreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T("")) = 0;
+
+  virtual void MessageSetIcon(LPARAM msgID, const MessageIcon icon) = 0;
   virtual void MessageSetProgress(LPARAM msgID, int pos, int total) = 0;
   virtual void MessageSetText(LPARAM msgID, const tstd::tstring& msg) = 0;
+  virtual void MessageSetURL(LPARAM msgID, const tstd::tstring& url) = 0;
 };
 
 class CStatusDlg :
@@ -71,6 +79,13 @@ private:
 	CListViewCtrl m_listView;
   ScreenshotOptions& m_options;
 
+  static const short ID_COPYURL = 4000;
+  static const short ID_COPYMESSAGE = 4001;
+  static const short ID_CLEAR = 4002;
+  static const short ID_EXPLORE = 4003;
+  static const short ID_OPENFILE = 4004;
+  static const short ID_OPENURL = 4005;
+
   CriticalSection m_cs;
 public:
 	enum { IDD = IDD_STATUS };
@@ -78,8 +93,7 @@ public:
   CStatusDlg(ScreenshotOptions& options) :
     m_options(options),
     m_hIconSmall(0),
-    m_hIcon(0),
-    m_nextMessageID(1)
+    m_hIcon(0)
   {
   }
 	virtual ~CStatusDlg()
@@ -97,7 +111,17 @@ public:
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_CHAR, OnChar)
 		NOTIFY_HANDLER(IDC_MESSAGES, NM_RCLICK, OnRightClick)
-		COMMAND_ID_HANDLER(ID_STATUSCONTEXTMENU_COPYTOCLIPBOARD, OnCopy)
+
+    NOTIFY_HANDLER(IDC_MESSAGES, LVN_DELETEALLITEMS, OnDeleteAllItems)
+    NOTIFY_HANDLER(IDC_MESSAGES, LVN_DELETEITEM, OnDeleteItem)
+
+    COMMAND_ID_HANDLER(ID_COPYURL, OnCopyURL)
+    COMMAND_ID_HANDLER(ID_COPYMESSAGE, OnCopyMessage)
+    COMMAND_ID_HANDLER(ID_CLEAR, OnClear)
+    COMMAND_ID_HANDLER(ID_EXPLORE, OnExplore)
+    COMMAND_ID_HANDLER(ID_OPENFILE, OnOpenFile)
+    COMMAND_ID_HANDLER(ID_OPENURL, OnOpenURL)
+
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		CHAIN_MSG_MAP(CDialogResize<CStatusDlg>)
 	END_MSG_MAP()
@@ -112,11 +136,12 @@ public:
 	//
 
 	void ClearMessages();
-	void PrintMessage(const MessageType type, const tstd::tstring& destination,
-		const tstd::tstring& message);
+  LPARAM CreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T(""));
 
-  // you don't have to create a Message for every item in the listview.  only ones that you need to deal with later.
-  LPARAM CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message);
+  void MessageSetIcon(LPARAM msgID, const MessageIcon icon);
+  void MessageSetProgress(LPARAM msgID, int pos, int total);
+  void MessageSetText(LPARAM msgID, const tstd::tstring& msg);
+  void MessageSetURL(LPARAM msgID, const tstd::tstring& url);
 
 	//
 	// message handlers and whatnot
@@ -128,61 +153,42 @@ public:
 	LRESULT OnChar(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 	LRESULT OnRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
-	LRESULT OnCopy(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+
+  LRESULT OnOpenURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+  LRESULT OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+  LRESULT OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+  LRESULT OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+
+  LRESULT OnDeleteAllItems(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
+  LRESULT OnDeleteItem(int idCtrl, LPNMHDR pnmh, BOOL& bHandled);
 
   HICON m_hIcon;
   HICON m_hIconSmall;
 
-  void MessageSetIcon(LPARAM msgID, const MessageType type)
-  {
-    int item;
-    if(-1 != (item = MessageIDToItemID(msgID)))
-    {
-      m_listView.SetItem(item, 0, LVIF_IMAGE, 0, MessageTypeToIconIndex(type), 0, 0, 0);
-    }
-  }
-
-  void MessageSetProgress(LPARAM msgID, int pos, int total)
-  {
-    int item;
-    if(-1 != (item = MessageIDToItemID(msgID)))
-    {
-      int iimage = m_progress.GetImageFromProgress(pos, total);
-      if(pos >= total)
-      {
-        // 100% - use a special image.
-        iimage = MessageTypeToIconIndex(MSG_CHECK);
-      }
-      m_listView.SetItem(item, 0, LVIF_IMAGE, 0, iimage, 0, 0, 0);
-    }
-  }
-
-  void MessageSetText(LPARAM msgID, const tstd::tstring& msg)
-  {
-    int item;
-    if(-1 != (item = MessageIDToItemID(msgID)))
-    {
-      m_listView.SetItemText(item, 1, msg.c_str());
-    }
-  }
-
 private:
-  LPARAM m_nextMessageID;
   int m_iconInfo;
   int m_iconWarning;
   int m_iconError;
   int m_iconCheck;
 
-  int MessageIDToItemID(LPARAM msgID)
+  /*
+    Stuff for dealing with the LPARAM for each item.
+  */
+  struct ItemSpec
   {
-    LVFINDINFO fi = {0};
-    fi.flags = LVFI_PARAM;
-    fi.lParam = msgID;
-    return m_listView.FindItem(&fi, -1);
-  }
+    MessageType type;
+    tstd::tstring url;
+  };
 
-  int MessageTypeToIconIndex(const MessageType& t)
+  int MessageIDToItemID(LPARAM msgID);
+  ItemSpec* MessageIDToItemSpec(LPARAM msgID);// returns 0 if not found.
+  ItemSpec* ItemToItemSpec(int id);// returns 0 if not found.
+  ItemSpec* GetSelectedItemSpec();// returns 0 if not found.
+
+  int MessageIconToIconIndex(const MessageIcon& t)
   {
     switch(t)
     {
@@ -194,6 +200,8 @@ private:
       return m_iconError;
     case MSG_CHECK:
       return m_iconCheck;
+    case MSG_PROGRESS:
+      return m_progress.GetImageFromProgress(0,1);// just return 0%
     }
     return m_iconError;
   }

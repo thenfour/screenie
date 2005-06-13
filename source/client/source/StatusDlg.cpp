@@ -60,7 +60,7 @@ void ProgressImages::InitializeProgressImages(CImageList& img, RgbPixel32 backgr
   m_diameter = 14;
   m_radius = 7;
   m_pieBlurringSize = 2;
-  m_perimeter = static_cast<int>(pi * m_diameter);
+  m_perimeter = static_cast<int>(GetPI() * m_diameter);
   m_background = background;
   m_images.clear();
   m_images.reserve(m_perimeter+1);
@@ -113,28 +113,27 @@ void CStatusDlg::ClearMessages()
   CriticalSection::ScopeLock lock(m_cs);
 
   if (m_listView.IsWindow())
+  {
 		m_listView.DeleteAllItems();
+  }
 }
 
-void CStatusDlg::PrintMessage(const MessageType type, const tstd::tstring& destination,
-	const tstd::tstring& message)
+LRESULT CStatusDlg::OnDeleteAllItems(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 {
-  CriticalSection::ScopeLock lock(m_cs);
-
-	if (m_listView.IsWindow())
-	{
-		int itemID = m_listView.GetItemCount() + 1;
-
-		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), MessageTypeToIconIndex(type));
-		m_listView.SetItem(itemID, 0, LVIF_PARAM, 0, 0, 0, 0, 0);
-		m_listView.SetItem(itemID, 1, LVIF_TEXT, message.c_str(), 0, 0, 0, 0);
-	}
-
-  m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
-  m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
+  bHandled = TRUE;
+  // tell the listview to call OnDeleteItem() for every single item in it.
+  return FALSE;
 }
 
-//
+LRESULT CStatusDlg::OnDeleteItem(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
+{
+  bHandled = TRUE;
+  NMLISTVIEW& nmlv(*((NMLISTVIEW*)pnmh));
+  ItemSpec* p = reinterpret_cast<ItemSpec*>(m_listView.GetItemData(nmlv.iItem));
+  delete p;
+  return 0;
+}
+
 
 LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
@@ -224,23 +223,131 @@ LRESULT CStatusDlg::OnChar(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, 
 
 LRESULT CStatusDlg::OnRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 {
-	OnCopy(0, 0, 0, bHandled);
+  CriticalSection::ScopeLock lock(m_cs);
+  NMITEMACTIVATE* itemActivate = reinterpret_cast<NMITEMACTIVATE*>(pnmh);
+  ItemSpec* spec = 0;
+  if(itemActivate->iItem != -1)
+  {
+    spec = ItemToItemSpec(itemActivate->iItem);
+  }
 
-	NMITEMACTIVATE* itemActivate = reinterpret_cast<NMITEMACTIVATE*>(pnmh);
+	CMenu menu;
+  menu.CreatePopupMenu();
+  int pos = 0;
 
-	CMenu contextMenu(AtlLoadMenu(IDM_CONTEXTMENU));
-	CMenuHandle listMenu = contextMenu.GetSubMenu(2);
+  if(spec)
+  {
+    switch(spec->type)
+    {
+    default:
+    case ITEM_GENERAL:
+      break;
+    case ITEM_FTP:
+      menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
+      menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open URL..."), ID_OPENURL));
+      break;
+    case ITEM_FILE:
+      menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy path"), ID_COPYURL));
+      menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Explore..."), ID_EXPLORE));
+      menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open file..."), ID_OPENFILE));
+      break;
+    }
+  }  
+  // append global items
+  if(pos > 0)
+  {
+    menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
+  }
+  menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
+  menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
 
 	POINT cursorPos = { 0 };
 	::GetCursorPos(&cursorPos);
-
-	listMenu.TrackPopupMenu(TPM_LEFTALIGN, cursorPos.x, cursorPos.y, m_hWnd);
+	menu.TrackPopupMenu(0, cursorPos.x, cursorPos.y, m_hWnd);
 
 	return 0;
 }
 
-LRESULT CStatusDlg::OnCopy(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT CStatusDlg::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+  ClearMessages();
+  return 0;
+}
+
+LRESULT CStatusDlg::OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+  CriticalSection::ScopeLock lock(m_cs);
+  ItemSpec* p = GetSelectedItemSpec();
+  if(!p)
+  {
+    return 0;
+  }
+  tstd::tstring cmdLine = LibCC::Format("explorer /select, %").qs(p->url).Str();
+
+  PROCESS_INFORMATION pi;
+  STARTUPINFO si;
+  GetStartupInfo(&si);
+  LibCC::Blob<TCHAR> stupidBullshit(cmdLine.size() + 1);
+  _tcscpy(stupidBullshit.GetBuffer(), cmdLine.c_str());
+  if(CreateProcess(0, stupidBullshit.GetBuffer(), 0, 0, FALSE, 0, 0, 0, &si, &pi))
+  {
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+  }
+
+  return 0;
+}
+
+LRESULT CStatusDlg::OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+  CriticalSection::ScopeLock lock(m_cs);
+  ItemSpec* p = GetSelectedItemSpec();
+  if(!p)
+  {
+    return 0;
+  }
+  ShellExecute(m_hWnd, _T("open"), p->url.c_str(), NULL, NULL, SW_SHOW);
+  return 0;
+}
+
+LRESULT CStatusDlg::OnOpenURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+  CriticalSection::ScopeLock lock(m_cs);
+  ItemSpec* p = GetSelectedItemSpec();
+  if(!p)
+  {
+    return 0;
+  }
+  ShellExecute(m_hWnd, _T("open"), p->url.c_str(), NULL, NULL, SW_SHOW);
+  return 0;
+}
+
+LRESULT CStatusDlg::OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+  CriticalSection::ScopeLock lock(m_cs);
+  ItemSpec* p = GetSelectedItemSpec();
+  if(!p)
+  {
+    return 0;
+  }
+
+  try
+	{
+    Clipboard(m_hWnd).SetText(p->url);
+	}
+	catch (const Win32Exception& excp)
+	{
+#ifdef _DEBUG
+		MessageBox(excp.What().c_str(), TEXT("Clipboard Error"),
+			MB_OK | MB_ICONERROR);
+#endif
+	}
+	return 0;
+}
+
+LRESULT CStatusDlg::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+  CriticalSection::ScopeLock lock(m_cs);
 	LVITEM item = { 0 };
 
 	TCHAR textBuffer[1024] = { 0 };
@@ -290,26 +397,100 @@ void CStatusDlg::CloseDialog(int nVal)
 }
 
 
-LPARAM CStatusDlg::CreateProgressMessage(const tstd::tstring& destination, const tstd::tstring& message)
+LPARAM CStatusDlg::CreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url)
 {
   CriticalSection::ScopeLock lock(m_cs);
+  LPARAM ret = 0;
 
-  LPARAM ret = m_nextMessageID;
-  m_nextMessageID ++;
-
-  // create the listview item.
 	if (m_listView.IsWindow())
 	{
 		int itemID = m_listView.GetItemCount() + 1;
-    itemID = m_listView.AddItem(itemID, 0, destination.c_str(), m_progress.GetImageFromProgress(0,1));
-		m_listView.SetItem(itemID, 1, LVIF_TEXT, message.c_str(), 0, 0, 0, 0);
-    m_listView.SetItem(itemID, 0, LVIF_PARAM, 0, 0, 0, 0, ret);
-	}
+    ItemSpec* newSpec = new ItemSpec;
+    ret = reinterpret_cast<LPARAM>(newSpec);
 
-  m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
-  m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
+    newSpec->type = type;
+    newSpec->url = url;
+
+		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), MessageIconToIconIndex(icon));
+		m_listView.SetItemData(itemID, ret);
+		m_listView.SetItemText(itemID, 1, message.c_str());
+
+    m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
+    m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
+	}
 
   return ret;
 }
 
+void CStatusDlg::MessageSetIcon(LPARAM msgID, const MessageIcon icon)
+{
+  int item;
+  if(-1 != (item = MessageIDToItemID(msgID)))
+  {
+    m_listView.SetItem(item, 0, LVIF_IMAGE, 0, MessageIconToIconIndex(icon), 0, 0, 0);
+  }
+}
 
+void CStatusDlg::MessageSetProgress(LPARAM msgID, int pos, int total)
+{
+  int item;
+  if(-1 != (item = MessageIDToItemID(msgID)))
+  {
+    int iimage = m_progress.GetImageFromProgress(pos, total);
+    if(pos >= total)
+    {
+      // 100% - use a special image.
+      iimage = MessageIconToIconIndex(MSG_CHECK);
+    }
+    m_listView.SetItem(item, 0, LVIF_IMAGE, 0, iimage, 0, 0, 0);
+  }
+}
+
+void CStatusDlg::MessageSetText(LPARAM msgID, const tstd::tstring& msg)
+{
+  int item;
+  if(-1 != (item = MessageIDToItemID(msgID)))
+  {
+    m_listView.SetItemText(item, 1, msg.c_str());
+  }
+}
+
+int CStatusDlg::MessageIDToItemID(LPARAM msgID)
+{
+  LVFINDINFO fi = {0};
+  fi.flags = LVFI_PARAM;
+  fi.lParam = msgID;
+  return m_listView.FindItem(&fi, -1);
+}
+
+CStatusDlg::ItemSpec* CStatusDlg::ItemToItemSpec(int id)
+{
+  if(id < m_listView.GetItemCount() && id >= 0)
+  {
+    return reinterpret_cast<ItemSpec*>(m_listView.GetItemData(id));
+  }
+  return 0;
+}
+
+CStatusDlg::ItemSpec* CStatusDlg::MessageIDToItemSpec(LPARAM msgID)
+{
+  if(-1 == MessageIDToItemID(msgID))
+  {
+    return 0;
+  }
+  return reinterpret_cast<ItemSpec*>(msgID);
+}
+
+void CStatusDlg::MessageSetURL(LPARAM msgID, const tstd::tstring& url)
+{
+  ItemSpec* pItem = MessageIDToItemSpec(msgID);
+  if(pItem)
+  {
+    pItem->url = url;
+  }
+}
+
+CStatusDlg::ItemSpec* CStatusDlg::GetSelectedItemSpec()
+{
+  return ItemToItemSpec(m_listView.GetSelectedIndex());
+}

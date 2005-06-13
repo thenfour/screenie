@@ -7,7 +7,10 @@
 #pragma once
 
 
-#define pi (3.1416f)
+inline float GetPI()
+{
+  return (3.1416f);
+}
 
 /*
   the lookup table holds values for -r,-r to r,r
@@ -79,7 +82,7 @@ public:
   inline static void GetAdHocPosition(long& x, long& y, Tr angle, const Tr& radius, const Tr& maxval, const Tr& rotation)
   {
     angle -= rotation;
-    angle = angle * (pi*2) / maxval;// convert to a scale of 0-2pi
+    angle = angle * (GetPI() * 2) / maxval;// convert to a scale of 0-2pi
     x = static_cast<long>(radius * cosf(angle));
     y = static_cast<long>(radius * sinf(angle));
   }
@@ -90,7 +93,7 @@ public:
     Tr a;
     if(x != 0)
     {
-      a = atanf(static_cast<float>(abs(y))/abs(x)) / (2*pi);
+      a = atanf(static_cast<float>(abs(y))/abs(x)) / (2 * GetPI());
     }
     else
     {

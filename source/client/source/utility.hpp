@@ -144,6 +144,82 @@ struct Win32Handle
 typedef bool (*UploadFTPFileProgressProc_T)(DWORD completed, DWORD total, void* pUser);
 LibCC::Result UploadFTPFile(struct ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFile, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser);
 
+#ifdef UNICODE
+typedef tagMENUITEMINFOW tagMENUITEMINFO; 
+#else
+typedef tagMENUITEMINFOA tagMENUITEMINFO;
+#endif
+
+struct MenuItemInfo :
+  public tagMENUITEMINFO
+{
+  // initialize with a separator
+  MenuItemInfo()
+  {
+  }
+
+  MenuItemInfo(const MenuItemInfo& rhs)
+  {
+    MENUITEMINFO* plhs = this;
+    const MENUITEMINFO* prhs = &rhs;
+    memcpy(plhs, prhs, sizeof(MENUITEMINFO));
+    if(rhs.dwTypeData == rhs.m_string.GetBuffer())
+    {
+      StringCopy(rhs.m_string.GetBuffer());
+      dwTypeData = m_string.GetBuffer();
+    }
+  }
+
+  MenuItemInfo(const MENUITEMINFO& rhs)
+  {
+    MENUITEMINFO* plhs = this;
+    memcpy(plhs, &rhs, sizeof(MENUITEMINFO));
+  }
+
+  operator MENUITEMINFO*()
+  {
+    return this;
+  }
+
+  MenuItemInfo& operator =(const MENUITEMINFO& rhs)
+  {
+    MENUITEMINFO* plhs = this;
+    memcpy(plhs, &rhs, sizeof(MENUITEMINFO));
+  }
+
+  // stores a string in the instance
+  TCHAR* StringCopy(const tstd::tstring& text)
+  {
+    m_string.Alloc(text.size() + 1);
+    _tcscpy(m_string.GetBuffer(), text.c_str());
+    return m_string.GetBuffer();
+  }
+
+  // creates a new separator item
+  static MenuItemInfo CreateSeparator()
+  {
+    MenuItemInfo ret;
+    ret.cbSize = sizeof(MENUITEMINFO);
+    ret.fMask = MIIM_TYPE | MIIM_ID;
+    ret.fType = MFT_SEPARATOR; 
+    return ret;
+  }
+
+  // creates a new normal text item
+  static MenuItemInfo CreateText(const tstd::tstring& text, UINT uCmd)
+  {
+    MenuItemInfo ret;
+    ret.cbSize = sizeof(MENUITEMINFO);
+    ret.fMask = MIIM_STRING | MIIM_FTYPE | MIIM_ID;
+    ret.fType = MFT_STRING;
+    ret.wID = uCmd;
+    ret.dwTypeData = ret.StringCopy(text);
+    return ret;
+  }
+
+protected:
+  LibCC::Blob<TCHAR> m_string;// why blob?  because freaking menuitem structs take non-const strings, so this is the easiest way to be good-bear
+};
 
 #endif
 

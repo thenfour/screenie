@@ -443,11 +443,6 @@ BEGIN
         MENUITEM "&Edit...",                    ID_LISTCONTEXTMENU_EDIT
         MENUITEM "&Remove",                     ID_LISTCONTEXTMENU_REMOVE
     END
-    POPUP "Status Context Menu"
-    BEGIN
-        MENUITEM "&Copy\tCtrl+C",               ID_STATUSCONTEXTMENU_COPYTOCLIPBOARD
-
-    END
 END
 
 

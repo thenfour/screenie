@@ -57,7 +57,7 @@ bool ProcessFtpDestination_ProgressProc(DWORD completed, DWORD total, void* pUse
 bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
-  LPARAM msgid = status.CreateProgressMessage(destination.general.name, _T("Initiating FTP transfer"));
+  LPARAM msgid = status.CreateMessage(StatusWindow::MSG_PROGRESS, StatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));
   status.MessageSetProgress(msgid, 0, 1);// set it to 0%
 
 	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
@@ -102,26 +102,27 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 
 	if (!destination.ftp.resultURL.empty())
 	{
-		tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
-    status.MessageSetText(msgid, url);
+    tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
+    status.MessageSetText(msgid, LibCC::Format("Uploaded to: %").s(url).Str());
+    status.MessageSetURL(msgid, url);
 
 		if (destination.ftp.copyURL)
 		{
       if(usedClipboard)
       {
-        status.PrintMessage(StatusWindow::MSG_WARNING, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+        status.CreateMessage(StatusWindow::MSG_WARNING, StatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
       }
 
 			try
 			{
 				Clipboard(hwnd).SetText(url);
-        status.PrintMessage(StatusWindow::MSG_INFO, destination.general.name,
+        status.CreateMessage(StatusWindow::MSG_INFO, StatusWindow::ITEM_GENERAL, destination.general.name,
           LibCC::Format("Copied URL to clipboard %").qs(url).Str());
         usedClipboard = true;
 			}
 			catch (const Win32Exception& excp)
 			{
-				status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+				status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(excp.What()).Str());
 			}
 		}
@@ -138,7 +139,7 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	// let's see if the directory they want us to save to even exists.
 	if (!::PathFileExists(destination.general.path.c_str()))
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+    status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 			LibCC::Format(TEXT("File: folder \"%\" doesn't exist")).s(destination.general.path).Str());
 		return false;
 	}
@@ -147,7 +148,7 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	util::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
 	if (!GetTransformedScreenshot(destination.image, image, transformedScreenshot))
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 			LibCC::Format(TEXT("File: can't get screenshot data!")).s(destination.general.path).Str());
 		return false;
 	}
@@ -163,12 +164,12 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	// do the deed
 	if (SaveImageToFile(*transformedScreenshot, destination.general.imageFormat, fullPath))
 	{
-    status.PrintMessage(StatusWindow::MSG_CHECK, destination.general.name,
-			LibCC::Format(TEXT("File: saved image to %\\%")).s(destination.general.path).s(filename).Str());
+    status.CreateMessage(StatusWindow::MSG_CHECK, StatusWindow::ITEM_FILE, destination.general.name,
+			LibCC::Format(TEXT("File: saved image to %")).qs(fullPath).Str(), fullPath);
 	}
 	else
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+    status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 			TEXT("File: couldn't save image to disk"));
 
 		return false;
@@ -208,12 +209,12 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 {
   if(usedClipboard)
   {
-    status.PrintMessage(StatusWindow::MSG_WARNING, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+    status.CreateMessage(StatusWindow::MSG_WARNING, StatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
   }
 
 	if (!::OpenClipboard(hwnd))
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 			TEXT("Clipboard: Can't get clipboard access!"));
 
 		return false;
@@ -221,7 +222,7 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 
 	if (!::EmptyClipboard())
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 			TEXT("Clipboard: Can't empty previous clipboard contents!"));
 
 		return false;
@@ -242,25 +243,25 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 			try
 			{
 				Clipboard(hwnd).SetBitmap(bitmapCopy);
-        status.PrintMessage(StatusWindow::MSG_CHECK, destination.general.name,
+        status.CreateMessage(StatusWindow::MSG_CHECK, StatusWindow::ITEM_GENERAL, destination.general.name,
           _T("Copied image to clipboard"));
         usedClipboard = true;
 			}
 			catch (const Win32Exception& excp)
 			{
-				status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+				status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 					LibCC::Format(TEXT("Clipboard: Can't copy image: %")).s(excp.What()).Str());
 			}
 		}
 		else
 		{
-			status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+			status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 				TEXT("Clipboard: Can't get clipboard-friendly image data!"));
 		}
 	}
 	else
 	{
-		status.PrintMessage(StatusWindow::MSG_ERROR, destination.general.name,
+		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
 			LibCC::Format(TEXT("File: can't get screenshot data!")).s(destination.general.path).Str());
 	}
 
