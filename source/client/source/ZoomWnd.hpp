@@ -208,7 +208,8 @@ public:
     {
       CRect rcSelection(ImageToClient(m_selection.TopLeft()), ImageToClient(m_selection.BottomRight()));
       CRect rcTemp(ClientToImage(rcSelection.TopLeft()), ClientToImage(rcSelection.BottomRight()));
-      DrawFocusRect(m_dibOffscreen.GetDC(), &rcSelection);
+      //DrawFocusRect(m_dibOffscreen.GetDC(), &rcSelection);
+      m_dibOffscreen.DrawSelectionRectSafe<8,64>(0, rcSelection);
     }
 
     // draw cross-hair

@@ -14,7 +14,6 @@
 #define IDS_FORMATDESCRIPTION           208
 #define IDD_CROPDLG                     209
 #define IDB_BITMAP2                     211
-#define IDI_ICON1                       212
 #define IDI_CHECK                       212
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
@@ -44,6 +43,8 @@
 #define IDC_FTP_COPYURL                 1013
 #define IDC_FILENAME_LOCAL              1013
 #define IDC_FTP_PORT                    1014
+#define IDC_SHOWSTATUS2                 1014
+#define IDC_AUTOSTART                   1014
 #define IDC_FTP_HOSTNAME                1015
 #define IDC_FTP_REMOTEPATH              1016
 #define IDC_GENERAL_NAME                1017

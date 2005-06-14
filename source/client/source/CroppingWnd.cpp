@@ -137,7 +137,13 @@ LRESULT CCroppingWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& h
 	int height = clientRect.bottom - clientRect.top;
 
   m_dibStretched.Blit(m_dibOffscreen, 0, 0);
-  DrawSelectionBox(m_dibOffscreen.GetDC());
+	if(m_hasSelection)
+	{
+    //DrawSelectionBox(m_dibOffscreen.GetDC());
+	  RECT rcSelection;
+    GetScreenSelection(rcSelection);
+    m_dibOffscreen.DrawSelectionRectSafe<8,64>(0, rcSelection);
+  }
   m_dibOffscreen.Blit(dc, 0, 0, width, height);
 
 	EndPaint(&paintStruct);
@@ -147,15 +153,16 @@ LRESULT CCroppingWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& h
 
 void CCroppingWindow::DrawSelectionBox(HDC dc)
 {
-	if(m_hasSelection)
-	{
-	  RECT rcSelection;
-    GetScreenSelection(rcSelection);
-    rcSelection.bottom += 0;
-    rcSelection.right += 0;
-    rcSelection.left += 0;
-    DrawFocusRect(dc, &rcSelection);
-	}
+	//if(m_hasSelection)
+	//{
+	//  RECT rcSelection;
+ //   GetScreenSelection(rcSelection);
+ //   rcSelection.bottom += 0;
+ //   rcSelection.right += 0;
+ //   rcSelection.left += 0;
+
+ //   DrawFocusRect(dc, &rcSelection);
+	//}
 }
 
 // returns the amount to move the virtual cursor during a constrained move, based on a pixel mouse cursor delta
@@ -267,14 +274,14 @@ void CCroppingWindow::UpdateSelection(int imagex, int imagey)
 	RECT rectOldSelection;
 	RECT rectNewSelection;
   GetScreenSelection(rectOldSelection);
-  ::InflateRect(&rectOldSelection, 1, 1);
+  ::InflateRect(&rectOldSelection, 5, 5);
 
  	m_selectionOrg.left = std::min<int>(imagex, m_selBegin.x);
 	m_selectionOrg.top = std::min<int>(imagey, m_selBegin.y);
 	m_selectionOrg.bottom = std::max<int>(imagey, m_selBegin.y);
 	m_selectionOrg.right = std::max<int>(imagex, m_selBegin.x);
   CopyRect(&rectNewSelection, &m_selectionOrg);
-  ::InflateRect(&rectNewSelection, 1, 1);
+  ::InflateRect(&rectNewSelection, 5, 5);
 
   // include the new rect in the invalidation
   UnionRect(&rectInvalidate, &rectOldSelection, &rectNewSelection);
