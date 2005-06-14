@@ -140,6 +140,8 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 		CheckDlgButton(IDC_CONFIRM, BST_CHECKED);
 	if (m_optionsCopy.ShowStatus())
 		CheckDlgButton(IDC_SHOWSTATUS, BST_CHECKED);
+  if (m_optionsCopy.AutoStartup())
+		CheckDlgButton(IDC_AUTOSTART, BST_CHECKED);
 
   SetForegroundWindow(*this);
 
@@ -258,18 +260,21 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 
 	switch (wID)
 	{
-		case IDC_SHOWSTATUS:
- 			m_optionsCopy.ShowStatus(checked);
-			break;
-		case IDC_CONFIRM:
-			m_optionsCopy.ConfirmOptions(checked);
-			break;
-		case IDC_CROPPING:
-			m_optionsCopy.ShowCropWindow(checked);
-			break;
-		case IDC_INCLUDECURSOR:
-			m_optionsCopy.IncludeCursor(checked);
-			break;
+  case IDC_AUTOSTART:
+    m_optionsCopy.AutoStartup(checked);
+		break;
+	case IDC_SHOWSTATUS:
+ 		m_optionsCopy.ShowStatus(checked);
+		break;
+	case IDC_CONFIRM:
+		m_optionsCopy.ConfirmOptions(checked);
+		break;
+	case IDC_CROPPING:
+		m_optionsCopy.ShowCropWindow(checked);
+		break;
+	case IDC_INCLUDECURSOR:
+		m_optionsCopy.IncludeCursor(checked);
+		break;
 	}
 
 	return 0;

@@ -20,7 +20,8 @@ public:
 	  m_showStatus(true),
 	  m_confirmOptions(false),
 	  m_showCropWindow(true),
-    m_croppingZoomFactor(2)
+    m_croppingZoomFactor(2),
+    m_autoStartup(true)
   {
   }
 
@@ -28,6 +29,7 @@ public:
 	{
 		m_destinations = copy.m_destinations;
 
+    m_autoStartup = copy.m_autoStartup;
 		m_includeCursor = copy.m_includeCursor;
 		m_showStatus = copy.m_showStatus;
 		m_confirmOptions = copy.m_confirmOptions;
@@ -56,6 +58,7 @@ public:
 
 		m_destinations = rightHand.m_destinations;
 
+    m_autoStartup = rightHand.m_autoStartup;
 		m_includeCursor = rightHand.m_includeCursor;
 		m_showStatus = rightHand.m_showStatus;
 		m_confirmOptions = rightHand.m_confirmOptions;
@@ -79,6 +82,9 @@ public:
 
   int CroppingZoomFactor() const { return m_croppingZoomFactor; }
   void CroppingZoomFactor(int n) { m_croppingZoomFactor = n; }
+
+  bool AutoStartup() const { return m_autoStartup; }
+  void AutoStartup(bool b) { m_autoStartup = b; }
 
 	bool ShowStatus() { return m_showStatus; }
 	void ShowStatus(bool newval) { m_showStatus = newval; }
@@ -172,6 +178,7 @@ private:
 
   int m_croppingZoomFactor;
 
+	bool m_autoStartup;
 	bool m_includeCursor;
 	bool m_showStatus;
 	bool m_confirmOptions;

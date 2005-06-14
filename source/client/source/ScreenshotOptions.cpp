@@ -152,6 +152,11 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
       options.CroppingZoomFactor(nTemp);
     }
 
+    {
+      LibCC::RegistryKey autoStartKey(root, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
+      options.AutoStartup(autoStartKey.ValueExists(_T("Screenie")));
+    }
+
     WINDOWPLACEMENT wpTemp;
     if(MainKey2[KEY_CONFIGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
     {
@@ -255,6 +260,21 @@ bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName
 		MainKey.SetDWORD(KEY_CONFIRMOPTIONS, options.ConfirmOptions());
 		MainKey.SetDWORD(KEY_SHOWSTATUS, options.ShowStatus());
 		MainKey.SetDWORD(KEY_SHOWCROPPINGWINDOW, options.ShowCropWindow());
+
+    {
+      LibCC::RegistryKey autoStartKey(root, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
+      if(options.AutoStartup())
+      {
+        TCHAR fileName[1024];
+        GetModuleFileName(NULL, fileName, 1024);
+        autoStartKey.SetValue(_T("Screenie"), fileName);
+      }
+      else
+      {
+        // make sure it's not in the registry.
+        autoStartKey.DeleteValue(_T("Screenie"));
+      }
+    }
 
     MainKey2[KEY_CROPPINGZOOMFACTOR] = options.CroppingZoomFactor();
 

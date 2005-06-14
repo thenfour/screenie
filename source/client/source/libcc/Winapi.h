@@ -103,9 +103,9 @@ namespace LibCC
   inline LONG RegSetValueExStringX( HKEY hKey, const Char* lpValueName, DWORD Reserved, DWORD dwType, const Char* strX)
   {
     std::wstring valueName;
+    std::wstring strW;
     if(lpValueName)
     {
-      std::wstring strW;
       StringCopy(valueName, lpValueName);
       StringCopy(strW, strX);
     }
