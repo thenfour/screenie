@@ -61,7 +61,9 @@ public:
 
 	BEGIN_MSG_MAP(CCroppingWindow)
 		MESSAGE_HANDLER(WM_SIZE, OnSize)
+		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
+		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
@@ -69,6 +71,8 @@ public:
 
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnTimer(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 
   CPoint ClientToImageCoords(CPoint x);
   CPoint ImageToClient(CPoint p);
@@ -79,7 +83,10 @@ public:
 
 private:
 	bool m_hasSelection;
-	
+
+  static const int patternFrequency = 8;
+  int m_selectionOffset;
+
   POINT m_selBegin;
 	float m_lastSelectionPointX;// used for "slowing down" selection boxes...
 	float m_lastSelectionPointY;
@@ -89,8 +96,6 @@ private:
 	RECT m_selectionOrg;// 2005-05-30 carl : changed this from screen coords to picture coords.
 
   void GetScreenSelection(RECT& rc);
-
-  void DrawSelectionBox(HDC dc);
 
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
   AnimBitmap<32> m_dibOriginal;

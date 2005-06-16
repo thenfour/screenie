@@ -150,12 +150,14 @@ public:
     ::DestroyWindow(GetDlgItem(IDC_IMAGE));
     m_croppingWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_IMAGE);
 
-    DlgResize_Init(true, true, WS_CLIPCHILDREN);
+    // create zoom window
+    rcImage;
+    ::GetWindowRect(GetDlgItem(IDC_ZOOM), &rcImage);
+    ScreenToClient(&rcImage);
+    ::DestroyWindow(GetDlgItem(IDC_ZOOM));
+    m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_ZOOM);
 
-    // set up zoom slider
-    HWND hSlider = GetDlgItem(IDC_ZOOMFACTOR);
-    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, 16));
-    SendMessage(hSlider, TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
+    DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
     // Load window placement settings.
     if(m_options.HaveCroppingPlacement())
@@ -163,13 +165,18 @@ public:
       SetWindowPlacement(&m_options.GetCroppingPlacement());
     }
 
-    BOOL temp;
-    m_croppingWnd.OnSize(0,0,0,temp);
-    m_croppingWnd.InvalidateRect(0);
+    // set up zoom slider
+    HWND hSlider = GetDlgItem(IDC_ZOOMFACTOR);
+    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, 16));
+    SendMessage(hSlider, TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
 
-    m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
-    m_zoomWnd.OnSize(0,0,0,temp);
-    m_zoomWnd.InvalidateRect(0);
+    BOOL temp;
+    //m_croppingWnd.OnSize(0,0,0,temp);
+    //m_croppingWnd.InvalidateRect(0);
+
+    //m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
+    //m_zoomWnd.OnSize(0,0,0,temp);
+    //m_zoomWnd.InvalidateRect(0);
     OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
     m_zoomWnd.SetFactor(m_options.CroppingZoomFactor());
 

@@ -17,7 +17,8 @@ CCroppingWindow::CCroppingWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, ICrop
   m_bitmap(bitmap),
   m_hasSelection(false),
   m_notify(pNotify == 0 ? this : pNotify),
-  m_selectionEntrancy(false)
+  m_selectionEntrancy(false),
+  m_selectionOffset(0)
 {
   CopyImage(m_dibOriginal, *bitmap);
 }
@@ -87,6 +88,12 @@ CPoint CCroppingWindow::ImageToClient(CPoint p)
   return ret;
 }
 
+LRESULT CCroppingWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+  this->SetTimer(0, 120);
+  return 0;
+}
+
 // returns the selection rect in screen coords (relative to client)
 void CCroppingWindow::GetScreenSelection(RECT& rc)
 {
@@ -142,7 +149,7 @@ LRESULT CCroppingWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& h
     //DrawSelectionBox(m_dibOffscreen.GetDC());
 	  RECT rcSelection;
     GetScreenSelection(rcSelection);
-    m_dibOffscreen.DrawSelectionRectSafe<8,64>(0, rcSelection);
+    m_dibOffscreen.DrawSelectionRectSafe<patternFrequency, 64>(m_selectionOffset, rcSelection);
   }
   m_dibOffscreen.Blit(dc, 0, 0, width, height);
 
@@ -151,18 +158,21 @@ LRESULT CCroppingWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& h
 	return 0;
 }
 
-void CCroppingWindow::DrawSelectionBox(HDC dc)
+LRESULT CCroppingWindow::OnTimer(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
-	//if(m_hasSelection)
-	//{
-	//  RECT rcSelection;
- //   GetScreenSelection(rcSelection);
- //   rcSelection.bottom += 0;
- //   rcSelection.right += 0;
- //   rcSelection.left += 0;
-
- //   DrawFocusRect(dc, &rcSelection);
-	//}
+  if(m_hasSelection)
+  {
+    m_selectionOffset ++;
+    if(m_selectionOffset >= patternFrequency)
+    {
+      m_selectionOffset = 0;
+    }
+	  RECT rectInvalidate;
+    GetScreenSelection(rectInvalidate);
+    ::InflateRect(&rectInvalidate, 5, 5);
+    RedrawWindow(&rectInvalidate, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+  }
+  return 0;
 }
 
 // returns the amount to move the virtual cursor during a constrained move, based on a pixel mouse cursor delta

@@ -343,7 +343,7 @@ public:
 
   inline static BYTE InvertColorantForSelection(const BYTE& x, int offset)
   {
-    int ret = (255 - x) + offset;
+    int ret = /*(255 - x) +*/x + offset;
     if(ret < 0) ret = 256 - ret;
     if(ret > 255) ret -= 256;
     return static_cast<BYTE>(ret);
@@ -358,6 +358,33 @@ public:
       );
   }
 
+  // "skip" lets us make this for either vertical or horizontal lines.  skip=1 = horizontal.  skip=m_x = vertical.
+  template<int patternFreq, int colorOffset>// templated for efficiency.
+  void DrawSelectionWithOffset(int patternOffset, RgbPixel32* startPixel, RgbPixel32* endPixel, int skip)
+  {
+    const int tickSize = patternFreq / 2;
+    RgbPixel32* start = startPixel + (patternOffset*skip);
+    RgbPixel32* p = start;
+    int totalPixels = (endPixel - startPixel) / skip;
+    int count = 0;
+    int i;
+    for(;;)
+    {
+      for(i = 0; i < tickSize; i ++, count ++, p += skip)
+      {
+        if(count >= totalPixels) return;
+        if(p >= endPixel) p = startPixel;
+        *p = InvertColorForSelection(*p, colorOffset);
+      }
+      for(i = 0; i < tickSize; i ++, count ++, p += skip)
+      {
+        if(count >= totalPixels) return;
+        if(p >= endPixel) p = startPixel;
+        *p = InvertColorForSelection(*p, -colorOffset);
+      }
+    }
+  }
+
   template<int patternFreq, int colorOffset>// templated for efficiency.
   void DrawSelectionHLineSafe(int patternOffset, int y, int xleft, int xright)
   {
@@ -365,26 +392,9 @@ public:
     if(y >= m_y) return;
     if(xleft < 0) xleft = 0;
     if(xright >= m_x) xright = m_x - 1;
-
-    const int tickSize = patternFreq / 2;
-    RgbPixel32* buf = &m_pbuf[(y * m_x) + xleft];
-    RgbPixel32* dest = buf + xright - xleft;
-    int i;
-    for(;;)
-    {
-      for(i = 0; i < tickSize; i ++)
-      {
-        if(buf >= dest) return;
-        *buf = InvertColorForSelection(*buf, colorOffset);
-        buf ++;
-      }
-      for(i = 0; i < tickSize; i ++)
-      {
-        if(buf >= dest) return;
-        *buf = InvertColorForSelection(*buf, -colorOffset);
-        buf ++;
-      }
-    }
+    RgbPixel32* leftMostPixel = &m_pbuf[(y * m_x) + xleft];
+    RgbPixel32* rightMostPixel = leftMostPixel + xright - xleft;
+    DrawSelectionWithOffset<patternFreq, colorOffset>(patternOffset, leftMostPixel, rightMostPixel, 1);
   }
 
   template<int patternFreq, int colorOffset>// templated for efficiency.
@@ -394,26 +404,9 @@ public:
     if(x >= m_x) return;
     if(ytop < 0) ytop = 0;
     if(ybottom >= m_y) ybottom = m_y - 1;
-
-    const int tickSize = patternFreq / 2;
-    RgbPixel32* buf = &m_pbuf[(ytop * m_x) + x];
-    RgbPixel32* dest = buf + ((ybottom - ytop) * m_x);
-    int i;
-    for(;;)
-    {
-      for(i = 0; i < tickSize; i ++)
-      {
-        if(buf >= dest) return;
-        *buf = InvertColorForSelection(*buf, colorOffset);
-        buf += m_x;
-      }
-      for(i = 0; i < tickSize; i ++)
-      {
-        if(buf >= dest) return;
-        *buf = InvertColorForSelection(*buf, -colorOffset);
-        buf += m_x;
-      }
-    }
+    RgbPixel32* topMostPixel = &m_pbuf[(ytop * m_x) + x];
+    RgbPixel32* bottomMostPixel = topMostPixel + ((ybottom - ytop) * m_x);
+    DrawSelectionWithOffset<patternFreq, colorOffset>(patternOffset, topMostPixel, bottomMostPixel, m_x);
   }
 
   template<int patternFreq, int colorOffset>
@@ -421,8 +414,8 @@ public:
   {
     // the formula for color is inverted, plus or minus 20 (with wrap) on each colorant.
     DrawSelectionHLineSafe<patternFreq, colorOffset>(patternOffset, rc.top, rc.left, rc.right);
-    DrawSelectionHLineSafe<patternFreq, colorOffset>(patternOffset, rc.bottom, rc.left, rc.right);
-    DrawSelectionVLineSafe<patternFreq, colorOffset>(patternOffset, rc.left, rc.top, rc.bottom);
+    DrawSelectionHLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.bottom, rc.left, rc.right);
+    DrawSelectionVLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.left, rc.top, rc.bottom);
     DrawSelectionVLineSafe<patternFreq, colorOffset>(patternOffset, rc.right, rc.top, rc.bottom);
   }
 

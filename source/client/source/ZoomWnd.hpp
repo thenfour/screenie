@@ -25,12 +25,15 @@ class CZoomWindow :
 public:
 	DECLARE_WND_CLASS("ScreenieCropperWnd")
 
+  static const int patternFrequency = 8;
+
   // IZoomWindowEvents methods
   void OnZoomScaleFactorChanged(int factor) { }
 
   CZoomWindow(Gdiplus::Bitmap* bitmap, IZoomWindowEvents* notify) :
     m_nFactor(1),
-    m_notify(notify == 0 ? this : notify)
+    m_notify(notify == 0 ? this : notify),
+    m_patternOffset(0)
 	{
     m_ImageOrigin.x = 0;
     m_ImageOrigin.y = 0;
@@ -72,21 +75,37 @@ public:
 		InvalidateRect(NULL, FALSE);
   }
 
-	BEGIN_MSG_MAP(CCroppingWindow)
+	BEGIN_MSG_MAP(CZoomWindow)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
+		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_SIZE, OnSize)
 	END_MSG_MAP()
 
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 	{
+    SetTimer(0, 120);
 		return 0;
 	}
 
   int GetFactor() const
   {
     return m_nFactor;
+  }
+
+  LRESULT OnTimer(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+  {
+    if(m_haveSelection)
+    {
+      m_patternOffset ++;
+      if(m_patternOffset >= patternFrequency)
+      {
+        m_patternOffset = 0;
+      }
+      RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+    }
+    return 0;
   }
 
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -208,8 +227,7 @@ public:
     {
       CRect rcSelection(ImageToClient(m_selection.TopLeft()), ImageToClient(m_selection.BottomRight()));
       CRect rcTemp(ClientToImage(rcSelection.TopLeft()), ClientToImage(rcSelection.BottomRight()));
-      //DrawFocusRect(m_dibOffscreen.GetDC(), &rcSelection);
-      m_dibOffscreen.DrawSelectionRectSafe<8,64>(0, rcSelection);
+      m_dibOffscreen.DrawSelectionRectSafe<patternFrequency, 64>(m_patternOffset, rcSelection);
     }
 
     // draw cross-hair
@@ -251,6 +269,8 @@ private:
   bool m_haveSelection;
   CRect m_selection;// selection box, in m_dibOriginal coords
   AnimBitmap<32> m_dibOffscreen;
+
+  int m_patternOffset;
 
   int m_nFactor;
   AnimBitmap<32> m_dibOriginal;
