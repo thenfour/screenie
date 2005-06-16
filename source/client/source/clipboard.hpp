@@ -18,18 +18,28 @@ struct Clipboard
 
 	void SetText(const tstd::tstring& text)
 	{
-		HGLOBAL clipboardData = ::GlobalAlloc(GMEM_MOVEABLE,
-			(text.length() + 1) * sizeof(TCHAR));
+    EmptyClipboard();
+    size_t nSize;
+    HANDLE hMem;
+    PVOID hMemLoc;
 
-		if (clipboardData == NULL)
-			throw Win32Exception(GetLastError());
+    // unicode first
+    nSize = (text.length() + 1) * sizeof(WCHAR);
+    hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
+		if (hMem == NULL) throw Win32Exception(GetLastError());
+    hMemLoc = GlobalLock(hMem);
+    LibCC::StringCopyN((WCHAR*)hMemLoc, text.c_str(), text.length() + 1);
+    GlobalUnlock(hMem);
+    if(NULL == SetClipboardData(CF_UNICODETEXT, hMem)) throw Win32Exception(GetLastError());
 
-		TCHAR* clipboardText = reinterpret_cast<TCHAR*>(::GlobalLock(clipboardData));
-		_tcscpy(clipboardText, text.c_str());
-		::GlobalUnlock(clipboardData);
-
-		if (::SetClipboardData(CF_TEXT, reinterpret_cast<HANDLE>(clipboardData)) == NULL)
-			throw Win32Exception(GetLastError());
+    // ascii
+    nSize = (text.length() + 1) * sizeof(char);
+    hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
+		if (hMem == NULL) throw Win32Exception(GetLastError());
+    hMemLoc = GlobalLock(hMem);
+    LibCC::StringCopyN((char*)hMemLoc, text.c_str(), text.length() + 1);
+    GlobalUnlock(hMem);
+    if(NULL == SetClipboardData(CF_TEXT, hMem)) throw Win32Exception(GetLastError());
 	}
 
 	void SetBitmap(HBITMAP bitmap)

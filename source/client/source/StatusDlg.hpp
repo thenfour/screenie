@@ -38,8 +38,7 @@ private:
 };
 
 
-// interface for passing to things that d
-struct StatusWindow
+struct AsyncStatusWindow
 {
 	enum MessageIcon
 	{
@@ -56,19 +55,15 @@ struct StatusWindow
     ITEM_FILE
   };
 
-	virtual ~StatusWindow() { }
-
-  virtual void ClearMessages() = 0;
-  virtual LPARAM CreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T("")) = 0;
-
-  virtual void MessageSetIcon(LPARAM msgID, const MessageIcon icon) = 0;
-  virtual void MessageSetProgress(LPARAM msgID, int pos, int total) = 0;
-  virtual void MessageSetText(LPARAM msgID, const tstd::tstring& msg) = 0;
-  virtual void MessageSetURL(LPARAM msgID, const tstd::tstring& url) = 0;
+  virtual LPARAM AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T("")) = 0;
+  virtual void AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon) = 0;
+  virtual void AsyncMessageSetProgress(LPARAM msgID, int pos, int total) = 0;
+  virtual void AsyncMessageSetText(LPARAM msgID, const tstd::tstring& msg) = 0;
+  virtual void AsyncMessageSetURL(LPARAM msgID, const tstd::tstring& url) = 0;
 };
 
 class CStatusDlg :
-	public StatusWindow,
+	public AsyncStatusWindow,
 	public CDialogImpl<CStatusDlg>,
 	public CMessageFilter,
 	public CDialogResize<CStatusDlg>
@@ -104,7 +99,8 @@ public:
 	virtual BOOL OnIdle();
 
 	void CloseDialog(int nVal);
-	
+  void ClearMessages();
+
 	BEGIN_MSG_MAP(CStatusDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		MESSAGE_HANDLER(WM_SHOWWINDOW, OnShowWindow)
@@ -132,16 +128,13 @@ public:
 	END_DLGRESIZE_MAP()
 
 	//
-	// StatusWindow implementation
+	// AsyncStatusWindow implementation
 	//
-
-	void ClearMessages();
-  LPARAM CreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T(""));
-
-  void MessageSetIcon(LPARAM msgID, const MessageIcon icon);
-  void MessageSetProgress(LPARAM msgID, int pos, int total);
-  void MessageSetText(LPARAM msgID, const tstd::tstring& msg);
-  void MessageSetURL(LPARAM msgID, const tstd::tstring& url);
+  LPARAM AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T(""));
+  void AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon);
+  void AsyncMessageSetProgress(LPARAM msgID, int pos, int total);
+  void AsyncMessageSetText(LPARAM msgID, const tstd::tstring& msg);
+  void AsyncMessageSetURL(LPARAM msgID, const tstd::tstring& url);
 
 	//
 	// message handlers and whatnot

@@ -13,16 +13,16 @@
 // for ScreenshotDestination
 #include "ScreenshotDestination.hpp"
 
-bool ProcessDestination(HWND hwnd, StatusWindow& status,
+bool ProcessDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 
-bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
+bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
-bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
+bool ProcessFileDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
-bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
+bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
-bool ProcessEmailDestination(HWND hwnd, StatusWindow& status,
+bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 
 #endif

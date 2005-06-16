@@ -110,8 +110,6 @@ BOOL CStatusDlg::OnIdle()
 
 void CStatusDlg::ClearMessages()
 {
-  CriticalSection::ScopeLock lock(m_cs);
-
   if (m_listView.IsWindow())
   {
 		m_listView.DeleteAllItems();
@@ -223,7 +221,6 @@ LRESULT CStatusDlg::OnChar(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, 
 
 LRESULT CStatusDlg::OnRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 {
-  CriticalSection::ScopeLock lock(m_cs);
   NMITEMACTIVATE* itemActivate = reinterpret_cast<NMITEMACTIVATE*>(pnmh);
   ItemSpec* spec = 0;
   if(itemActivate->iItem != -1)
@@ -276,7 +273,6 @@ LRESULT CStatusDlg::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BO
 
 LRESULT CStatusDlg::OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-  CriticalSection::ScopeLock lock(m_cs);
   ItemSpec* p = GetSelectedItemSpec();
   if(!p)
   {
@@ -300,7 +296,6 @@ LRESULT CStatusDlg::OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 
 LRESULT CStatusDlg::OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-  CriticalSection::ScopeLock lock(m_cs);
   ItemSpec* p = GetSelectedItemSpec();
   if(!p)
   {
@@ -312,7 +307,6 @@ LRESULT CStatusDlg::OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/,
 
 LRESULT CStatusDlg::OnOpenURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-  CriticalSection::ScopeLock lock(m_cs);
   ItemSpec* p = GetSelectedItemSpec();
   if(!p)
   {
@@ -324,7 +318,6 @@ LRESULT CStatusDlg::OnOpenURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 
 LRESULT CStatusDlg::OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-  CriticalSection::ScopeLock lock(m_cs);
   ItemSpec* p = GetSelectedItemSpec();
   if(!p)
   {
@@ -347,7 +340,6 @@ LRESULT CStatusDlg::OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 
 LRESULT CStatusDlg::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-  CriticalSection::ScopeLock lock(m_cs);
 	LVITEM item = { 0 };
 
 	TCHAR textBuffer[1024] = { 0 };
@@ -377,7 +369,6 @@ LRESULT CStatusDlg::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl
 LRESULT CStatusDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	CloseDialog(IDOK);
-
 	return 0;
 }
 
@@ -397,9 +388,8 @@ void CStatusDlg::CloseDialog(int nVal)
 }
 
 
-LPARAM CStatusDlg::CreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url)
+LPARAM CStatusDlg::AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url)
 {
-  CriticalSection::ScopeLock lock(m_cs);
   LPARAM ret = 0;
 
 	if (m_listView.IsWindow())
@@ -422,8 +412,9 @@ LPARAM CStatusDlg::CreateMessage(const MessageIcon icon, const MessageType type,
   return ret;
 }
 
-void CStatusDlg::MessageSetIcon(LPARAM msgID, const MessageIcon icon)
+void CStatusDlg::AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon)
 {
+  CriticalSection::ScopeLock lock(m_cs);
   int item;
   if(-1 != (item = MessageIDToItemID(msgID)))
   {
@@ -431,7 +422,7 @@ void CStatusDlg::MessageSetIcon(LPARAM msgID, const MessageIcon icon)
   }
 }
 
-void CStatusDlg::MessageSetProgress(LPARAM msgID, int pos, int total)
+void CStatusDlg::AsyncMessageSetProgress(LPARAM msgID, int pos, int total)
 {
   int item;
   if(-1 != (item = MessageIDToItemID(msgID)))
@@ -446,12 +437,21 @@ void CStatusDlg::MessageSetProgress(LPARAM msgID, int pos, int total)
   }
 }
 
-void CStatusDlg::MessageSetText(LPARAM msgID, const tstd::tstring& msg)
+void CStatusDlg::AsyncMessageSetText(LPARAM msgID, const tstd::tstring& msg)
 {
   int item;
   if(-1 != (item = MessageIDToItemID(msgID)))
   {
     m_listView.SetItemText(item, 1, msg.c_str());
+  }
+}
+
+void CStatusDlg::AsyncMessageSetURL(LPARAM msgID, const tstd::tstring& url)
+{
+  ItemSpec* pItem = MessageIDToItemSpec(msgID);
+  if(pItem)
+  {
+    pItem->url = url;
   }
 }
 
@@ -479,15 +479,6 @@ CStatusDlg::ItemSpec* CStatusDlg::MessageIDToItemSpec(LPARAM msgID)
     return 0;
   }
   return reinterpret_cast<ItemSpec*>(msgID);
-}
-
-void CStatusDlg::MessageSetURL(LPARAM msgID, const tstd::tstring& url)
-{
-  ItemSpec* pItem = MessageIDToItemSpec(msgID);
-  if(pItem)
-  {
-    pItem->url = url;
-  }
 }
 
 CStatusDlg::ItemSpec* CStatusDlg::GetSelectedItemSpec()

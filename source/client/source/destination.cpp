@@ -43,28 +43,28 @@ bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
 
 struct ProcessFtpDestination_Info
 {
-  StatusWindow* status;
+  AsyncStatusWindow* status;
   LPARAM msgid;
 };
 
 bool ProcessFtpDestination_ProgressProc(DWORD completed, DWORD total, void* pUser)
 {
   ProcessFtpDestination_Info& info(*((ProcessFtpDestination_Info*)pUser));
-  info.status->MessageSetProgress(info.msgid, static_cast<int>(completed), static_cast<int>(total));
+  info.status->AsyncMessageSetProgress(info.msgid, static_cast<int>(completed), static_cast<int>(total));
   return true;
 }
 
-bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
+bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
-  LPARAM msgid = status.CreateMessage(StatusWindow::MSG_PROGRESS, StatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));
-  status.MessageSetProgress(msgid, 0, 1);// set it to 0%
+  LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_PROGRESS, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));
+  status.AsyncMessageSetProgress(msgid, 0, 1);// set it to 0%
 
 	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
 	if (!GetTransformedScreenshot(destination.image, image, transformedImage))
 	{
-    status.MessageSetText(msgid, TEXT("FTP: Can't resize screenshot!"));
-    status.MessageSetIcon(msgid, StatusWindow::MSG_ERROR);
+    status.AsyncMessageSetText(msgid, TEXT("FTP: Can't resize screenshot!"));
+    status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_ERROR);
 		return false;
 	}
 
@@ -72,8 +72,8 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 	tstd::tstring temporaryFilename = GetUniqueTemporaryFilename();
 	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename))
 	{
-    status.MessageSetText(msgid, TEXT("FTP: Can't save image to temporary file!"));
-    status.MessageSetIcon(msgid, StatusWindow::MSG_ERROR);
+    status.AsyncMessageSetText(msgid, TEXT("FTP: Can't save image to temporary file!"));
+    status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_ERROR);
 		return false;
 	}
 
@@ -89,40 +89,40 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
   info.status = &status;
   if(!(r = UploadFTPFile(destination, temporaryFilename, remoteFileName, 4000, ProcessFtpDestination_ProgressProc, &info)))
   {
-    status.MessageSetIcon(msgid, StatusWindow::MSG_ERROR);
-    status.MessageSetText(msgid, r.str());
+    status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_ERROR);
+    status.AsyncMessageSetText(msgid, r.str());
     return false;
   }
 
   // delete the temp file
   DeleteFile(temporaryFilename.c_str());
 
-  status.MessageSetText(msgid, TEXT("Upload complete."));
-  status.MessageSetIcon(msgid, StatusWindow::MSG_CHECK);
+  status.AsyncMessageSetText(msgid, TEXT("Upload complete."));
+  status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_CHECK);
 
 	if (!destination.ftp.resultURL.empty())
 	{
     tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
-    status.MessageSetText(msgid, LibCC::Format("Uploaded to: %").s(url).Str());
-    status.MessageSetURL(msgid, url);
+    status.AsyncMessageSetText(msgid, LibCC::Format("Uploaded to: %").s(url).Str());
+    status.AsyncMessageSetURL(msgid, url);
 
 		if (destination.ftp.copyURL)
 		{
       if(usedClipboard)
       {
-        status.CreateMessage(StatusWindow::MSG_WARNING, StatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+        status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
       }
 
 			try
 			{
 				Clipboard(hwnd).SetText(url);
-        status.CreateMessage(StatusWindow::MSG_INFO, StatusWindow::ITEM_GENERAL, destination.general.name,
+        status.AsyncCreateMessage(AsyncStatusWindow::MSG_INFO, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
           LibCC::Format("Copied URL to clipboard %").qs(url).Str());
         usedClipboard = true;
 			}
 			catch (const Win32Exception& excp)
 			{
-				status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+				status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(excp.What()).Str());
 			}
 		}
@@ -131,7 +131,7 @@ bool ProcessFtpDestination(HWND hwnd, StatusWindow& status,
 	return true;
 }
 
-bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
+bool ProcessFileDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
 	bool success = false;
@@ -139,7 +139,7 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	// let's see if the directory they want us to save to even exists.
 	if (!::PathFileExists(destination.general.path.c_str()))
 	{
-    status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+    status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 			LibCC::Format(TEXT("File: folder \"%\" doesn't exist")).s(destination.general.path).Str());
 		return false;
 	}
@@ -148,7 +148,7 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	util::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
 	if (!GetTransformedScreenshot(destination.image, image, transformedScreenshot))
 	{
-		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 			LibCC::Format(TEXT("File: can't get screenshot data!")).s(destination.general.path).Str());
 		return false;
 	}
@@ -164,12 +164,12 @@ bool ProcessFileDestination(HWND hwnd, StatusWindow& status,
 	// do the deed
 	if (SaveImageToFile(*transformedScreenshot, destination.general.imageFormat, fullPath))
 	{
-    status.CreateMessage(StatusWindow::MSG_CHECK, StatusWindow::ITEM_FILE, destination.general.name,
+    status.AsyncCreateMessage(AsyncStatusWindow::MSG_CHECK, AsyncStatusWindow::ITEM_FILE, destination.general.name,
 			LibCC::Format(TEXT("File: saved image to %")).qs(fullPath).Str(), fullPath);
 	}
 	else
 	{
-    status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+    status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 			TEXT("File: couldn't save image to disk"));
 
 		return false;
@@ -204,17 +204,17 @@ HBITMAP DuplicateScreenshotBitmap(HBITMAP sourceBitmap)
 	return destBitmap;
 }
 
-bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
+bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
   if(usedClipboard)
   {
-    status.CreateMessage(StatusWindow::MSG_WARNING, StatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+    status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
   }
 
 	if (!::OpenClipboard(hwnd))
 	{
-		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 			TEXT("Clipboard: Can't get clipboard access!"));
 
 		return false;
@@ -222,7 +222,7 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 
 	if (!::EmptyClipboard())
 	{
-		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 			TEXT("Clipboard: Can't empty previous clipboard contents!"));
 
 		return false;
@@ -243,25 +243,25 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 			try
 			{
 				Clipboard(hwnd).SetBitmap(bitmapCopy);
-        status.CreateMessage(StatusWindow::MSG_CHECK, StatusWindow::ITEM_GENERAL, destination.general.name,
+        status.AsyncCreateMessage(AsyncStatusWindow::MSG_CHECK, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
           _T("Copied image to clipboard"));
         usedClipboard = true;
 			}
 			catch (const Win32Exception& excp)
 			{
-				status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+				status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 					LibCC::Format(TEXT("Clipboard: Can't copy image: %")).s(excp.What()).Str());
 			}
 		}
 		else
 		{
-			status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+			status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 				TEXT("Clipboard: Can't get clipboard-friendly image data!"));
 		}
 	}
 	else
 	{
-		status.CreateMessage(StatusWindow::MSG_ERROR, StatusWindow::ITEM_GENERAL, destination.general.name,
+		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
 			LibCC::Format(TEXT("File: can't get screenshot data!")).s(destination.general.path).Str());
 	}
 
@@ -270,13 +270,13 @@ bool ProcessClipboardDestination(HWND hwnd, StatusWindow& status,
 	return true;
 }
 
-bool ProcessEmailDestination(HWND hwnd, StatusWindow& status,
+bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
 	return true;
 }
 
-bool ProcessDestination(HWND hwnd, StatusWindow& status,
+bool ProcessDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
 	switch (destination.general.type)
