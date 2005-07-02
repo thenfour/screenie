@@ -32,6 +32,7 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   CopyImage(m_dibOriginal, *bitmap);
   m_view.SetZoomFactor(3);
   m_view.SetVirtualOrigin(Point<int>(250,250));
+
   if(pNotify)
   {
     m_notify = pNotify;
@@ -85,38 +86,42 @@ float GetDeltaMin(int val, bool bSuperDooper)
 LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
   bHandled = TRUE;
-  if(m_mouseEntrancy) return 0;
-  m_mouseEntrancy = true;
+  if(!MouseEnter()) return 0;
 
-	CPoint cursorPos;
-  GetCursorPos(&cursorPos);
-  ScreenToClient(&cursorPos);
+  POINTS& psTemp = MAKEPOINTS(lParam);
+	CPoint cursorPos(psTemp.x, psTemp.y);
 
-  CPoint pt;
-
-  if((wParam & MK_SHIFT) == MK_SHIFT)
+  if(m_bIsPanning)
   {
-    bool bSuperDooper = ((wParam & MK_CONTROL) == MK_CONTROL);
-
-    // figure out how many virtual units to actually move.
-    float deltax = GetDeltaMin(cursorPos.x - m_lastCursor.x, bSuperDooper);
-    m_lastCursorVirtual.x += deltax;
-
-    float deltay = GetDeltaMin(cursorPos.y - m_lastCursor.y, bSuperDooper);
-    m_lastCursorVirtual.y += deltay;
-
-    //if(m_bIsPanning)
-    //{
-    //  Point<int> org = m_view.GetVirtualOrigin();
-    //  org.x += deltax;
-    //  org.y += deltay;
-    //  m_view.SetVirtualOrigin(org);
-    //  BOOL temp;
-    //  OnSize(0,0,0,temp);
-    //  RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
-    //}
-    //else
+    Point<int> delta;
+    delta.x = m_panningStart.x - cursorPos.x;
+    delta.y = m_panningStart.y - cursorPos.y;
+    delta = m_view.ViewToVirtualSize(delta);
+    Point<int> newOrg = m_panningStartVirtual;
+    newOrg.x += delta.x;
+    newOrg.y += delta.y;
+    if(newOrg.x < 0) newOrg.x = 0;
+    if(newOrg.y < 0) newOrg.y = 0;
+    if(newOrg.x > (int)m_bitmap->GetWidth()) newOrg.x = (int)m_bitmap->GetWidth();
+    if(newOrg.y > (int)m_bitmap->GetHeight()) newOrg.y = (int)m_bitmap->GetHeight();
+    m_view.SetVirtualOrigin(newOrg);
+    BOOL temp;
+    OnSize(0,0,0,temp);
+    RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+  }
+  else
+  {
+    if((wParam & MK_SHIFT) == MK_SHIFT)
     {
+      bool bSuperDooper = ((wParam & MK_CONTROL) == MK_CONTROL);
+
+      // figure out how many virtual units to actually move.
+      float deltax = GetDeltaMin(cursorPos.x - m_lastCursor.x, bSuperDooper);
+      m_lastCursorVirtual.x += deltax;
+
+      float deltay = GetDeltaMin(cursorPos.y - m_lastCursor.y, bSuperDooper);
+      m_lastCursorVirtual.y += deltay;
+
       // bounds checking
       if(m_lastCursorVirtual.x < 0) m_lastCursorVirtual.x = 0;
       if(static_cast<DWORD>(m_lastCursorVirtual.x) > m_bitmap->GetWidth()) m_lastCursorVirtual.x = static_cast<float>(m_bitmap->GetWidth());
@@ -133,95 +138,65 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
       ClientToScreen(&newCursorPos);
       SetCursorPos(newCursorPos.x, newCursorPos.y);
     }
-  }
-  else
-  {
-    if(m_bIsPanning)
-    {
-      int deltax = m_lastCursor.x - cursorPos.x;
-      int deltay = m_lastCursor.y - cursorPos.y;
-      Point<int> org = m_view.GetVirtualOrigin();
-      Point<int> deltaVirtual = m_view.ViewToVirtualSize(Point<int>(deltax, deltay));
-      org.x += deltaVirtual.x;
-      org.y += deltaVirtual.y;
-      // bounds check
-      if(org.x < 0) org.x = 0;
-      if(org.x > m_dibOriginal.GetWidth()) org.x = m_dibOriginal.GetWidth();
-      if(org.y < 0) org.y = 0;
-      if(org.y > m_dibOriginal.GetHeight()) org.y = m_dibOriginal.GetHeight();
-      m_view.SetVirtualOrigin(org);
-      BOOL temp;
-      OnSize(0,0,0,temp);
-      RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
-    }
     else
     {
       cursorPos.Offset(-viewMargin, -viewMargin);
       m_lastCursorVirtual = m_view.ViewToVirtual<float>(Point<float>(
         static_cast<float>(cursorPos.x),
         static_cast<float>(cursorPos.y) ));
+      cursorPos.Offset(viewMargin, viewMargin);
     }
   }
-  pt.x = static_cast<LONG>(m_lastCursorVirtual.x);
-  pt.y = static_cast<LONG>(m_lastCursorVirtual.y);
 
   m_lastCursor = cursorPos;
 
   // fire tool events.
 
+  CPoint pt;
+  pt.x = static_cast<LONG>(m_lastCursorVirtual.x);
+  pt.y = static_cast<LONG>(m_lastCursorVirtual.y);
   m_notify->OnCursorPositionChanged(pt.x, pt.y);
 
-  m_mouseEntrancy = false;
-	return 0;
+  return MouseLeave();
 }
 
 LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-  if(m_mouseEntrancy) return 0;
-  m_mouseEntrancy = true;
-
+  if(!MouseEnter()) return 0;
   // fire tool events.
-
-  m_mouseEntrancy = false;
-	return 0;
+  return MouseLeave();
 }
 
 LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-  if(m_mouseEntrancy) return 0;
-  m_mouseEntrancy = true;
-
+  if(!MouseEnter()) return 0;
   // fire tool events.
-
-  m_mouseEntrancy = false;
-	return 0;
+  return MouseLeave();
 }
 
-LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
-  if(m_mouseEntrancy) return 0;
-  m_mouseEntrancy = true;
-
+  if(!MouseEnter()) return 0;
   m_bIsPanning = true;
-  SetCapture();
 
-  m_mouseEntrancy = false;
-	return 0;
+  POINTS& psTemp = MAKEPOINTS(lParam);
+  m_panningStart.SetPoint(psTemp.x, psTemp.y);
+  m_panningStartVirtual = m_view.GetVirtualOrigin();
+  SetCapture();
+  m_hPreviousCursor = SetCursor(LoadCursor(0, IDC_HAND));
+  return MouseLeave();
 }
 
 LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-  if(m_mouseEntrancy) return 0;
-  m_mouseEntrancy = true;
-
+  if(!MouseEnter()) return 0;
   if(m_bIsPanning)
   {
     ReleaseCapture();
+    SetCursor(m_hPreviousCursor);
     m_bIsPanning = false;
   }
-
-  m_mouseEntrancy = false;
-	return 0;
+  return MouseLeave();
 }
 
 LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*handled*/)

@@ -151,6 +151,13 @@ protected:
   LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
+  enum CursorMoveType
+  {
+    CM_NORMAL,
+    CM_SLOW,
+    CM_SUPERSLOW
+  };
+
   // cursor stuff
 	Point<float> m_lastCursorVirtual;// used for "slowing down" cursor movement... these are in VIRTUAL coords.
   CPoint m_lastCursor;// in client coords
@@ -167,11 +174,25 @@ protected:
   ToolBase* m_currentTool;
   PencilTool m_penTool;
   SelectionTool m_selectionTool;
+  TextTool m_textTool;
 
+  bool MouseEnter()
+  {
+    if(m_mouseEntrancy) return false;
+    return m_mouseEntrancy = true;
+  }
+  LRESULT MouseLeave()
+  {
+    m_mouseEntrancy = false;
+    return 0;
+  }
   bool m_mouseEntrancy;
 
   // panning.
   bool m_bIsPanning;
+  HCURSOR m_hPreviousCursor;
+  CPoint m_panningStart;// in client coords
+  Point<int> m_panningStartVirtual;// virtual coords.
 };
 
 #endif

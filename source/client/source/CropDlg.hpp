@@ -34,9 +34,25 @@ public:
     m_hIcon(0),
     m_zoomFactorIndex(0)
   {
+    bool bHitOne = false;
     for(float f = 0.05f; f < 30.0f; f *= 1.10)
     {
-      m_zoomFactors.push_back(f);
+      if(!bHitOne)
+      {
+        if(f >= 1.0f)
+        {
+          bHitOne = true;
+          m_zoomFactors.push_back(1.0f);
+        }
+        else
+        {
+          m_zoomFactors.push_back(f);
+        }
+      }
+      else
+      {
+        m_zoomFactors.push_back(f);
+      }
     }
   }
 

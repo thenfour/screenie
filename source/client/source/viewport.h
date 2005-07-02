@@ -164,8 +164,8 @@ protected:
   Point<T2> ZoomedToVirtualSize(Point<T2> x)
   {
     return Point<T2>(
-      static_cast<T>((static_cast<float>(x.x) / zoomFactor)),
-      static_cast<T>((static_cast<float>(x.y) / zoomFactor))
+      static_cast<T2>((static_cast<float>(x.x) / zoomFactor)),
+      static_cast<T2>((static_cast<float>(x.y) / zoomFactor))
       );
   }
 
@@ -173,8 +173,8 @@ protected:
   Point<T2> VirtualToZoomedSize(Point<T2> x)
   {
     return Point<T2>(
-      static_cast<T>(zoomFactor * x.x),
-      static_cast<T>(zoomFactor * x.y)
+      static_cast<T2>(zoomFactor * x.x),
+      static_cast<T2>(zoomFactor * x.y)
       );
   }
 
@@ -223,8 +223,8 @@ protected:
       <-----> return
     */
     return Point<T2>(
-      static_cast<T>((static_cast<float>(x.x) / zoomFactor)),
-      static_cast<T>((static_cast<float>(x.y) / zoomFactor))
+      static_cast<T2>((static_cast<float>(x.x) / zoomFactor)),
+      static_cast<T2>((static_cast<float>(x.y) / zoomFactor))
       );
   }
 
@@ -239,8 +239,8 @@ protected:
       <-------------> return
     */
     return Point<T2>(
-      static_cast<T>(zoomFactor * x.x),
-      static_cast<T>(zoomFactor * x.y)
+      static_cast<T2>(zoomFactor * x.x),
+      static_cast<T2>(zoomFactor * x.y)
       );
   }
 
