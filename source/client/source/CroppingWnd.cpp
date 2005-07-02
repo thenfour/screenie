@@ -1,3 +1,6 @@
+/*
+  NOT REMOVING THIS FILE UNTIL IMAGEEDITWND IS COMPLETE.
+*/
 //
 //
 //
@@ -5,6 +8,7 @@
 //
 
 #include "stdafx.hpp"
+#error do not include croppingwnd.cpp anymore
 #include "resource.h"
 
 #include <algorithm>

@@ -7,7 +7,7 @@
 #ifndef _SCREENIE_CROPDLG_H_
 #define _SCREENIE_CROPDLG_H_
 
-#include "CroppingWnd.hpp"
+#include "ImageEditWnd.hpp"
 #include "ZoomWnd.hpp"
 #include "destinationDlg.hpp"
 #include "image.hpp"
@@ -17,7 +17,7 @@
 class CCropDlg :
 	public CDialogImpl<CCropDlg>,
 	public CDialogResize<CCropDlg>,
-  public ICroppingWindowEvents,
+  public IImageEditWindowEvents,
   public IZoomWindowEvents
 {
 public:
@@ -44,7 +44,10 @@ public:
   {
     handled = TRUE;
     int newFactor = m_zoomWnd.GetFactor() + (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+    if(newFactor < 1) return 0;
+    if(newFactor > 16) return 0;
     m_zoomWnd.SetFactor(newFactor);
+    m_croppingWnd.SetZoomFactor(newFactor);
     return 0;
   }
 
@@ -56,16 +59,19 @@ public:
     ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
   }
 
-  // ICroppingWindowEvents methods
-  virtual void OnCroppingSelectionChanged()
+  // IImageEditWindowEvents methods
+  void OnCroppingSelectionChanged()
   {
     SyncZoomWindowSelection();
   }
-  virtual void OnCroppingPositionChanged(int x, int y)// image coords
+  void OnCursorPositionChanged(int x, int y)// image coords
   {
     SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
     m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
     SyncZoomWindowSelection();
+  }
+  void OnZoomScaleFactorChanged2(int factor)
+  {
   }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
@@ -126,6 +132,7 @@ public:
     {
       int factor = ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_GETPOS, 0, 0);
       m_zoomWnd.SetFactor(factor);
+      m_croppingWnd.SetZoomFactor(factor);
       m_options.CroppingZoomFactor(factor);
     }
     return 0;
@@ -170,15 +177,17 @@ public:
     SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, 16));
     SendMessage(hSlider, TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
 
-    BOOL temp;
-    //m_croppingWnd.OnSize(0,0,0,temp);
-    //m_croppingWnd.InvalidateRect(0);
-
     //m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
     //m_zoomWnd.OnSize(0,0,0,temp);
     //m_zoomWnd.InvalidateRect(0);
     OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
     m_zoomWnd.SetFactor(m_options.CroppingZoomFactor());
+
+    BOOL temp;
+
+    m_croppingWnd.SetZoomFactor(m_options.CroppingZoomFactor());
+    m_croppingWnd.OnSize(0,0,0,temp);
+    m_croppingWnd.InvalidateRect(0);
 
     SetForegroundWindow(*this);
 
@@ -190,7 +199,7 @@ public:
   void SyncZoomWindowSelection()
   {
     CRect rc;
-    if(m_croppingWnd.GetSelection(rc))
+    if(m_croppingWnd.GetVirtualSelection(rc))
     {
       SetDlgItemText(IDC_SELECTIONSTATIC,
         LibCC::Format("(%,%)-(%,%)|% x %")
@@ -247,7 +256,7 @@ public:
 		if (nVal == IDOK)
 		{
 			RECT selectionRect = { 0 };
-			if (m_croppingWnd.GetSelection(selectionRect))
+			if (m_croppingWnd.GetVirtualSelection(selectionRect))
 			{
 				m_croppedBitmap = m_croppingWnd.GetBitmapRect(selectionRect);
 				m_didCropping = true;
@@ -266,7 +275,7 @@ private:
 	util::shared_ptr<Gdiplus::Bitmap> m_croppedBitmap;
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
 	CZoomWindow m_zoomWnd;
-	CCroppingWindow m_croppingWnd;
+	CImageEditWindow m_croppingWnd;
   ScreenshotOptions& m_options;
 
   HICON m_hIcon;

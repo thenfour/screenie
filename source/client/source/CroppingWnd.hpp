@@ -1,3 +1,8 @@
+/*
+  NOT REMOVING THIS FILE UNTIL IMAGEEDITWND IS COMPLETE.
+*/
+#error do not include croppingwnd.cpp anymore
+
 //
 // CroppingWnd.hpp - cropping functionality
 // Copyright (c) 2005 Roger Clark

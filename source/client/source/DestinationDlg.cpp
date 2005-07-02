@@ -11,7 +11,6 @@
 #include "DestinationDlg.hpp"
 #include "StatusDlg.hpp"
 #include "utility.hpp"
-#include "CroppingWnd.hpp"
 
 #include "DestProperties.hpp"
 #include "DestinationProperties.hpp"

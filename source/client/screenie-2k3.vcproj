@@ -141,28 +141,49 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
+			Name="Application Sources"
+			Filter="">
 			<File
 				RelativePath=".\source\codec.cpp">
+			</File>
+			<File
+				RelativePath=".\source\codec.hpp">
 			</File>
 			<File
 				RelativePath=".\source\destination.cpp">
 			</File>
 			<File
-				RelativePath=".\source\ftp.cpp">
+				RelativePath=".\source\destination.hpp">
 			</File>
 			<File
 				RelativePath=".\source\image.cpp">
 			</File>
 			<File
+				RelativePath=".\source\image.hpp">
+			</File>
+			<File
 				RelativePath=".\source\options.cpp">
+			</File>
+			<File
+				RelativePath=".\source\options.hpp">
+			</File>
+			<File
+				RelativePath=".\source\resource.h">
 			</File>
 			<File
 				RelativePath=".\source\screenie.cpp">
 			</File>
 			<File
+				RelativePath=".\source\screenshot.hpp">
+			</File>
+			<File
+				RelativePath=".\source\ScreenshotDestination.hpp">
+			</File>
+			<File
 				RelativePath=".\source\ScreenshotOptions.cpp">
+			</File>
+			<File
+				RelativePath=".\source\ScreenshotOptions.hpp">
 			</File>
 			<File
 				RelativePath=".\source\stdafx.cpp">
@@ -180,43 +201,15 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\source\utility.cpp">
+				RelativePath=".\source\stdafx.hpp">
 			</File>
-			<Filter
-				Name="User Interface"
-				Filter="">
-				<File
-					RelativePath=".\source\CroppingWnd.cpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationDlg.cpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationProperties.cpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesEmail.cpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesFtp.cpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesGeneral.cpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesImage.cpp">
-				</File>
-				<File
-					RelativePath=".\source\MainWindow.cpp">
-				</File>
-				<File
-					RelativePath=".\source\StatusDlg.cpp">
-				</File>
-			</Filter>
+			<File
+				RelativePath=".\source\viewport.h">
+			</File>
 		</Filter>
 		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc">
+			Name="Utility Sources"
+			Filter="">
 			<File
 				RelativePath=".\source\animbitmap.h">
 			</File>
@@ -230,25 +223,16 @@
 				RelativePath=".\source\clipboard.hpp">
 			</File>
 			<File
-				RelativePath=".\source\codec.hpp">
-			</File>
-			<File
-				RelativePath=".\source\destination.hpp">
-			</File>
-			<File
 				RelativePath=".\source\exception.hpp">
 			</File>
 			<File
 				RelativePath=".\source\geom.h">
 			</File>
 			<File
-				RelativePath=".\source\image.hpp">
-			</File>
-			<File
 				RelativePath=".\source\internet.hpp">
 			</File>
 			<File
-				RelativePath=".\source\options.hpp">
+				RelativePath=".\source\tr1\memory">
 			</File>
 			<File
 				RelativePath=".\source\path.hpp">
@@ -257,66 +241,11 @@
 				RelativePath=".\source\polarlut.h">
 			</File>
 			<File
-				RelativePath=".\source\resource.h">
-			</File>
-			<File
-				RelativePath=".\source\screenshot.hpp">
-			</File>
-			<File
-				RelativePath=".\source\ScreenshotDestination.hpp">
-			</File>
-			<File
-				RelativePath=".\source\ScreenshotOptions.hpp">
-			</File>
-			<File
-				RelativePath=".\source\stdafx.hpp">
+				RelativePath=".\source\utility.cpp">
 			</File>
 			<File
 				RelativePath=".\source\utility.hpp">
 			</File>
-			<Filter
-				Name="User Interface"
-				Filter="">
-				<File
-					RelativePath=".\source\AboutDlg.hpp">
-				</File>
-				<File
-					RelativePath=".\source\CropDlg.hpp">
-				</File>
-				<File
-					RelativePath=".\source\CroppingWnd.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationDlg.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationProperties.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesEmail.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesFtp.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesGeneral.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestinationPropertiesImage.hpp">
-				</File>
-				<File
-					RelativePath=".\source\DestProperties.hpp">
-				</File>
-				<File
-					RelativePath=".\source\MainWindow.hpp">
-				</File>
-				<File
-					RelativePath=".\source\StatusDlg.hpp">
-				</File>
-				<File
-					RelativePath=".\source\ZoomWnd.hpp">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -344,10 +273,93 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="external"
+			Name="Config Dialog Sources"
 			Filter="">
 			<File
-				RelativePath=".\source\tr1\memory">
+				RelativePath=".\source\DestinationDlg.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationDlg.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationProperties.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationProperties.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesEmail.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesEmail.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesFtp.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesFtp.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesGeneral.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesGeneral.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesImage.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesImage.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestProperties.hpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="UI Control Sources"
+			Filter="">
+			<File
+				RelativePath=".\source\CroppingWnd.cpp">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\source\CroppingWnd.hpp">
+			</File>
+			<File
+				RelativePath=".\source\ImageEditWnd.cpp">
+			</File>
+			<File
+				RelativePath=".\source\ImageEditWnd.hpp">
+			</File>
+			<File
+				RelativePath=".\source\MainWindow.cpp">
+			</File>
+			<File
+				RelativePath=".\source\MainWindow.hpp">
+			</File>
+			<File
+				RelativePath=".\source\ZoomWnd.hpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="Misc Dialog Sources"
+			Filter="">
+			<File
+				RelativePath=".\source\AboutDlg.hpp">
+			</File>
+			<File
+				RelativePath=".\source\CropDlg.hpp">
+			</File>
+			<File
+				RelativePath=".\source\StatusDlg.cpp">
+			</File>
+			<File
+				RelativePath=".\source\StatusDlg.hpp">
 			</File>
 		</Filter>
 	</Files>

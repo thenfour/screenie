@@ -9,7 +9,7 @@
 
 #include "AboutDlg.hpp"
 #include "CropDlg.hpp"
-#include "CroppingWnd.hpp"
+#include "ImageEditWnd.hpp"
 #include "DestinationDlg.hpp"
 #include "MainWindow.hpp"
 #include "StatusDlg.hpp"
