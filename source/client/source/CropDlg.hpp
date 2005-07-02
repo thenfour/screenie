@@ -14,6 +14,7 @@
 
 #include "ScreenshotOptions.hpp"
 
+
 class CCropDlg :
 	public CDialogImpl<CCropDlg>,
 	public CDialogResize<CCropDlg>,
@@ -30,25 +31,19 @@ public:
     m_zoomWnd(bitmap.get(), this),
     m_options(options),
     m_hIconSmall(0),
-    m_hIcon(0)
+    m_hIcon(0),
+    m_zoomFactorIndex(0)
   {
+    for(float f = 0.05f; f < 30.0f; f *= 1.10)
+    {
+      m_zoomFactors.push_back(f);
+    }
   }
 
 	~CCropDlg()
   {
     if(m_hIcon) DestroyIcon(m_hIcon);
     if(m_hIconSmall) DestroyIcon(m_hIconSmall);
-  }
-
-	LRESULT OnMouseWheel(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
-  {
-    handled = TRUE;
-    int newFactor = m_zoomWnd.GetFactor() + (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
-    if(newFactor < 1) return 0;
-    if(newFactor > 16) return 0;
-    m_zoomWnd.SetFactor(newFactor);
-    m_croppingWnd.SetZoomFactor(newFactor);
-    return 0;
   }
 
   // IZoomWindowEvents methods
@@ -114,6 +109,27 @@ public:
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
 
+  void AttemptNewFactorIndex(int n)
+  {
+    m_zoomFactorIndex = n;
+    // clamp
+    if(m_zoomFactorIndex < 0) m_zoomFactorIndex = 0;
+    if(m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
+    // notify
+    float factor = m_zoomFactors[m_zoomFactorIndex];
+    //m_zoomWnd.SetFactor(factor);
+    m_croppingWnd.SetZoomFactor(factor);
+    //options
+    m_options.CroppingZoomFactor(factor);
+  }
+
+	LRESULT OnMouseWheel(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+  {
+    handled = TRUE;
+    int newFactorIndex = m_zoomFactorIndex + (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+    AttemptNewFactorIndex(newFactorIndex);
+    return 0;
+  }
 
 	LRESULT OnZoomFactorChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
   {
@@ -130,10 +146,8 @@ public:
     */
     if(((HWND)lParam) == GetDlgItem(IDC_ZOOMFACTOR).m_hWnd)
     {
-      int factor = ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_GETPOS, 0, 0);
-      m_zoomWnd.SetFactor(factor);
-      m_croppingWnd.SetZoomFactor(factor);
-      m_options.CroppingZoomFactor(factor);
+      int newFactorIndex = ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_GETPOS, 0, 0);
+      AttemptNewFactorIndex(newFactorIndex);
     }
     return 0;
   }
@@ -174,14 +188,22 @@ public:
 
     // set up zoom slider
     HWND hSlider = GetDlgItem(IDC_ZOOMFACTOR);
-    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, 16));
+    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, m_zoomFactors.size()));
     SendMessage(hSlider, TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
 
-    //m_zoomWnd.SubclassWindow(GetDlgItem(IDC_ZOOM));
-    //m_zoomWnd.OnSize(0,0,0,temp);
-    //m_zoomWnd.InvalidateRect(0);
+    float price = m_options.CroppingZoomFactor();
+
+    // find the closest zoom factor index without going over.
+    for(int i = 0; i < m_zoomFactors.size(); ++ i)
+    {
+      if(m_zoomFactors[i] > price) break;
+    }
+    m_zoomFactorIndex = i - 1;
+    if(m_zoomFactorIndex < 0) m_zoomFactorIndex = 0;
+    if(m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
+
     OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
-    m_zoomWnd.SetFactor(m_options.CroppingZoomFactor());
+    m_zoomWnd.SetFactor(1);
 
     BOOL temp;
 
@@ -280,6 +302,9 @@ private:
 
   HICON m_hIcon;
   HICON m_hIconSmall;
+
+  int m_zoomFactorIndex;
+  std::vector<float> m_zoomFactors;
 };
 
 #endif

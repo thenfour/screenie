@@ -20,7 +20,7 @@ public:
 	  m_showStatus(true),
 	  m_confirmOptions(false),
 	  m_showCropWindow(true),
-    m_croppingZoomFactor(2),
+    m_croppingZoomFactor(2.0f),
     m_autoStartup(true)
   {
   }
@@ -80,8 +80,8 @@ public:
 	bool IncludeCursor() { return m_includeCursor; }
 	void IncludeCursor(bool newval) { m_includeCursor = newval; }
 
-  int CroppingZoomFactor() const { return m_croppingZoomFactor; }
-  void CroppingZoomFactor(int n) { m_croppingZoomFactor = n; }
+  float CroppingZoomFactor() const { return m_croppingZoomFactor; }
+  void CroppingZoomFactor(float n) { m_croppingZoomFactor = n; }
 
   bool AutoStartup() const { return m_autoStartup; }
   void AutoStartup(bool b) { m_autoStartup = b; }
@@ -176,7 +176,7 @@ private:
   bool m_haveConfigPlacement;
   WINDOWPLACEMENT m_configPlacement;
 
-  int m_croppingZoomFactor;
+  float m_croppingZoomFactor;
 
 	bool m_autoStartup;
 	bool m_includeCursor;

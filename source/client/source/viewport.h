@@ -107,12 +107,12 @@ public:
     viewOffsetFromZoomed = rhs.viewOffsetFromZoomed;
   }
 
-  void SetZoomFactor(int z)
+  void SetZoomFactor(float z)
   {
     zoomFactor = z;
     CacheValues();
   }
-  int GetZoomFactor() const
+  float GetZoomFactor() const
   {
     return zoomFactor;
   }
@@ -164,8 +164,8 @@ protected:
   Point<T2> ZoomedToVirtualSize(Point<T2> x)
   {
     return Point<T2>(
-      x.x / zoomFactor,
-      x.y / zoomFactor
+      static_cast<T>((static_cast<float>(x.x) / zoomFactor)),
+      static_cast<T>((static_cast<float>(x.y) / zoomFactor))
       );
   }
 
@@ -173,8 +173,8 @@ protected:
   Point<T2> VirtualToZoomedSize(Point<T2> x)
   {
     return Point<T2>(
-      x.x * zoomFactor,
-      x.y * zoomFactor
+      static_cast<T>(zoomFactor * x.x),
+      static_cast<T>(zoomFactor * x.y)
       );
   }
 
@@ -223,8 +223,8 @@ protected:
       <-----> return
     */
     return Point<T2>(
-      x.x / zoomFactor,
-      x.y / zoomFactor
+      static_cast<T>((static_cast<float>(x.x) / zoomFactor)),
+      static_cast<T>((static_cast<float>(x.y) / zoomFactor))
       );
   }
 
@@ -239,16 +239,16 @@ protected:
       <-------------> return
     */
     return Point<T2>(
-      x.x * zoomFactor,
-      x.y * zoomFactor
+      static_cast<T>(zoomFactor * x.x),
+      static_cast<T>(zoomFactor * x.y)
       );
   }
 
   // calculate cached members based on the basic members
   void CacheValues()
   {
-    zoomedOrigin.x = virtualOrigin.x * zoomFactor;
-    zoomedOrigin.y = virtualOrigin.y * zoomFactor;
+    zoomedOrigin.x = static_cast<T>(zoomFactor * virtualOrigin.x);
+    zoomedOrigin.y = static_cast<T>(zoomFactor * virtualOrigin.y);
     /*              origins
                       |
       |===============*============================| zoomed virtual canvas
@@ -264,7 +264,7 @@ protected:
   // basic members
   Point_T viewOrigin;
   Point_T virtualOrigin;
-  int zoomFactor;
+  float zoomFactor;
 
   // cached values
   Point_T zoomedOrigin;// always virtualOrigin * zoomFactor

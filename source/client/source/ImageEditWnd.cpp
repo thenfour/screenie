@@ -53,7 +53,7 @@ bool CImageEditWindow::GetVirtualSelection(RECT& selectionRect) const
   return m_selectionTool.GetSelection(selectionRect);
 }
 
-void CImageEditWindow::SetZoomFactor(int n)
+void CImageEditWindow::SetZoomFactor(float n)
 {
   m_view.SetZoomFactor(n);
   BOOL temp;
@@ -61,7 +61,7 @@ void CImageEditWindow::SetZoomFactor(int n)
   RedrawWindow(0, 0, RDW_INVALIDATE);
 }
 
-int CImageEditWindow::GetZoomFactor() const
+float CImageEditWindow::GetZoomFactor() const
 {
   return m_view.GetZoomFactor();
 }
@@ -105,28 +105,62 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
     float deltay = GetDeltaMin(cursorPos.y - m_lastCursor.y, bSuperDooper);
     m_lastCursorVirtual.y += deltay;
 
-    // bounds checking
-    if(m_lastCursorVirtual.x < 0) m_lastCursorVirtual.x = 0;
-    if(static_cast<DWORD>(m_lastCursorVirtual.x) > m_bitmap->GetWidth()) m_lastCursorVirtual.x = static_cast<float>(m_bitmap->GetWidth());
+    //if(m_bIsPanning)
+    //{
+    //  Point<int> org = m_view.GetVirtualOrigin();
+    //  org.x += deltax;
+    //  org.y += deltay;
+    //  m_view.SetVirtualOrigin(org);
+    //  BOOL temp;
+    //  OnSize(0,0,0,temp);
+    //  RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+    //}
+    //else
+    {
+      // bounds checking
+      if(m_lastCursorVirtual.x < 0) m_lastCursorVirtual.x = 0;
+      if(static_cast<DWORD>(m_lastCursorVirtual.x) > m_bitmap->GetWidth()) m_lastCursorVirtual.x = static_cast<float>(m_bitmap->GetWidth());
 
-    if(m_lastCursorVirtual.y < 0) m_lastCursorVirtual.y = 0;
-    if(static_cast<DWORD>(m_lastCursorVirtual.y) > m_bitmap->GetHeight()) m_lastCursorVirtual.y = static_cast<float>(m_bitmap->GetHeight());
+      if(m_lastCursorVirtual.y < 0) m_lastCursorVirtual.y = 0;
+      if(static_cast<DWORD>(m_lastCursorVirtual.y) > m_bitmap->GetHeight()) m_lastCursorVirtual.y = static_cast<float>(m_bitmap->GetHeight());
 
-    // replace the mouse cursor to reflect the slowdown.
-    Point<int> newCursorPosX = m_view.VirtualToView(Point<int>(static_cast<int>(m_lastCursorVirtual.x), static_cast<int>(m_lastCursorVirtual.y)));
-    CPoint newCursorPos(newCursorPosX.x, newCursorPosX.y);
-    newCursorPos.Offset(viewMargin, viewMargin);
+      // replace the mouse cursor to reflect the slowdown.
+      Point<int> newCursorPosX = m_view.VirtualToView(Point<int>(static_cast<int>(m_lastCursorVirtual.x), static_cast<int>(m_lastCursorVirtual.y)));
+      CPoint newCursorPos(newCursorPosX.x, newCursorPosX.y);
+      newCursorPos.Offset(viewMargin, viewMargin);
 
-    cursorPos = newCursorPos;
-    ClientToScreen(&newCursorPos);
-    SetCursorPos(newCursorPos.x, newCursorPos.y);
+      cursorPos = newCursorPos;
+      ClientToScreen(&newCursorPos);
+      SetCursorPos(newCursorPos.x, newCursorPos.y);
+    }
   }
   else
   {
-    cursorPos.Offset(-viewMargin, -viewMargin);
-    m_lastCursorVirtual = m_view.ViewToVirtual<float>(Point<float>(
-      static_cast<float>(cursorPos.x),
-      static_cast<float>(cursorPos.y) ));
+    if(m_bIsPanning)
+    {
+      int deltax = m_lastCursor.x - cursorPos.x;
+      int deltay = m_lastCursor.y - cursorPos.y;
+      Point<int> org = m_view.GetVirtualOrigin();
+      Point<int> deltaVirtual = m_view.ViewToVirtualSize(Point<int>(deltax, deltay));
+      org.x += deltaVirtual.x;
+      org.y += deltaVirtual.y;
+      // bounds check
+      if(org.x < 0) org.x = 0;
+      if(org.x > m_dibOriginal.GetWidth()) org.x = m_dibOriginal.GetWidth();
+      if(org.y < 0) org.y = 0;
+      if(org.y > m_dibOriginal.GetHeight()) org.y = m_dibOriginal.GetHeight();
+      m_view.SetVirtualOrigin(org);
+      BOOL temp;
+      OnSize(0,0,0,temp);
+      RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+    }
+    else
+    {
+      cursorPos.Offset(-viewMargin, -viewMargin);
+      m_lastCursorVirtual = m_view.ViewToVirtual<float>(Point<float>(
+        static_cast<float>(cursorPos.x),
+        static_cast<float>(cursorPos.y) ));
+    }
   }
   pt.x = static_cast<LONG>(m_lastCursorVirtual.x);
   pt.y = static_cast<LONG>(m_lastCursorVirtual.y);
@@ -134,11 +168,6 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   m_lastCursor = cursorPos;
 
   // fire tool events.
-
-  if(m_bIsPanning)
-  {
-    //
-  }
 
   m_notify->OnCursorPositionChanged(pt.x, pt.y);
 
@@ -212,8 +241,8 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
   // figure out the dimensions of the original image to draw to the LEFT and TOP of the view origin.
   // this will tell us the upper-left coord where to draw the image
   Point<int> ulViewSize(
-    viewOrigin.x + m_view.GetZoomFactor(),
-    viewOrigin.y + m_view.GetZoomFactor());
+    viewOrigin.x + static_cast<int>(m_view.GetZoomFactor()),
+    viewOrigin.y + static_cast<int>(m_view.GetZoomFactor()));
   Point<int> ulVirtualSize = m_view.ViewToVirtualSize(ulViewSize);
   ulViewSize = m_view.VirtualToViewSize(ulVirtualSize);// correct for rounding
 
@@ -224,8 +253,8 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
 
   // figure out the dimensions of the entire original image to draw
   Point<int> wholeViewSize(
-    clientRect.Width() + (m_view.GetZoomFactor()*2),
-    clientRect.Height() + (m_view.GetZoomFactor()*2));
+    clientRect.Width() + static_cast<int>(m_view.GetZoomFactor()*2),
+    clientRect.Height() + static_cast<int>(m_view.GetZoomFactor()*2));
   Point<int> wholeVirtualSize = m_view.ViewToVirtualSize(wholeViewSize);
   wholeViewSize = m_view.VirtualToViewSize(wholeVirtualSize);// correct for rounding
 

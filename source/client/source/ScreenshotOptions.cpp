@@ -146,10 +146,10 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
 		MainKey.GetDWORD(KEY_SHOWSTATUS, &temp);
 		options.ShowStatus(temp != 0);
 
-    int nTemp;
-    if(MainKey2[KEY_CROPPINGZOOMFACTOR].GetValue(nTemp))
+    float fTemp;
+    if(MainKey2[KEY_CROPPINGZOOMFACTOR].GetValue(&fTemp, sizeof(fTemp)))
     {
-      options.CroppingZoomFactor(nTemp);
+      options.CroppingZoomFactor(fTemp);
     }
 
     {
@@ -276,7 +276,8 @@ bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName
       }
     }
 
-    MainKey2[KEY_CROPPINGZOOMFACTOR] = options.CroppingZoomFactor();
+    float temp = options.CroppingZoomFactor();
+    MainKey2[KEY_CROPPINGZOOMFACTOR].SetValue(&temp, sizeof(temp));
 
     if(options.HaveConfigPlacement())
     {

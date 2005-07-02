@@ -125,8 +125,8 @@ public:
 	bool GetVirtualSelection(RECT& selectionRect) const;
 
   // zoom
-  void SetZoomFactor(int n);
-  int GetZoomFactor() const;
+  void SetZoomFactor(float n);
+  float GetZoomFactor() const;
 
   // gets the specified section of the original image.
 	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);

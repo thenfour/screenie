@@ -254,8 +254,6 @@ public:
 
   void SetFactor(int n)
   {
-    if(n > 16) n = 16;
-    if(n < 1) n = 1;
     if(m_nFactor != n)
     {
       m_nFactor = n;
