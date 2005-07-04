@@ -409,14 +409,35 @@ public:
     DrawSelectionWithOffset<patternFreq, colorOffset>(patternOffset, topMostPixel, bottomMostPixel, m_x);
   }
 
+  enum SelectionRectFlags
+  {
+    SR_DEFAULT = 0,
+    SR_IGNORELEFT = 1,
+    SR_IGNORERIGHT = 2,
+    SR_IGNORETOP = 4,
+    SR_IGNOREBOTTOM = 8
+  };
+
   template<int patternFreq, int colorOffset>
-  void DrawSelectionRectSafe(int patternOffset, RECT& rc)
+  void DrawSelectionRectSafe(int patternOffset, RECT& rc, SelectionRectFlags f = SR_DEFAULT)
   {
     // the formula for color is inverted, plus or minus 20 (with wrap) on each colorant.
-    DrawSelectionHLineSafe<patternFreq, colorOffset>(patternOffset, rc.top, rc.left, rc.right);
-    DrawSelectionHLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.bottom, rc.left, rc.right);
-    DrawSelectionVLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.left, rc.top, rc.bottom);
-    DrawSelectionVLineSafe<patternFreq, colorOffset>(patternOffset, rc.right, rc.top, rc.bottom);
+    if(!(f & SR_IGNORETOP))
+    {
+      DrawSelectionHLineSafe<patternFreq, colorOffset>(patternOffset, rc.top, rc.left, rc.right);
+    }
+    if(!(f & SR_IGNOREBOTTOM))
+    {
+      DrawSelectionHLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.bottom, rc.left, rc.right);
+    }
+    if(!(f & SR_IGNORELEFT))
+    {
+      DrawSelectionVLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.left, rc.top, rc.bottom);
+    }
+    if(!(f & SR_IGNORERIGHT))
+    {
+      DrawSelectionVLineSafe<patternFreq, colorOffset>(patternOffset, rc.right, rc.top, rc.bottom);
+    }
   }
 
   bool StretchBlit(AnimBitmap& dest, long destx, long desty, long destw, long desth, long srcx, long srcy, long srcw, long srch, int mode = HALFTONE)

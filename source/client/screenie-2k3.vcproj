@@ -343,6 +343,9 @@
 				RelativePath=".\source\MainWindow.hpp">
 			</File>
 			<File
+				RelativePath=".\source\ToolBase.h">
+			</File>
+			<File
 				RelativePath=".\source\ZoomWnd.hpp">
 			</File>
 		</Filter>

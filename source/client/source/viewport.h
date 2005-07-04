@@ -28,7 +28,7 @@ public:
   template<typename T2>
   Point(const Point<T2>& rhs) :
     x(static_cast<T>(rhs.x)),
-    y(static_cast<T>(rhs.y)),
+    y(static_cast<T>(rhs.y))
   {
   }
 
@@ -136,32 +136,32 @@ public:
   }
 
   template<typename T2>
-  Point<T2> ViewToVirtual(Point<T2> x)
+  Point<T2> ViewToVirtual(Point<T2> x) const
   {
     return ZoomedToVirtual(ViewToZoomed(x));
   }
 
   template<typename T2>
-  Point<T2> VirtualToView(Point<T2> x)
+  Point<T2> VirtualToView(Point<T2> x) const
   {
     return ZoomedToView(VirtualToZoomed(x));
   }
 
   template<typename T2>
-  Point<T2> ViewToVirtualSize(Point<T2> x)
+  Point<T2> ViewToVirtualSize(Point<T2> x) const
   {
     return ZoomedToVirtualSize(x);
   }
 
   template<typename T2>
-  Point<T2> VirtualToViewSize(Point<T2> x)
+  Point<T2> VirtualToViewSize(Point<T2> x) const
   {
     return VirtualToZoomedSize(x);
   }
 
 protected:
   template<typename T2>
-  Point<T2> ZoomedToVirtualSize(Point<T2> x)
+  Point<T2> ZoomedToVirtualSize(Point<T2> x) const
   {
     return Point<T2>(
       static_cast<T2>((static_cast<float>(x.x) / zoomFactor)),
@@ -170,7 +170,7 @@ protected:
   }
 
   template<typename T2>
-  Point<T2> VirtualToZoomedSize(Point<T2> x)
+  Point<T2> VirtualToZoomedSize(Point<T2> x) const
   {
     return Point<T2>(
       static_cast<T2>(zoomFactor * x.x),
@@ -179,7 +179,7 @@ protected:
   }
 
   template<typename T2>
-  Point<T2> ViewToZoomed(Point<T2> x)
+  Point<T2> ViewToZoomed(Point<T2> x) const
   {
     /*              origins
                       |
@@ -196,7 +196,7 @@ protected:
   }
 
   template<typename T2>
-  Point<T2> ZoomedToView(Point<T2> x)
+  Point<T2> ZoomedToView(Point<T2> x) const
   {
     /*              origins
                       |
@@ -214,7 +214,7 @@ protected:
 
   // TODO: consider rounding.
   template<typename T2>
-  Point<T2> ZoomedToVirtual(Point<T2> x)
+  Point<T2> ZoomedToVirtual(Point<T2> x) const
   {
     /*
       |=============x===========================| zoomed virtual canvas
@@ -230,7 +230,7 @@ protected:
 
   // TODO: consider rounding.
   template<typename T2>
-  Point<T2> VirtualToZoomed(Point<T2> x)
+  Point<T2> VirtualToZoomed(Point<T2> x) const
   {
     /*
       |=============x===========================| zoomed virtual canvas

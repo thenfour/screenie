@@ -27,70 +27,9 @@
 
 #include "animbitmap.h"
 #include "viewport.h"
+#include "ToolBase.h"
+#include <map>
 
-
-class ToolBase
-{
-public:
-  virtual void OnSelectTool() = 0;
-  virtual void OnDeselectTool() = 0;
-  virtual void OnCursorMove(CPoint p) = 0;
-  virtual void OnLeftClick(CPoint p) = 0;
-  virtual void OnRightClick(CPoint p) = 0;
-  virtual void OnPaint(AnimBitmap<32>& img, const Viewport<int>& view) = 0;
-};
-
-class PencilTool : public ToolBase
-{
-public:
-  void OnSelectTool() { }
-  void OnDeselectTool() { }
-  void OnCursorMove(CPoint p) { }
-  void OnLeftClick(CPoint p) { }
-  void OnRightClick(CPoint p) { }
-  void OnPaint(AnimBitmap<32>& img, const Viewport<int>& view) { }
-};
-
-class SelectionTool : public ToolBase
-{
-public:
-  void OnSelectTool() { }
-  void OnDeselectTool() { }
-  void OnCursorMove(CPoint p) { }
-  void OnLeftClick(CPoint p) { }
-  void OnRightClick(CPoint p) { }
-  void OnPaint(AnimBitmap<32>& img, const Viewport<int>& view) { }
-
-  bool GetSelection(RECT&) const { return false; }
-  void ClearSelection() { }
-  bool HasSelection() const { return false; }
-  /*
-  SetTimer(0, 120);
-  if(m_hasSelection)
-  {
-    m_selectionOffset ++;
-    if(m_selectionOffset >= patternFrequency)
-    {
-      m_selectionOffset = 0;
-    }
-	  RECT rectInvalidate;
-    GetScreenSelection(rectInvalidate);
-    ::InflateRect(&rectInvalidate, 5, 5);
-    RedrawWindow(&rectInvalidate, 0, RDW_INVALIDATE | RDW_UPDATENOW);
-  }
-  */
-};
-
-class TextTool : public ToolBase
-{
-public:
-  void OnSelectTool() { }
-  void OnDeselectTool() { }
-  void OnCursorMove(CPoint p) { }
-  void OnLeftClick(CPoint p) { }
-  void OnRightClick(CPoint p) { }
-  void OnPaint(AnimBitmap<32>& img, const Viewport<int>& view) { }
-};
 
 class IImageEditWindowEvents
 {
@@ -102,7 +41,8 @@ public:
 
 class CImageEditWindow :
   public CWindowImpl<CImageEditWindow>,
-  public IImageEditWindowEvents
+  public IImageEditWindowEvents,
+  public IToolOperations
 {
   // global const settings
   static const int viewMargin = 15;
@@ -115,6 +55,27 @@ public:
   // IImageEditWindowEvents methods
   void OnCroppingSelectionChanged() { }
   void OnCursorPositionChanged(int x, int y) { }
+
+  // IToolOperations methods
+  void Pan(int x, int y, bool updateNow);
+  HWND GetHWND();
+  Point<int> GetCursorPosition();
+  int GetImageHeight();
+  int GetImageWidth();
+  void ClampToImage(Point<int>& p);
+  void ClampToImageF(Point<float>& p);
+  void Refresh(bool now);
+  void Refresh(const RECT& imageCoords, bool now);
+  void CreateTimer(UINT elapse, TIMERPROC, void* userData);
+
+  template<typename T>
+  void ClampToImageX(Point<T>& p)
+  {
+    if(p.x < 0) p.x = 0;
+    if(p.y < 0) p.y = 0;
+    if(p.x > GetImageWidth()) p.x = static_cast<T>(GetImageWidth());
+    if(p.y > GetImageHeight()) p.y = static_cast<T>(GetImageHeight());
+  }
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
@@ -136,13 +97,17 @@ protected:
 	BEGIN_MSG_MAP(CImageEditWindow)
 		MESSAGE_HANDLER(WM_SIZE, OnSize)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
+		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
 		MESSAGE_HANDLER(WM_RBUTTONDOWN, OnRButtonDown)
+		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_RBUTTONUP, OnRButtonUp)
-	END_MSG_MAP()
+    MESSAGE_HANDLER(WM_CAPTURECHANGED, OnLoseCapture)
+  END_MSG_MAP()
 
+	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
   LRESULT OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -150,6 +115,8 @@ protected:
   LRESULT OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+  LRESULT OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+  LRESULT OnTimer(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
   enum CursorMoveType
   {
@@ -159,7 +126,7 @@ protected:
   };
 
   // cursor stuff
-	Point<float> m_lastCursorVirtual;// used for "slowing down" cursor movement... these are in VIRTUAL coords.
+	Point<float> m_lastCursorVirtual;// virtual coords.
   CPoint m_lastCursor;// in client coords
 
   // members
@@ -175,6 +142,9 @@ protected:
   PencilTool m_penTool;
   SelectionTool m_selectionTool;
   TextTool m_textTool;
+
+  // timer crap (ugh all this could be avoided if SetTimer() had a userdata arg.
+  std::map<UINT_PTR, TIMERPROC> m_timerMap;// maps 'this' pointer to proc
 
   bool MouseEnter()
   {
