@@ -59,23 +59,14 @@ public:
   // IToolOperations methods
   void Pan(int x, int y, bool updateNow);
   HWND GetHWND();
-  Point<int> GetCursorPosition();
+  PointI GetCursorPosition();
   int GetImageHeight();
   int GetImageWidth();
-  void ClampToImage(Point<int>& p);
-  void ClampToImageF(Point<float>& p);
+  void ClampToImage(PointI& p);
+  void ClampToImage(PointF& p);
   void Refresh(bool now);
   void Refresh(const RECT& imageCoords, bool now);
   void CreateTimer(UINT elapse, TIMERPROC, void* userData);
-
-  template<typename T>
-  void ClampToImageX(Point<T>& p)
-  {
-    if(p.x < 0) p.x = 0;
-    if(p.y < 0) p.y = 0;
-    if(p.x > GetImageWidth()) p.x = static_cast<T>(GetImageWidth());
-    if(p.y > GetImageHeight()) p.y = static_cast<T>(GetImageHeight());
-  }
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
@@ -126,7 +117,7 @@ protected:
   };
 
   // cursor stuff
-	Point<float> m_lastCursorVirtual;// virtual coords.
+	PointF m_lastCursorVirtual;// virtual coords.
   CPoint m_lastCursor;// in client coords
 
   // members
@@ -134,7 +125,7 @@ protected:
   AnimBitmap<32> m_dibOriginal;
   AnimBitmap<32> m_dibStretched;
   AnimBitmap<32> m_dibOffscreen;
-  Viewport<int> m_view;
+  Viewport m_view;
   IImageEditWindowEvents* m_notify;
 
   // tool selection stuff
@@ -162,7 +153,7 @@ protected:
   bool m_bIsPanning;
   HCURSOR m_hPreviousCursor;
   CPoint m_panningStart;// in client coords
-  Point<int> m_panningStartVirtual;// virtual coords.
+  PointI m_panningStartVirtual;// virtual coords.
 };
 
 #endif

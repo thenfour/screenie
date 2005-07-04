@@ -3,32 +3,32 @@
 #ifndef VIEWPORT_INCLUDED
 #define VIEWPORT_INCLUDED
 
-template<typename T>
-class Point
+
+inline int Round(float f)
+{
+  return static_cast<int>(f + 0.5f);
+}
+
+
+class PointI
 {
 public:
-  typedef Point<T> This_T;
+  typedef PointI This_T;
 
   // Constructors
-  Point() :
+  PointI() :
     x(0),
     y(0)
   {
   }
-  Point(T initX, T initY) :
+  PointI(int initX, int initY) :
     x(initX),
     y(initY)
   {
   }
-  Point(const This_T& rhs) :
+  PointI(const This_T& rhs) :
     x(rhs.x),
     y(rhs.y)
-  {
-  }
-  template<typename T2>
-  Point(const Point<T2>& rhs) :
-    x(static_cast<T>(rhs.x)),
-    y(static_cast<T>(rhs.y))
   {
   }
 
@@ -40,21 +40,77 @@ public:
   }
 
   // Operations
-	void Offset(T xOffset, T yOffset)
+	void Offset(int xOffset, int yOffset)
   {
     x += xOffset;
     y += yOffset;
   }
 
-	void Assign(T X, T Y)
+	void Assign(int X, int Y)
   {
     x = X;
     y = Y;
   }
 
-  T x;
-  T y;
+  int x;
+  int y;
 };
+
+class PointF
+{
+public:
+  typedef PointF This_T;
+
+  // Constructors
+  PointF() :
+    x(0.0f),
+    y(0.0f)
+  {
+  }
+  PointF(float initX, float initY) :
+    x(initX),
+    y(initY)
+  {
+  }
+  PointF(const This_T& rhs) :
+    x(rhs.x),
+    y(rhs.y)
+  {
+  }
+
+  This_T& operator =(const This_T& rhs)
+  {
+    x = rhs.x;
+    y = rhs.y;
+    return *this;
+  }
+
+  // Operations
+	void Offset(float xOffset, float yOffset)
+  {
+    x += xOffset;
+    y += yOffset;
+  }
+
+	void Assign(float X, float Y)
+  {
+    x = X;
+    y = Y;
+  }
+
+  float x;
+  float y;
+};
+
+inline PointI PointFtoI(PointF x)
+{
+  return PointI(Round(x.x), Round(x.y));
+}
+
+inline PointF PointItoF(PointI x)
+{
+  return PointF(static_cast<float>(x.x), static_cast<float>(x.y));
+}
 
 
 /*
@@ -77,15 +133,12 @@ public:
   The way this class translates coordinates is basically i set the viewport origin directly on top of the
   canvas origin.  that gives me the orientation, and anything can be calculated off of that.
 */
-template<typename T>
 class Viewport
 {
 public:
-  typedef Point<T> Point_T;
-  typedef Viewport<T> This_T;
 
   Viewport() :
-    zoomFactor(1)
+    zoomFactor(1.0f)
   {
   }
 
@@ -93,8 +146,7 @@ public:
     virtualOrigin(rhs.virtualOrigin),
     viewOrigin(rhs.viewOrigin),
     zoomedOrigin(rhs.zoomedOrigin),
-    zoomFactor(rhs.zoomFactor),
-    viewOffsetFromZoomed(0)
+    zoomFactor(rhs.zoomFactor)
   {
   }
 
@@ -116,70 +168,98 @@ public:
   {
     return zoomFactor;
   }
-  void SetViewOrigin(Point_T o)
+  void SetViewOrigin(PointI o)
   {
     viewOrigin = o;
     CacheValues();
   }
-  const Point_T& GetViewOrigin() const
+  const PointI& GetViewOrigin() const
   {
     return viewOrigin;
   }
-  void SetVirtualOrigin(Point_T o)
+  void SetVirtualOrigin(PointI o)
   {
     virtualOrigin = o;
     CacheValues();
   }
-  const Point_T& GetVirtualOrigin() const
+  const PointI& GetVirtualOrigin() const
   {
     return virtualOrigin;
   }
 
-  template<typename T2>
-  Point<T2> ViewToVirtual(Point<T2> x) const
+  PointI ViewToVirtual(PointI x) const
   {
     return ZoomedToVirtual(ViewToZoomed(x));
   }
 
-  template<typename T2>
-  Point<T2> VirtualToView(Point<T2> x) const
+  PointF ViewToVirtual(PointF x) const
+  {
+    return ZoomedToVirtual(ViewToZoomed(x));
+  }
+
+  PointI VirtualToView(PointI x) const
   {
     return ZoomedToView(VirtualToZoomed(x));
   }
 
-  template<typename T2>
-  Point<T2> ViewToVirtualSize(Point<T2> x) const
+  PointF VirtualToView(PointF x) const
+  {
+    return ZoomedToView(VirtualToZoomed(x));
+  }
+
+  PointI ViewToVirtualSize(PointI x) const
   {
     return ZoomedToVirtualSize(x);
   }
 
-  template<typename T2>
-  Point<T2> VirtualToViewSize(Point<T2> x) const
+  PointF ViewToVirtualSize(PointF x) const
+  {
+    return ZoomedToVirtualSize(x);
+  }
+
+  PointI VirtualToViewSize(PointI x) const
+  {
+    return VirtualToZoomedSize(x);
+  }
+
+  PointF VirtualToViewSize(PointF x) const
   {
     return VirtualToZoomedSize(x);
   }
 
 protected:
-  template<typename T2>
-  Point<T2> ZoomedToVirtualSize(Point<T2> x) const
+  PointI ZoomedToVirtualSize(PointI x) const
   {
-    return Point<T2>(
-      static_cast<T2>((static_cast<float>(x.x) / zoomFactor)),
-      static_cast<T2>((static_cast<float>(x.y) / zoomFactor))
+    return PointI(
+      Round((static_cast<float>(x.x) / zoomFactor)),
+      Round((static_cast<float>(x.y) / zoomFactor))
+      );
+  }
+  PointF ZoomedToVirtualSize(PointF x) const
+  {
+    return PointF(
+      (static_cast<float>(x.x) / zoomFactor),
+      (static_cast<float>(x.y) / zoomFactor)
       );
   }
 
-  template<typename T2>
-  Point<T2> VirtualToZoomedSize(Point<T2> x) const
+  PointI VirtualToZoomedSize(PointI x) const
   {
-    return Point<T2>(
-      static_cast<T2>(zoomFactor * x.x),
-      static_cast<T2>(zoomFactor * x.y)
+    return PointI(
+      Round(zoomFactor * x.x),
+      Round(zoomFactor * x.y)
       );
   }
 
-  template<typename T2>
-  Point<T2> ViewToZoomed(Point<T2> x) const
+  PointF VirtualToZoomedSize(PointF x) const
+  {
+    return PointF(
+      zoomFactor * x.x,
+      zoomFactor * x.y
+      );
+  }
+
+  PointI ViewToZoomed(PointI x) const
   {
     /*              origins
                       |
@@ -189,14 +269,21 @@ protected:
       <-----------> what we are calculating.
       <----> viewOffsetFromZoomed cached value.
     */
-    return Point<T2>(
+    return PointI(
       x.x + viewOffsetFromZoomed.x,
       x.y + viewOffsetFromZoomed.y
       );
   }
 
-  template<typename T2>
-  Point<T2> ZoomedToView(Point<T2> x) const
+  PointF ViewToZoomed(PointF x) const
+  {
+    return PointF(
+      x.x + viewOffsetFromZoomed.x,
+      x.y + viewOffsetFromZoomed.y
+      );
+  }
+
+  PointI ZoomedToView(PointI x) const
   {
     /*              origins
                       |
@@ -206,15 +293,21 @@ protected:
             <-----> what we are calculating.
       <----> viewOffsetFromZoomed cached value.
     */
-    return Point<T2>(
+    return PointI(
+      x.x - viewOffsetFromZoomed.x,
+      x.y - viewOffsetFromZoomed.y
+      );
+  }
+  PointF ZoomedToView(PointF x) const
+  {
+    return PointF(
       x.x - viewOffsetFromZoomed.x,
       x.y - viewOffsetFromZoomed.y
       );
   }
 
   // TODO: consider rounding.
-  template<typename T2>
-  Point<T2> ZoomedToVirtual(Point<T2> x) const
+  PointI ZoomedToVirtual(PointI x) const
   {
     /*
       |=============x===========================| zoomed virtual canvas
@@ -222,15 +315,20 @@ protected:
       <-------------> input
       <-----> return
     */
-    return Point<T2>(
-      static_cast<T2>((static_cast<float>(x.x) / zoomFactor)),
-      static_cast<T2>((static_cast<float>(x.y) / zoomFactor))
+    return PointI(
+      Round((static_cast<float>(x.x) / zoomFactor)),
+      Round((static_cast<float>(x.y) / zoomFactor))
+      );
+  }
+  PointF ZoomedToVirtual(PointF x) const
+  {
+    return PointF(
+      (static_cast<float>(x.x) / zoomFactor),
+      (static_cast<float>(x.y) / zoomFactor)
       );
   }
 
-  // TODO: consider rounding.
-  template<typename T2>
-  Point<T2> VirtualToZoomed(Point<T2> x) const
+  PointI VirtualToZoomed(PointI x) const
   {
     /*
       |=============x===========================| zoomed virtual canvas
@@ -238,17 +336,24 @@ protected:
       <-----> input
       <-------------> return
     */
-    return Point<T2>(
-      static_cast<T2>(zoomFactor * x.x),
-      static_cast<T2>(zoomFactor * x.y)
+    return PointI(
+      Round(zoomFactor * x.x),
+      Round(zoomFactor * x.y)
+      );
+  }
+  PointF VirtualToZoomed(PointF x) const
+  {
+    return PointF(
+      zoomFactor * x.x,
+      zoomFactor * x.y
       );
   }
 
   // calculate cached members based on the basic members
   void CacheValues()
   {
-    zoomedOrigin.x = static_cast<T>(zoomFactor * virtualOrigin.x);
-    zoomedOrigin.y = static_cast<T>(zoomFactor * virtualOrigin.y);
+    zoomedOrigin.x = Round(zoomFactor * virtualOrigin.x);
+    zoomedOrigin.y = Round(zoomFactor * virtualOrigin.y);
     /*              origins
                       |
       |===============*============================| zoomed virtual canvas
@@ -262,13 +367,13 @@ protected:
   }
 
   // basic members
-  Point_T viewOrigin;
-  Point_T virtualOrigin;
+  PointI viewOrigin;
+  PointI virtualOrigin;
   float zoomFactor;
 
   // cached values
-  Point_T zoomedOrigin;// always virtualOrigin * zoomFactor
-  Point_T viewOffsetFromZoomed;// this value + view coords = zoomed coords.  most of the time this should be positive, meaning the view's left edge is INSIDE the virtual canvas.
+  PointI zoomedOrigin;// always virtualOrigin * zoomFactor
+  PointI viewOffsetFromZoomed;// this value + view coords = zoomed coords.  most of the time this should be positive, meaning the view's left edge is INSIDE the virtual canvas.
 };
 
 
