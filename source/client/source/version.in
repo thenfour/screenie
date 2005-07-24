@@ -1,0 +1,10 @@
+#define FILEVER        1,$WCREV$,$WCMODS?1:0$,0
+#define PRODUCTVER     FILEVER
+#define STRFILEVER     "1, $WCREV$, $WCMODS?1:0$, 0\0"
+#define STRPRODUCTVER  "1, $WCREV$, $WCMODS?1:0$, 0\0"
+
+#define TSVN_VERMAJOR             1
+#define TSVN_VERMINOR       $WCREV$
+#define TSVN_VERMICRO  $WCMODS?1:0$
+#define TSVN_VERBUILD			        0
+

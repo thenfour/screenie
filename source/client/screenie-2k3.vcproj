@@ -52,7 +52,8 @@
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCPreBuildEventTool"
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) source\version.in source\version.h"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -117,7 +118,8 @@
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCPreBuildEventTool"
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) version.in version.h"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -267,6 +269,9 @@
 			</File>
 			<File
 				RelativePath=".\source\screenie.rc">
+			</File>
+			<File
+				RelativePath=".\source\screenie.rc2">
 			</File>
 			<File
 				RelativePath=".\source\resources\watermark.bmp">

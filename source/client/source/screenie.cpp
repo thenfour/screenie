@@ -51,21 +51,6 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	int retval = 0;
 
-  Viewport m_view;
-  m_view.SetVirtualOrigin(PointF(2.67f, 3.67f));
-  m_view.SetViewOrigin(PointF(1.33f, 1.33f));
-  m_view.SetZoomFactor(1);
-
-  PointF viewOrigin = m_view.GetViewOrigin();
-
-  PointF ulViewSize(viewOrigin.x, viewOrigin.y);
-  PointF ulVirtualSize = m_view.ViewToVirtualSize(ulViewSize);
-  PointF ulVirtual = m_view.ViewToVirtual(PointF(0,0));
-  ulVirtual.x = floor(ulVirtual.x);// make integral
-  ulVirtual.y = floor(ulVirtual.y);// make integral
-  PointF ulClient = m_view.VirtualToView(ulVirtual);// now this is guaranteed to be at the start of an integral virtual coord
-
-
 	RECT display = { 0 };
 	if (g_mainWindow.Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))
 	{
