@@ -60,7 +60,7 @@ public:
   virtual UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData) = 0;// returns a cookie that identifies the tmier. guaranteed not to be 0, so you can use 0 to tell if an id is valid.
   virtual void DeleteTimer(UINT_PTR cookie) = 0;
   //virtual HWND GetHWND() = 0;
-  virtual PointI GetCursorPosition() = 0;
+  virtual PointF GetCursorPosition() = 0;
   virtual int GetImageHeight() = 0;
   virtual int GetImageWidth() = 0;
   virtual void ClampToImage(PointI& p) = 0;// clamps the point to be within the image's bounds.
@@ -78,9 +78,9 @@ public:
   virtual void OnInitTool() = 0;
   virtual void OnSelectTool() = 0;
   virtual void OnDeselectTool() = 0;
-  virtual void OnCursorMove(PointI p) = 0;
-  virtual void OnLeftButtonDown(PointI p) = 0;
-  virtual void OnLeftButtonUp(PointI p) = 0;
+  virtual void OnCursorMove(PointF p) = 0;
+  virtual void OnLeftButtonDown(PointF p) = 0;
+  virtual void OnLeftButtonUp(PointF p) = 0;
   virtual void OnLoseCapture() = 0;
   virtual void OnPaint(AnimBitmap<32>& img, const Viewport& view, int marginX, int marginY) = 0;
 };
@@ -178,7 +178,7 @@ public:
     // don't need to do anything.
   }
 
-  void OnCursorMove(PointI p)
+  void OnCursorMove(PointF p)
   {
     if(m_ops->HaveCapture())
     {
@@ -189,7 +189,7 @@ public:
       }
 
       m_haveSelection = true;
-      m_selectionPt = p;
+      m_selectionPt = PointFtoI(p);
       m_notify->OnSelectionToolSelectionChanged();
       m_ops->ClampToImage(m_selectionPt);
 
@@ -232,7 +232,7 @@ public:
     }
   }
 
-  void OnLeftButtonDown(PointI p)
+  void OnLeftButtonDown(PointF p)
   {
     if(!m_ops->HaveCapture())
     {
@@ -245,13 +245,13 @@ public:
       }
 
       m_ops->SetCapture_();
-      m_selectionOrg = m_ops->GetCursorPosition();
+      m_selectionOrg = PointFtoI(m_ops->GetCursorPosition());
       m_notify->OnSelectionToolSelectionChanged();
       m_ops->ClampToImage(m_selectionOrg);
     }
   }
 
-  void OnLeftButtonUp(PointI p)
+  void OnLeftButtonUp(PointF p)
   {
     if(m_ops->HaveCapture())
     {

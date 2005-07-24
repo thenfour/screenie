@@ -36,6 +36,7 @@ class IImageEditWindowEvents
 public:
   virtual void OnSelectionChanged() = 0;
   virtual void OnCursorPositionChanged(int x, int y) = 0;
+  virtual void OnZoomFactorChanged() = 0;
 };
 
 
@@ -56,6 +57,7 @@ public:
   // IImageEditWindowEvents methods
   void OnCursorPositionChanged(int x, int y) { }
   void OnSelectionChanged() { };
+  void OnZoomFactorChanged() { };
 
   // ISelectionToolCallback methods
   void OnSelectionToolSelectionChanged();
@@ -65,7 +67,7 @@ public:
   void Pan(const PanningSpec&, bool updateNow);
   void Pan(int x, int y, bool updateNow);
   HWND GetHWND();
-  PointI GetCursorPosition();
+  PointF GetCursorPosition();
   int GetImageHeight();
   int GetImageWidth();
   void ClampToImage(PointI& p);
@@ -119,6 +121,8 @@ protected:
   LRESULT OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnTimer(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
+  void ResetOffscreenBitmaps();
+
   enum CursorMoveType
   {
     CM_NORMAL,
@@ -140,9 +144,7 @@ protected:
 
   // tool selection stuff
   ToolBase* m_currentTool;
-  PencilTool m_penTool;
   SelectionTool m_selectionTool;
-  TextTool m_textTool;
 
   // timer crap (ugh all this could be avoided if SetTimer() had a userdata arg.
   std::map<UINT_PTR, std::pair<ToolTimerProc, void*> > m_timerMap;// maps 'this' pointer to proc
@@ -164,7 +166,7 @@ protected:
   bool m_bIsPanning;
   HCURSOR m_hPreviousCursor;
   CPoint m_panningStart;// in client coords
-  PointI m_panningStartVirtual;// virtual coords.
+  PointF m_panningStartVirtual;// virtual coords.
   bool m_haveCapture;
 };
 

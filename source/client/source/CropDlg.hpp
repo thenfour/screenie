@@ -30,8 +30,7 @@ public:
     m_zoomWnd(bitmap.get()),
     m_options(options),
     m_hIconSmall(0),
-    m_hIcon(0),
-    m_zoomFactorIndex(0)
+    m_hIcon(0)
   {
     bool bHitOne = false;
     for(float f = 0.05f; f < 30.0f; f *= 1.10f)
@@ -71,6 +70,9 @@ public:
     SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
     m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
     SyncZoomWindowSelection();
+  }
+  void OnZoomFactorChanged()
+  {
   }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
@@ -304,11 +306,12 @@ private:
 	CImageEditWindow m_croppingWnd;
   ScreenshotOptions& m_options;
 
-  HICON m_hIcon;
-  HICON m_hIconSmall;
-
+  // zoom stuff
   int m_zoomFactorIndex;
   std::vector<float> m_zoomFactors;
+
+  HICON m_hIcon;
+  HICON m_hIconSmall;
 };
 
 #endif

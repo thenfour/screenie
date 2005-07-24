@@ -146,7 +146,8 @@ public:
     virtualOrigin(rhs.virtualOrigin),
     viewOrigin(rhs.viewOrigin),
     zoomedOrigin(rhs.zoomedOrigin),
-    zoomFactor(rhs.zoomFactor)
+    zoomFactor(rhs.zoomFactor),
+    viewOffsetFromZoomed(rhs.viewOffsetFromZoomed)
   {
   }
 
@@ -168,21 +169,21 @@ public:
   {
     return zoomFactor;
   }
-  void SetViewOrigin(PointI o)
+  void SetViewOrigin(PointF o)
   {
     viewOrigin = o;
     CacheValues();
   }
-  const PointI& GetViewOrigin() const
+  const PointF& GetViewOrigin() const
   {
     return viewOrigin;
   }
-  void SetVirtualOrigin(PointI o)
+  void SetVirtualOrigin(PointF o)
   {
     virtualOrigin = o;
     CacheValues();
   }
-  const PointI& GetVirtualOrigin() const
+  const PointF& GetVirtualOrigin() const
   {
     return virtualOrigin;
   }
@@ -270,16 +271,16 @@ protected:
       <----> viewOffsetFromZoomed cached value.
     */
     return PointI(
-      x.x + viewOffsetFromZoomed.x,
-      x.y + viewOffsetFromZoomed.y
+      x.x + (int)viewOffsetFromZoomed.x,
+      x.y + (int)viewOffsetFromZoomed.y
       );
   }
 
   PointF ViewToZoomed(PointF x) const
   {
     return PointF(
-      x.x + viewOffsetFromZoomed.x,
-      x.y + viewOffsetFromZoomed.y
+      viewOffsetFromZoomed.x + x.x,
+      viewOffsetFromZoomed.y + x.y
       );
   }
 
@@ -294,8 +295,8 @@ protected:
       <----> viewOffsetFromZoomed cached value.
     */
     return PointI(
-      x.x - viewOffsetFromZoomed.x,
-      x.y - viewOffsetFromZoomed.y
+      (int)(x.x - viewOffsetFromZoomed.x),
+      (int)(x.y - viewOffsetFromZoomed.y)
       );
   }
   PointF ZoomedToView(PointF x) const
@@ -306,7 +307,6 @@ protected:
       );
   }
 
-  // TODO: consider rounding.
   PointI ZoomedToVirtual(PointI x) const
   {
     /*
@@ -352,8 +352,8 @@ protected:
   // calculate cached members based on the basic members
   void CacheValues()
   {
-    zoomedOrigin.x = Round(zoomFactor * virtualOrigin.x);
-    zoomedOrigin.y = Round(zoomFactor * virtualOrigin.y);
+    zoomedOrigin.x = zoomFactor * virtualOrigin.x;
+    zoomedOrigin.y = zoomFactor * virtualOrigin.y;
     /*              origins
                       |
       |===============*============================| zoomed virtual canvas
@@ -367,13 +367,13 @@ protected:
   }
 
   // basic members
-  PointI viewOrigin;
-  PointI virtualOrigin;
+  PointF viewOrigin;
+  PointF virtualOrigin;
   float zoomFactor;
 
   // cached values
-  PointI zoomedOrigin;// always virtualOrigin * zoomFactor
-  PointI viewOffsetFromZoomed;// this value + view coords = zoomed coords.  most of the time this should be positive, meaning the view's left edge is INSIDE the virtual canvas.
+  PointF zoomedOrigin;// always virtualOrigin * zoomFactor
+  PointF viewOffsetFromZoomed;// this value + view coords = zoomed coords.  most of the time this should be positive, meaning the view's left edge is INSIDE the virtual canvas.
 };
 
 
