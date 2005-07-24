@@ -34,7 +34,7 @@
 class IImageEditWindowEvents
 {
 public:
-  virtual void OnCroppingSelectionChanged() = 0;
+  virtual void OnSelectionChanged() = 0;
   virtual void OnCursorPositionChanged(int x, int y) = 0;
 };
 
@@ -42,10 +42,11 @@ public:
 class CImageEditWindow :
   public CWindowImpl<CImageEditWindow>,
   public IImageEditWindowEvents,
-  public IToolOperations
+  public IToolOperations,
+  public ISelectionToolCallback
 {
   // global const settings
-  static const int viewMargin = 15;
+  static const int viewMargin = 0;
   static const int patternFrequency = 8;
 
 public:
@@ -53,10 +54,15 @@ public:
   static ATL::CWndClassInfo& GetWndClassInfo();
 
   // IImageEditWindowEvents methods
-  void OnCroppingSelectionChanged() { }
   void OnCursorPositionChanged(int x, int y) { }
+  void OnSelectionChanged() { };
+
+  // ISelectionToolCallback methods
+  void OnSelectionToolSelectionChanged();
 
   // IToolOperations methods
+  PanningSpec GetPanningSpec();
+  void Pan(const PanningSpec&, bool updateNow);
   void Pan(int x, int y, bool updateNow);
   HWND GetHWND();
   PointI GetCursorPosition();
@@ -66,7 +72,11 @@ public:
   void ClampToImage(PointF& p);
   void Refresh(bool now);
   void Refresh(const RECT& imageCoords, bool now);
-  void CreateTimer(UINT elapse, TIMERPROC, void* userData);
+  UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData);
+  void DeleteTimer(UINT_PTR cookie);
+  void SetCapture_();
+  void ReleaseCapture_();
+  bool HaveCapture();
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
@@ -135,7 +145,8 @@ protected:
   TextTool m_textTool;
 
   // timer crap (ugh all this could be avoided if SetTimer() had a userdata arg.
-  std::map<UINT_PTR, TIMERPROC> m_timerMap;// maps 'this' pointer to proc
+  std::map<UINT_PTR, std::pair<ToolTimerProc, void*> > m_timerMap;// maps 'this' pointer to proc
+  UINT_PTR m_nextTimerID;
 
   bool MouseEnter()
   {
@@ -154,6 +165,7 @@ protected:
   HCURSOR m_hPreviousCursor;
   CPoint m_panningStart;// in client coords
   PointI m_panningStartVirtual;// virtual coords.
+  bool m_haveCapture;
 };
 
 #endif

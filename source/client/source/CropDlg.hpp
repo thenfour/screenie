@@ -18,8 +18,7 @@
 class CCropDlg :
 	public CDialogImpl<CCropDlg>,
 	public CDialogResize<CCropDlg>,
-  public IImageEditWindowEvents,
-  public IZoomWindowEvents
+  public IImageEditWindowEvents
 {
 public:
 	enum { IDD = IDD_CROPDLG };
@@ -28,14 +27,14 @@ public:
     m_bitmap(bitmap),
     m_didCropping(false),
     m_croppingWnd(bitmap, this),
-    m_zoomWnd(bitmap.get(), this),
+    m_zoomWnd(bitmap.get()),
     m_options(options),
     m_hIconSmall(0),
     m_hIcon(0),
     m_zoomFactorIndex(0)
   {
     bool bHitOne = false;
-    for(float f = 0.05f; f < 30.0f; f *= 1.10)
+    for(float f = 0.05f; f < 30.0f; f *= 1.10f)
     {
       if(!bHitOne)
       {
@@ -62,16 +61,8 @@ public:
     if(m_hIconSmall) DestroyIcon(m_hIconSmall);
   }
 
-  // IZoomWindowEvents methods
-  void OnZoomScaleFactorChanged(int factor)
-  {
-    SetDlgItemText(IDC_ZOOM_CAPTION, LibCC::Format("%x zoom view:").i(factor).CStr());
-    m_options.CroppingZoomFactor(factor);
-    ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
-  }
-
   // IImageEditWindowEvents methods
-  void OnCroppingSelectionChanged()
+  void OnSelectionChanged()
   {
     SyncZoomWindowSelection();
   }
@@ -80,9 +71,6 @@ public:
     SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
     m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
     SyncZoomWindowSelection();
-  }
-  void OnZoomScaleFactorChanged2(int factor)
-  {
   }
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
@@ -218,7 +206,7 @@ public:
     if(m_zoomFactorIndex < 0) m_zoomFactorIndex = 0;
     if(m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
 
-    OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
+    //OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
     m_zoomWnd.SetFactor(1);
 
     BOOL temp;

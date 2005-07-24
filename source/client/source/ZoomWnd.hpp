@@ -11,28 +11,17 @@
 #include "image.hpp"
 
 
-class IZoomWindowEvents
-{
-public:
-  virtual void OnZoomScaleFactorChanged(int factor) = 0;
-};
-
 
 class CZoomWindow :
-  public CWindowImpl<CZoomWindow>,
-  public IZoomWindowEvents
+  public CWindowImpl<CZoomWindow>
 {
 public:
 	DECLARE_WND_CLASS("ScreenieCropperWnd")
 
   static const int patternFrequency = 8;
 
-  // IZoomWindowEvents methods
-  void OnZoomScaleFactorChanged(int factor) { }
-
-  CZoomWindow(Gdiplus::Bitmap* bitmap, IZoomWindowEvents* notify) :
+  CZoomWindow(Gdiplus::Bitmap* bitmap) :
     m_nFactor(1),
-    m_notify(notify == 0 ? this : notify),
     m_patternOffset(0)
 	{
     m_ImageOrigin.x = 0;
@@ -257,7 +246,6 @@ public:
     if(m_nFactor != n)
     {
       m_nFactor = n;
-      m_notify->OnZoomScaleFactorChanged(n);
       RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
     }
   }
@@ -272,8 +260,6 @@ private:
 
   int m_nFactor;
   AnimBitmap<32> m_dibOriginal;
-
-  IZoomWindowEvents* m_notify;
 };
 
 #endif

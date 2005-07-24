@@ -23,7 +23,9 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_notify(this),
   m_mouseEntrancy(false),
   m_bIsPanning(false),
-  m_selectionTool(this)
+  m_selectionTool(this, this),
+  m_nextTimerID(0),
+  m_haveCapture(false)
 {
   CopyImage(m_dibOriginal, *bitmap);
   m_view.SetZoomFactor(3);
@@ -293,6 +295,52 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	return 0;
 }
 
+PanningSpec CImageEditWindow::GetPanningSpec()
+{
+  PanningSpec ret(0, 0);
+
+	RECT clientRect;
+	GetClientRect(&clientRect);
+
+  PointF ul = m_view.ViewToVirtual(PointF(0, 0));
+  PointF br = m_view.ViewToVirtual(PointF((float)clientRect.right, (float)clientRect.bottom));
+
+  PointF pos = m_lastCursorVirtual;
+
+  if(pos.x < ul.x)
+  {
+    ret.m_x = (int)(pos.x - ul.x);
+    ret.m_x /= 3;
+    if(ret.m_x == 0) ret.m_x = -1;
+  }
+  if(pos.x > br.x)
+  {
+    ret.m_x = (int)(pos.x - br.x);
+    ret.m_x /= 3;
+    if(ret.m_x == 0) ret.m_x = 1;
+  }
+
+  if(pos.y < ul.y)
+  {
+    ret.m_y = (int)(pos.y - ul.y);
+    ret.m_y /= 3;
+    if(ret.m_y == 0) ret.m_y = -1;
+  }
+  if(pos.y > br.y)
+  {
+    ret.m_y = (int)(pos.y - br.y);
+    ret.m_y /= 3;
+    if(ret.m_y == 0) ret.m_y = 1;
+  }
+
+  return ret;
+}
+
+void CImageEditWindow::Pan(const PanningSpec& ps, bool updateNow)
+{
+  Pan(ps.m_x, ps.m_y, updateNow);
+}
+
 void CImageEditWindow::Pan(int x, int y, bool updateNow)
 {
   PointI org = m_view.GetVirtualOrigin();
@@ -300,6 +348,27 @@ void CImageEditWindow::Pan(int x, int y, bool updateNow)
   org.y += y;
   ClampToImage(org);
   m_view.SetVirtualOrigin(org);
+
+  // the thing about panning is that now the mouse cursor position also changes (relative to the view).
+  // so, send a mousemove if necessary.
+  POINT pt;
+  GetCursorPos(&pt);
+  ScreenToClient(&pt);
+  bool doit = true;// always send if we are capturing.
+  if(!m_haveCapture)
+  {
+    // is the cursor inside the window?
+    RECT rcClient;
+    GetClientRect(&rcClient);
+    doit = (PtInRect(&rcClient, pt) == TRUE);
+  }
+  if(doit)
+  {
+    BOOL temp;
+    LPARAM lParam = MAKELPARAM(pt.x, pt.y);
+    OnMouseMove(WM_MOUSEMOVE, 0, lParam, temp);
+  }
+
   Refresh(updateNow);
 }
 
@@ -367,15 +436,22 @@ void CImageEditWindow::Refresh(const RECT& imageCoords, bool now)
 LRESULT CImageEditWindow::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
   bHandled = TRUE;
-  m_timerMap[wParam](m_hWnd, WM_TIMER, wParam, GetTickCount());
+  m_timerMap[wParam].first(m_timerMap[wParam].second);
   return 0;
 }
 
-void CImageEditWindow::CreateTimer(UINT elapse, TIMERPROC proc, void* userData)
+UINT_PTR CImageEditWindow::CreateTimer(UINT elapse, ToolTimerProc proc, void* userData)
 {
-  UINT_PTR id = reinterpret_cast<UINT_PTR>(userData);
-  m_timerMap[id] = proc;
-  SetTimer(id, elapse);
+  UINT_PTR cookie = m_nextTimerID ++;
+  m_timerMap[cookie] = std::pair<ToolTimerProc, void*>(proc, userData);
+  SetTimer(cookie, elapse);
+  return cookie;
+}
+
+void CImageEditWindow::DeleteTimer(UINT_PTR cookie)
+{
+  KillTimer(cookie);
+  m_timerMap.erase(cookie);
 }
 
 LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -384,3 +460,30 @@ LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL&
   m_selectionTool.OnInitTool();
   return 0;
 }
+
+void CImageEditWindow::OnSelectionToolSelectionChanged()
+{
+  m_notify->OnSelectionChanged();
+}
+
+void CImageEditWindow::SetCapture_()
+{
+  SetCapture();
+  m_haveCapture = true;
+}
+
+void CImageEditWindow::ReleaseCapture_()
+{
+  if(m_haveCapture)
+  {
+    ReleaseCapture();
+    m_haveCapture = false;
+  }
+}
+
+bool CImageEditWindow::HaveCapture()
+{
+  return m_haveCapture;
+}
+
+
