@@ -25,7 +25,8 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_nextTimerID(0),
   m_haveCapture(false),
   m_lastCursor(0,0),
-  m_lastCursorVirtual(0,0)
+  m_lastCursorVirtual(0,0),
+  m_panningTimer(0)
 {
   CopyImage(m_dibOriginal, *bitmap);
   m_view.SetZoomFactor(3.0f);
@@ -130,7 +131,28 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   m_lastCursor = cursorPos;
 
   // fire tool events.
-  m_selectionTool.OnCursorMove(m_lastCursorVirtual);
+  m_selectionTool.OnCursorMove(m_lastCursorVirtual, m_haveCapture && !m_bIsPanning);
+
+  if(m_haveCapture)
+  {
+    m_panningSpec = GetPanningSpec();
+    if(m_panningSpec.IsNotNull())
+    {
+      // start the panning timer.
+      if(!m_panningTimer)
+      {
+        m_panningTimer = CreateTimer(30, CImageEditWindow::PanningTimerProc, this);
+      }
+    }
+    else
+    {
+      if(m_panningTimer)
+      {
+        DeleteTimer(m_panningTimer);
+        m_panningTimer = 0;
+      }
+    }
+  }
 
   CPoint pt;
   pt.x = static_cast<LONG>(m_lastCursorVirtual.x);
@@ -151,6 +173,13 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   // fire tool events.
   m_selectionTool.OnLeftButtonDown(pt);
 
+  if(!m_haveCapture)
+  {
+    SetCapture();
+    m_haveCapture = true;
+    m_selectionTool.OnStartDragging();
+  }
+
   return MouseLeave();
 }
 
@@ -161,6 +190,11 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
   PointF pt = m_view.ViewToVirtual(PointF((float)cursorPos.x, (float)cursorPos.y));
+
+  if(m_haveCapture)
+  {
+    ReleaseCapture();
+  }
 
   // fire tool events.
   m_selectionTool.OnLeftButtonUp(pt);
@@ -204,7 +238,13 @@ LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   else
   {
     // fire tool events.
-    m_selectionTool.OnLoseCapture();
+    m_haveCapture = false;
+    if(m_panningTimer)
+    {
+      DeleteTimer(m_panningTimer);
+      m_panningTimer = 0;
+    }
+    m_selectionTool.OnStopDragging();
   }
 
   return 0;
@@ -357,11 +397,6 @@ void CImageEditWindow::Pan(int x, int y, bool updateNow)
   Refresh(updateNow);
 }
 
-HWND CImageEditWindow::GetHWND()
-{
-  return m_hWnd;
-}
-
 PointF CImageEditWindow::GetCursorPosition()
 {
   return m_lastCursorVirtual;
@@ -448,26 +483,6 @@ void CImageEditWindow::OnSelectionToolSelectionChanged()
   m_notify->OnSelectionChanged();
 }
 
-void CImageEditWindow::SetCapture_()
-{
-  SetCapture();
-  m_haveCapture = true;
-}
-
-void CImageEditWindow::ReleaseCapture_()
-{
-  if(m_haveCapture)
-  {
-    ReleaseCapture();
-    m_haveCapture = false;
-  }
-}
-
-bool CImageEditWindow::HaveCapture()
-{
-  return m_haveCapture;
-}
-
 void CImageEditWindow::SetZoomFactor(float n)
 {
   // set the origins to where the cursor is, so when the user zooms,
@@ -475,6 +490,7 @@ void CImageEditWindow::SetZoomFactor(float n)
   CRect rcClient;
   GetClientRect(&rcClient);
   PointF client((float)m_lastCursor.x, (float)m_lastCursor.y);
+  // clamp
   if(client.x < 1) client.x = 1;
   if(client.y < 1) client.y = 1;
   if(client.x > (rcClient.right - 1)) client.x = rcClient.right - 1;

@@ -1,5 +1,4 @@
 //
-// CroppingWnd.hpp - cropping functionality
 // Copyright (c) 2005 Roger Clark
 // Copyright (c) 2003 Carl Corcoran
 //
@@ -40,6 +39,30 @@ public:
 };
 
 
+class PanningSpec
+{
+public:
+  PanningSpec() :
+    m_x(0),
+    m_y(0)
+  {
+  }
+  PanningSpec(int x, int y) :
+    m_x(x),
+    m_y(y)
+  {
+  }
+
+  bool IsNotNull()
+  {
+    return (m_x != 0) || (m_y != 0);
+  }
+
+  int m_x;
+  int m_y;
+};
+
+
 class CImageEditWindow :
   public CWindowImpl<CImageEditWindow>,
   public IImageEditWindowEvents,
@@ -62,10 +85,7 @@ public:
   void OnSelectionToolSelectionChanged();
 
   // IToolOperations methods
-  PanningSpec GetPanningSpec();
-  void Pan(const PanningSpec&, bool updateNow);
   void Pan(int x, int y, bool updateNow);
-  HWND GetHWND();
   PointF GetCursorPosition();
   int GetImageHeight();
   int GetImageWidth();
@@ -75,9 +95,6 @@ public:
   void Refresh(const RECT& imageCoords, bool now);
   UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData);
   void DeleteTimer(UINT_PTR cookie);
-  void SetCapture_();
-  void ReleaseCapture_();
-  bool HaveCapture();
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
@@ -167,6 +184,18 @@ protected:
   CPoint m_panningStart;// in client coords
   PointF m_panningStartVirtual;// virtual coords.
   bool m_haveCapture;
+
+  // for panning when the cursor is off the display & we have mouse capture
+  PanningSpec m_panningSpec;
+  UINT_PTR m_panningTimer;
+  PanningSpec CImageEditWindow::GetPanningSpec();
+  void Pan(const PanningSpec& ps, bool updateNow);
+  static void PanningTimerProc(void* pUser)
+  {
+    // pan based on current velocity / direction
+    CImageEditWindow* pThis = reinterpret_cast<CImageEditWindow*>(pUser);
+    pThis->Pan(pThis->m_panningSpec, true);
+  }
 };
 
 #endif
