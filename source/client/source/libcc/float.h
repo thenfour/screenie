@@ -211,25 +211,22 @@ namespace LibCC
       InternalType e = (m_val & ExponentMask) >> MantissaBits;
       Mantissa m = static_cast<Mantissa>(m_val & MantissaMask);
 
-      if(m)
+      if(e >= ExponentBias)
       {
-        if(e >= ExponentBias)
+        e -= ExponentBias;
+        if(e < MantissaBits)// if we did this when e is greater than the mantissa bits, it would get all screwy.
         {
-          e -= ExponentBias;
-          if(e < MantissaBits)// if we did this when e is greater than the mantissa bits, it would get all screwy.
-          {
-            // positive exponent.  mask out the decimal part.
-            InternalType mask = 1;
-            mask <<= (MantissaBits - e);// bits
-            mask -= 1;// mask
-            m_val &= ~mask;
-          }
+          // positive exponent.  mask out the decimal part.
+          InternalType mask = 1;
+          mask <<= (MantissaBits - e);// bits
+          mask -= 1;// mask
+          m_val &= ~mask;
         }
-        else
-        {
-          // negative exponent; set this float to zero, retaining the current sign.
-          m_val &= ~(ExponentMask | MantissaMask);
-        }
+      }
+      else
+      {
+        // negative exponent; set this float to zero, retaining the current sign.
+        m_val &= ~(ExponentMask | MantissaMask);
       }
     }
 

@@ -30,8 +30,7 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
 {
   CopyImage(m_dibOriginal, *bitmap);
   m_view.SetZoomFactor(3.0f);
-  m_view.SetVirtualOrigin(PointF(250.0f , 250.0f));
-  m_view.SetViewOrigin(PointF(0.0f, 0.0f));
+  m_view.SetVirtualOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
 
   if(pNotify)
   {
@@ -290,6 +289,18 @@ void CImageEditWindow::ResetOffscreenBitmaps()
     (long)(virtualSize.y),
     COLORONCOLOR
     );
+}
+
+void CImageEditWindow::CenterImage()
+{
+  CRect rc;
+  GetClientRect(&rc);
+  m_lastCursor.SetPoint(rc.Width() / 2, rc.Height() / 2);
+  PointF viewOrg(PointF((float)m_lastCursor.x, (float)m_lastCursor.y));
+  m_lastCursorVirtual = m_view.ViewToVirtual(viewOrg);
+  m_view.SetViewOrigin(viewOrg);
+  m_view.SetVirtualOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
+  ResetOffscreenBitmaps();
 }
 
 LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*handled*/)

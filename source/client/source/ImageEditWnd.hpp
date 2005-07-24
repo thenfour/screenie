@@ -108,6 +108,8 @@ public:
   void SetZoomFactor(float n);
   float GetZoomFactor() const;
 
+  void CenterImage();
+
   // gets the specified section of the original image.
 	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
 

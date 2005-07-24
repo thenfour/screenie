@@ -26,32 +26,12 @@ public:
 	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
     m_didCropping(false),
-    m_croppingWnd(bitmap, this),
+    m_editWnd(bitmap, this),
     m_zoomWnd(bitmap.get()),
     m_options(options),
     m_hIconSmall(0),
     m_hIcon(0)
   {
-    bool bHitOne = false;
-    for(float f = 0.05f; f < 30.0f; f *= 1.30f)
-    {
-      if(!bHitOne)
-      {
-        if(f >= 1.0f)
-        {
-          bHitOne = true;
-          m_zoomFactors.push_back(1.0f);
-        }
-        else
-        {
-          m_zoomFactors.push_back(f);
-        }
-      }
-      else
-      {
-        m_zoomFactors.push_back(f);
-      }
-    }
   }
 
 	~CCropDlg()
@@ -60,40 +40,15 @@ public:
     if(m_hIconSmall) DestroyIcon(m_hIconSmall);
   }
 
-  // IImageEditWindowEvents methods
-  void OnSelectionChanged()
-  {
-    SyncZoomWindowSelection();
-  }
-  void OnCursorPositionChanged(int x, int y)// image coords
-  {
-    SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
-    m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
-    SyncZoomWindowSelection();
-  }
-  void OnZoomFactorChanged()
-  {
-  }
-
 	virtual BOOL PreTranslateMessage(MSG* pMsg)
 	{
 		return CWindow::IsDialogMessage(pMsg);
 	}
 
-	bool GetCroppedScreenshot(util::shared_ptr<Gdiplus::Bitmap>& croppedScreenshot)
-	{
-		if (!m_didCropping)
-			return false;
-
-		croppedScreenshot = m_croppedBitmap;
-
-		return true;
-	}
-
 	BEGIN_MSG_MAP(CCropDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
-    MESSAGE_HANDLER(WM_HSCROLL, OnZoomFactorChanged);
+    MESSAGE_HANDLER(WM_HSCROLL, OnTrackbarChanged);
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
@@ -115,29 +70,73 @@ public:
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
 
-  void AttemptNewFactorIndex(int n)
+  // IImageEditWindowEvents methods
+  void OnSelectionChanged()
+  {
+    SyncZoomWindowSelection();
+  }
+  void OnCursorPositionChanged(int x, int y)// image coords
+  {
+    SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
+    m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
+    SyncZoomWindowSelection();
+  }
+  void OnZoomFactorChanged()
+  {
+  }
+
+  // other crap
+
+	bool GetCroppedScreenshot(util::shared_ptr<Gdiplus::Bitmap>& croppedScreenshot)
+	{
+		if(!m_didCropping)
+    {
+			return false;
+    }
+		croppedScreenshot = m_croppedBitmap;
+		return true;
+	}
+
+  void AttemptNewFactorIndex(int n, bool updateTrackbar)
   {
     m_zoomFactorIndex = n;
     // clamp
     if(m_zoomFactorIndex < 0) m_zoomFactorIndex = 0;
     if(m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
-    // notify
+
     float factor = m_zoomFactors[m_zoomFactorIndex];
-    //m_zoomWnd.SetFactor(factor);
-    m_croppingWnd.SetZoomFactor(factor);
-    //options
+    m_editWnd.SetZoomFactor(factor);
     m_options.CroppingZoomFactor(factor);
+
+    SetDlgItemText(IDC_ZOOM_CAPTION, LibCC::Format("Zoom: %^%").f<4>(factor).CStr());
+
+    if(updateTrackbar)
+    {
+      SendDlgItemMessage(IDC_ZOOMFACTOR, TBM_SETPOS, TRUE, m_zoomFactorIndex);
+    }
+  }
+
+  void SetZoomFactor(float ideal, bool updateTrackbar)
+  {
+    for(int i = 0; i < m_zoomFactors.size(); ++ i)
+    {
+      if(m_zoomFactors[i] > ideal) break;
+    }
+    int newid = i - 1;
+    if(newid < 0) newid = 0;
+    if(newid >= m_zoomFactors.size()) newid = m_zoomFactors.size() - 1;
+    AttemptNewFactorIndex(newid, updateTrackbar);
   }
 
 	LRESULT OnMouseWheel(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
   {
     handled = TRUE;
     int newFactorIndex = m_zoomFactorIndex + (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
-    AttemptNewFactorIndex(newFactorIndex);
+    AttemptNewFactorIndex(newFactorIndex, true);
     return 0;
   }
 
-	LRESULT OnZoomFactorChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
+	LRESULT OnTrackbarChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
   {
     /*
       A trackbar notifies its parent window of user actions by sending the parent a WM_HSCROLL or WM_VSCROLL message.
@@ -153,14 +152,35 @@ public:
     if(((HWND)lParam) == GetDlgItem(IDC_ZOOMFACTOR).m_hWnd)
     {
       int newFactorIndex = ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_GETPOS, 0, 0);
-      AttemptNewFactorIndex(newFactorIndex);
+      AttemptNewFactorIndex(newFactorIndex, false);
     }
     return 0;
   }
   
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
-	  // set icons
+    // populate the list of zoom factors.
+    bool bHitOne = false;
+    m_zoomFactors.push_back(0.1f);
+    m_zoomFactors.push_back(0.15f);
+    m_zoomFactors.push_back(0.25f);
+    m_zoomFactors.push_back(0.40f);
+    m_zoomFactors.push_back(0.666667f);
+    m_zoomFactors.push_back(1.00f);
+    m_zoomFactors.push_back(1.5f);
+    m_zoomFactors.push_back(2.0f);
+    m_zoomFactors.push_back(3.0f);
+    m_zoomFactors.push_back(4.0f);
+    m_zoomFactors.push_back(6.0f);
+    m_zoomFactors.push_back(8.0f);
+    m_zoomFactors.push_back(10.0f);
+    m_zoomFactors.push_back(12.5f);
+    m_zoomFactors.push_back(15.0f);
+    m_zoomFactors.push_back(18.0f);
+    m_zoomFactors.push_back(23.0f);
+    m_zoomFactors.push_back(30.0f);
+
+    // set icons
     if(m_hIcon) DestroyIcon(m_hIcon);
     if(m_hIconSmall) DestroyIcon(m_hIconSmall);
 	  m_hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
@@ -175,7 +195,7 @@ public:
     ::GetWindowRect(GetDlgItem(IDC_IMAGE), &rcImage);
     ScreenToClient(&rcImage);
     ::DestroyWindow(GetDlgItem(IDC_IMAGE));
-    m_croppingWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_IMAGE);
+    m_editWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_IMAGE);
 
     // create zoom window
     rcImage;
@@ -194,40 +214,31 @@ public:
 
     // set up zoom slider
     HWND hSlider = GetDlgItem(IDC_ZOOMFACTOR);
-    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (1, m_zoomFactors.size()));
-    SendMessage(hSlider, TBM_SETPOS, TRUE, m_options.CroppingZoomFactor());
+    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (0, m_zoomFactors.size()-1));
 
-    float price = m_options.CroppingZoomFactor();
-
-    // find the closest zoom factor index without going over.
-    for(int i = 0; i < m_zoomFactors.size(); ++ i)
-    {
-      if(m_zoomFactors[i] > price) break;
-    }
-    m_zoomFactorIndex = i - 1;
-    if(m_zoomFactorIndex < 0) m_zoomFactorIndex = 0;
-    if(m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
-
-    //OnZoomScaleFactorChanged(m_options.CroppingZoomFactor());
-    m_zoomWnd.SetFactor(1);
-
+    // set up image edit window
     BOOL temp;
+    m_editWnd.SetZoomFactor(1.0f);// just temporary, to give it *something*
+    m_editWnd.OnSize(0,0,0,temp);
 
-    m_croppingWnd.SetZoomFactor(m_options.CroppingZoomFactor());
-    m_croppingWnd.OnSize(0,0,0,temp);
-    m_croppingWnd.InvalidateRect(0);
+    // determine the best zoom factor.
+    CRect rcClient;
+    m_editWnd.GetClientRect(&rcClient);
+    float ideal = (float)rcClient.Width() / m_bitmap->GetWidth();
+    SetZoomFactor(ideal, true);
+
+    m_editWnd.CenterImage();
 
     SetForegroundWindow(*this);
-
+    SetFocus();
     SyncZoomWindowSelection();
-
 		return 0;
 	}
 
   void SyncZoomWindowSelection()
   {
     CRect rc;
-    if(m_croppingWnd.GetVirtualSelection(rc))
+    if(m_editWnd.GetVirtualSelection(rc))
     {
       SetDlgItemText(IDC_SELECTIONSTATIC,
         LibCC::Format("(%,%)-(%,%)|% x %")
@@ -255,20 +266,18 @@ public:
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
 		CloseDialog(IDOK);
-
 		return 0;
 	}
 
   LRESULT OnSelectAll(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
-    m_croppingWnd.ClearSelection();
+    m_editWnd.ClearSelection();
 		return 0;
 	}
 
 	LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
 		CloseDialog(IDCANCEL);
-
 		return 0;
 	}
 
@@ -284,9 +293,9 @@ public:
 		if (nVal == IDOK)
 		{
 			RECT selectionRect = { 0 };
-			if (m_croppingWnd.GetVirtualSelection(selectionRect))
+			if (m_editWnd.GetVirtualSelection(selectionRect))
 			{
-				m_croppedBitmap = m_croppingWnd.GetBitmapRect(selectionRect);
+				m_croppedBitmap = m_editWnd.GetBitmapRect(selectionRect);
 				m_didCropping = true;
 			}
 		}
@@ -303,7 +312,7 @@ private:
 	util::shared_ptr<Gdiplus::Bitmap> m_croppedBitmap;
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
 	CZoomWindow m_zoomWnd;
-	CImageEditWindow m_croppingWnd;
+	CImageEditWindow m_editWnd;
   ScreenshotOptions& m_options;
 
   // zoom stuff

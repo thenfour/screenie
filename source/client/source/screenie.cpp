@@ -49,6 +49,9 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	CMessageLoop theLoop;
 	_Module.AddMessageLoop(&theLoop);
 
+  LibCC::SinglePrecisionFloat f(0.5f);
+  f.RemoveDecimal();
+
 	int retval = 0;
 
 	RECT display = { 0 };
