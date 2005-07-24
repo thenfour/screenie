@@ -33,7 +33,7 @@ public:
     m_hIcon(0)
   {
     bool bHitOne = false;
-    for(float f = 0.05f; f < 30.0f; f *= 1.10f)
+    for(float f = 0.05f; f < 30.0f; f *= 1.30f)
     {
       if(!bHitOne)
       {

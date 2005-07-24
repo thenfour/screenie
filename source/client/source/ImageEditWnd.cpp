@@ -16,7 +16,6 @@ ATL::CWndClassInfo& CImageEditWindow::GetWndClassInfo()
 	return wc;
 }
 
-
 CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify) :
   m_bitmap(bitmap),
   m_notify(this),
@@ -115,7 +114,6 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
       // replace the mouse cursor to reflect the slowdown.
       PointI newCursorPosX = m_view.VirtualToView(PointFtoI(m_lastCursorVirtual));
       CPoint newCursorPos(newCursorPosX.x, newCursorPosX.y);
-      newCursorPos.Offset(viewMargin, viewMargin);
 
       cursorPos = newCursorPos;
       ClientToScreen(&newCursorPos);
@@ -123,11 +121,9 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
     }
     else
     {
-      cursorPos.Offset(-viewMargin, -viewMargin);
       m_lastCursorVirtual = m_view.ViewToVirtual(PointF(
         static_cast<float>(cursorPos.x),
         static_cast<float>(cursorPos.y) ));
-      cursorPos.Offset(viewMargin, viewMargin);
     }
   }
 
@@ -150,8 +146,6 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
-  cursorPos.x -= viewMargin;
-  cursorPos.y -= viewMargin;
   PointF pt = m_view.ViewToVirtual(PointF((float)cursorPos.x, (float)cursorPos.y));
 
   // fire tool events.
@@ -166,8 +160,6 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
-  cursorPos.x -= viewMargin;
-  cursorPos.y -= viewMargin;
   PointF pt = m_view.ViewToVirtual(PointF((float)cursorPos.x, (float)cursorPos.y));
 
   // fire tool events.
@@ -179,13 +171,16 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
   if(!MouseEnter()) return 0;
-  m_bIsPanning = true;
+  if(m_haveCapture == false)
+  {
+    m_bIsPanning = true;
 
-  POINTS& psTemp = MAKEPOINTS(lParam);
-  m_panningStart.SetPoint(psTemp.x, psTemp.y);
-  m_panningStartVirtual = m_view.GetVirtualOrigin();
-  SetCapture();
-  m_hPreviousCursor = SetCursor(LoadCursor(0, IDC_HAND));
+    POINTS& psTemp = MAKEPOINTS(lParam);
+    m_panningStart.SetPoint(psTemp.x, psTemp.y);
+    m_panningStartVirtual = m_view.GetVirtualOrigin();
+    SetCapture();
+    m_hPreviousCursor = SetCursor(LoadCursor(0, IDC_HAND));
+  }
   return MouseLeave();
 }
 
@@ -219,7 +214,6 @@ LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 void CImageEditWindow::ResetOffscreenBitmaps()
 {
 	CRect clientRect;
-	CRect clientRectTrue;// without margins corrected
 	GetClientRect(&clientRect);
 
   if(m_dibOffscreen.GetWidth() < clientRect.right || m_dibOffscreen.GetHeight() < clientRect.bottom)
@@ -227,13 +221,6 @@ void CImageEditWindow::ResetOffscreenBitmaps()
     m_dibOffscreen.SetSize(clientRect.right, clientRect.bottom);
     m_dibStretched.SetSize(clientRect.right, clientRect.bottom);
   }
-
-  clientRectTrue = clientRect;
-
-  //clientRect.left += viewMargin;
-  //clientRect.top += viewMargin;
-  //clientRect.right -= viewMargin;
-  //clientRect.bottom -= viewMargin;
 
   // figure out an integral place to start drawing (client 0,0 may be at a fraction of a virtual coord)
   PointF ulVirtual = m_view.ViewToVirtual(PointF((float)clientRect.left, (float)clientRect.top));
@@ -263,18 +250,6 @@ void CImageEditWindow::ResetOffscreenBitmaps()
     (long)(virtualSize.y),
     COLORONCOLOR
     );
-
-  // draw black borders.
-  CRect marginRect;
-  marginRect.left = viewMargin;
-  marginRect.top = viewMargin;
-  marginRect.right = clientRectTrue.right - viewMargin;
-  marginRect.bottom = clientRectTrue.bottom - viewMargin;
-
-  m_dibStretched.Rect(0, 0, clientRectTrue.right, viewMargin, 0);// top
-  m_dibStretched.Rect(0, marginRect.bottom, clientRectTrue.right, clientRectTrue.bottom, 0);// bottom
-  m_dibStretched.Rect(0, viewMargin, viewMargin, clientRectTrue.bottom, 0);// left
-  m_dibStretched.Rect(marginRect.right, viewMargin, clientRectTrue.right, clientRect.bottom, 0);// right
 }
 
 LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*handled*/)
@@ -297,7 +272,7 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
   m_dibStretched.Blit(m_dibOffscreen, 0, 0, width, height);
 
   // fire tool events.
-  m_selectionTool.OnPaint(m_dibOffscreen, m_view, viewMargin, viewMargin);
+  m_selectionTool.OnPaint(m_dibOffscreen, m_view, 0, 0);
 
   m_dibOffscreen.Blit(dc, 0, 0, width, height);
 
@@ -320,26 +295,26 @@ PanningSpec CImageEditWindow::GetPanningSpec()
   if(pos.x < ul.x)
   {
     ret.m_x = (int)(pos.x - ul.x);
-    ret.m_x /= 3;
+    ret.m_x /= 4;
     if(ret.m_x == 0) ret.m_x = -1;
   }
   if(pos.x > br.x)
   {
     ret.m_x = (int)(pos.x - br.x);
-    ret.m_x /= 3;
+    ret.m_x /= 4;
     if(ret.m_x == 0) ret.m_x = 1;
   }
 
   if(pos.y < ul.y)
   {
     ret.m_y = (int)(pos.y - ul.y);
-    ret.m_y /= 3;
+    ret.m_y /= 4;
     if(ret.m_y == 0) ret.m_y = -1;
   }
   if(pos.y > br.y)
   {
     ret.m_y = (int)(pos.y - br.y);
-    ret.m_y /= 3;
+    ret.m_y /= 4;
     if(ret.m_y == 0) ret.m_y = 1;
   }
 
@@ -435,7 +410,6 @@ void CImageEditWindow::Refresh(const RECT& imageCoords, bool now)
 
   CRect rcScreen(ulScreen.x, ulScreen.y, brScreen.x, brScreen.y);
 
-  rcScreen.OffsetRect(viewMargin, viewMargin);
   rcScreen.InflateRect(5,5);
 
   RedrawWindow(&rcScreen, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
@@ -498,13 +472,20 @@ void CImageEditWindow::SetZoomFactor(float n)
 {
   // set the origins to where the cursor is, so when the user zooms,
   // it will zoom into the mouse cursor.
-  m_view.SetViewOrigin(PointF((float)m_lastCursor.x, (float)m_lastCursor.y));
-  m_view.SetVirtualOrigin(m_lastCursorVirtual);
+  CRect rcClient;
+  GetClientRect(&rcClient);
+  PointF client((float)m_lastCursor.x, (float)m_lastCursor.y);
+  if(client.x < 1) client.x = 1;
+  if(client.y < 1) client.y = 1;
+  if(client.x > (rcClient.right - 1)) client.x = rcClient.right - 1;
+  if(client.y > (rcClient.bottom - 1)) client.x = rcClient.bottom - 1;
+  m_view.SetViewOrigin(client);
+  PointF virtual_(m_lastCursorVirtual);
+  ClampToImage(virtual_);
+  m_view.SetVirtualOrigin(virtual_);
 
   m_view.SetZoomFactor(n);
   m_notify->OnZoomFactorChanged();
   Refresh(false);
 }
-
-
 

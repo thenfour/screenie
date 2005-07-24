@@ -47,7 +47,6 @@ class CImageEditWindow :
   public ISelectionToolCallback
 {
   // global const settings
-  static const int viewMargin = 0;
   static const int patternFrequency = 8;
 
 public:
