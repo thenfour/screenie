@@ -34,7 +34,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -96,7 +96,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
@@ -249,6 +249,9 @@
 			<File
 				RelativePath=".\source\utility.hpp">
 			</File>
+			<File
+				RelativePath=".\source\xversion.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -324,24 +327,6 @@
 		<Filter
 			Name="UI Control Sources"
 			Filter="">
-			<File
-				RelativePath=".\source\CroppingWnd.cpp">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCLCompilerTool"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\source\CroppingWnd.hpp">
-			</File>
 			<File
 				RelativePath=".\source\ImageEditWnd.cpp">
 			</File>

@@ -48,7 +48,6 @@ public:
 	BEGIN_MSG_MAP(CCropDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
-    MESSAGE_HANDLER(WM_HSCROLL, OnTrackbarChanged);
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
@@ -56,15 +55,22 @@ public:
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_CONFIGURE, OnConfigure)    
 
-		CHAIN_MSG_MAP(CDialogResize<CCropDlg>)
+    CHAIN_MSG_MAP(CDialogResize<CCropDlg>)
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CCropDlg)
 		DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 
+		DLGRESIZE_CONTROL(IDC_CONTROLS1, DLSZ_MOVE_Y | DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_CONTROLS2, DLSZ_MOVE_Y | DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_CONTROLS3, DLSZ_MOVE_Y | DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_CONTROLS4, DLSZ_MOVE_Y | DLSZ_SIZE_X)
+
+    DLGRESIZE_CONTROL(IDC_ZOOM_CAPTION, DLSZ_MOVE_X)
+
     DLGRESIZE_CONTROL(IDC_SELECTALL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
-    DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+    DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
     DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
@@ -108,12 +114,7 @@ public:
     m_editWnd.SetZoomFactor(factor);
     m_options.CroppingZoomFactor(factor);
 
-    SetDlgItemText(IDC_ZOOM_CAPTION, LibCC::Format("Zoom: %^%").f<4>(factor).CStr());
-
-    if(updateTrackbar)
-    {
-      SendDlgItemMessage(IDC_ZOOMFACTOR, TBM_SETPOS, TRUE, m_zoomFactorIndex);
-    }
+    SetDlgItemText(IDC_ZOOM_CAPTION, LibCC::Format("Zoom: %^%").f<0>(factor*100).CStr());
   }
 
   void SetZoomFactor(float ideal, bool updateTrackbar)
@@ -133,27 +134,6 @@ public:
     handled = TRUE;
     int newFactorIndex = m_zoomFactorIndex + (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
     AttemptNewFactorIndex(newFactorIndex, true);
-    return 0;
-  }
-
-	LRESULT OnTrackbarChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
-  {
-    /*
-      A trackbar notifies its parent window of user actions by sending the parent a WM_HSCROLL or WM_VSCROLL message.
-      A trackbar with the TBS_HORZ style sends WM_HSCROLL messages.
-      A trackbar with the TBS_VERT style sends WM_VSCROLL messages.
-      
-      The low-order word of the wParam parameter of WM_HSCROLL or WM_VSCROLL contains the notification code.
-      For the TB_THUMBPOSITION and TB_THUMBTRACK notifications, the high-order word of the wParam parameter specifies the position of the slider.
-      For all other notifications, the high-order word is zero;
-      send the TBM_GETPOS message to determine the slider position.
-      The lParam parameter is the handle to the trackbar. 
-    */
-    if(((HWND)lParam) == GetDlgItem(IDC_ZOOMFACTOR).m_hWnd)
-    {
-      int newFactorIndex = ::SendMessage(GetDlgItem(IDC_ZOOMFACTOR), TBM_GETPOS, 0, 0);
-      AttemptNewFactorIndex(newFactorIndex, false);
-    }
     return 0;
   }
   
@@ -212,10 +192,6 @@ public:
       SetWindowPlacement(&m_options.GetCroppingPlacement());
     }
 
-    // set up zoom slider
-    HWND hSlider = GetDlgItem(IDC_ZOOMFACTOR);
-    SendMessage(hSlider, TBM_SETRANGE, FALSE, MAKELONG (0, m_zoomFactors.size()-1));
-
     // set up image edit window
     BOOL temp;
     m_editWnd.SetZoomFactor(1.0f);// just temporary, to give it *something*
@@ -260,7 +236,8 @@ public:
 
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
-		return 0;
+		CloseDialog(IDCANCEL);
+    return 0;
 	}
 
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -321,6 +298,8 @@ private:
 
   HICON m_hIcon;
   HICON m_hIconSmall;
+public:
+  LRESULT OnStnClickedZoomCaption(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
 #endif

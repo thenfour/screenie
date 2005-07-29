@@ -1,0 +1,8 @@
+Version numbers are as follows:
+
+Major.Revision.LocalBuild.Serial
+
+Major = product version
+Revision = subversion revision #
+LocalBuild = 1 if there are local revisions.  this way you can tell if it's an "official" from-the-repo build
+Serial = incremental serial # for purchased copies

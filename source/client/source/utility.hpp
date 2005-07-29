@@ -36,6 +36,23 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 tstd::tstring tstring_tolower(const tstd::tstring& input);
 tstd::tstring tstring_toupper(const tstd::tstring& input);
 
+inline tstd::tstring GetPathRelativeToApp(PCTSTR extra)
+{
+  TCHAR sz[MAX_PATH];
+  TCHAR sz2[MAX_PATH];
+  GetModuleFileName(0, sz, MAX_PATH);
+  _tcscpy(PathFindFileName(sz), extra);
+  PathCanonicalize(sz2, sz);
+  return sz2;
+}
+
+inline tstd::tstring GetModuleFileNameX()
+{
+  TCHAR sz[MAX_PATH];
+  GetModuleFileName(0, sz, MAX_PATH);
+  return sz;
+}
+
 class Guid
 {
 public:

@@ -15,7 +15,6 @@
 #define IDB_BITMAP2                     211
 #define IDB_HEADER                      211
 #define IDI_CHECK                       212
-#define IDB_BITMAP1                     213
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -23,6 +22,7 @@
 #define IDC_FTP_USERNAME                1004
 #define IDC_THUMB_FILEFMT               1004
 #define IDC_FILE_FOLDER                 1004
+#define IDC_CONTROLS1                   1004
 #define IDC_EDIT                        1005
 #define IDC_COMBO1                      1005
 #define IDC_FTP_PASSWORD                1005
@@ -88,6 +88,13 @@
 #define IDC_ZOOMFACTOR                  1048
 #define IDC_ZOOM_CAPTION                1049
 #define IDC_SELECTIONSTATIC             1050
+#define IDC_PRODUCTVERSION              1051
+#define IDC_ZOOM_CAPTION2               1051
+#define IDC_COPYRIGHT                   1052
+#define IDC_CONTROLS3                   1053
+#define IDC_CONTROLS2                   1054
+#define IDC_ZOOM_CAPTION6               1055
+#define IDC_CONTROLS4                   1055
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -155,7 +162,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        214
 #define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1051
+#define _APS_NEXT_CONTROL_VALUE         1053
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

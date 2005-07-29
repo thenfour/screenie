@@ -7,6 +7,9 @@
 #ifndef SCREENIE_ABOUTDLG_HPP
 #define SCREENIE_ABOUTDLG_HPP
 
+#include "xversion.h"
+#include "utility.hpp"
+
 class CAboutDlg : public CDialogImpl<CAboutDlg>
 {
 public:
@@ -41,6 +44,12 @@ public:
 	  m_hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
 		  IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 	  SetIcon(m_hIconSmall, FALSE);
+
+    // set version text based on resources
+    Version v;
+    v.FromFile(GetModuleFileNameX().c_str());
+    SetDlgItemText(IDC_PRODUCTVERSION, LibCC::Format("Screenie v%.%.%").ui(v.GetA()).ui(v.GetB()).ui(v.GetC()).CStr());
+    // Screenie vA.B.C.D
 
     CenterWindow(GetParent());
 		m_link.SubclassWindow(GetDlgItem(IDC_HYPERLINK));

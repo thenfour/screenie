@@ -72,9 +72,9 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,7,7,174,65
     CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,35,32,
                     WS_EX_CLIENTEDGE
-    LTEXT           "Screenie v1.0.0",IDC_STATIC,60,19,108,12
+    LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
     LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",
-                    IDC_STATIC,60,30,108,18
+                    IDC_COPYRIGHT,60,30,108,18
     LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,18,54,156,12
 END
 
@@ -224,25 +224,29 @@ BEGIN
     LTEXT           "Password:",IDC_STATIC,18,108,42,12
 END
 
-IDD_CROPDLG DIALOGEX 0, 0, 338, 218
+IDD_CROPDLG DIALOGEX 0, 0, 338, 209
 STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | WS_MAXIMIZEBOX | 
     WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Crop Screenshot"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,226,197,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,281,197,50,14
-    LTEXT           "Static",IDC_ZOOM,7,33,102,160,WS_BORDER
-    LTEXT           "Static",IDC_IMAGE,109,27,221,166,WS_BORDER
-    PUSHBUTTON      "Options...",IDC_CONFIGURE,172,197,50,14
-    LTEXT           "2x zoom view:",IDC_ZOOM_CAPTION,7,7,102,8
-    LTEXT           "Full view (use the mouse wheel to zoom, hold SHIFT for precision, hold SHIFT+CONTROL for extra precision)",
-                    IDC_STATIC,109,7,222,16
-    CONTROL         "",IDC_ZOOMFACTOR,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,7,17,102,12
-    LTEXT           "Selection:",IDC_SELECTIONSTATIC,7,195,102,16
-    DEFPUSHBUTTON   "Select All",IDC_SELECTALL,109,197,50,14
+    DEFPUSHBUTTON   "OK",IDOK,226,189,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,281,189,50,14
+    LTEXT           "Static",IDC_ZOOM,7,17,98,150,WS_BORDER
+    LTEXT           "Static",IDC_IMAGE,109,17,221,150,WS_BORDER
+    PUSHBUTTON      "Options...",IDC_CONFIGURE,281,171,50,14
+    RTEXT           "Zoom: 15%",IDC_ZOOM_CAPTION,276,7,55,8
+    DEFPUSHBUTTON   "Select All",IDC_SELECTALL,226,171,50,14
+    LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
+    LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,55,8
+    LTEXT           "To Pan: Click and drag with the RIGHT mouse button",
+                    IDC_CONTROLS3,7,179,173,8
+    LTEXT           "To Zoom: Use the mouse wheel",IDC_CONTROLS2,7,187,173,8
+    LTEXT           "To Select: Click and drag with the LEFT mouse button",
+                    IDC_CONTROLS4,7,171,173,8
+    LTEXT           "Hold SHIFT for precision. Hold SHIFT+CONTROL for extra precision",
+                    IDC_CONTROLS1,7,195,215,8
 END
 
 
@@ -325,13 +329,13 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 331
         VERTGUIDE, 109
+        VERTGUIDE, 190
         VERTGUIDE, 226
         VERTGUIDE, 276
         TOPMARGIN, 7
-        BOTTOMMARGIN, 211
-        HORZGUIDE, 15
-        HORZGUIDE, 23
-        HORZGUIDE, 193
+        BOTTOMMARGIN, 202
+        HORZGUIDE, 167
+        HORZGUIDE, 203
     END
 END
 #endif    // APSTUDIO_INVOKED
