@@ -27,6 +27,13 @@ BOOL CMainWindow::DisplayTrayMenu()
 	CMenu contextMenu(AtlLoadMenu(IDM_CONTEXTMENU));
 	CMenuHandle trayMenu = contextMenu.GetSubMenu(0);
 
+#ifdef CRIPPLED
+  MenuItemInfo buy = MenuItemInfo::CreateText(_T("Buy Screenie..."), ID_TRAYCONTEXTMENU_BUY);
+  MenuItemInfo sep = MenuItemInfo::CreateSeparator();
+  trayMenu.InsertMenuItem(0, TRUE, &sep);
+  trayMenu.InsertMenuItem(0, TRUE, &buy);
+#endif
+
 	::SetForegroundWindow(m_hWnd);
 
 	POINT cursorPos = { 0 };
@@ -185,6 +192,14 @@ LRESULT CMainWindow::OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 		}
 	}
 	return 0;
+}
+
+LRESULT CMainWindow::OnBuy(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
+{
+  // taken from atlctrlx.h / hyperlink control::Navigate()
+  SHELLEXECUTEINFO shExeInfo = { sizeof(SHELLEXECUTEINFO), 0, 0, _T("open"), _T("http://screenie.net"), 0, 0, SW_SHOWNORMAL, 0, 0, 0, 0, 0, 0, 0 };
+	::ShellExecuteEx(&shExeInfo);
+  return 0;
 }
 
 LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)

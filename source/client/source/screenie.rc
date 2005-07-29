@@ -249,6 +249,21 @@ BEGIN
                     IDC_CONTROLS1,7,195,215,8
 END
 
+IDD_BUY DIALOGEX 0, 0, 202, 79
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Demo version"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,102,58,50,14
+    CTEXT           "http://www.screenie.net/",IDC_HYPERLINK,7,43,188,12
+    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,7,7,35,32,
+                    WS_EX_CLIENTEDGE
+    LTEXT           "example: The demo version of Screenie does not allow uploading to FTP.  Please buy the full version from the URL below.",
+                    IDC_DESCRIPTION,46,11,149,24
+    DEFPUSHBUTTON   "Buy",IDC_BUY,48,58,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -337,6 +352,16 @@ BEGIN
         HORZGUIDE, 167
         HORZGUIDE, 203
     END
+
+    IDD_BUY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 195
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 72
+        HORZGUIDE, 39
+        HORZGUIDE, 55
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -404,6 +429,10 @@ BEGIN
     BEGIN
         MENUITEM "&Edit...",                    ID_LISTCONTEXTMENU_EDIT
         MENUITEM "&Remove",                     ID_LISTCONTEXTMENU_REMOVE
+    END
+    POPUP "placeholder"
+    BEGIN
+        MENUITEM "Buy",                         ID_TRAYCONTEXTMENU_BUY
     END
 END
 

@@ -74,6 +74,7 @@ public:
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(m_uTaskbarCreatedMsg, OnTaskbarCreated)
 
+		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_BUY, OnBuy)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_ABOUT, OnAbout)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_CONFIGURE, OnConfigure)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_EXIT, OnExit)
@@ -93,6 +94,7 @@ public:
 	LRESULT OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 
+	LRESULT OnBuy(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);

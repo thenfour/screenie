@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by screenie.rc
 //
+#define IDOK2                           2
 #define IDC_SELECTALL                   3
 #define IDI_SCREENIE                    4
 #define IDD_ABOUTBOX                    100
@@ -15,6 +16,7 @@
 #define IDB_BITMAP2                     211
 #define IDB_HEADER                      211
 #define IDI_CHECK                       212
+#define IDD_BUY                         214
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -93,8 +95,9 @@
 #define IDC_COPYRIGHT                   1052
 #define IDC_CONTROLS3                   1053
 #define IDC_CONTROLS2                   1054
-#define IDC_ZOOM_CAPTION6               1055
 #define IDC_CONTROLS4                   1055
+#define IDC_BUY                         1056
+#define IDC_DESCRIPTION                 1057
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -155,14 +158,15 @@
 #define ID_LISTCONTEXTMENU_EDIT         32779
 #define ID_TRAYCONTEXTMENU_ABOUT        32780
 #define ID_STATUSCONTEXTMENU_COPYTOCLIPBOARD 32781
+#define ID_TRAYCONTEXTMENU_BUY          32783
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        214
-#define _APS_NEXT_COMMAND_VALUE         32782
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_RESOURCE_VALUE        215
+#define _APS_NEXT_COMMAND_VALUE         32784
+#define _APS_NEXT_CONTROL_VALUE         1058
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

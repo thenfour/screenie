@@ -9,6 +9,7 @@
 
 #include "ImageEditWnd.hpp"
 #include "ZoomWnd.hpp"
+#include "BuyDlg.h"
 #include "destinationDlg.hpp"
 #include "image.hpp"
 
@@ -25,7 +26,9 @@ public:
 
 	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
+#ifndef CRIPPLED
     m_didCropping(false),
+#endif
     m_editWnd(bitmap, this),
     m_zoomWnd(bitmap.get()),
     m_options(options),
@@ -95,12 +98,16 @@ public:
 
 	bool GetCroppedScreenshot(util::shared_ptr<Gdiplus::Bitmap>& croppedScreenshot)
 	{
+#ifdef CRIPPLED
+    return false;
+#else
 		if(!m_didCropping)
     {
 			return false;
     }
 		croppedScreenshot = m_croppedBitmap;
 		return true;
+#endif
 	}
 
   void AttemptNewFactorIndex(int n, bool updateTrackbar)
@@ -272,8 +279,13 @@ public:
 			RECT selectionRect = { 0 };
 			if (m_editWnd.GetVirtualSelection(selectionRect))
 			{
+#ifdef CRIPPLED
+        CBuyDlg dlg;
+        dlg.DoModal(_T("cropping"));
+#else
 				m_croppedBitmap = m_editWnd.GetBitmapRect(selectionRect);
 				m_didCropping = true;
+#endif
 			}
 		}
 
@@ -285,9 +297,11 @@ public:
 		EndDialog(nVal); 
 	}
 private:
+#ifndef CRIPPLED
 	bool m_didCropping;
 	util::shared_ptr<Gdiplus::Bitmap> m_croppedBitmap;
-	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
+#endif
+  util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
 	CZoomWindow m_zoomWnd;
 	CImageEditWindow m_editWnd;
   ScreenshotOptions& m_options;

@@ -139,6 +139,135 @@
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
+		<Configuration
+			Name="Debug-Crippled|Win32"
+			OutputDirectory="..\..\bin-debug-crippled"
+			IntermediateDirectory="obj-debug-crippled"
+			ConfigurationType="1"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;_DEBUG;CRIPPLED"
+				MinimalRebuild="TRUE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				TreatWChar_tAsBuiltInType="TRUE"
+				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="StdAfx.hpp"
+				WarningLevel="3"
+				DebugInformationFormat="4"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
+				LinkIncremental="2"
+				GenerateDebugInformation="TRUE"
+				SubSystem="2"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="FALSE"
+				TargetEnvironment="1"
+				GenerateStublessProxies="TRUE"
+				TypeLibraryName="$(IntDir)/screenie.tlb"
+				HeaderFileName="screenie.h"
+				DLLDataFileName=""
+				InterfaceIdentifierFileName="screenie_i.c"
+				ProxyFileName="screenie_p.c"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) source\version.in source\version.h"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Release-Crippled|Win32"
+			OutputDirectory="..\..\bin-release-crippled"
+			IntermediateDirectory="obj-release-crippled"
+			ConfigurationType="1"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;CRIPPLED"
+				MinimalRebuild="FALSE"
+				ExceptionHandling="TRUE"
+				RuntimeLibrary="0"
+				TreatWChar_tAsBuiltInType="TRUE"
+				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="StdAfx.hpp"
+				WarningLevel="3"
+				DebugInformationFormat="0"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
+				LinkIncremental="1"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="1"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="FALSE"
+				TargetEnvironment="1"
+				GenerateStublessProxies="TRUE"
+				TypeLibraryName="$(IntDir)/screenie.tlb"
+				HeaderFileName="screenie.h"
+				DLLDataFileName=""
+				InterfaceIdentifierFileName="screenie_i.c"
+				ProxyFileName="screenie_p.c"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(ProjectDir) &quot;$(ProjectDir)source\version.in&quot; &quot;$(ProjectDir)source\version.h&quot;"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -198,6 +327,18 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug-Crippled|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release-Crippled|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
@@ -351,6 +492,9 @@
 			Filter="">
 			<File
 				RelativePath=".\source\AboutDlg.hpp">
+			</File>
+			<File
+				RelativePath=".\source\BuyDlg.h">
 			</File>
 			<File
 				RelativePath=".\source\CropDlg.hpp">
