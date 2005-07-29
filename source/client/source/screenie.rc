@@ -70,7 +70,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,131,78,50,14
     GROUPBOX        "",IDC_STATIC,7,7,174,65
-    CONTROL         205,IDC_STATIC,"Static",SS_BITMAP,18,18,33,30,
+    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,35,32,
                     WS_EX_CLIENTEDGE
     LTEXT           "Screenie v1.0.0",IDC_STATIC,60,19,108,12
     LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",
@@ -384,13 +384,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap
-//
-
-IDB_HEADER              BITMAP                  "resources\\header.bmp"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Menu
 //
 
@@ -410,6 +403,13 @@ BEGIN
     END
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_HEADER              BITMAP                  "resources\\header.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

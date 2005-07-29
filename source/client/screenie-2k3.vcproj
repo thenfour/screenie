@@ -3,7 +3,8 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="screenie"
-	ProjectGUID="{C842F6FF-88EE-4F49-A446-74A504643F8F}">
+	ProjectGUID="{C842F6FF-88EE-4F49-A446-74A504643F8F}"
+	RootNamespace="screenie">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -119,7 +120,7 @@
 				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) version.in version.h"/>
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(ProjectDir) &quot;$(ProjectDir)source\version.in&quot; &quot;$(ProjectDir)source\version.h&quot;"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
