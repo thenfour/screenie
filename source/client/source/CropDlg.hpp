@@ -224,7 +224,7 @@ public:
     if(m_editWnd.GetVirtualSelection(rc))
     {
       SetDlgItemText(IDC_SELECTIONSTATIC,
-        LibCC::Format("(%,%)-(%,%)|% x %")
+        LibCC::Format("(%,%)-(%,%); % x %")
           .i(rc.left)
           .i(rc.top)
           .i(rc.right)

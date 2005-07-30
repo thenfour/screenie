@@ -494,6 +494,18 @@ public:
     return r != 0;
   }
 
+  bool BlitFrom(HBITMAP src, long x, long y, long w, long h, long DestX = 0, long DestY = 0)
+  {
+    HDC dcScreen = ::GetDC(0);
+    HDC dcMem = CreateCompatibleDC(dcScreen);
+    ReleaseDC(0, dcScreen);
+    HBITMAP hOld = (HBITMAP)SelectObject(dcMem, src);
+    int r = BitBlt(m_offscreen, DestX, DestY, w, h, dcMem, x, y, SRCCOPY);
+    SelectObject(dcMem, hOld);
+    DeleteDC(dcMem);
+    return r != 0;
+  }
+
   bool StretchBlitFrom(int destx, int desty, int destw, int desth, HDC src, int srcx, int srcy, int srcw, int srch, int mode = HALFTONE)
   {
     SetStretchBltMode(m_offscreen, mode);

@@ -505,7 +505,19 @@
 			<File
 				RelativePath=".\source\StatusDlg.hpp">
 			</File>
+			<File
+				RelativePath=".\source\welcomewnd.h">
+			</File>
 		</Filter>
+		<File
+			RelativePath=".\source\resources\prtscr.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\traysample.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\welcome.png">
+		</File>
 	</Files>
 	<Globals>
 		<Global

@@ -41,6 +41,7 @@ BEGIN
             VALUE "FileVersion", STRFILEVER
             VALUE "LegalCopyright", "(c)2005 Carl Corcoran and Roger Clark.  All rights reserved."
             VALUE "ProductVersion", STRPRODUCTVER
+            VALUE "RegisteredTo", STRREGISTRANT
         END
     END
     BLOCK "VarFileInfo"

@@ -141,6 +141,8 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 		CheckDlgButton(IDC_SHOWSTATUS, BST_CHECKED);
   if (m_optionsCopy.AutoStartup())
 		CheckDlgButton(IDC_AUTOSTART, BST_CHECKED);
+  if (m_optionsCopy.ShowSplash())
+    CheckDlgButton(IDC_SHOWSPLASH, BST_CHECKED);
 
   SetForegroundWindow(*this);
 
@@ -261,6 +263,9 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 	{
   case IDC_AUTOSTART:
     m_optionsCopy.AutoStartup(checked);
+		break;
+  case IDC_SHOWSPLASH:
+    m_optionsCopy.ShowSplash(checked);
 		break;
 	case IDC_SHOWSTATUS:
  		m_optionsCopy.ShowStatus(checked);

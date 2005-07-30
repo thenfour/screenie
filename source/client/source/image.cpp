@@ -285,7 +285,7 @@ void DumpBitmap(Gdiplus::Bitmap& image, int x, int y)
   HBITMAP himg;
   image.GetHBITMAP(0, &himg);
   HBITMAP hOld = (HBITMAP)SelectObject(dcc, himg);
-  StretchBlt(dc, x, y, image.GetWidth()/2, image.GetHeight()/2, dcc, 0, 0, image.GetWidth(), image.GetHeight(), SRCCOPY);
+  StretchBlt(dc, x, y, image.GetWidth(), image.GetHeight(), dcc, 0, 0, image.GetWidth(), image.GetHeight(), SRCCOPY);
   SelectObject(dcc, hOld);
   DeleteDC(dcc);
   DeleteObject(himg);

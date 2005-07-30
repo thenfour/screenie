@@ -15,8 +15,9 @@
 #include "MainWindow.hpp"
 #include "viewport.h"
 #include "DestinationDlg.hpp"
+#include "WelcomeWnd.h"
 
-CMainWindow g_mainWindow;
+CMainWindow* g_mainWindow;
 CAppModule _Module;
 
 HHOOK g_keyboardHook;
@@ -36,7 +37,7 @@ LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
 
 			BOOL altDown = (ks->flags & LLKHF_ALTDOWN);
 
-			::PostMessage(g_mainWindow, CMainWindow::WM_TAKESCREENSHOT,
+			::PostMessage(*g_mainWindow, CMainWindow::WM_TAKESCREENSHOT,
 				MAKELONG(cursorPos.x, cursorPos.y), altDown);
 		}
 	}
@@ -54,8 +55,21 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	int retval = 0;
 
+  ScreenshotOptions options;
+	LoadOptionsFromRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+
+#ifdef CRIPPLED
+  ShowNagSplash();
+#endif
+  if(options.ShowSplash())
+  {
+    ShowSplashScreen();
+  }
+
+  g_mainWindow = new CMainWindow(options);
+
 	RECT display = { 0 };
-	if (g_mainWindow.Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))
+	if (g_mainWindow->Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))
 	{
 		g_keyboardHook = ::SetWindowsHookEx(WH_KEYBOARD_LL, PrintScreenProc,
 			_Module.GetModuleInstance(), 0);
@@ -65,6 +79,8 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 			retval = theLoop.Run();
 		}
 	}
+
+  delete g_mainWindow;
 
 	_Module.RemoveMessageLoop();
 

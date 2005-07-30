@@ -55,7 +55,8 @@ public:
 		WM_TAKESCREENSHOT = WM_APP + 3
 	};
 
-  CMainWindow() :
+  CMainWindow(ScreenshotOptions& options) :
+    m_screenshotOptions(options),
     m_statusDialog(m_screenshotOptions)
   {
     m_uTaskbarCreatedMsg = RegisterWindowMessage(_T("TaskbarCreated"));

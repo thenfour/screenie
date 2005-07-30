@@ -17,6 +17,10 @@
 #define IDB_HEADER                      211
 #define IDI_CHECK                       212
 #define IDD_BUY                         214
+#define IDR_SPLASHBACKGROUND            216
+#define IDR_TRAYSAMPLE                  217
+#define IDR_PNG1                        218
+#define IDR_PRTSCR                      218
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -49,6 +53,7 @@
 #define IDC_SHOWSTATUS2                 1014
 #define IDC_AUTOSTART                   1014
 #define IDC_FTP_HOSTNAME                1015
+#define IDC_SHOWSPLASH                  1015
 #define IDC_FTP_REMOTEPATH              1016
 #define IDC_GENERAL_NAME                1017
 #define IDC_FTP_HTTPURL                 1017
@@ -164,7 +169,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        215
+#define _APS_NEXT_RESOURCE_VALUE        219
 #define _APS_NEXT_COMMAND_VALUE         32784
 #define _APS_NEXT_CONTROL_VALUE         1058
 #define _APS_NEXT_SYMED_VALUE           101

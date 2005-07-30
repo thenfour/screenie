@@ -8,6 +8,7 @@
 #define SCREENIE_IMAGE_HPP
 
 #include "animbitmap.h"
+#include "autoGDI.hpp"
 
 tstd::tstring GetGdiplusStatusString(Gdiplus::Status status);
 
@@ -71,6 +72,33 @@ void CopyImage(AnimBitmap<T>& dest, Gdiplus::Bitmap& src, int zoomFactor)
   SelectObject(dcc, hbm);
   DeleteObject(hScreenshot);
   DeleteDC(dcc);
+}
+
+// stolen from a thread on google groups
+inline Gdiplus::Bitmap* BitmapFromResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
+{
+    HRSRC hrsrc=FindResource(hInstance, szResName, szResType);
+    if(!hrsrc) return 0;
+    HGLOBAL hg1 = LoadResource(hInstance, hrsrc);
+    DWORD sz = SizeofResource(hInstance, hrsrc);
+    void* ptr1 = LockResource(hg1);
+    HGLOBAL hg2 = GlobalAlloc(GMEM_FIXED, sz);
+    CopyMemory(hg2, ptr1, sz);
+    IStream *pStream;
+    HRESULT hr=CreateStreamOnHGlobal(hg2, TRUE, &pStream);
+    if(FAILED(hr)) return 0;
+    Gdiplus::Bitmap *image=Gdiplus::Bitmap::FromStream(pStream);
+    pStream->Release();
+    return image;
+} 
+
+
+inline AutoGdiBitmap LoadImageResource(LPCTSTR szResName, LPCTSTR szResType)
+{
+  std::auto_ptr<Gdiplus::Bitmap> bmp(BitmapFromResource(_Module.GetResourceInstance(), szResName, szResType));
+  HBITMAP hbm;
+  Gdiplus::Status s = bmp->GetHBITMAP(0, &hbm);
+  return hbm;
 }
 
 #endif

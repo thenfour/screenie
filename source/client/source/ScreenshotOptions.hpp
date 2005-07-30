@@ -21,7 +21,8 @@ public:
 	  m_confirmOptions(false),
 	  m_showCropWindow(true),
     m_croppingZoomFactor(2.0f),
-    m_autoStartup(true)
+    m_autoStartup(true),
+    m_showSplash(true)
   {
   }
 
@@ -35,6 +36,7 @@ public:
 		m_confirmOptions = copy.m_confirmOptions;
 		m_showCropWindow = copy.m_showCropWindow;
     m_croppingZoomFactor = copy.m_croppingZoomFactor;
+    m_showSplash = copy.m_showSplash;
 
     m_haveStatusPlacement = copy.m_haveStatusPlacement;
     m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
@@ -64,6 +66,7 @@ public:
 		m_confirmOptions = rightHand.m_confirmOptions;
 		m_showCropWindow = rightHand.m_showCropWindow;
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
+    m_showSplash = rightHand.m_showSplash;
 
     m_haveStatusPlacement = copy.m_haveStatusPlacement;
     m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
@@ -85,6 +88,9 @@ public:
 
   bool AutoStartup() const { return m_autoStartup; }
   void AutoStartup(bool b) { m_autoStartup = b; }
+
+  bool ShowSplash() const { return m_showSplash; }
+  void ShowSplash(bool b) { m_showSplash = b; }
 
 	bool ShowStatus() { return m_showStatus; }
 	void ShowStatus(bool newval) { m_showStatus = newval; }
@@ -183,6 +189,7 @@ private:
 	bool m_showStatus;
 	bool m_confirmOptions;
 	bool m_showCropWindow;
+  bool m_showSplash;
 };
 
 bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
