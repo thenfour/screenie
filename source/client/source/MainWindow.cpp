@@ -171,11 +171,7 @@ LRESULT CMainWindow::OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	{
   case WM_LBUTTONDBLCLK:
     {
-      ScopedGUIEntry ee;
-      if(ee.Enter())
-      {
-        OnConfigure(0,0,0,handled);
-      }
+      OnConfigure(0,0,0,handled);
       break;
     }
   case WM_CONTEXTMENU:
@@ -236,6 +232,8 @@ LRESULT CMainWindow::OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& h
 
 bool CMainWindow::OnConfigure(const tstd::tstring& OKbuttonText)
 {
+  ScopedGUIEntry ee;
+  if(!ee.Enter()) return false;
 	CDestinationDlg dialog(m_screenshotOptions, OKbuttonText);
 	return (TRUE == dialog.DoModal());
 }

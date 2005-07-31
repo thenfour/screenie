@@ -48,16 +48,10 @@ public:
 
 	~ScreenshotOptions()
 	{
-		// move along, nothing to see here
-		m_destinations.clear();
 	}
 
 	ScreenshotOptions& operator=(const ScreenshotOptions& rightHand)
 	{
-    const ScreenshotOptions& copy = rightHand;
-
-    m_destinations.clear();
-
 		m_destinations = rightHand.m_destinations;
 
     m_autoStartup = rightHand.m_autoStartup;
@@ -68,12 +62,12 @@ public:
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
     m_showSplash = rightHand.m_showSplash;
 
-    m_haveStatusPlacement = copy.m_haveStatusPlacement;
-    m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
-    m_haveConfigPlacement = copy.m_haveConfigPlacement;
-    memcpy(&m_statusPlacement, &copy.m_statusPlacement, sizeof(m_statusPlacement));
-    memcpy(&m_croppingPlacement, &copy.m_croppingPlacement, sizeof(m_croppingPlacement));
-    memcpy(&m_configPlacement, &copy.m_configPlacement, sizeof(m_configPlacement));
+    m_haveStatusPlacement = rightHand.m_haveStatusPlacement;
+    m_haveCroppingPlacement = rightHand.m_haveCroppingPlacement;
+    m_haveConfigPlacement = rightHand.m_haveConfigPlacement;
+    memcpy(&m_statusPlacement, &rightHand.m_statusPlacement, sizeof(m_statusPlacement));
+    memcpy(&m_croppingPlacement, &rightHand.m_croppingPlacement, sizeof(m_croppingPlacement));
+    memcpy(&m_configPlacement, &rightHand.m_configPlacement, sizeof(m_configPlacement));
 
 		return (*this);
 	}

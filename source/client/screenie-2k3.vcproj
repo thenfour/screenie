@@ -211,11 +211,13 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				GlobalOptimizations="TRUE"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;CRIPPLED"
 				MinimalRebuild="FALSE"
 				ExceptionHandling="TRUE"
 				RuntimeLibrary="0"
+				BufferSecurityCheck="FALSE"
 				TreatWChar_tAsBuiltInType="TRUE"
 				UsePrecompiledHeader="3"
 				PrecompiledHeaderThrough="StdAfx.hpp"
@@ -401,6 +403,9 @@
 				RelativePath=".\source\resources\check.ico">
 			</File>
 			<File
+				RelativePath=".\source\resources\checked.ico">
+			</File>
+			<File
 				RelativePath=".\source\resources\header.bmp">
 			</File>
 			<File
@@ -417,6 +422,9 @@
 			</File>
 			<File
 				RelativePath=".\source\screenie.rc2">
+			</File>
+			<File
+				RelativePath=".\source\resources\unchecked.ico">
 			</File>
 			<File
 				RelativePath=".\source\resources\watermark.bmp">
@@ -469,6 +477,9 @@
 			Name="UI Control Sources"
 			Filter="">
 			<File
+				RelativePath=".\source\Checkbox.h">
+			</File>
+			<File
 				RelativePath=".\source\ImageEditWnd.cpp">
 			</File>
 			<File
@@ -510,10 +521,61 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\source\resources\buy_normal.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\buy_normal_hover.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\buy_pushed.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\buy_pushed_hover.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\checked.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\checked.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\checkeddown.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\checkedhover.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\continue_normal.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\continue_normal_hover.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\continue_pushed.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\continue_pushed_hover.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\prtscr.gif">
+		</File>
+		<File
 			RelativePath=".\source\resources\prtscr.png">
 		</File>
 		<File
+			RelativePath=".\source\resources\traysample.gif">
+		</File>
+		<File
 			RelativePath=".\source\resources\traysample.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\unchecked.gif">
+		</File>
+		<File
+			RelativePath=".\source\resources\unchecked.png">
+		</File>
+		<File
+			RelativePath=".\source\resources\uncheckedhover.png">
 		</File>
 		<File
 			RelativePath=".\source\resources\welcome.png">

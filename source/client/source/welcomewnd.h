@@ -7,6 +7,8 @@
 #include "image.hpp"
 #include "animbitmap.h"
 #include "xversion.h"
+#include "screenshotoptions.hpp"
+#include "checkbox.h"
 
 
 template<bool m_nag>// if false, assume we are showing welcome.
@@ -14,41 +16,78 @@ class CWelcomeWindow : public CWindowImpl<CWelcomeWindow>
 {
   static const COLORREF DarkGreen = RGB(23,43,18);
   static const COLORREF DarkRed = RGB(107,23,21);
+  static const int IDC_ShowSplash = 1000;
+
+  static const int ButtonWidth = 116;
+  static const int ButtonHeight = 39;
+  static const int LeftPane = 251;// the welcome screen is sorta divided in 2 panes.  this is the width of the left one
+  static const int TotalWidth = 521;
+  static const int RightPane = TotalWidth - LeftPane;
+
 public:
-  CWelcomeWindow() :
-    m_isDone(false)
+  CWelcomeWindow(ScreenshotOptions& opt) :
+    m_isDone(false),
+    m_options(opt)
   {
+#ifdef CRIPPLED
+    m_next = 0;
+#endif
   }
 
 	BEGIN_MSG_MAP(CWelcomeWindow)
 		MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkGnd)
     MESSAGE_HANDLER(WM_CTLCOLORSTATIC, OnCTLCOLORSTATIC)
+    
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 
+    COMMAND_ID_HANDLER(IDC_BUY, OnBuy)
     COMMAND_ID_HANDLER(IDOK, OnContinue)
 	END_MSG_MAP()
 
-  void DoSortofModal()
+  void GoForIt(CWelcomeWindow<false>* next = 0)
   {
-    Create(0, 0, 0, WS_POPUP);
-    ShowWindow(SW_NORMAL);
-    MSG msg;
-    while(GetMessage(&msg, 0, 0, 0))
+#ifdef CRIPPLED
+    m_next = next;
+#endif
+    if(m_nag)
     {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-      if(m_isDone)
-      {
-        break;
-      }
+      Create(0, 0, _T("Screenie Demo"), WS_POPUP);
+    }
+    else
+    {
+      Create(0, 0, _T("Screenie Welcome"), WS_POPUP);
+    }
+    ShowWindow(SW_NORMAL);
+  }
+
+  void EnsureDestroyed()
+  {
+    if(IsWindow())
+    {
+      DestroyWindow();
     }
   }
 
+  LRESULT OnBuy(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+  {
+    m_link.Navigate();
+    return 0;
+  }
   LRESULT OnContinue(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
   {
+    if(!m_nag)
+    {
+      m_options.ShowSplash(!m_showSplash.IsChecked());
+    }
+#ifdef CRIPPLED
+    if(m_next)
+    {
+      m_next->GoForIt(0);
+    }
+#endif
     DestroyWindow();
     return 0;
   }
@@ -65,61 +104,6 @@ public:
     }
     return 0;
   } 
-
-  void DrawText_(int x, int y, int w, int h, bool center, COLORREF textColor, int fontSize, int fontWeight, const tstd::tstring& text)
-  {
-    CFont font;
-    font.CreateFont(fontSize, 0, 0, 0, fontWeight, 0, 0, 0, 0, 0, 0, 0, 0, _T("Arial"));
-    HDC dc = m_offscreen.GetDC();
-    SetBkMode(dc, TRANSPARENT);
-    SetTextColor(dc, textColor);
-    CRect rc(x, y, x + w, y + h);
-    HGDIOBJ hOldFont = SelectObject(dc, font);
-    DrawText(dc, text.c_str(), text.size(), &rc, (center ? DT_CENTER : 0) | DT_NOCLIP);
-    SelectObject(dc, hOldFont);
-  }
-
-	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-	{
-    // background image
-    m_background = LoadImageResource(MAKEINTRESOURCE(IDR_SPLASHBACKGROUND), _T("PNG"));
-    GetObject(m_background.handle, sizeof(BITMAP), &m_bmpBackground);
-
-    m_offscreen.SetSize(m_bmpBackground.bmWidth, m_bmpBackground.bmHeight);
-    m_offscreen.BlitFrom(m_background.handle, 0, 0, m_bmpBackground.bmWidth, m_bmpBackground.bmHeight);
-
-    MoveWindow(0, 0, m_bmpBackground.bmWidth, m_bmpBackground.bmHeight, FALSE);
-    CenterWindow();
-
-    // hyperlink
-    m_hyperlinkFont.CreateFont(22, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, _T("Arial"));
-    CRect rc(26,246,170+26,30+246);
-    m_link.Create(m_hWnd, &rc, _T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, 0, IDC_HYPERLINK);
-    m_link.SetFont(m_hyperlinkFont);
-    m_link.SetLinkFont(m_hyperlinkFont);
-    m_link.SetLabel( _T("http://screenie.net/"));
-
-    Version v;
-    v.FromFile(GetModuleFileNameX().c_str());
-
-    // registration
-    DrawText_(26, 272, 170, 30, true, DarkGreen, 17, FW_NORMAL, _T("Registered to:"));
-    DrawText_(26, 292, 170, 30, true, DarkRed, 19, FW_BOLD, LibCC::Format().s(v.GetRegistrant()).Str());
-
-    // "Thank you for installing"
-    DrawText_(216, 8, 200, 30, false, DarkGreen, 18, FW_NORMAL, _T("Thank you for installing"));
-
-    if(m_nag)
-    {
-      SetupNag();
-    }
-    else
-    {
-      SetupWelcome();
-    }
-
-		return 0;
-	}
 
 	LRESULT OnEraseBkGnd(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
   {
@@ -148,80 +132,173 @@ public:
     EndPaint(&ps);
     return 0;
   }
+
+	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	{
+    // setup the default GUI stuff
+
+    // background image
+    AutoGdiBitmap background;
+    background = LoadBitmapResource(MAKEINTRESOURCE(IDR_SPLASHBACKGROUND), _T("PNG"));
+    GetObject(background.handle, sizeof(BITMAP), &m_bmpBackground);
+
+    m_offscreen.SetSize(m_bmpBackground.bmWidth, m_bmpBackground.bmHeight);
+    m_offscreen.BlitFrom(background.handle, 0, 0, m_bmpBackground.bmWidth, m_bmpBackground.bmHeight);
+
+    MoveWindow(0, 0, m_bmpBackground.bmWidth, m_bmpBackground.bmHeight, FALSE);
+    CenterWindow();
+
+    // hyperlink
+    m_hyperlinkFont.CreateFont(24, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, _T("Arial"));
+    CRect rc(0,290,LeftPane, 30 + 290);
+    m_link.Create(m_hWnd, &rc, _T(""), WS_CHILD | SS_CENTER | WS_VISIBLE, 0, IDC_HYPERLINK);
+    m_link.SetFont(m_hyperlinkFont);
+    m_link.SetLinkFont(m_hyperlinkFont);
+    m_link.SetLabel(_T("http://screenie.net/"));
+    m_link.SetHyperLink(_T("http://screenie.net/"));
+
+    Version v;
+    v.FromFile(GetModuleFileNameX().c_str());
+
+    // registration
+    DrawText_(0, 337, LeftPane, 30, true, DarkGreen, 19, FW_NORMAL, _T("Registered to:"));
+    DrawText_(0, 362, LeftPane, 422-362, true, DarkRed, 21, FW_BOLD, LibCC::Format().s(v.GetRegistrant()).Str(), true);
+
+    // "Thank you for installing"
+    DrawText_(LeftPane, 10, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Thank you for installing"));
+
+    // set up images for the continue button.
+    m_continueImages.Create(ButtonWidth, ButtonHeight, ILC_COLOR32, 3, 0);
+    int normal = m_continueImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_CONTINUE_NORMAL), _T("BIN")).handle);
+    int pushed = m_continueImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_CONTINUE_PUSHED_HOVER), _T("BIN")).handle);
+    m_continue.SetImageList(m_continueImages.m_hImageList);
+    m_continue.SetImages(normal, pushed);
+
+    if(m_nag)
+    {
+      SetupNag();
+    }
+    else
+    {
+      SetupWelcome();
+    }
+
+		return 0;
+	}
   
 private:
 
   void SetupNag()
   {
-    // "the follomwming features have been disabled"
+    // "the followming features have been disabled"
+    DrawText_(LeftPane, 130, RightPane, 25*3, false, DarkGreen, 19, FW_NORMAL, _T("The following features have\r\nbeen disabled in this demo\r\nversion:"));
+
     // "cropping"
+    DrawText_(293, 196, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Cropping"));
+
     // "ftp uploading"
+    DrawText_(293, 223, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("FTP uploading"));
+
     // "if you like what you see...."
+    DrawText_(LeftPane, 273, RightPane, 25, false, DarkGreen, 19, FW_NORMAL, _T("If you like what you see, please\r\npurchase the full version."));
+
     // buy
+    CRect rc(LeftPane, 369, LeftPane + ButtonWidth, 369 + ButtonHeight);
+    m_buyImages.Create(ButtonWidth, ButtonHeight, ILC_COLOR32, 3, 0);
+    int normal = m_buyImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_BUY_NORMAL), _T("BIN")).handle);
+    int pushed = m_buyImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_BUY_PUSHED_HOVER), _T("BIN")).handle);
+    m_buy.SetImageList(m_buyImages.m_hImageList);
+    m_buy.SetImages(normal, pushed);
+    m_buy.Create(m_hWnd, &rc, _T("Buy"), WS_CHILD | WS_VISIBLE, 0, IDC_BUY);
+
     // continue
-    CRect rc(0, 0, 75, 23);
+  	//void SetImages(int nNormal, int nPushed = -1, int nFocusOrHover = -1, int nDisabled = -1);
+    rc.SetRect(LeftPane + (RightPane / 2), 369, LeftPane + (RightPane / 2) + ButtonWidth, 369 + ButtonHeight);
     m_continue.Create(m_hWnd, &rc, _T("Continue"), WS_CHILD | WS_VISIBLE, 0, IDOK);
   }
 
   void SetupWelcome()
   {
     // "what do i do next?"
-    DrawText_(216, 91, 200, 30, false, DarkGreen, 18, FW_NORMAL, _T("What do I do next?\r\nHit the Print Screen key on your\r\nkeyboard to take a screenshot."));
+    DrawText_(LeftPane, 106, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("Instructions:"));
+    DrawText_(LeftPane, 135, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("Hit the Print Screen key on your\r\nkeyboard to take a screenshot."));
 
     // printscreen graphic
-    m_printScreen = LoadImageResource(MAKEINTRESOURCE(IDR_PRTSCR), _T("PNG"));
-    GetObject(m_printScreen.handle, sizeof(BITMAP), &m_bmpPrintScreen);
-    m_offscreen.BlitFrom(m_printScreen.handle, 0, 0, m_bmpPrintScreen.bmWidth, m_bmpPrintScreen.bmHeight, 216, 136);
+    AutoGdiBitmap printScreen = LoadBitmapResource(MAKEINTRESOURCE(IDR_PRTSCR), _T("BIN"));
+    BITMAP bmpPrintScreen;
+    GetObject(printScreen.handle, sizeof(BITMAP), &bmpPrintScreen);
+    m_offscreen.BlitFrom(printScreen.handle, 0, 0, bmpPrintScreen.bmWidth, bmpPrintScreen.bmHeight, LeftPane, 178);
 
     // "to configure screenie, right-cilck...."
-    DrawText_(216, 197, 200, 30, false, DarkGreen, 18, FW_NORMAL, _T("To configure Screenie, right-click on\r\nthe Screenie logo in your system tray."));
+    DrawText_(LeftPane, 249, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("To configure Screenie, right-click on\r\nthe Screenie logo in your system tray."));
 
     // menu graphic
-    m_menu = LoadImageResource(MAKEINTRESOURCE(IDR_TRAYSAMPLE), _T("PNG"));
-    GetObject(m_menu.handle, sizeof(BITMAP), &m_bmpMenu);
-    m_offscreen.BlitFrom(m_menu.handle, 0, 0, m_bmpMenu.bmWidth, m_bmpMenu.bmHeight, 216, 228);
+    AutoGdiBitmap menu = LoadBitmapResource(MAKEINTRESOURCE(IDR_TRAYSAMPLE), _T("BIN"));
+    BITMAP bmpMenu;
+    GetObject(menu.handle, sizeof(BITMAP), &bmpMenu);
+    m_offscreen.BlitFrom(menu.handle, 0, 0, bmpMenu.bmWidth, bmpMenu.bmHeight, LeftPane, 288);
+
+    CRect rc;
 
     // continue
-    CRect rc(324, 297, 324+75, 297+23);
+    rc.SetRect(LeftPane + ((RightPane - ButtonWidth) / 2), 379, LeftPane + ((RightPane - ButtonWidth) / 2) + ButtonWidth, 379 + ButtonHeight);
     m_continue.Create(m_hWnd, &rc, _T("Continue"), WS_CHILD | WS_VISIBLE, 0, IDOK);
 
     // "do not show this window again"
+    rc.SetRect(10,422,10+20,426+22);
+    m_showSplash.Create(m_hWnd, &rc, _T(""), WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0, IDC_ShowSplash);
+    DrawText_(10+20+6, 426, LeftPane, 30, false, DarkGreen, 14, FW_NORMAL, _T("Do not show this window next time Screenie starts"));
+
+    m_showSplash.SetChecked(IDR_CHECKED, _T("BIN"));
+    m_showSplash.SetCheckedHover(IDR_CHECKED, _T("BIN"));
+    m_showSplash.SetCheckedDown(IDR_CHECKED, _T("BIN"));
+    m_showSplash.SetUnchecked(IDR_UNCHECKED, _T("BIN"));
+    m_showSplash.SetUncheckedHover(IDR_UNCHECKED, _T("BIN"));
+    m_showSplash.SetUncheckedDown(IDR_UNCHECKED, _T("BIN"));
   }
 
+  void DrawText_(int x, int y, int w, int h, bool center, COLORREF textColor, int fontSize, int fontWeight, const tstd::tstring& text, bool wordBreak = false)
+  {
+    CFont font;
+    font.CreateFont(fontSize, 0, 0, 0, fontWeight, 0, 0, 0, 0, 0, 0, 0, 0, _T("Arial"));
+    HDC dc = m_offscreen.GetDC();
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, textColor);
+    CRect rc(x, y, x + w, y + h);
+    HGDIOBJ hOldFont = SelectObject(dc, font);
+    DrawText(dc, text.c_str(), text.size(), &rc, (center ? DT_CENTER : 0) | DT_NOCLIP | (wordBreak ? DT_WORDBREAK : 0));
+    SelectObject(dc, hOldFont);
+  }
+
+  std::tr1::shared_ptr<Gdiplus::Image> LoadPNGResource(UINT id)
+  {
+    return std::tr1::shared_ptr<Gdiplus::Image>(ImageFromResource(_Module.GetResourceInstance(), MAKEINTRESOURCE(id), _T("PNG")));
+  }
+
+  BITMAP m_bmpBackground;
+
+#ifdef CRIPPLED
+  CWelcomeWindow<false>* m_next;// when the user closes the nag, this one is the welcome screen.
+#endif
 
   AnimBitmap<32> m_offscreen;
 
 	CHyperLink m_link;
-  //CButton m_showSplash;
-  CButton m_continue;
-  //CButton m_buy;
+  CFont m_hyperlinkFont;
 
-  AutoGdiBitmap m_menu;
-  BITMAP m_bmpMenu;
+  CheckboxButton m_showSplash;
 
-  AutoGdiBitmap m_printScreen;
-  BITMAP m_bmpPrintScreen;
+  CImageList m_continueImages;
+  CBitmapButton m_continue;
 
-  AutoGdiBitmap m_background;
-  BITMAP m_bmpBackground;
+  CImageList m_buyImages;
+  CBitmapButton m_buy;
 
   bool m_isDone;
 
-  CFont m_hyperlinkFont;
+  ScreenshotOptions& m_options;
 };
 
-
-void ShowNagSplash()
-{
-  CWelcomeWindow<true> aoeu;
-  aoeu.DoSortofModal();
-}
-
-void ShowSplashScreen()
-{
-  CWelcomeWindow<false> aoeu;
-  aoeu.DoSortofModal();
-}
 
 
 #endif

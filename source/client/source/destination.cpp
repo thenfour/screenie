@@ -60,7 +60,7 @@ bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 {
 #ifdef CRIPPLED
   CBuyDlg dlg;
-  dlg.DoModal(_T("FTP transfers"));
+  dlg.DoModal(_T("FTP uploading"));
   LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("FTP Transfers are not supported in the demo version."));
 #else
   LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_PROGRESS, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));

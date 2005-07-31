@@ -468,9 +468,9 @@ public:
     return r != 0;
   }
 
-  bool Blit(HDC hDest, long x, long y, long width, long height)
+  bool Blit(HDC hDest, long destX, long destY, long width, long height, long srcX = 0, long srcY = 0)
   {
-    int r = BitBlt(hDest, x, y, x + width, y + height, m_offscreen, 0, 0, SRCCOPY);
+    int r = BitBlt(hDest, destX, destY, destX + width, destY + height, m_offscreen, srcX, srcY, SRCCOPY);
     return r != 0;
   }
 

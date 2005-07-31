@@ -122,7 +122,7 @@ private:
   NOTIFYICONDATA m_iconData;
 
   CStatusDlg m_statusDialog;
-	ScreenshotOptions m_screenshotOptions;
+	ScreenshotOptions& m_screenshotOptions;
 };
 
 #endif

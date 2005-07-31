@@ -75,7 +75,8 @@ void CopyImage(AnimBitmap<T>& dest, Gdiplus::Bitmap& src, int zoomFactor)
 }
 
 // stolen from a thread on google groups
-inline Gdiplus::Bitmap* BitmapFromResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
+template<typename T>
+inline T* GdiplusObjectFromResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
 {
     HRSRC hrsrc=FindResource(hInstance, szResName, szResType);
     if(!hrsrc) return 0;
@@ -87,13 +88,23 @@ inline Gdiplus::Bitmap* BitmapFromResource(HINSTANCE hInstance, LPCTSTR szResNam
     IStream *pStream;
     HRESULT hr=CreateStreamOnHGlobal(hg2, TRUE, &pStream);
     if(FAILED(hr)) return 0;
-    Gdiplus::Bitmap *image=Gdiplus::Bitmap::FromStream(pStream);
+    T *image=T::FromStream(pStream);
     pStream->Release();
     return image;
 } 
 
+inline Gdiplus::Bitmap* BitmapFromResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
+{
+  return GdiplusObjectFromResource<Gdiplus::Bitmap>(hInstance, szResName, szResType);
+}
 
-inline AutoGdiBitmap LoadImageResource(LPCTSTR szResName, LPCTSTR szResType)
+inline Gdiplus::Image* ImageFromResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
+{
+  return GdiplusObjectFromResource<Gdiplus::Image>(hInstance, szResName, szResType);
+} 
+
+
+inline AutoGdiBitmap LoadBitmapResource(LPCTSTR szResName, LPCTSTR szResType)
 {
   std::auto_ptr<Gdiplus::Bitmap> bmp(BitmapFromResource(_Module.GetResourceInstance(), szResName, szResType));
   HBITMAP hbm;

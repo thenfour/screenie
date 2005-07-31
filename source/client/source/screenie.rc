@@ -78,9 +78,10 @@ BEGIN
     LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,18,54,156,12
 END
 
-IDD_MAINDLG DIALOGEX 0, 0, 210, 250
-STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+IDD_MAINDLG DIALOGEX 0, 0, 210, 249
+STYLE DS_SETFONT | DS_SETFOREGROUND | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | 
+    WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_WINDOWEDGE | WS_EX_APPWINDOW
 CAPTION "Screenie Options"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
@@ -291,7 +292,7 @@ BEGIN
         VERTGUIDE, 99
         VERTGUIDE, 190
         TOPMARGIN, 7
-        BOTTOMMARGIN, 243
+        BOTTOMMARGIN, 242
         HORZGUIDE, 113
         HORZGUIDE, 214
     END
@@ -452,8 +453,20 @@ IDB_HEADER              BITMAP                  "resources\\header.bmp"
 //
 
 IDR_SPLASHBACKGROUND    PNG                     "resources\\welcome.png"
-IDR_TRAYSAMPLE          PNG                     "resources\\traysample.png"
-IDR_PRTSCR              PNG                     "resources\\prtscr.png"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// BIN
+//
+
+IDR_BUY_NORMAL          BIN                     "resources\\buy_normal.gif"
+IDR_BUY_PUSHED_HOVER    BIN                     "resources\\buy_pushed_hover.gif"
+IDR_CONTINUE_NORMAL     BIN                     "resources\\continue_normal.gif"
+IDR_CONTINUE_PUSHED_HOVER BIN                     "resources\\continue_pushed_hover.gif"
+IDR_PRTSCR              BIN                     "resources\\prtscr.gif"
+IDR_TRAYSAMPLE          BIN                     "resources\\traysample.gif"
+IDR_UNCHECKED           BIN                     "resources\\unchecked.gif"
+IDR_CHECKED             BIN                     "resources\\checked.gif"
 
 /////////////////////////////////////////////////////////////////////////////
 //

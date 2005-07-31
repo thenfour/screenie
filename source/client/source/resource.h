@@ -18,9 +18,15 @@
 #define IDI_CHECK                       212
 #define IDD_BUY                         214
 #define IDR_SPLASHBACKGROUND            216
-#define IDR_TRAYSAMPLE                  217
-#define IDR_PNG1                        218
-#define IDR_PRTSCR                      218
+#define IDR_BUY_NORMAL                  230
+#define IDR_BUY_PUSHED_HOVER            232
+#define IDR_CONTINUE_NORMAL             235
+#define IDR_CONTINUE_PUSHED_HOVER       237
+#define IDR_PRTSCR                      239
+#define IDR_TRAYSAMPLE                  240
+#define IDR_BIN1                        241
+#define IDR_UNCHECKED                   241
+#define IDR_CHECKED                     242
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -169,7 +175,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        219
+#define _APS_NEXT_RESOURCE_VALUE        243
 #define _APS_NEXT_COMMAND_VALUE         32784
 #define _APS_NEXT_CONTROL_VALUE         1058
 #define _APS_NEXT_SYMED_VALUE           101

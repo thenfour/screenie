@@ -115,7 +115,7 @@ public:
     m_zoomFactorIndex = n;
     // clamp
     if(m_zoomFactorIndex < 0) m_zoomFactorIndex = 0;
-    if(m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
+    if((size_t)m_zoomFactorIndex >= m_zoomFactors.size()) m_zoomFactorIndex = m_zoomFactors.size() - 1;
 
     float factor = m_zoomFactors[m_zoomFactorIndex];
     m_editWnd.SetZoomFactor(factor);
@@ -126,13 +126,13 @@ public:
 
   void SetZoomFactor(float ideal, bool updateTrackbar)
   {
-    for(int i = 0; i < m_zoomFactors.size(); ++ i)
+    for(size_t i = 0; i < m_zoomFactors.size(); ++ i)
     {
       if(m_zoomFactors[i] > ideal) break;
     }
     int newid = i - 1;
     if(newid < 0) newid = 0;
-    if(newid >= m_zoomFactors.size()) newid = m_zoomFactors.size() - 1;
+    if((size_t)newid >= m_zoomFactors.size()) newid = m_zoomFactors.size() - 1;
     AttemptNewFactorIndex(newid, updateTrackbar);
   }
 
