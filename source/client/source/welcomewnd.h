@@ -249,6 +249,8 @@ private:
     m_showSplash.Create(m_hWnd, &rc, _T(""), WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0, IDC_ShowSplash);
     DrawText_(10+20+6, 426, LeftPane, 30, false, DarkGreen, 14, FW_NORMAL, _T("Do not show this window next time Screenie starts"));
 
+    m_showSplash.SetCheck(true);
+
     m_showSplash.SetChecked(IDR_CHECKED, _T("BIN"));
     m_showSplash.SetCheckedHover(IDR_CHECKED, _T("BIN"));
     m_showSplash.SetCheckedDown(IDR_CHECKED, _T("BIN"));

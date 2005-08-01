@@ -23,6 +23,15 @@ public:
 		MESSAGE_HANDLER(WM_CAPTURECHANGED, OnCaptureChanged)
 	END_MSG_MAP()
 
+  void SetCheck(bool b)
+  {
+    m_isChecked = b;
+    if(IsWindow())
+    {
+      Invalidate();
+    }
+  }
+
   void SetChecked(UINT i, PCTSTR szResType)
   {
     m_checked = LoadBitmapResource(MAKEINTRESOURCE(i), szResType);

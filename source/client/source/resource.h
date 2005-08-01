@@ -24,7 +24,6 @@
 #define IDR_CONTINUE_PUSHED_HOVER       237
 #define IDR_PRTSCR                      239
 #define IDR_TRAYSAMPLE                  240
-#define IDR_BIN1                        241
 #define IDR_UNCHECKED                   241
 #define IDR_CHECKED                     242
 #define IDC_DESTINATIONS                1002
@@ -35,6 +34,7 @@
 #define IDC_THUMB_FILEFMT               1004
 #define IDC_FILE_FOLDER                 1004
 #define IDC_CONTROLS1                   1004
+#define IDC_REGISTRANT                  1004
 #define IDC_EDIT                        1005
 #define IDC_COMBO1                      1005
 #define IDC_FTP_PASSWORD                1005

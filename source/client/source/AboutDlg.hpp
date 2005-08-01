@@ -49,7 +49,8 @@ public:
     Version v;
     v.FromFile(GetModuleFileNameX().c_str());
     SetDlgItemText(IDC_PRODUCTVERSION, LibCC::Format("Screenie v%.%.%").ui(v.GetA()).ui(v.GetB()).ui(v.GetC()).CStr());
-    // Screenie vA.B.C.D
+    SetDlgItemText(IDC_COPYRIGHT, v.GetCopyright().c_str());
+    SetDlgItemText(IDC_REGISTRANT, v.GetRegistrant().c_str());
 
     CenterWindow(GetParent());
 		m_link.SubclassWindow(GetDlgItem(IDC_HYPERLINK));
