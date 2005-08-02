@@ -17,7 +17,7 @@ VIAddVersionKey "Registrant" "[development]"
 
 
 ; The file to write
-OutFile "..\..\bin-installer\Setup.exe"
+OutFile "..\..\bin-installer\ScreenieSetup.exe"
 
 
 ; The stuff to install
