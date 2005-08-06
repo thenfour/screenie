@@ -42,7 +42,8 @@
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCPreBuildEventTool"
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) version.in version_generated.h"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -88,7 +89,8 @@
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCPreBuildEventTool"
+				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) version.in version_generated.h"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -167,12 +169,18 @@
 			<File
 				RelativePath=".\veredit.rc">
 			</File>
+			<File
+				RelativePath=".\veredit.rc2">
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt">
 		</File>
 		<File
 			RelativePath=".\usage.txt">
+		</File>
+		<File
+			RelativePath=".\version.in">
 		</File>
 	</Files>
 	<Globals>
