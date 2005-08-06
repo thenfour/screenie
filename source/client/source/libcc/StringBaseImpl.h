@@ -398,7 +398,7 @@ namespace LibCC
   {
     Blob<LChar> temp;
     temp.Alloc(StringLength(rhs) + 1);
-    StringCopyN(temp.GetBuffer(), rhs, temp.Size() - 1);
+    StringCopyN(temp.GetBuffer(), rhs, temp.Size());
     str.append(temp.GetBuffer());
     return;
   }
@@ -422,6 +422,7 @@ namespace LibCC
       }
       else
       {
+        r.push_back(*p);
         p ++;
       }
     }

@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "textreplace", "textreplace.vcproj", "{6C4B21F3-8E6B-4324-97F5-A57C0CF3118D}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{6C4B21F3-8E6B-4324-97F5-A57C0CF3118D}.Debug.ActiveCfg = Debug|Win32
+		{6C4B21F3-8E6B-4324-97F5-A57C0CF3118D}.Debug.Build.0 = Debug|Win32
+		{6C4B21F3-8E6B-4324-97F5-A57C0CF3118D}.Release.ActiveCfg = Release|Win32
+		{6C4B21F3-8E6B-4324-97F5-A57C0CF3118D}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
