@@ -20,7 +20,11 @@
 #include <list>
 #include <vector>
 
+#include <windows.h>
+#include <shlwapi.h>
+
 using namespace std;
 using namespace LibCC;
 
 #pragma comment(lib, "version.lib")
+#pragma comment(lib, "shlwapi.lib")

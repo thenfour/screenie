@@ -1,6 +1,10 @@
 veredit.exe, (c) 2005 Carl Corcoran
 http://carl.ript.net/veredit
 
+About veredit.exe:
+This program is used to modify version resources of executable
+files (EXE / DLL / etc) using the command line.
+
 COMMAND LINE ARGUMENTS
 ----------------------
 Syntax:
@@ -10,10 +14,10 @@ Switches:
   /xml [file]          Import values from the specified XML file.
   /string [name=value] Set the string value in version resource.
   /delete [name]       Removes the specified string resource value if
-                        it exists
+                       it exists
   /fixed [name=value]  Sets the fixed numeric value. Value format is
-                        explained below. Available fields are the same as in
-                        the XML file. See below for more on that.
+                       explained below. Available fields are the same as in
+                       the XML file. See below for more on that.
 
 Note: If a string resource value with the same name already exists, its value
       will be replaced. If it does not exist, it will be added.
@@ -33,6 +37,8 @@ Fixed numeric values can be in these forms:
   {1 2 3 255}     <-- sequential BYTE values in decimal, in BIG-endian
   [0102 03ff]     <-- sequential WORD values in hexadecimal, in BIG-endian
   {258 1023}      <-- sequential WORD values in decimal, in BIG-endian
+  [010203ff]      <-- DWORD value in hexadecimal
+  {16909311}      <-- DWORD value in decimal
   0x010203ff      <-- DWORD in hexadecimal
   16909311        <-- DWORD in decimal
 
@@ -52,7 +58,7 @@ THE XML FILE
 Here's a rough example/description of the format of the xml file:
   <Version>
     <StringFileInfo
-      FileVersion = "258, 1023"
+      FileVersion = "1, 0, 258, 1023"
       ProductVersion = "4, 2, 1, 0"
       LegalCopyright = "..."
       [... add any string values here ...]

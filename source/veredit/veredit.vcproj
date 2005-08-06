@@ -130,6 +130,9 @@
 			<File
 				RelativePath=".\veredit.cpp">
 			</File>
+			<File
+				RelativePath=".\xmlutil.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -152,6 +155,9 @@
 			</File>
 			<File
 				RelativePath=".\versionxml.h">
+			</File>
+			<File
+				RelativePath=".\xmlutil.h">
 			</File>
 		</Filter>
 		<Filter

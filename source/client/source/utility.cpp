@@ -415,7 +415,7 @@ LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& lo
     }
   }
 
-	return S_OK;
+	return Result(S_OK);
 }
 
 

@@ -131,7 +131,8 @@ namespace LibCC
   template<typename Char, typename OutIt>
     inline void StringSplit(const std::basic_string<Char>& s, Char sep, OutIt dest)
   {
-    StringSplit(s, std::basic_string<Char>(sep), dest);
+    Char x[2] = { sep };
+    StringSplit(s, x, dest);
   }
 
 

@@ -241,7 +241,7 @@ Error:
       // verify that hdr.valueLength is the value length in WORDs.
       if(hdr.valueLength != GetValueLengthChars())
       {
-        ret.Fail(Format("The valueLength field was incorrect.  Expected %, it is %.").st(GetValueLengthChars()).st(hdr.valueLength));
+        ret.Fail(Format("The valueLength field was incorrect.  Expected %, it is %.  The value is %").st(GetValueLengthChars()).st(hdr.valueLength).qs(value));
         goto Error;
       }
 
@@ -341,7 +341,7 @@ Error:
         items.push_back(Element("StringTable"));
         if(!(ret = items.back().Read(f)))
         {
-          ret.Prepend("Error writing an item; ");
+          ret.Prepend("Error reading an item; ");
           goto Error;
         }
         bytesLeft -= items.back().GetLengthWithPadding();

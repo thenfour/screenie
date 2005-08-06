@@ -126,7 +126,7 @@ private:
     DWORD br;
     if(0 == WriteFile(m_hFile, val, size, &br, 0))
     {
-      return Result(false, Format("Write failed, gle=%").gle(GetLastError()));
+      return Result(false, Format("Write failed, gle=%").gle());
     }
     return Result(br == size);
   }
@@ -144,7 +144,7 @@ private:
     DWORD br;
     if(0 == ReadFile(m_hFile, val, size, &br, 0))
     {
-      return Result(false, Format("Write failed, gle=%").gle(GetLastError()));
+      return Result(false, Format("Write failed, gle=%").gle());
     }
     return Result(br == size);
   }
