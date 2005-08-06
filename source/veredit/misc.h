@@ -2,23 +2,6 @@
 
 #pragma once
 
-// auto-class for LoadLibrary() / FreeLibrary()
-//class LibraryHandle
-//{
-//public:
-//  LibraryHandle() : h(0) { }
-//  LibraryHandle(HMODULE h_) : h(h_) { }
-//  LibraryHandle& operator =(HMODULE h_) { Free(); h = h_; } 
-//  void Free()
-//  {
-//    if(h)
-//    {
-//      FreeLibrary(h);
-//    }
-//  }
-//  HMODULE h;
-//};
-
 // splits a string at the first equal sign.
 Result ParseNameValueString(const string& in, string& name, string& value)
 {

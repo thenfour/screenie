@@ -246,7 +246,7 @@ Error:
       }
 
       // padding.
-      f.Skip(GetPaddingLength(GetLengthWithoutPadding()));
+      f.Skip(Version::GetPaddingLength(GetLengthWithoutPadding()));
       return ret.Succeed();
 Error:
       return ret.Prepend("Error reading a String structure; ");
@@ -280,7 +280,7 @@ Error:
         }
       }
       // padding
-      if(!(ret = f.WriteZeroBytes(GetPaddingLength(GetLengthWithoutPadding()))))
+      if(!(ret = f.WriteZeroBytes(Version::GetPaddingLength(GetLengthWithoutPadding()))))
       {
         ret.Prepend("Error writing the padding bytes; ");
         goto Error;
@@ -290,6 +290,10 @@ Error:
       return ret.Prepend("Error writing a String structure; ");
     }
 
+    size_t GetPaddingLength() const
+    {
+      return Version::GetPaddingLength(GetLengthWithoutPadding());
+    }
     size_t GetValueLengthChars() const
     {
       if(value.empty()) return 0;
@@ -305,7 +309,7 @@ Error:
     }
     size_t GetLengthWithPadding() const
     {
-      return GetLengthWithoutPadding() + GetPaddingLength(GetLengthWithoutPadding());
+      return GetLengthWithoutPadding() + GetPaddingLength();
     }
   };
 
@@ -325,6 +329,11 @@ Error:
     {
     }
 
+    size_t GetPaddingLength() const
+    {
+      return items.back().GetPaddingLength();
+    }
+
     template<typename TBinary>
     Result Read(TBinary& f, VersionStructHeader& header)
     {
@@ -335,8 +344,12 @@ Error:
         ret.Fail(Format("ValueLength is wrong.  Expected: 0, actual: %.")(hdr.valueLength));
         goto Error;
       }
-      size_t bytesLeft = hdr.length - hdr.GetLengthWithPadding();// valuelength is always 0
-      while(bytesLeft)
+      signed int bytesLeft = (signed int)(hdr.length - hdr.GetLengthWithPadding());// valuelength is always 0
+      // now bytesLeft may actually be a bit smaller than the actual number of bytes to read.
+      // the reason is that i just got the length including all children's padding.  in reality,
+      // i should exclude the last children's padding.  of coruse i haven't read them in yet
+      // so i don't know what they are.  so, i'll just allow bytesLeft to reach negative.
+      while(bytesLeft > 0)
       {
         items.push_back(Element("StringTable"));
         if(!(ret = items.back().Read(f)))
@@ -344,10 +357,10 @@ Error:
           ret.Prepend("Error reading an item; ");
           goto Error;
         }
-        bytesLeft -= items.back().GetLengthWithPadding();
+        bytesLeft -= (signed int)items.back().GetLengthWithPadding();
       }
       // padding.
-      f.Skip(GetPaddingLength(GetLengthWithoutPadding()));
+      f.Skip(Version::GetPaddingLength(GetLengthWithoutPadding()));
       return ret.Succeed();
 Error:
       return ret.Prepend(Format("Error reading a % structure; ")(name));
@@ -370,6 +383,9 @@ Error:
     {
       Result ret;
       hdr.length = (WORD)GetLengthWithoutPadding();
+      // this should exclude the last item's padding length... stupid i know, but it's just how it is.
+      hdr.length -= (WORD)GetPaddingLength();
+
       hdr.valueLength = 0;// StringTable and StringFileInfo always have this set to 0
       if(!(ret = hdr.Write(f))) { goto Error; }
       for(list<Element>::iterator it = items.begin(); it != items.end(); ++ it)
@@ -381,7 +397,7 @@ Error:
         }
       }
       // padding
-      f.WriteZeroBytes(GetPaddingLength(GetLengthWithoutPadding()));
+      f.WriteZeroBytes(Version::GetPaddingLength(GetLengthWithoutPadding()));
       return ret.Succeed();
 Error:
       return ret.Prepend(Format("Error writing a % structure; ")(name));
@@ -402,7 +418,7 @@ Error:
     }
     size_t GetLengthWithPadding() const
     {
-      return GetLengthWithoutPadding() + GetPaddingLength(GetLengthWithoutPadding());
+      return GetLengthWithoutPadding() + Version::GetPaddingLength(GetLengthWithoutPadding());
     }
   };
   typedef Collection<String> StringTable;
@@ -429,6 +445,19 @@ Error:
 
     list<StringFileInfo> stringFileInfo;
     list<VarFileInfo> varFileInfo;
+
+    WORD GetLanguage()
+    {
+      if(varFileInfo.size())
+      {
+        LibCC::Blob<DWORD>& b = varFileInfo.back().value.values;
+        if(b.Size())
+        {
+          return LOWORD(b[0]);
+        }
+      }
+      return MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+    }
 
     template<typename TBinary>
     Result Read(TBinary& f)
@@ -457,6 +486,11 @@ Error:
         ret.Fail(Format("Magic number is incorrect. Expected 0xfeef04bd; it is 0x%").ul<16,8>(magicNumber));
         goto Error;
       }
+      if(structVersion != 0x00010000)
+      {
+        ret.Fail(Format("Unsupported struct version.  Expected: 0x00010000, Actual: 0x%").ul<16,8>(structVersion));
+        goto Error;
+      }
       if(!StringEquals(hdr.key, "VS_VERSION_INFO"))
       {
         ret.Fail(Format("The root key is incorrect.  Expected \"VS_VERSION_INFO\"; it is %").qs(hdr.key));
@@ -468,7 +502,7 @@ Error:
         goto Error;
       }
 
-      // now we can have some other structs but may be of different types.  read the header, figure out which type, and dispatch.
+      // now i can have some other structs but may be of different types.  read the header, figure out which type, and dispatch.
       while(bytesLeft > VersionStructHeader::GetMinimumStructSize())
       {
         VersionStructHeader temp;
