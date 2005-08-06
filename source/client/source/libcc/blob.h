@@ -120,7 +120,18 @@ namespace LibCC
     }
 
     template<typename Trel, typename Trtraits>
-    Blob(const Blob<Trel, Trtraits>& rhs)
+    explicit Blob(const Blob<Trel, Trtraits>& rhs)
+    {
+      // no copy construction available
+    }
+
+    Blob<Tel, Ttraits>& operator =(const Blob<Tel, Ttraits>& rhs)
+    {
+      // no assignment available
+      return *this;
+    }
+
+    explicit Blob(const Blob<Tel, Ttraits>& rhs)
     {
       // no copy construction available
     }
@@ -138,7 +149,6 @@ namespace LibCC
       m_sizeReported(0)
     {
     }
-
 
     explicit Blob(size_t size) :
       m_p(_StaticBufferSupport ? m_StaticBuffer : 0),
