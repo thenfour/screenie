@@ -77,6 +77,7 @@ namespace LibCC
   template<typename String, typename Char>
   inline void StringCopyN(String& out, const Char* in, size_t maxlen)
   {
+    out.clear();
     out.reserve(StringLength(in));
     while(*in && maxlen --)
     {
@@ -88,6 +89,7 @@ namespace LibCC
   template<typename DestString, typename SourceChar>
   inline void StringCopy(DestString& out, const std::basic_string<SourceChar>& in)
   {
+    out.clear();
     out.reserve(in.size());
     std::basic_string<SourceChar>::const_iterator it;
     for(it = in.begin(); it != in.end(); ++ it)
@@ -100,6 +102,7 @@ namespace LibCC
   inline void StringCopyN(DestString& out, const std::basic_string<SourceChar>& in, size_t maxlen)
   {
     out.reserve(in.size());
+    out.clear();
     std::basic_string<SourceChar>::const_iterator it;
     for(it = in.begin(); (it != in.end()) && (maxlen --); ++ it)
     {

@@ -82,9 +82,10 @@ Result ProcessString(Arg& a, Version::VersionResource& res)
       // enumerate strings
       for(list<Version::String>::iterator itS = itST->items.begin(); itS != itST->items.end(); ++ itS)
       {
-        if(StringEquals(itS->hdr.key, a.name))
+        Version::String& s = *itS;
+        if(StringEquals(s.hdr.key, a.name))
         {
-          StringCopy(itS->value, a.value);
+          StringCopy(s.value, a.value);
           occurrences ++;
         }
       }
@@ -382,20 +383,14 @@ int _tmain(int argc, _TCHAR* argv[])
   PTSTR argv__[] = 
     {
       "[name of exe]",
-      "F:\\svn.screenie\\root\\source\\veredit\\test\\test.exe",
-      "/string",
-      "ProductName=OMGtheaoudinaohteudianohtdin'oehudi",
-      "/string",
-      "ProductVersion=1,2,3,4",
-      "/string",
-      "FileVersion=1,2,3,4",
-      "/fixed",
-      "dwFileVersionMS=[1 2]",
-      "/fixed",
-      "dwFileVersionLS=[3 4]"
+      "F:\\svn.screenie\\root\\distro\\1\\screenie.exe",
+      "/xml",
+      "F:\\svn.screenie\\root\\distro\\1\\ver_out.xml"
     };
-
- // DumpResourcesToDisk(argv__[1], "F:\\svn.screenie\\root\\source\\veredit\\test\\test2.bin");
+ 
+  //"%outdir%\screenie.exe" /xml "%outdir%\ver_out.xml" /string RegisteredTo="%registrant%"
+ 
+  // DumpResourcesToDisk(argv__[1], "F:\\svn.screenie\\root\\source\\veredit\\test\\test2.bin");
 
   return main2(sizeof(argv__) / sizeof(PCTSTR), argv__);
 #else

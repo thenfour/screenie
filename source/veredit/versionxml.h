@@ -59,7 +59,7 @@ public:
 
     if(GetFirstElementByTagName(versionElement, "FixedFileInfo", fixedElement))
     {
-      if(!(res = ProcessValueTag(versionElement, Arg::FIXED, Format("XML file %; <FixedFileInfo> element").s(fileName).Str())))
+      if(!(res = ProcessValueTag(fixedElement, Arg::FIXED, Format("XML file %; <FixedFileInfo> element").s(fileName).Str())))
       {
         res.Prepend("Error reading <FixedFileInfo> element; ");
         goto Error;
