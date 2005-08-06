@@ -65,8 +65,8 @@ namespace LibCC
 
     // Construction / Assignment
     CCSTR_INLINE FormatX();
-    CCSTR_INLINE FormatX(const _String& s);
-    CCSTR_INLINE FormatX(const _Char* s);
+    CCSTR_INLINE explicit FormatX(const _String& s);
+    CCSTR_INLINE explicit FormatX(const _Char* s);
     CCSTR_INLINE FormatX(const _This& r);
     template<typename CharX>
     explicit inline FormatX(const CharX* s);
@@ -157,57 +157,82 @@ namespace LibCC
 
     // UNSIGNED INT (just stubs for ul()) -----------------------------
     template<size_t Base, size_t Width, _Char PadChar>
-    _This& ui(unsigned long n)
+    _This& ui(unsigned int n)
     {
-      return ul<Base, Width, PadChar>(n);
+      return ul<Base, Width, PadChar>(static_cast<long>(n));
     }
     template<size_t Base, size_t Width>
-    _This& ui(unsigned long n)
+    _This& ui(unsigned int n)
     {
-      return ul<Base, Width>(n);
+      return ul<Base, Width>(static_cast<long>(n));
     }
     template<size_t Base>
-    _This& ui(unsigned long n)
+    _This& ui(unsigned int n)
     {
-      return ul<Base>(n);
+      return ul<Base>(static_cast<long>(n));
     }
-    _This& ui(unsigned long n)
+    _This& ui(unsigned int n)
     {
-      return ul(n);
+      return ul(static_cast<long>(n));
     }
-    _This& ui(unsigned long n, size_t Base, size_t Width = 0, _Char PadChar = '0')
+    _This& ui(unsigned int n, size_t Base, size_t Width = 0, _Char PadChar = '0')
     {
-      return ul(n, Base, Width, PadChar);
+      return ul(static_cast<long>(n), Base, Width, PadChar);
+    }
+
+    // size_t (just stubs for ul()) -----------------------------
+    template<size_t Base, size_t Width, _Char PadChar>
+    _This& st(size_t n)
+    {
+      return ul<Base, Width, PadChar>(static_cast<long>(n));
+    }
+    template<size_t Base, size_t Width>
+    _This& st(size_t n)
+    {
+      return ul<Base, Width>(static_cast<long>(n));
+    }
+    template<size_t Base>
+    _This& st(size_t n)
+    {
+      return ul<Base>(static_cast<long>(n));
+    }
+    _This& st(size_t n)
+    {
+      return ul(static_cast<long>(n));
+    }
+    _This& st(size_t n, size_t Base, size_t Width = 0, _Char PadChar = '0')
+    {
+      return ul(static_cast<long>(n), Base, Width, PadChar);
     }
 
     // SIGNED INT -----------------------------
     template<size_t Base, size_t Width, _Char PadChar, bool ForceShowSign>
-    _This& i(signed long n)
+    _This& i(signed int n)
     {
-      return l<Base, Width, PadChar, ForceShowSign>(n);
+      return l<Base, Width, PadChar, ForceShowSign>(static_cast<long>(n));
     }
     template<size_t Base, size_t Width, _Char PadChar>
-    _This& i(signed long n)
+    _This& i(signed int n)
     {
-      return l<Base, Width, PadChar>(n);
+      return l<Base, Width, PadChar>(static_cast<long>(n));
     }
     template<size_t Base, size_t Width>
-    _This& i(signed long n)
+    _This& i(signed int n)
     {
-      return l<Base, Width>(n);
+      return l<Base, Width>(static_cast<long>(n));
     }
     template<size_t Base>
-    _This& i(signed long n)
+    _This& i(signed int n)
     {
-      return l<Base>(n);
+      return l<Base>(static_cast<long>(n));
     }
-    _This& i(signed long n)
+    _This& i(signed int n)
     {
-      return l(n);
+      return l(static_cast<long>(n));
     }
-    _This& i(signed long n, size_t Base, size_t Width = 0, _Char PadChar = '0', bool ForceShowSign = false)
+    _This& i(signed int n, size_t Base, size_t Width = 0, _Char PadChar = '0', bool ForceShowSign = false)
     {
-      return l(n, Base, Width, PadChar, ForceShowSign);
+      return l(static_cast<long>(n), Base, Width, PadChar, ForceShowSign);
     }
 
     // FLOAT ----------------------------- 3.14   [intwidth].[decwidth]
@@ -269,6 +294,10 @@ namespace LibCC
     _This& operator ()(int n, size_t Base = 10, size_t Width = 0, _Char PadChar = '0', bool ForceShowSign = false)
     {
       return i(n, Base, Width, PadChar, ForceShowSign);
+    }
+    _This& operator ()(size_t n, size_t Base = 10, size_t Width = 0, _Char PadChar = '0', bool ForceShowSign = false)
+    {
+      return st(n, Base, Width, PadChar, ForceShowSign);
     }
     _This& operator ()(unsigned int n, size_t Base = 10, size_t Width = 0, _Char PadChar = '0')
     {

@@ -1,0 +1,84 @@
+veredit.exe, (c) 2005 Carl Corcoran
+http://carl.ript.net/veredit
+
+COMMAND LINE ARGUMENTS
+----------------------
+Syntax:
+  veredit.exe exename [switches] 
+
+Switches:
+  /xml [file]          Import values from the specified XML file.
+  /string [name=value] Set the string value in version resource.
+  /delete [name]       Removes the specified string resource value if
+                        it exists
+  /fixed [name=value]  Sets the fixed numeric value. Value format is
+                        explained below. Available fields are the same as in
+                        the XML file. See below for more on that.
+
+Note: If a string resource value with the same name already exists, its value
+      will be replaced. If it does not exist, it will be added.
+
+Note: You may specify more than one /xml, /string, /delete, or /fixed
+      commands, and they will be processed in the order they appear on the
+      command line.
+
+Example command line:
+  veredit.exe myfile.exe /xml ver.xml /string FileVersion="1, 2, 3, 4"
+    /delete FileComments /fixed dwFileVersionMS=0x00010002
+
+FIXED NUMERIC VALUES
+--------------------
+Fixed numeric values can be in these forms:
+  [1 2 3 ff]      <-- sequential BYTE values in hexadecimal, in BIG-endian
+  {1 2 3 255}     <-- sequential BYTE values in decimal, in BIG-endian
+  [0102 03ff]     <-- sequential WORD values in hexadecimal, in BIG-endian
+  {258 1023}      <-- sequential WORD values in decimal, in BIG-endian
+  0x010203ff      <-- DWORD in hexadecimal
+  16909311        <-- DWORD in decimal
+
+Example:
+  For a product version of "1.2.3.4",
+    dwProductVersionMS = "{1 2}"
+    dwProductVersionLS = "{3 4}"
+  *or*
+    dwProductVersionMS = "0x00010002"
+    dwProductVersionLS = "0x00030004"
+  *or*
+    dwProductVersionMS = "65538"
+    dwProductVersionLS = "196612"
+
+THE XML FILE
+------------
+Here's a rough example/description of the format of the xml file:
+  <Version>
+    <StringFileInfo
+      FileVersion = "258, 1023"
+      ProductVersion = "4, 2, 1, 0"
+      LegalCopyright = "..."
+      [... add any string values here ...]
+    />
+    <FixedFileInfo
+      dwFileVersionMS = "[0001 0002]"
+      dwFileVersionLS = "[0003 0004]"
+      [
+        ... only specific FixedFileInfo attributes are available.
+        See below for a table.  These are all optional.
+      ]
+    />
+  </Version>
+
+Available FixedFileInfo attributes:
+  dwFileVersionMS
+  dwFileVersionLS
+  dwProductVersionMS
+  dwProductVersionLS
+  dwFileFlagsMask
+  dwFileFlags
+  dwFileOS
+  dwFileType
+  dwFileSubtype
+  dwFileDateMS
+  dwFileDateLS
+
+  See MSDN's documentation on the VS_FIXEDFILEINFO structure for an
+  explanation of what these fields mean.

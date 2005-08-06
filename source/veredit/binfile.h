@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include <string>
-
-using namespace std;
-
 class BinaryFile
 {
 public:
@@ -30,82 +26,88 @@ public:
   }
 
   // PODs
-  bool WriteZeroBytes(size_t bytes)
+  Result WriteZeroBytes(size_t bytes)
   {
+    Result ret;
     BYTE b = 0;
     for(size_t i = 0; i < bytes; i ++)
     {
-      InternalWrite(b);
+      if((ret = InternalWrite(b)).Failed())
+      {
+        return ret.Prepend("WriteZeroBytes failed. ");
+      }
     }
-    return true;
+    return ret.Succeed();
   }
-  bool Write(int val)
+  Result Write(int val)
   {
     return InternalWrite(val);
   }
-  bool Write(WORD val)
+  Result Write(WORD val)
   {
     return InternalWrite(val);
   }
-  bool Write(DWORD val)
+  Result Write(DWORD val)
   {
     return InternalWrite(val);
   }
   template<typename T>
-  bool Write(const T* val, size_t count)
+  Result Write(const T* val, size_t count)
   {
     return InternalWrite(val, count);
   }
   // string
   template<typename T>
-  bool Write(const T* val)
+  Result Write(const T* val)
   {
+    Result ret;
     size_t len = LibCC::StringLength(val);
     // write length, then data.
-    if(!InternalWrite(val, len))
+    if(!(ret = InternalWrite(val, len)))
     {
-      return false;
+      return ret;
     }
     return InternalWrite((T)0);// null terminator
   }
   template<typename T>
-  bool Write(const std::basic_string<T>& val)
+  Result Write(const std::basic_string<T>& val)
   {
     return Write(val.c_str());
   }
 
   // PODs
-  bool Skip(size_t bytes)
+  Result Skip(size_t bytes)
   {
     SetFilePointer(m_hFile, (LONG) bytes, 0, FILE_CURRENT);
-    return true;
+    return Result(true);
   }
-  bool Read(int& val)
+  Result Read(int& val)
   {
     return InternalRead(val);
   }
-  bool Read(WORD& val)
+  Result Read(WORD& val)
   {
     return InternalRead(val);
   }
-  bool Read(DWORD& val)
+  Result Read(DWORD& val)
   {
     return InternalRead(val);
   }
   template<typename T>
-  bool Read(T* val, size_t count)
+  Result Read(T* val, size_t count)
   {
     return InternalRead(val, count);
   }
   template<typename T>
-  bool Read(std::basic_string<T>& val)
+  Result Read(std::basic_string<T>& val)
   {
+    Result ret;
     T ch;
     for(;;)
     {
-      if(!Read(&ch, 1))
+      if(!(ret = Read(&ch, 1)))
       {
-        return false;
+        return ret;
       }
       if(ch == 0)
       {
@@ -113,37 +115,42 @@ public:
       }
       val.push_back(ch);
     }
-    return true;
+    return ret.Succeed();
   }
 
-public:
-
+private:
   template<typename T>
-  bool InternalWrite(const T* val, size_t count)
+  Result InternalWrite(const T* val, size_t count)
   {
     DWORD size = sizeof(T) * static_cast<DWORD>(count);
     DWORD br;
-    WriteFile(m_hFile, val, size, &br, 0);
-    return br == size;
+    if(0 == WriteFile(m_hFile, val, size, &br, 0))
+    {
+      return Result(false, Format("Write failed, gle=%").gle(GetLastError()));
+    }
+    return Result(br == size);
   }
 
   template<typename T>
-  bool InternalWrite(const T& val)
+  Result InternalWrite(const T& val)
   {
     return InternalWrite(&val, 1);
   }
 
   template<typename T>
-  bool InternalRead(T* val, size_t count)
+  Result InternalRead(T* val, size_t count)
   {
     DWORD size = sizeof(T) * static_cast<DWORD>(count);
     DWORD br;
-    ReadFile(m_hFile, val, size, &br, 0);
-    return br == size;
+    if(0 == ReadFile(m_hFile, val, size, &br, 0))
+    {
+      return Result(false, Format("Write failed, gle=%").gle(GetLastError()));
+    }
+    return Result(br == size);
   }
 
   template<typename T>
-  bool InternalRead(T& val)
+  Result InternalRead(T& val)
   {
     return InternalRead(&val, 1);
   }
@@ -168,82 +175,88 @@ public:
   }
 
   // PODs
-  bool WriteZeroBytes(size_t bytes)
+  Result WriteZeroBytes(size_t bytes)
   {
+    Result ret;
     BYTE b = 0;
     for(size_t i = 0; i < bytes; i ++)
     {
-      InternalWrite(b);
+      if((ret = InternalWrite(b)).Failed())
+      {
+        return ret.Prepend("WriteZeroBytes failed. ");
+      }
     }
-    return true;
+    return ret.Succeed();
   }
-  bool Write(int val)
+  Result Write(int val)
   {
     return InternalWrite(val);
   }
-  bool Write(WORD val)
+  Result Write(WORD val)
   {
     return InternalWrite(val);
   }
-  bool Write(DWORD val)
+  Result Write(DWORD val)
   {
     return InternalWrite(val);
   }
   template<typename T>
-  bool Write(const T* val, size_t count)
+  Result Write(const T* val, size_t count)
   {
     return InternalWrite(val, count);
   }
   // string
   template<typename T>
-  bool Write(const T* val)
+  Result Write(const T* val)
   {
+    Result ret;
     size_t len = LibCC::StringLength(val);
     // write length, then data.
-    if(!InternalWrite(val, len))
+    if(!(ret = InternalWrite(val, len)))
     {
-      return false;
+      return ret;
     }
     return InternalWrite((T)0);// null terminator
   }
   template<typename T>
-  bool Write(const std::basic_string<T>& val)
+  Result Write(const std::basic_string<T>& val)
   {
     return Write(val.c_str());
   }
 
   // PODs
-  bool Skip(size_t bytes)
+  Result Skip(size_t bytes)
   {
     m_filePointer += bytes;
-    return true;
+    return Result(true);
   }
-  bool Read(int& val)
+  Result Read(int& val)
   {
     return InternalRead(val);
   }
-  bool Read(WORD& val)
+  Result Read(WORD& val)
   {
     return InternalRead(val);
   }
-  bool Read(DWORD& val)
+  Result Read(DWORD& val)
   {
     return InternalRead(val);
   }
   template<typename T>
-  bool Read(T* val, size_t count)
+  Result Read(T* val, size_t count)
   {
     return InternalRead(val, count);
   }
   template<typename T>
-  bool Read(std::basic_string<T>& val)
+  Result Read(std::basic_string<T>& val)
   {
+    Result ret;
     T ch;
     for(;;)
     {
-      if(!Read(&ch, 1))
+      if(!(ret = Read(&ch, 1)))
       {
-        return false;
+        return ret;
       }
       if(ch == 0)
       {
@@ -251,7 +264,7 @@ public:
       }
       val.push_back(ch);
     }
-    return true;
+    return ret.Succeed();
   }
 
   const BYTE* GetBuffer() const
@@ -267,13 +280,16 @@ public:
 private:
 
   template<typename T>
-  bool InternalWrite(const T* val, size_t count)
+  Result InternalWrite(const T* val, size_t count)
   {
     // reserve memory
     size_t finalSize = m_filePointer + (sizeof(T) * count);
     if(m_buffer.Size() < finalSize)
     {
-      m_buffer.Alloc(finalSize);
+      if(!m_buffer.Alloc(finalSize))
+      {
+        return Result(false, "Failed to allocate memory for buffered write operation");
+      }
     }
     BYTE* p = m_buffer.GetBuffer() + m_filePointer;
     for(size_t i = 0; i < count; i ++)
@@ -282,11 +298,11 @@ private:
       p += sizeof(T);
       m_filePointer += sizeof(T);
     }
-    return true;
+    return Result(true);
   }
 
   template<typename T>
-  bool InternalRead(T* val, size_t count)
+  Result InternalRead(T* val, size_t count)
   {
     BYTE* p = m_buffer.GetBuffer() + m_filePointer;
     for(size_t i = 0; i < count; i ++)
@@ -295,17 +311,17 @@ private:
       p += sizeof(T);
       m_filePointer += sizeof(T);
     }
-    return true;
+    return Result(true);
   }
 
   template<typename T>
-  bool InternalWrite(const T& val)
+  Result InternalWrite(const T& val)
   {
     return InternalWrite(&val, 1);
   }
 
   template<typename T>
-  bool InternalRead(T& val)
+  Result InternalRead(T& val)
   {
     return InternalRead(&val, 1);
   }
