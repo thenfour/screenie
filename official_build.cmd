@@ -1,17 +1,33 @@
 @echo off
 
-echo Confirming arguments / variables...
-  if "%1" == "" goto Usage
-  if "%2" == "" goto Usage
+echo * Usage:
+echo * official_build.cmd [serial] [registrant] {binary-dir}
+echo * Also, You must run this from the svn.screenie\root directory (the directory that contains this file)
+echo * {binary-dir} is relative to root\ directory.  if it's omitted,
+echo * then bin-release will be used.
+echo.  
 
+echo Confirming arguments / variables...
   set svnroot=%cd%
   set serial=%1
   set registrant=%2
 
+  if "%1" == "" set /P serial=Enter the serial number: 
+  if "%2" == "" set /P registrant=Enter the registrant: 
+
+  set bindir=%3
+  if "%3" == "" set bindir=bin-release
+  if "%3" == "" set /P bindir=Enter the binaries directory, or leave it blank to use bin-release:
+  
+  echo   svnroot    =%svnroot%
+  echo   serial     =%serial%
+  echo   registrant =%registrant%
+  echo   bindir     =%bindir%
+
 echo Checking for tools / files...
   where makensis.exe >nul
   if %errorlevel% gtr 0 goto NsisNotFound
-  if not exist "%svnroot%\bin-release\screenie.exe" goto NotBuilt
+  if not exist "%svnroot%\%bindir%\screenie.exe" goto NotBuilt
 
 echo Generating output directory...
   md "%svnroot%\distro" 2>nul
@@ -19,7 +35,7 @@ echo Generating output directory...
   md "%outdir%" 2>nul
 
 echo Copying program binaries...
-  copy "%svnroot%\bin-release\screenie.exe" "%outdir%" >nul
+  copy "%svnroot%\%bindir%\screenie.exe" "%outdir%" >nul
 
 echo Generating version information for "%svnroot%\source\client"
   "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml" -n
@@ -38,23 +54,23 @@ echo Watermarking screenie.exe...
 
 echo Building Installer...
   rem /O"%outdir%\nsislog.txt" 
-  echo on
   makensis.exe /Dregistrant="%registrant%" /Dserial="%serial%" /Doutfile="%outdir%\ScreenieSetup.exe" "%svnroot%\source\installer\screenie.nsi"
-  @echo off
+  if %errorlevel% gtr 0 goto NSISError
+  
+echo Opening the output folder
+  start "%outdir%"
 
 echo All done!  SUCCESS.
   cd /d %svnroot%
   goto End
 
 
-:Usage
-echo * Usage:
-echo * official_build.cmd [serial] [registrant]
-echo * Also, You must run this from the svn.screenie\root directory (the directory that contains this file)
-goto End
-
 :NsisNotFound
 echo !!makensis.exe was not found in your path.  Make sure you have nsis installed, and it's location is in your path environment variable. Stopping.
+goto End
+
+:NSISError
+echo !!NSIS returned an error.  Stopping.
 goto End
 
 :VereditError

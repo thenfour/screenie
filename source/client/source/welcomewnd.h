@@ -245,7 +245,7 @@ private:
     m_continue.Create(m_hWnd, &rc, _T("Continue"), WS_CHILD | WS_VISIBLE, 0, IDOK);
 
     // "do not show this window again"
-    rc.SetRect(10,422,10+20,426+22);
+    rc.SetRect(10,422,10+22,426+22);
     m_showSplash.Create(m_hWnd, &rc, _T(""), WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0, IDC_ShowSplash);
     DrawText_(10+20+6, 426, LeftPane, 30, false, DarkGreen, 14, FW_NORMAL, _T("Do not show this window next time Screenie starts"));
 
