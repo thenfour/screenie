@@ -15,21 +15,24 @@
 !endif
 
 !ifndef installname
-!define installname "Screenie Demo"
+!define installname "Screenie"
 !endif
 
 ; The name of the installer
-Name ${installname}
+Name "${installname}"
 InstallDir "$PROGRAMFILES\Screenie"
-OutFile ${outfile}
+OutFile "${outfile}"
 
-!echo "${installname}"
+Var "Launch"
 
 Page directory
 
 Page components
 
 Page instfiles
+
+UninstPage uninstConfirm
+UninstPage instfiles
 
 VIProductVersion 0.1.0.${serial}
 VIAddVersionKey "ProductName" "${installname}"
@@ -62,7 +65,7 @@ lbl_VersionOK:
   SetOutPath $INSTDIR
   File ${infile}
   WriteUninstaller $INSTDIR\Uninst.exe
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie" $INSTDIR\screenie.exe
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie" "$INSTDIR\screenie.exe"
   
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Screenie" "DisplayName" "Screenie"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Screenie" "UninstallString" "$INSTDIR\Uninst.exe"
@@ -75,6 +78,15 @@ Section "Start Menu Shortcuts"
   CreateShortCut "$SMPROGRAMS\Screenie\Screenie.lnk" "$INSTDIR\screenie.exe" "" "$INSTDIR\screenie.exe" 0
 SectionEnd
 
+; optional section
+Section "Launch Screenie"
+  StrCpy "$Launch" "Yes"
+SectionEnd
+
+Function .onInstSuccess
+  StrCmp "$Launch" "Yes" 0 +2
+  Exec "$INSTDIR\screenie.exe"
+FunctionEnd
 
 Section "Uninstall"
   Delete $INSTDIR\Uninst.exe
