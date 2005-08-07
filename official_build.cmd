@@ -63,6 +63,9 @@ echo Building Installer...
   rem /O"%outdir%\nsislog.txt" 
   makensis.exe /Dinstallname="%installname%" /Dregistrant="%registrant%" /Dserial="%serial%" /Dinfile="%svnroot%\%bindir%\screenie.exe" /Doutfile="%outdir%\ScreenieSetup.exe" "%svnroot%\source\installer\screenie.nsi"
   if %errorlevel% gtr 0 goto NSISError
+
+echo Zipping it...
+  zip "%outdir%\ScreenieSetup.zip" "%outdir%\ScreenieSetup.exe"
   
 echo Opening the output folder
   explorer "%outdir%"

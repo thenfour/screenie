@@ -63,6 +63,7 @@ lbl_VersionError:
 lbl_VersionOK:
   
   SetOutPath $INSTDIR
+  Delete ${infile}
   File ${infile}
   WriteUninstaller $INSTDIR\Uninst.exe
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie" "$INSTDIR\screenie.exe"
