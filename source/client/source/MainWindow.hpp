@@ -70,6 +70,7 @@ public:
 
 	BEGIN_MSG_MAP(CMainWindow)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
+		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_NOTIFYICON, OnNotifyIcon)
 		MESSAGE_HANDLER(WM_TAKESCREENSHOT, OnTakeScreenshot)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
@@ -94,6 +95,12 @@ public:
 	LRESULT OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnClose(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+  {
+    handled = TRUE;
+	  DestroyWindow();
+    return 0;
+  }
 
 	LRESULT OnBuy(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);

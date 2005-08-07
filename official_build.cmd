@@ -47,7 +47,11 @@ echo Copying program binaries...
 echo Generating version information for "%svnroot%\source\client"
   "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\source\installer\screenie.nsi" "%outdir%\installer.nsi" -n
   "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml" -n
-  if %errorlevel% gtr 0 goto LocalMods
+  if %errorlevel% == 0 goto NoLocalMods
+  echo WARNING: There are local modifications; you still wanna go through with this?
+  pause
+  
+  :NoLocalMods
 
   "%svnroot%\tools\textreplace.exe" "%outdir%\ver_out.xml" "[serial]"="%serial%" "[registrant]"="%registrant%"
   if %errorlevel% gtr 0 goto TextReplaceFailed
@@ -95,9 +99,6 @@ goto End
 :TextReplaceFailed
 echo !!textreplace.exe failed.  Stopping.
 goto End
-
-:LocalMods
-echo There are local modifications; you can't do an official build.
 
 :End
 echo.

@@ -76,6 +76,9 @@ lbl_VersionError:
   Abort "This application requires Windows 2000 or later."
 
 lbl_VersionOK:
+  ; close it just in case it's open.
+  FindWindow $0 "ScreenieMainWnd"
+  SendMessage $0 16 0 0
   
   SetOutPath $INSTDIR
   Delete ${infile}
@@ -105,6 +108,9 @@ Function .onInstSuccess
 FunctionEnd
 
 Section "Uninstall"
+  FindWindow $0 "ScreenieMainWnd"
+  SendMessage $0 16 0 0
+
   Delete $INSTDIR\Uninst.exe
   Delete $INSTDIR\screenie.exe
   RMDir $SMPROGRAMS\Screenie

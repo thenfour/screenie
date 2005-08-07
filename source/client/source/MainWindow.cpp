@@ -210,6 +210,7 @@ LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& han
 {
 	SaveOptionsToRegistry(m_screenshotOptions, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
   ::Shell_NotifyIcon(NIM_DELETE, &m_iconData);
+	PostQuitMessage(0);
 	return 0;
 }
 
@@ -237,9 +238,8 @@ bool CMainWindow::OnConfigure(const tstd::tstring& OKbuttonText)
 
 LRESULT CMainWindow::OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
+  handled = TRUE;
 	DestroyWindow();
-	PostQuitMessage(0);
-
 	return 0;
 }
 
