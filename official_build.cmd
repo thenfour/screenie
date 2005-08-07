@@ -1,10 +1,11 @@
 @echo off
 
 echo * Usage:
-echo * official_build.cmd [serial] [registrant] {binary-dir}
+echo * official_build.cmd [serial] [registrant] {binary-dir} {installer-name}
 echo * Also, You must run this from the svn.screenie\root directory (the directory that contains this file)
 echo * {binary-dir} is relative to root\ directory.  if it's omitted,
 echo * then bin-release will be used.
+echo * {installer-name} may also be omitted... "Screenie" is the default.
 echo.  
 
 echo Confirming arguments / variables...
@@ -18,11 +19,17 @@ echo Confirming arguments / variables...
   set bindir=%3
   if "%3" == "" set bindir=bin-release
   if "%3" == "" set /P bindir=Enter the binaries directory, or leave it blank to use bin-release:
+
+  set installname=%4
+  if "%4" == "" set installname=Screenie
+  if "%4" == "" set /P installname=Enter the installer name, or leave it blank to use "Screenie":
   
-  echo   svnroot    =%svnroot%
-  echo   serial     =%serial%
-  echo   registrant =%registrant%
-  echo   bindir     =%bindir%
+  echo   svnroot     =%svnroot%
+  echo   serial      =%serial%
+  echo   registrant  =%registrant%
+  echo   bindir      =%bindir%
+  echo   installname =%installname%
+  echo.
 
 echo Checking for tools / files...
   where makensis.exe >nul
@@ -54,11 +61,11 @@ echo Watermarking screenie.exe...
 
 echo Building Installer...
   rem /O"%outdir%\nsislog.txt" 
-  makensis.exe /Dregistrant="%registrant%" /Dserial="%serial%" /Doutfile="%outdir%\ScreenieSetup.exe" "%svnroot%\source\installer\screenie.nsi"
+  makensis.exe /Dinstallname="%installname%" /Dregistrant="%registrant%" /Dserial="%serial%" /Dinfile="%svnroot%\%bindir%\screenie.exe" /Doutfile="%outdir%\ScreenieSetup.exe" "%svnroot%\source\installer\screenie.nsi"
   if %errorlevel% gtr 0 goto NSISError
   
 echo Opening the output folder
-  start "%outdir%"
+  explorer "%outdir%"
 
 echo All done!  SUCCESS.
   cd /d %svnroot%

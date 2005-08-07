@@ -14,11 +14,16 @@
 !define serial "0"
 !endif
 
+!ifndef installname
+!define installname "Screenie Demo"
+!endif
+
 ; The name of the installer
-Name "Screenie"
+Name ${installname}
 InstallDir "$PROGRAMFILES\Screenie"
 OutFile ${outfile}
 
+!echo "${installname}"
 
 Page directory
 
@@ -27,13 +32,13 @@ Page components
 Page instfiles
 
 VIProductVersion 0.1.0.${serial}
-VIAddVersionKey "ProductName" "Screenie Installer"
+VIAddVersionKey "ProductName" "${installname}"
 VIAddVersionKey "CompanyName" "Carl Corcoran & Roger Clark"
 VIAddVersionKey "LegalCopyright" "©2005 Carl Corcoran & Roger Clark.  All Rights Reserved."
 VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net"
 VIAddVersionKey "FileVersion" 0.1.0.${serial}
 VIAddVersionKey "FileProduct" 0.1.0.${serial}
-VIAddVersionKey "RegisteredTo" ${registrant}
+VIAddVersionKey "RegisteredTo" "${registrant}"
 
 ; The stuff to install
 Section "Screenie Program Files (required)"
