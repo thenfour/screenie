@@ -70,7 +70,9 @@ echo Building Installer...
   if %errorlevel% gtr 0 goto NSISError
 
 echo Zipping it...
-  zip "%outdir%\ScreenieSetup.zip" "%outdir%\ScreenieSetup.exe"
+  rem -j = don't store dir names
+  rem -9 = compress better.
+  zip -j -9 "%outdir%\ScreenieSetup.zip" "%outdir%\ScreenieSetup.exe"
   
 echo Opening the output folder
   explorer "%outdir%"

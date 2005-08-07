@@ -80,8 +80,8 @@ lbl_VersionOK:
   FindWindow $0 "ScreenieMainWnd"
   SendMessage $0 16 0 0
   
-  SetOutPath $INSTDIR
-  Delete ${infile}
+  SetOutPath "$INSTDIR"
+  Delete "$INSTDIR\screenie.exe"
   File ${infile}
   WriteUninstaller $INSTDIR\Uninst.exe
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie" "$INSTDIR\screenie.exe"
