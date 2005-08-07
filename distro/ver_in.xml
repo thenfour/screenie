@@ -1,0 +1,13 @@
+<Version>
+  <StringFileInfo
+    FileVersion = "1, $WCREV$, $WCMODS?1:0$, [serial]"
+    ProductVersion = "1, $WCREV$, $WCMODS?1:0$, [serial]"
+    RegisteredTo = "[registrant]"
+  />
+  <FixedFileInfo
+    dwFileVersionMS = "{0001 $WCREV$}"
+    dwFileVersionLS = "{$WCMODS?1:0$ [serial]}"
+    dwProductVersionMS = "{0001 $WCREV$}"
+    dwProductVersionLS = "{$WCMODS?1:0$ [serial]}"
+  />
+</Version>

@@ -24,25 +24,27 @@ echo Copying program binaries...
 echo Generating version information for "%svnroot%\source\client"
   "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml" -n
   if %errorlevel% gtr 0 goto LocalMods
-
+  
+  "%svnroot%\tools\textreplace.exe" "%outdir%\ver_out.xml" "[serial]"="%serial%" "[registrant]"="%registrant%"
+  if %errorlevel% gtr 0 goto TextReplaceFailed
+  
 echo Setting up version info...
-  "%svnroot%\tools\veredit.exe" "%outdir%\screenie.exe" /xml "%outdir%\ver_out.xml" /string RegisteredTo="%registrant%"
+  "%svnroot%\tools\veredit.exe" "%outdir%\screenie.exe" /xml "%outdir%\ver_out.xml"
   if %errorlevel% gtr 0 goto VereditError
 
-echo Watermarking...
-  rem cd /d "%outdir%"
-  rem "%svnroot%\tools\PEWaterMark.exe" "%outdir%\screenie.exe" /mark=%serial%
+echo Watermarking screenie.exe...
+  cd /d "%outdir%"
+  "%svnroot%\tools\PEWaterMark.exe" "%outdir%\screenie.exe" /mark=%serial% >nul
 
 echo Building Installer...
-  rem makensis.exe "%svnroot%\source\installer\screenie.nsi" /O"%outdir%\nsislog.txt" /Dregistrant="%registrant%" /Dserial="%serial%"
-
-echo Copying final installer...
-  rem copy "%svnroot%\bin-installer\ScreenieSetup.exe" "%outdir%" >nul
+  rem /O"%outdir%\nsislog.txt" 
+  echo on
+  makensis.exe /Dregistrant="%registrant%" /Dserial="%serial%" /Doutfile="%outdir%\ScreenieSetup.exe" "%svnroot%\source\installer\screenie.nsi"
+  @echo off
 
 echo All done!  SUCCESS.
   cd /d %svnroot%
   goto End
-
 
 
 :Usage
@@ -61,6 +63,10 @@ goto End
 
 :NotBuilt
 echo !!screenie.exe has not been built.  Stopping.
+goto End
+
+:TextReplaceFailed
+echo !!textreplace.exe failed.  Stopping.
 goto End
 
 :LocalMods
