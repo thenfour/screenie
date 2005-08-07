@@ -244,7 +244,7 @@ BEGIN
     RTEXT           "Zoom: 15%",IDC_ZOOM_CAPTION,276,7,55,8
     DEFPUSHBUTTON   "Select All",IDC_SELECTALL,226,171,50,14
     LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
-    LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,55,8
+    LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,167,8
     LTEXT           "To Pan: Click and drag with the RIGHT mouse button",
                     IDC_CONTROLS3,7,179,173,8
     LTEXT           "To Zoom: Use the mouse wheel",IDC_CONTROLS2,7,187,173,8
