@@ -47,9 +47,6 @@ BOOL CMainWindow::DisplayTrayMenu()
 
 BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 {
-	if (!m_screenshotOptions.GetNumDestinations())
-		return FALSE;
-
 	RECT windowRect = { 0 };
 
 	CBitmap screenshotBitmap;
