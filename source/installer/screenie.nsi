@@ -23,6 +23,9 @@ Name "${installname}"
 InstallDir "$PROGRAMFILES\Screenie"
 OutFile "${outfile}"
 
+; Adds an XP manifest to the installer
+XPStyle on
+
 Var "Launch"
 
 Page directory
@@ -34,17 +37,29 @@ Page instfiles
 UninstPage uninstConfirm
 UninstPage instfiles
 
-VIProductVersion 0.1.0.${serial}
+VIProductVersion 1.$WCREV$.$WCMODS?1:0$.${serial}
 VIAddVersionKey "ProductName" "${installname}"
 VIAddVersionKey "CompanyName" "Carl Corcoran & Roger Clark"
 VIAddVersionKey "LegalCopyright" "©2005 Carl Corcoran & Roger Clark.  All Rights Reserved."
 VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net"
-VIAddVersionKey "FileVersion" 0.1.0.${serial}
-VIAddVersionKey "FileProduct" 0.1.0.${serial}
+VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0$.${serial}
+VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0$.${serial}
 VIAddVersionKey "RegisteredTo" "${registrant}"
 
 ; The stuff to install
 Section "Screenie Program Files (required)"
+
+  ;-------------------------
+  ; Check for already-installed
+  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Screenie" "DisplayName"
+  StrCmp $0 "" NotAlreadyInstalled 0
+  MessageBox MB_YESNO "Setup has detected that you already have a version of ${installname} installed.  It is recommended that you uninstall the previous version before continuing, or setup may not work.  Do you want to continue anyway?" IDYES true IDNO false
+false:
+  Abort "You have chosen to stop installation."
+true:
+
+NotAlreadyInstalled:
+
   ;-------------------------
   ; check the windows version.
   ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion

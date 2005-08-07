@@ -45,9 +45,10 @@ echo Copying program binaries...
   copy "%svnroot%\%bindir%\screenie.exe" "%outdir%" >nul
 
 echo Generating version information for "%svnroot%\source\client"
+  "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\source\installer\screenie.nsi" "%outdir%\installer.nsi" -n
   "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml" -n
   if %errorlevel% gtr 0 goto LocalMods
-  
+
   "%svnroot%\tools\textreplace.exe" "%outdir%\ver_out.xml" "[serial]"="%serial%" "[registrant]"="%registrant%"
   if %errorlevel% gtr 0 goto TextReplaceFailed
   
@@ -61,7 +62,7 @@ echo Watermarking screenie.exe...
 
 echo Building Installer...
   rem /O"%outdir%\nsislog.txt" 
-  makensis.exe /Dinstallname="%installname%" /Dregistrant="%registrant%" /Dserial="%serial%" /Dinfile="%svnroot%\%bindir%\screenie.exe" /Doutfile="%outdir%\ScreenieSetup.exe" "%svnroot%\source\installer\screenie.nsi"
+  makensis.exe /Dinstallname="%installname%" /Dregistrant="%registrant%" /Dserial="%serial%" /Dinfile="%svnroot%\%bindir%\screenie.exe" /Doutfile="%outdir%\ScreenieSetup.exe" "%outdir%\installer.nsi"
   if %errorlevel% gtr 0 goto NSISError
 
 echo Zipping it...
