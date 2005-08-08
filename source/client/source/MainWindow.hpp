@@ -57,7 +57,7 @@ public:
 
   CMainWindow(ScreenshotOptions& options) :
     m_screenshotOptions(options),
-    m_statusDialog(m_screenshotOptions)
+    m_statusDialog(options)
   {
     m_uTaskbarCreatedMsg = RegisterWindowMessage(_T("TaskbarCreated"));
     m_iconData.hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
