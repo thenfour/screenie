@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title>Screenie screenshot / screen capture utility</title>
+    <style type="text/css">
+      <!--
+      * { padding: 0; margin: 0; border: 0; }
+	    html, body
+	    {
+		    width: 100%;
+		    height: 100%;
+		    background: black url(back.png);
+		  }
+		  body
+		  {
+		    margin-top: 15px;
+        text-align: center;
+		  }
+		  p
+		  {
+		    padding: 10px; margin: 0; border: 10px;
+		  }
+	    img
+	    { 
+	      border: 0;
+	    }
+	    #WholeThing
+	    {
+		    width:600px;
+		    border: 4px solid black;
+		    font-family: Arial;
+		    font-size: 0.8em;
+		    background-color: white;
+		    text-align: left;
+		    margin: 0 auto;/* WORKAROUND: firefox doesnt center elements correctly unless this is set. */
+	    }
+	    #MenuImage
+	    {
+	      border-bottom: 4px solid black;
+	    }
+	    #CopyrightWorkaround /* WORKAROUND: float attribute screws up the copyright div.  but adding this "null" one in front of it makes it OK. */
+	    {
+	    }
+	    #Copyright
+	    {
+	      background-color: #d8d8d8;
+        text-align: center;
+	      color: #606060;
+	    }
+	    #FeatureList
+	    {
+        list-style-image:url(bigcheck.gif);
+        margin-left:60px;
+        font-size: 1.38em;
+        font-weight: bold;
+        vertical-align: text-top;
+	    }
+	    .FeatureDetail
+	    {
+	      font-size: 0.8em;
+	      font-weight: normal;
+	    }
+	    -->
+	    </style>
+  </head>
+  <body>
+    <div id="WholeThing">
+      <div id="Menu">
+        <map name="contents">
+          <area href="index.htm" shape="RECT" coords="343,0,406,59">
+          <area href="features.htm" shape="RECT" coords="407,0,470,59">
+          <area href="try.htm" shape="RECT" coords="471,0,534,59">
+          <area href="buy.htm" shape="RECT" coords="535,0,599,59">
+        </map>
+        <img id="MenuImage" src="title.png" usemap="#contents">
+      </div>
+      <div id="Row1">
+        <ul id="FeatureList">
+          <li>Send screenshots to multiple places.<br>
+            <font class="FeatureDetail">Upload a thumbnail along with the orignal.  Save a backup to disk.  It's all done automatically.</font><br>
+            <img src="destinations.png"></li>
+          <li>Compress images to save space.<br>
+            <font class="FeatureDetail">GIF, JPEG, PNG, BMP, and TIFF formats are supported.</font><br>
+            <img src="formats.png"></li>
+          <li>Plays nicely with OpenGL and DirectX games.<br>
+          <li>Supports multiple monitors.<br>
+          <li>Resize your images .<br>
+            <img src="resize.png"></li>
+          <li>Crop your images down to size.<br>
+            <img src="crop.png"></li>
+          <li>Upload screenshots to FTP.<br>
+            <img src="ftp.png"></li>
+          <li>Customize file names.<br>
+            <font class="FeatureDetail">Automatically insert the date or time (local or GMT) into the filename of the screenshot.</font><br>
+          <li>Tons of other small conveniences.<br>
+            <img src="status.png"></li>
+        </ul>
+      </div>
+      <div id="CopyrightWorkaround">&nbsp;</div>
+      <div id="Copyright">Copyright (c)2005 Carl Corcoran.  All rights reserved.</div>
+    </div>
+  </body>
+</html>
