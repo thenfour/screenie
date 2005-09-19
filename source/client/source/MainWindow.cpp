@@ -208,7 +208,6 @@ LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BO
 }
 LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
-	SaveOptionsToRegistry(m_screenshotOptions, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
   ::Shell_NotifyIcon(NIM_DELETE, &m_iconData);
 	PostQuitMessage(0);
 	return 0;
