@@ -164,8 +164,8 @@ public:
     DrawText_(0, 337, LeftPane, 30, true, DarkGreen, 19, FW_NORMAL, _T("Registered to:"));
     DrawText_(0, 362, LeftPane, 422-362, true, DarkRed, 21, FW_BOLD, LibCC::Format().s(v.GetRegistrant()).Str(), true);
 
-    // "Thank you for installing"
-    DrawText_(LeftPane, 10, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Thank you for installing"));
+    // "Thank you for installing" is now on the graphic
+    // DrawText_(LeftPane, 10, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Thank you for installing"));
 
     // set up images for the continue button.
     m_continueImages.Create(ButtonWidth, ButtonHeight, ILC_COLOR32, 3, 0);
@@ -191,16 +191,16 @@ private:
   void SetupNag()
   {
     // "the followming features have been disabled"
-    DrawText_(LeftPane, 130, RightPane, 25*3, false, DarkGreen, 19, FW_NORMAL, _T("The following features have\r\nbeen disabled in this demo\r\nversion:"));
+    DrawText_(LeftPane, 175, RightPane, 25*3, false, DarkGreen, 19, FW_NORMAL, _T("The following features have\r\nbeen disabled in this demo\r\nversion:"));
 
     // "cropping"
-    DrawText_(293, 196, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Cropping"));
+    DrawText_(293, 240, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Cropping"));
 
     // "ftp uploading"
-    DrawText_(293, 223, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("FTP uploading"));
+    DrawText_(293, 265, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("FTP uploading"));
 
     // "if you like what you see...."
-    DrawText_(LeftPane, 273, RightPane, 25, false, DarkGreen, 19, FW_NORMAL, _T("If you like what you see, please\r\npurchase the full version."));
+    DrawText_(LeftPane, 303, RightPane, 25, false, DarkGreen, 19, FW_NORMAL, _T("If you like what you see, please\r\npurchase the full version."));
 
     // buy
     CRect rc(LeftPane, 369, LeftPane + ButtonWidth, 369 + ButtonHeight);
@@ -220,23 +220,23 @@ private:
   void SetupWelcome()
   {
     // "what do i do next?"
-    DrawText_(LeftPane, 106, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("Instructions:"));
-    DrawText_(LeftPane, 135, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("Hit the Print Screen key on your\r\nkeyboard to take a screenshot."));
+	// DrawText_(LeftPane, 106, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("Instructions:"));
+    DrawText_(LeftPane, 150, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("Hit the Print Screen key on your\r\nkeyboard to take a screenshot."));
 
     // printscreen graphic
     AutoGdiBitmap printScreen = LoadBitmapResource(MAKEINTRESOURCE(IDR_PRTSCR), _T("BIN"));
     BITMAP bmpPrintScreen;
     GetObject(printScreen.handle, sizeof(BITMAP), &bmpPrintScreen);
-    m_offscreen.BlitFrom(printScreen.handle, 0, 0, bmpPrintScreen.bmWidth, bmpPrintScreen.bmHeight, LeftPane, 178);
+    m_offscreen.BlitFrom(printScreen.handle, 0, 0, bmpPrintScreen.bmWidth, bmpPrintScreen.bmHeight, LeftPane, 193);
 
     // "to configure screenie, right-cilck...."
-    DrawText_(LeftPane, 249, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("To configure Screenie, right-click on\r\nthe Screenie logo in your system tray."));
+    DrawText_(LeftPane, 255, RightPane, 30, false, DarkGreen, 18, FW_NORMAL, _T("To configure Screenie, right-click on\r\nthe Screenie logo in your system tray."));
 
     // menu graphic
     AutoGdiBitmap menu = LoadBitmapResource(MAKEINTRESOURCE(IDR_TRAYSAMPLE), _T("BIN"));
     BITMAP bmpMenu;
     GetObject(menu.handle, sizeof(BITMAP), &bmpMenu);
-    m_offscreen.BlitFrom(menu.handle, 0, 0, bmpMenu.bmWidth, bmpMenu.bmHeight, LeftPane, 288);
+    m_offscreen.BlitFrom(menu.handle, 0, 0, bmpMenu.bmWidth, bmpMenu.bmHeight, LeftPane, 300);
 
     CRect rc;
 
