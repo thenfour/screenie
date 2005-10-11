@@ -20,7 +20,7 @@ class CWelcomeWindow : public CWindowImpl<CWelcomeWindow>
 
   static const int ButtonWidth = 116;
   static const int ButtonHeight = 39;
-  static const int LeftPane = 251;// the welcome screen is sorta divided in 2 panes.  this is the width of the left one
+  static const int LeftPane = 242;// the welcome screen is sorta divided in 2 panes.  this is the width of the left one
   static const int TotalWidth = 521;
   static const int RightPane = TotalWidth - LeftPane;
 
@@ -190,20 +190,23 @@ private:
 
   void SetupNag()
   {
+    const int indentedRightColmunX = 255;
     // "the followming features have been disabled"
-    DrawText_(LeftPane, 175, RightPane, 25*3, false, DarkGreen, 19, FW_NORMAL, _T("The following features have\r\nbeen disabled in this demo\r\nversion:"));
+    DrawText_(LeftPane, 155, RightPane, 25*3, false, DarkGreen, 19, FW_NORMAL, _T("This demo has the following\r\nrestrictions:"));
 
     // "cropping"
-    DrawText_(293, 240, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Cropping"));
+    DrawText_(indentedRightColmunX, 200, RightPane, 30, false, DarkGreen, 23, FW_NORMAL, _T("No cropping support"));
 
     // "ftp uploading"
-    DrawText_(293, 265, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("FTP uploading"));
+    DrawText_(indentedRightColmunX, 240, RightPane, 30, false, DarkGreen, 23, FW_NORMAL, _T("You may only send\r\nscreenshots to one\r\ndestination"));
 
     // "if you like what you see...."
-    DrawText_(LeftPane, 303, RightPane, 25, false, DarkGreen, 19, FW_NORMAL, _T("If you like what you see, please\r\npurchase the full version."));
+    DrawText_(LeftPane, 323, RightPane, 25, false, DarkGreen, 19, FW_NORMAL, _T("This demo is for trial purposes only.\r\nIf you like what you see, please\r\npurchase the full version."));
+
+    const int buttonY = 388;
 
     // buy
-    CRect rc(LeftPane, 369, LeftPane + ButtonWidth, 369 + ButtonHeight);
+    CRect rc(LeftPane, buttonY, LeftPane + ButtonWidth, buttonY+ ButtonHeight);
     m_buyImages.Create(ButtonWidth, ButtonHeight, ILC_COLOR32, 3, 0);
     int normal = m_buyImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_BUY_NORMAL), _T("BIN")).handle);
     int pushed = m_buyImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_BUY_PUSHED_HOVER), _T("BIN")).handle);
@@ -213,7 +216,7 @@ private:
 
     // continue
   	//void SetImages(int nNormal, int nPushed = -1, int nFocusOrHover = -1, int nDisabled = -1);
-    rc.SetRect(LeftPane + (RightPane / 2), 369, LeftPane + (RightPane / 2) + ButtonWidth, 369 + ButtonHeight);
+    rc.SetRect(LeftPane + (RightPane / 2), buttonY, LeftPane + (RightPane / 2) + ButtonWidth, buttonY + ButtonHeight);
     m_continue.Create(m_hWnd, &rc, _T("Continue"), WS_CHILD | WS_VISIBLE, 0, IDOK);
   }
 

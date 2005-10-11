@@ -130,6 +130,7 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
   ScreenshotOptions& options(params.options);
   CMainWindow* pThis(params.pThis);
 
+  int enabledDestinations = 0;
   bool bUsedClipboard = false;// used to display warnings about copying things multiply to the clipboard
 	for (size_t i = 0; i < options.GetNumDestinations(); ++i)
 	{
@@ -138,11 +139,25 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
 		{
 			if (destination.enabled)
       {
-        ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, bUsedClipboard);
+#ifdef CRIPPLED
+        if(enabledDestinations == 0)
+        {
+#endif
+          ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, bUsedClipboard);
+#ifdef CRIPPLED
+        }
+        else
+        {
+          // display a warning
+          pThis->m_statusDialog.AsyncCreateMessage(
+            AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
+			      _T("This demo only allows you to use one destination per screenshot."));
+        }
+#endif
+        enabledDestinations ++;
       }
 		}
 	}
-
   return 0;
 }
 

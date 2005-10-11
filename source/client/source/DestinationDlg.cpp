@@ -183,7 +183,7 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.general.name = TEXT("My New Destination");
 	destination.general.type = ScreenshotDestination::TYPE_FILE;
 	destination.general.imageFormat = TEXT("image/png");
-	destination.general.filenameFormat = TEXT("%Y%m%d-%h%i%s.jpg");
+	destination.general.filenameFormat = TEXT("%Y%m%d-%h%i%s.png");
 
   destination.image.scaleType = ScreenshotDestination::SCALE_NONE;
 	destination.image.scalePercent = 100;

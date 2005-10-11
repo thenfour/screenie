@@ -58,11 +58,6 @@ bool ProcessFtpDestination_ProgressProc(DWORD completed, DWORD total, void* pUse
 bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
-#ifdef CRIPPLED
-  CBuyDlg dlg;
-  dlg.DoModal(_T("FTP uploading"));
-  LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("FTP Transfers are not supported in the demo version."));
-#else
   LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_PROGRESS, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));
   status.AsyncMessageSetProgress(msgid, 0, 1);// set it to 0%
 
@@ -133,7 +128,6 @@ bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 			}
 		}
 	}
-#endif
 	return true;
 }
 
