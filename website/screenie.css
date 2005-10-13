@@ -1,0 +1,32 @@
+td.content
+{
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 10pt;
+}
+
+td.header-logo
+{
+}
+
+td.header-blurb
+{
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 10pt
+}
+
+div.menu
+{
+	border: 2px solid #A0A0A0;
+	padding: 0.5em;
+	background: #D0D0D0;
+	font-family: Trebuchet MS, Arial, sans-serif;
+	font-size: 12pt;
+	font-weight: bold;
+}
+
+span.bigtext
+{
+	font-family: trebuchet ms;
+	font-size: 12pt;
+	font-weight: bold;
+}
