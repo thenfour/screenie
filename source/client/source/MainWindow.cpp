@@ -65,7 +65,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 			// show cropping dialog
 			CCropDlg cropDialog(screenshot, m_screenshotOptions);
 
-			if (cropDialog.DoModal(m_hWnd) == IDOK)
+			if (cropDialog.DoModal(0) == IDOK)
 			{
 				// if there is a selection, make that our screenshot
 
@@ -83,17 +83,12 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 			}
 		}
 
-		if (m_statusDialog.IsWindow())
-		{
-			if (m_screenshotOptions.ShowStatus())
-      {
-				m_statusDialog.ShowWindow(SW_SHOW);
-        // for some reason it doesnt like to redraw when it's shown... even non-client area.
-        // so, a little brute force and we're golden... like the shower.
-        m_statusDialog.SetWindowPos(HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-        ::SetFocus(m_statusDialog.GetDlgItem(IDOK));// this doest work either... no idea what's going on.
-      }
-		}
+    
+
+		if (m_screenshotOptions.ShowStatus())
+    {
+      ShowStatusWindow();
+    }
 
     //for(int aoeu = 0; aoeu <= 110; aoeu ++)
     //{
@@ -171,8 +166,10 @@ LRESULT CMainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hand
 {
   CreateTrayIcon();
 
-	if (m_statusDialog.Create(m_hWnd, NULL))
+	if (m_statusDialog.Create(0, NULL))
+  {
 		m_statusDialog.ShowWindow(SW_HIDE);
+  }
 
 	return 0;
 }
@@ -208,6 +205,22 @@ LRESULT CMainWindow::OnBuy(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled
   return 0;
 }
 
+void CMainWindow::ShowStatusWindow()
+{
+	m_statusDialog.ShowWindow(SW_SHOW);
+  // for some reason it doesnt like to redraw when it's shown... even non-client area.
+  // so, a little brute force and we're golden... like the shower.
+  m_statusDialog.SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+  m_statusDialog.SetWindowPos(HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+}
+
+LRESULT CMainWindow::OnShowStatusWindow(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
+{
+  ShowStatusWindow();
+  handled = TRUE;
+  return 0;
+}
+
 LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
   ScopedGUIEntry ee;
@@ -223,6 +236,11 @@ LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BO
 }
 LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
+  if(m_statusDialog.IsWindow())// prevent assertions from wtl
+  {
+    m_statusDialog.DestroyWindow();
+  }
+
   ::Shell_NotifyIcon(NIM_DELETE, &m_iconData);
 	PostQuitMessage(0);
 	return 0;

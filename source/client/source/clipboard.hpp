@@ -3,63 +3,160 @@
 
 #include "exception.hpp"
 
-struct Clipboard
+/*
+  RetryEngine re(3, 500);
+  for(re.Begin(); re.End(status); re.Next())
+  {
+    status = SomeFunc();
+    if(status)
+    {
+      status = SomeOtherFunc();
+    }
+  }
+  ...
+*/
+class RetryEngine
 {
-	Clipboard(HWND owner)
+public:
+  RetryEngine(int n, DWORD wait) :
+    m_retriesLeft(n),
+    m_retriesTotal(n),
+    m_wait(wait)
+  {
+  }
+  /*
+    condition is AND'd into the test. if condition is false (like an error), then we will continue to retry.
+    otherwise if it is TRUE, then we end the loop.
+  */
+  bool End(bool condition) { return (0 == m_retriesLeft) || condition; }
+  void Begin() { m_retriesLeft = m_retriesTotal; }
+  void Next(bool condition)// prevent waiting if End() is true.
+  {
+    if(End(condition)) return;
+    Sleep(m_wait);
+    m_retriesLeft --;
+  }
+private:
+  int m_retriesTotal;
+  int m_retriesLeft;
+  DWORD m_wait;
+};
+
+class Clipboard
+{
+public:
+  Clipboard(HWND owner) :
+    m_hOwner(owner)
 	{
-		if (!::OpenClipboard(owner))
-			throw Win32Exception(GetLastError());
 	}
 
 	~Clipboard()
 	{
-		::CloseClipboard();
 	}
 
-	void SetText(const tstd::tstring& text)
+  LibCC::Result SetText(const tstd::tstring& text)
 	{
-    EmptyClipboard();
-    size_t nSize;
-    HANDLE hMem;
-    PVOID hMemLoc;
+    LibCC::Result r;
+    r.Fail();// initialize
+    RetryEngine re(4, 500);
 
-    // unicode first
-    nSize = (text.length() + 1) * sizeof(WCHAR);
-    hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
-		if (hMem == NULL) throw Win32Exception(GetLastError());
-    hMemLoc = GlobalLock(hMem);
-    LibCC::StringCopyN((WCHAR*)hMemLoc, text.c_str(), text.length() + 1);
-    GlobalUnlock(hMem);
-    if(NULL == SetClipboardData(CF_UNICODETEXT, hMem)) throw Win32Exception(GetLastError());
+    for(re.Begin(); !re.End(r.Succeeded()); re.Next(r.Succeeded()))
+    {
+		  if (!::OpenClipboard(m_hOwner))
+      {
+        r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
+      }
+      else
+      {
+        if(!EmptyClipboard())
+        {
+          r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
+        }
+        else
+        {
+          size_t nSize;
+          HANDLE hMem;
+          PVOID hMemLoc;
 
-    // ascii
-    nSize = (text.length() + 1) * sizeof(char);
-    hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
-		if (hMem == NULL) throw Win32Exception(GetLastError());
-    hMemLoc = GlobalLock(hMem);
-    LibCC::StringCopyN((char*)hMemLoc, text.c_str(), text.length() + 1);
-    GlobalUnlock(hMem);
-    if(NULL == SetClipboardData(CF_TEXT, hMem)) throw Win32Exception(GetLastError());
+          // unicode first
+          nSize = (text.length() + 1) * sizeof(WCHAR);
+          hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
+		      if (hMem == NULL)
+          {
+            r.Fail(LibCC::Format("Error allocating clipboard memory (UNICODE). System error: %").gle(GetLastError()).Str());
+          }
+          else
+          {
+            hMemLoc = GlobalLock(hMem);
+            LibCC::StringCopyN((WCHAR*)hMemLoc, text.c_str(), text.length() + 1);
+            GlobalUnlock(hMem);
+            if(NULL == SetClipboardData(CF_UNICODETEXT, hMem))
+            {
+              r.Fail(LibCC::Format("Error setting clipboard data (UNICODE). System error: %").gle(GetLastError()).Str());
+            }
+            else
+            {
+              nSize = (text.length() + 1) * sizeof(char);
+              hMem = GlobalAlloc(GMEM_MOVEABLE, nSize);
+		          if (hMem == NULL)
+              {
+                r.Fail(LibCC::Format("Error allocating clipboard memory (ANSI). System error: %").gle(GetLastError()).Str());
+              }
+              else
+              {
+                hMemLoc = GlobalLock(hMem);
+                LibCC::StringCopyN((char*)hMemLoc, text.c_str(), text.length() + 1);
+                GlobalUnlock(hMem);
+                if(NULL == SetClipboardData(CF_TEXT, hMem))
+                {
+                  r.Fail(LibCC::Format("Error setting clipboard data (ANSI). System error: %").gle(GetLastError()).Str());
+                }
+                else
+                {
+                  r.Succeed();
+                }
+              }
+            }
+          }
+        }
+        ::CloseClipboard();
+      }
+    }
+
+    return r;
 	}
 
-	void SetBitmap(HBITMAP bitmap)
+	LibCC::Result SetBitmap(HBITMAP bitmap)
 	{
-		if (bitmap == NULL)
-			throw Win32Exception(GetLastError());
+    LibCC::Result r;
+    r.Fail();// initialize
+    RetryEngine re(4, 500);
 
-		if (::SetClipboardData(CF_BITMAP, (HANDLE)bitmap) == NULL)
-			throw Win32Exception(GetLastError());
+    for(re.Begin(); !re.End(r.Succeeded()); re.Next(r.Succeeded()))
+    {
+		  if (!::OpenClipboard(m_hOwner))
+      {
+        r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
+      }
+      else
+      {
+		    if (::SetClipboardData(CF_BITMAP, (HANDLE)bitmap) == NULL)
+        {
+          r.Fail(LibCC::Format("Error setting clipboard data (BITMAP). System error: %").gle(GetLastError()).Str());
+        }
+        else
+        {
+          r.Succeed();
+        }
+        ::CloseClipboard();
+      }
+    }
+
+    return r;
 	}
 
-	bool GetText(tstd::tstring& text)
-	{
-		return true;
-	}
-
-	bool GetBitmap(HBITMAP& bitmap)
-	{
-		return true;
-	}
+private:
+  HWND m_hOwner;
 };
 
 #endif

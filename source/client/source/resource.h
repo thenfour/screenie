@@ -26,6 +26,8 @@
 #define IDR_TRAYSAMPLE                  240
 #define IDR_UNCHECKED                   241
 #define IDR_CHECKED                     242
+#define IDR_MENU1                       243
+#define IDR_CROPMENU                    243
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -170,13 +172,15 @@
 #define ID_TRAYCONTEXTMENU_ABOUT        32780
 #define ID_STATUSCONTEXTMENU_COPYTOCLIPBOARD 32781
 #define ID_TRAYCONTEXTMENU_BUY          32783
+#define ID_SHOWSTATUSWINDOW             32785
+#define ID_EDIT_SELECTALL               32786
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        243
-#define _APS_NEXT_COMMAND_VALUE         32784
+#define _APS_NEXT_RESOURCE_VALUE        244
+#define _APS_NEXT_COMMAND_VALUE         32788
 #define _APS_NEXT_CONTROL_VALUE         1058
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

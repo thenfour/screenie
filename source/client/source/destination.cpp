@@ -114,17 +114,17 @@ bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
         status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
       }
 
-			try
-			{
-				Clipboard(hwnd).SetText(url);
+      LibCC::Result r = Clipboard(hwnd).SetText(url);
+      if(r.Succeeded())
+      {
         status.AsyncCreateMessage(AsyncStatusWindow::MSG_INFO, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
           LibCC::Format("Copied URL to clipboard %").qs(url).Str());
         usedClipboard = true;
 			}
-			catch (const Win32Exception& excp)
+      else
 			{
 				status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(excp.What()).Str());
+          LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str());
 			}
 		}
 	}
@@ -211,63 +211,43 @@ bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status,
   {
     status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
   }
-
-	if (!::OpenClipboard(hwnd))
-	{
-		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-			TEXT("Clipboard: Can't get clipboard access!"));
-
-		return false;
-	}
-
-	if (!::EmptyClipboard())
-	{
-		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-			TEXT("Clipboard: Can't empty previous clipboard contents!"));
-
-		return false;
-	}
-
-	bool success = false;
+  LibCC::Result r;
 
 	// try to get the transformed screenshot.
 	util::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
-	if (GetTransformedScreenshot(destination.image, image, transformedScreenshot))
+	if(!GetTransformedScreenshot(destination.image, image, transformedScreenshot))
+  {
+		r.Fail(TEXT("File: error getting screenshot data"));
+  }
+  else
 	{
 		HBITMAP clipboardBitmap = NULL;
-		if (transformedScreenshot->GetHBITMAP(Gdiplus::Color(0,0,0), &clipboardBitmap) == Gdiplus::Ok)
+		if (Gdiplus::Ok != transformedScreenshot->GetHBITMAP(Gdiplus::Color(0,0,0), &clipboardBitmap))
+    {
+			r.Fail(TEXT("Clipboard: Can't get clipboard-friendly image data"));
+    }
+    else
 		{
 			// the system will take care of deleting this bitmap.
 			HBITMAP bitmapCopy = DuplicateScreenshotBitmap(clipboardBitmap);
 
-			try
-			{
-				Clipboard(hwnd).SetBitmap(bitmapCopy);
+      LibCC::Result r = Clipboard(hwnd).SetBitmap(bitmapCopy);
+      if(r.Succeeded())
+      {
         status.AsyncCreateMessage(AsyncStatusWindow::MSG_CHECK, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
           _T("Copied image to clipboard"));
         usedClipboard = true;
-			}
-			catch (const Win32Exception& excp)
-			{
-				status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-					LibCC::Format(TEXT("Clipboard: Can't copy image: %")).s(excp.What()).Str());
+        r.Succeed();
 			}
 		}
-		else
-		{
-			status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-				TEXT("Clipboard: Can't get clipboard-friendly image data!"));
-		}
-	}
-	else
-	{
-		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-			LibCC::Format(TEXT("File: can't get screenshot data!")).s(destination.general.path).Str());
 	}
 
-	::CloseClipboard();
+  if(!r)
+  {
+		status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name, r.str());
+  }
 
-	return true;
+	return r.Succeeded();
 }
 
 bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status,

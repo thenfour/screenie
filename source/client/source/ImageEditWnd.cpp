@@ -287,7 +287,7 @@ void CImageEditWindow::ResetOffscreenBitmaps()
     (long)(ulVirtual.y),
     (long)(virtualSize.x),
     (long)(virtualSize.y),
-    COLORONCOLOR
+    (m_view.GetZoomFactor() < 1.0f) ? HALFTONE : COLORONCOLOR
     );
 }
 

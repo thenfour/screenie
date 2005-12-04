@@ -208,12 +208,11 @@ public:
     CRect rcClient;
     m_editWnd.GetClientRect(&rcClient);
     float ideal = (float)rcClient.Width() / m_bitmap->GetWidth();
+    if(ideal > 1.0f) ideal = 1.0f;
     SetZoomFactor(ideal, true);
 
     m_editWnd.CenterImage();
 
-    SetForegroundWindow(*this);
-    SetFocus();
     SyncZoomWindowSelection();
 		return 0;
 	}

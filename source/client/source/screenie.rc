@@ -428,6 +428,7 @@ BEGIN
     POPUP "Tray Context Menu"
     BEGIN
         MENUITEM "&Configure...",               ID_TRAYCONTEXTMENU_CONFIGURE
+        MENUITEM "Show Status Window...",       ID_SHOWSTATUSWINDOW
         MENUITEM "&About Screenie...",          ID_TRAYCONTEXTMENU_ABOUT
         MENUITEM SEPARATOR
         MENUITEM "&Exit",                       ID_TRAYCONTEXTMENU_EXIT
@@ -440,6 +441,15 @@ BEGIN
     POPUP "placeholder"
     BEGIN
         MENUITEM "Buy",                         ID_TRAYCONTEXTMENU_BUY
+    END
+END
+
+IDR_CROPMENU MENU 
+BEGIN
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "Select &All",                 ID_EDIT_SELECTALL
+        MENUITEM "&Copy",                       ID_EDIT_COPY
     END
 END
 

@@ -44,7 +44,8 @@ public:
 };
 
 
-class CMainWindow : public CWindowImpl<CMainWindow>
+class CMainWindow :
+  public CWindowImpl<CMainWindow>
 {
 public:
 	DECLARE_WND_CLASS(TEXT("ScreenieMainWnd"))
@@ -76,6 +77,8 @@ public:
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(m_uTaskbarCreatedMsg, OnTaskbarCreated)
 
+    
+		COMMAND_ID_HANDLER(ID_SHOWSTATUSWINDOW, OnShowStatusWindow)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_BUY, OnBuy)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_ABOUT, OnAbout)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_CONFIGURE, OnConfigure)
@@ -106,6 +109,8 @@ public:
 	LRESULT OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
+  LRESULT OnShowStatusWindow(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
+  void ShowStatusWindow();
 
   // returns true if settings are used ("OK" button was clicked).
   // returns false if canceled.

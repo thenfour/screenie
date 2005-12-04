@@ -96,7 +96,14 @@ int ProgressImages::GetImageFromProgress(int pos, int total)
 
 BOOL CStatusDlg::PreTranslateMessage(MSG* pMsg)
 {
-	return CWindow::IsDialogMessage(pMsg);
+  if(pMsg->message == WM_KEYDOWN)
+  {
+    if(pMsg->wParam == VK_RETURN)
+    {
+      CloseDialog(IDOK);
+    }
+  }
+  return CWindow::IsDialogMessage(pMsg);
 }
 
 BOOL CStatusDlg::OnIdle()
@@ -136,6 +143,9 @@ LRESULT CStatusDlg::OnDeleteItem(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CenterWindow();
+
+  CMessageLoop* pLoop = _Module.GetMessageLoop();
+  pLoop->AddMessageFilter(this);
 
 	// set icons
   if(m_hIcon) DestroyIcon(m_hIcon);
@@ -324,17 +334,13 @@ LRESULT CStatusDlg::OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
     return 0;
   }
 
-  try
-	{
-    Clipboard(m_hWnd).SetText(p->url);
-	}
-	catch (const Win32Exception& excp)
-	{
+  LibCC::Result r = Clipboard(m_hWnd).SetText(p->url);
 #ifdef _DEBUG
-		MessageBox(excp.What().c_str(), TEXT("Clipboard Error"),
-			MB_OK | MB_ICONERROR);
+  if(!r)
+  {
+    MessageBox(r.str().c_str(), TEXT("Clipboard Error"), MB_OK | MB_ICONERROR);
+  }
 #endif
-	}
 	return 0;
 }
 
@@ -350,17 +356,13 @@ LRESULT CStatusDlg::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl
 
 	if (m_listView.GetSelectedItem(&item))
 	{
-		try
-		{
-			Clipboard(m_hWnd).SetText(item.pszText);
-		}
-		catch (const Win32Exception& excp)
-		{
+		LibCC::Result r = Clipboard(m_hWnd).SetText(item.pszText);
 #ifdef _DEBUG
-			MessageBox(excp.What().c_str(), TEXT("Clipboard Error"),
-				MB_OK | MB_ICONERROR);
+    if(!r)
+    {
+      MessageBox(r.str().c_str(), TEXT("Clipboard Error"), MB_OK | MB_ICONERROR);
+    }
 #endif
-		}
 	}
 
 	return 0;
