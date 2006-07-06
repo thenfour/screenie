@@ -63,15 +63,15 @@ IDI_CHECK               ICON                    "resources\\check.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 188, 126
+IDD_ABOUTBOX DIALOGEX 0, 0, 188, 133
 STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,131,105,50,14
-    GROUPBOX        "",IDC_STATIC,7,7,174,95
-    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,35,32,
-                    WS_EX_CLIENTEDGE
+    DEFPUSHBUTTON   "OK",IDOK,131,112,50,14
+    GROUPBOX        "",IDC_STATIC,7,7,174,98
+    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,
+                    WS_EX_STATICEDGE
     LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
     LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",
                     IDC_COPYRIGHT,60,30,108,18
@@ -80,7 +80,7 @@ BEGIN
     LTEXT           "Registered to:",IDC_STATIC,18,70,45,8
 END
 
-IDD_MAINDLG DIALOGEX 0, 0, 210, 249
+IDD_MAINDLG DIALOGEX 0, 0, 269, 238
 STYLE DS_SETFONT | DS_SETFOREGROUND | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | 
     WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_WINDOWEDGE | WS_EX_APPWINDOW
@@ -89,31 +89,29 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         "",IDC_DESTINATIONS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | 
-                    WS_BORDER | WS_TABSTOP,16,130,178,70
+                    WS_BORDER | WS_TABSTOP,16,110,236,70
     CONTROL         "Confirm destinations before saving screenshots",
-                    IDC_CONFIRM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,17,
+                    IDC_CONFIRM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,20,
                     174,12
     CONTROL         "Show cropping window before saving screenshots",
-                    IDC_CROPPING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,33,
+                    IDC_CROPPING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,32,
                     178,12
     CONTROL         "Include cursor in screenshots",IDC_INCLUDECURSOR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,49,107,12
+                    BS_AUTOCHECKBOX | WS_TABSTOP,16,44,107,12
     CONTROL         "Show status window during processing",IDC_SHOWSTATUS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,65,135,12
-    PUSHBUTTON      "&New...",IDC_NEW,16,205,50,14
-    PUSHBUTTON      "&Edit...",IDC_EDIT,70,205,50,14
-    PUSHBUTTON      "&Remove",IDC_REMOVE,124,205,50,14
-    PUSHBUTTON      "OK",IDOK,99,230,50,14
-    GROUPBOX        "General",IDC_GENERAL_GROUP,6,7,197,106,0,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,56,135,12
+    PUSHBUTTON      "&New...",IDC_NEW,98,186,50,14
+    PUSHBUTTON      "&Edit...",IDC_EDIT,150,186,50,14
+    PUSHBUTTON      "&Remove",IDC_REMOVE,202,186,50,14
+    PUSHBUTTON      "OK",IDOK,159,217,50,14
+    GROUPBOX        "General",IDC_GENERAL_GROUP,6,7,256,83,0,
                     WS_EX_TRANSPARENT
-    GROUPBOX        "Destinations",IDC_DESTINATIONS_GROUP,6,117,197,109,0,
+    GROUPBOX        "Destinations",IDC_DESTINATIONS_GROUP,6,96,256,114,0,
                     WS_EX_TRANSPARENT
-    PUSHBUTTON      "Cancel",IDCANCEL,153,230,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,212,217,50,14
     CONTROL         "Automatically start Screenie when Windows starts",
                     IDC_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,
-                    81,174,12
-    CONTROL         "Show splash screen on startup",IDC_SHOWSPLASH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,97,174,12
+                    68,174,12
 END
 
 IDD_DESTPROP_GENERAL DIALOGEX 0, 0, 235, 262
@@ -166,28 +164,27 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "FTP"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Host",IDC_STATIC,7,7,221,59
-    LTEXT           "Hostname:",IDC_STATIC,18,24,36,12
+    GROUPBOX        "Server",IDC_STATIC,7,7,221,59
+    LTEXT           "Hostname:",IDC_STATIC,18,25,36,12
     EDITTEXT        IDC_FTP_HOSTNAME,60,24,156,12,ES_AUTOHSCROLL
     LTEXT           "Port:",IDC_STATIC,18,42,30,12
     EDITTEXT        IDC_FTP_PORT,60,42,48,12,ES_AUTOHSCROLL | ES_NUMBER
-    GROUPBOX        "Authentication:",IDC_STATIC,7,72,221,60
-    LTEXT           "Username:",IDC_STATIC,18,90,42,12
+    GROUPBOX        "Authentication",IDC_STATIC,7,72,221,60
+    LTEXT           "Username:",IDC_STATIC,18,92,42,12
     EDITTEXT        IDC_FTP_USERNAME,60,90,156,12,ES_AUTOHSCROLL
-    LTEXT           "Password:",IDC_STATIC,18,108,42,12
+    LTEXT           "Password:",IDC_STATIC,18,110,42,12
     EDITTEXT        IDC_FTP_PASSWORD,60,108,156,12,ES_PASSWORD | 
                     ES_AUTOHSCROLL
-    GROUPBOX        "Remote File",IDC_STATIC,7,138,221,48
-    LTEXT           "File Path (for example, /home/joe/public_html/screenshots/):",
+    GROUPBOX        "Remote File",IDC_STATIC,7,138,221,114
+    LTEXT           "File Path (e.g., /home/joe/public_html/screenshots/):",
                     IDC_STATIC,18,150,198,12
     EDITTEXT        IDC_FTP_REMOTEPATH,18,162,198,12,ES_AUTOHSCROLL
-    GROUPBOX        "Resulting URL",IDC_STATIC,7,192,221,63
-    LTEXT           "URL (for example, http://mysite.com/~joe/screenshots/):",
-                    IDC_STATIC,17,204,198,12
-    EDITTEXT        IDC_FTP_HTTPURL,17,216,198,12,ES_AUTOHSCROLL
+    LTEXT           "Base URL (e.g., http://mysite.com/~joe/screenshots/):",
+                    IDC_STATIC,18,180,198,12
+    EDITTEXT        IDC_FTP_HTTPURL,18,192,198,12,ES_AUTOHSCROLL
     CONTROL         "Copy image URL to clipboard after processing",
                     IDC_FTP_COPYURL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,
-                    234,198,12
+                    210,198,12
 END
 
 IDD_DESTPROP_RESIZING DIALOGEX 0, 0, 235, 262
@@ -199,12 +196,12 @@ BEGIN
     CONTROL         "Resize my screenshot",IDC_RESIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,24,198,12
     CONTROL         "Scale (in percent):",IDC_RESIZE_SCALE,"Button",
-                    BS_AUTORADIOBUTTON,36,42,72,12
-    EDITTEXT        IDC_RESIZE_SCALE_VALUE,132,42,54,12,ES_AUTOHSCROLL
+                    BS_AUTORADIOBUTTON,30,42,72,12
+    EDITTEXT        IDC_RESIZE_SCALE_VALUE,126,42,54,12,ES_AUTOHSCROLL
     CONTROL         "Limit height or width to:",IDC_RESIZE_LIMIT,"Button",
-                    BS_AUTORADIOBUTTON,36,60,90,12
-    EDITTEXT        IDC_RESIZE_LIMIT_VALUE,132,60,54,12,ES_AUTOHSCROLL
-    LTEXT           "pixels",IDC_RESIZE_LIMIT_LABEL,192,60,30,12
+                    BS_AUTORADIOBUTTON,30,60,90,12
+    EDITTEXT        IDC_RESIZE_LIMIT_VALUE,126,60,54,12,ES_AUTOHSCROLL
+    LTEXT           "pixels",IDC_RESIZE_LIMIT_LABEL,186,62,30,12
 END
 
 IDD_DESTPROP_EMAIL DIALOGEX 0, 0, 235, 262
@@ -238,11 +235,11 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,226,189,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,281,189,50,14
-    LTEXT           "Static",IDC_ZOOM,7,17,98,150,WS_BORDER
-    LTEXT           "Static",IDC_IMAGE,109,17,221,150,WS_BORDER
+    LTEXT           "Static",IDC_ZOOM,7,17,98,150,0,WS_EX_CLIENTEDGE
+    LTEXT           "Static",IDC_IMAGE,109,17,221,150,0,WS_EX_CLIENTEDGE
     PUSHBUTTON      "Options...",IDC_CONFIGURE,281,171,50,14
     RTEXT           "Zoom: 15%",IDC_ZOOM_CAPTION,276,7,55,8
-    DEFPUSHBUTTON   "Select All",IDC_SELECTALL,226,171,50,14
+    PUSHBUTTON      "Select All",IDC_SELECTALL,226,171,50,14
     LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
     LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,167,8
     LTEXT           "To Pan: Click and drag with the RIGHT mouse button",
@@ -269,6 +266,41 @@ BEGIN
     DEFPUSHBUTTON   "Buy",IDC_BUY,48,58,50,14
 END
 
+IDD_DESTPROP_SCREENIE DIALOGEX 0, 0, 235, 262
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Screenie"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Screenie.net",-1,7,7,221,59
+    LTEXT           "URL:",-1,18,25,36,12
+    EDITTEXT        IDC_SCREENIE_URL,60,24,156,12,ES_AUTOHSCROLL
+    GROUPBOX        "Authentication:",-1,7,72,221,60
+    LTEXT           "Username:",-1,18,90,42,12
+    EDITTEXT        IDC_SCREENIE_USERNAME,60,90,156,12,ES_AUTOHSCROLL
+    LTEXT           "Password:",-1,18,108,42,12
+    EDITTEXT        IDC_SCREENIE_PASSWORD,60,108,156,12,ES_PASSWORD | 
+                    ES_AUTOHSCROLL
+    CONTROL         "Copy image URL to clipboard after processing",
+                    IDC_SCREENIE_COPYURL,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,138,221,12
+    LTEXT           "Example: http://users.screenie.net/",-1,18,42,198,12
+END
+
+IDD_NEW_DESTINATION DIALOGEX 0, 0, 207, 73
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Create New Destination"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Create...",IDOK,97,52,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,150,52,50,14
+    LTEXT           "Title:",IDC_STATIC,12,12,24,12
+    EDITTEXT        IDC_EDIT1,42,12,158,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_COMBO1,42,30,158,12,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Type:",IDC_STATIC,12,30,24,12
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -285,18 +317,18 @@ BEGIN
         VERTGUIDE, 18
         VERTGUIDE, 60
         TOPMARGIN, 7
-        BOTTOMMARGIN, 119
+        BOTTOMMARGIN, 126
     END
 
     IDD_MAINDLG, DIALOG
     BEGIN
         LEFTMARGIN, 6
-        RIGHTMARGIN, 203
+        RIGHTMARGIN, 262
         VERTGUIDE, 16
         VERTGUIDE, 99
         VERTGUIDE, 190
         TOPMARGIN, 7
-        BOTTOMMARGIN, 242
+        BOTTOMMARGIN, 231
         HORZGUIDE, 113
         HORZGUIDE, 214
     END
@@ -369,6 +401,22 @@ BEGIN
         HORZGUIDE, 39
         HORZGUIDE, 55
     END
+
+    IDD_DESTPROP_SCREENIE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 228
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 255
+    END
+
+    IDD_NEW_DESTINATION, DIALOG
+    BEGIN
+        LEFTMARGIN, 6
+        RIGHTMARGIN, 200
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 66
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -429,9 +477,10 @@ BEGIN
     BEGIN
         MENUITEM "&Configure...",               ID_TRAYCONTEXTMENU_CONFIGURE
         MENUITEM "Show Status Window...",       ID_SHOWSTATUSWINDOW
+        MENUITEM SEPARATOR
         MENUITEM "&About Screenie...",          ID_TRAYCONTEXTMENU_ABOUT
         MENUITEM SEPARATOR
-        MENUITEM "&Exit",                       ID_TRAYCONTEXTMENU_EXIT
+        MENUITEM "E&xit",                       ID_TRAYCONTEXTMENU_EXIT
     END
     POPUP "List Context Menu"
     BEGIN
