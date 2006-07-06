@@ -39,7 +39,7 @@ BOOL CMainWindow::DisplayTrayMenu()
 	POINT cursorPos = { 0 };
 	::GetCursorPos(&cursorPos);
 
-	trayMenu.TrackPopupMenu(TPM_LEFTALIGN, cursorPos.x, cursorPos.y, m_hWnd);
+	trayMenu.TrackPopupMenu(TPM_RIGHTALIGN, cursorPos.x, cursorPos.y, m_hWnd);
 
 	SendMessage(WM_NULL);
 	return TRUE;
@@ -256,7 +256,7 @@ LRESULT CMainWindow::OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handl
 
 LRESULT CMainWindow::OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
-  OnConfigure(_T("Ok"));
+  OnConfigure(_T("OK"));
   return 0;
 }
 
