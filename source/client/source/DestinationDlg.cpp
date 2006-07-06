@@ -194,7 +194,7 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.ftp.username = TEXT("username");
   destination.ftp.SetPassword(TEXT("password"));
 	destination.ftp.remotePath = TEXT("/home/username/public_html/");
-	destination.ftp.resultURL = TEXT("http://mysite.com/~username");
+	destination.ftp.resultURL = TEXT("http://mysite.com/~username/");
 	destination.ftp.copyURL = false;
 
 	GetSpecialFolderPath(destination.general.path, CSIDL_MYPICTURES);
