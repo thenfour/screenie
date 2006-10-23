@@ -161,6 +161,22 @@ bool GetScreenshotBitmap(HBITMAP& bitmap, BOOL AltPressed, BOOL drawCursor)
     rc.bottom -= GetSystemMetrics(SM_YVIRTUALSCREEN);
     rc.top -= GetSystemMetrics(SM_YVIRTUALSCREEN);
 
+	WINDOWPLACEMENT wndpl = {sizeof(WINDOWPLACEMENT)};
+	GetWindowPlacement(hWnd, &wndpl);
+	
+	if(wndpl.showCmd == SW_SHOWMAXIMIZED)
+	{
+		// maximised windows have magic non-visible borders, trim them off
+
+		WINDOWINFO wndinf = {sizeof(WINDOWINFO)};
+		GetWindowInfo(hWnd, &wndinf);
+
+		rc.left += wndinf.cxWindowBorders;
+		rc.right -= wndinf.cxWindowBorders;
+		rc.top += wndinf.cyWindowBorders;
+		rc.bottom -= wndinf.cyWindowBorders;
+	}
+
     HDC screenDC = ::GetDC(0);
     HDC sourceDC = ::CreateCompatibleDC(screenDC);
     HBITMAP sourceOld = (HBITMAP)SelectObject(sourceDC, full);
