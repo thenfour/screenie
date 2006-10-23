@@ -21,6 +21,8 @@
 #include "path.hpp"
 #include "utility.hpp"
 
+#include <curl/curl.h>
+
 bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
 	util::shared_ptr<Gdiplus::Bitmap> screenshot, util::shared_ptr<Gdiplus::Bitmap>& transformed)
 {
@@ -256,6 +258,116 @@ bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status,
 	return true;
 }
 
+bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status,
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+{
+	CURL* curl = 0;
+	CURLcode result;
+
+	curl_httppost* formpost = 0;
+	curl_httppost* lastptr = 0;
+	curl_slist* headerlist = 0;
+
+	curl_formadd(&formpost, &lastptr,
+		CURLFORM_COPYNAME, "username",
+		CURLFORM_COPYCONTENTS, tstd::convert<char>(destination.screenie.username).c_str(),
+		CURLFORM_END);
+
+	curl_formadd(&formpost, &lastptr,
+		CURLFORM_COPYNAME, "password",
+		CURLFORM_COPYCONTENTS, tstd::convert<char>(destination.screenie.password).c_str(),
+		CURLFORM_END);
+
+
+	LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_PROGRESS, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));
+	status.AsyncMessageSetProgress(msgid, 0, 1);// set it to 0%
+
+	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
+	if (!GetTransformedScreenshot(destination.image, image, transformedImage))
+	{
+		status.AsyncMessageSetText(msgid, TEXT("Screenie.net: Can't resize screenshot!"));
+		status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_ERROR);
+		return false;
+	}
+
+	// before we can upload the image, we need to save it to a temporary file.
+	tstd::tstring temporaryFilename = GetUniqueTemporaryFilename();
+	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename))
+	{
+		status.AsyncMessageSetText(msgid, TEXT("Screenie.net: Can't save image to temporary file!"));
+		status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_ERROR);
+		return false;
+	}
+
+	curl_formadd(&formpost, &lastptr,
+		CURLFORM_COPYNAME, "screenshot",
+		CURLFORM_FILE, tstd::convert<char>(temporaryFilename).c_str(),
+		CURLFORM_END);
+
+	curl = curl_easy_init();
+	headerlist = curl_slist_append(headerlist, "Expect:");
+
+	std::string posturl = tstd::convert<char>(destination.screenie.url);
+	if (posturl[posturl.length() - 1] != '/')
+		posturl += "/";
+	posturl += "upload.php";
+
+	if (curl != 0)
+	{
+		curl_easy_setopt(curl, CURLOPT_URL, posturl.c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+
+		result = curl_easy_perform(curl);
+
+		curl_easy_cleanup(curl);
+		curl_formfree(formpost);
+		curl_slist_free_all(headerlist);
+	}
+
+	// format the destination filename based on the current time
+	SYSTEMTIME systemTime = { 0 };
+	destination.GetNowBasedOnTimeSettings(systemTime);
+	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat);
+
+	// delete the temp file
+	DeleteFile(temporaryFilename.c_str());
+
+	status.AsyncMessageSetText(msgid, TEXT("Upload complete."));
+	status.AsyncMessageSetIcon(msgid, AsyncStatusWindow::MSG_CHECK);
+
+// 	if (!destination.ftp.resultURL.empty())
+// 	{
+// 		tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
+// 		status.AsyncMessageSetText(msgid, LibCC::Format("Uploaded to: %").s(url).Str());
+// 		status.AsyncMessageSetURL(msgid, url);
+// 
+// 		if (destination.ftp.copyURL)
+// 		{
+// 			if(usedClipboard)
+// 			{
+// 				status.AsyncCreateMessage(AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+// 			}
+// 
+// 			LibCC::Result r = Clipboard(hwnd).SetText(url);
+// 			if(r.Succeeded())
+// 			{
+// 				status.AsyncCreateMessage(AsyncStatusWindow::MSG_INFO, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
+// 					LibCC::Format("Copied URL to clipboard %").qs(url).Str());
+// 				usedClipboard = true;
+// 			}
+// 			else
+// 			{
+// 				status.AsyncCreateMessage(AsyncStatusWindow::MSG_ERROR, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
+// 					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str());
+// 			}
+// 		}
+// 	}
+
+	return true;
+}
+
 bool ProcessDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
 {
@@ -273,6 +385,8 @@ bool ProcessDestination(HWND hwnd, AsyncStatusWindow& status,
 		case ScreenshotDestination::TYPE_EMAIL:
 			return ProcessEmailDestination(hwnd, status, destination, image, usedClipboard);
 			break;
+		case ScreenshotDestination::TYPE_SCREENIENET:
+			return ProcessScreenieDestination(hwnd, status, destination, image, usedClipboard);
 	}
 
 	return false;

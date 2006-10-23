@@ -42,6 +42,11 @@ const TCHAR* KEY_DEST_FTP_REMOTEPATH = TEXT("FTP Remote Path");
 const TCHAR* KEY_DEST_FTP_RESULTURL = TEXT("FTP Result URL");
 const TCHAR* KEY_DEST_FTP_COPYURL = TEXT("FTP Copy URL");
 
+const TCHAR* KEY_DEST_SCREENIE_URL = TEXT("Screenie.net Base URL");
+const TCHAR* KEY_DEST_SCREENIE_USERNAME = TEXT("Screenie.net Username");
+const TCHAR* KEY_DEST_SCREENIE_PASSWORD = TEXT("Screenie.net Password");
+const TCHAR* KEY_DEST_SCREENIE_COPYURL = TEXT("Screenie.net Copy URL");
+
 const TCHAR* KEY_DEST_IMAGE_SCALETYPE = TEXT("Scale Type");
 const TCHAR* KEY_DEST_IMAGE_SCALEPERCENT = TEXT("Scale Percent");
 const TCHAR* KEY_DEST_IMAGE_MAXDIMENSION = TEXT("Maximum Width/Height");
@@ -106,6 +111,17 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKe
 
 	key.GetDWORD(KEY_DEST_FTP_COPYURL, &temp);
 	destination.ftp.copyURL = (temp != 0);
+
+	//////////////////////////////////////////////////////////////////////////
+	// screenie.net settings
+	//////////////////////////////////////////////////////////////////////////
+
+	key.GetString(KEY_DEST_SCREENIE_URL, destination.screenie.url);
+	key.GetString(KEY_DEST_SCREENIE_USERNAME, destination.screenie.username);
+	key.GetString(KEY_DEST_SCREENIE_PASSWORD, destination.screenie.password);
+
+	key.GetDWORD(KEY_DEST_SCREENIE_COPYURL, &temp);
+	destination.screenie.copyURL = (temp != 0);
 
 	return true;
 }
@@ -219,6 +235,15 @@ bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegis
   memcpy(temp.Lock(), destination.ftp.GetEncryptedPassword().GetBuffer(), size);
   temp.Unlock();
   key.SetBytes(KEY_DEST_FTP_PASSWORD, temp, size);
+
+	//////////////////////////////////////////////////////////////////////////
+	// screenie.net settings
+	//////////////////////////////////////////////////////////////////////////
+
+	key.SetString(KEY_DEST_SCREENIE_URL, destination.screenie.url);
+	key.SetString(KEY_DEST_SCREENIE_USERNAME, destination.screenie.username);
+	key.SetString(KEY_DEST_SCREENIE_PASSWORD, destination.screenie.password);
+	key.SetDWORD(KEY_DEST_SCREENIE_COPYURL, destination.screenie.copyURL);
 
 	return true;
 }

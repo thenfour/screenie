@@ -70,11 +70,11 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
     nag.GoForIt(0);
   }
 #else
-  CWelcomeWindow<false> welcome(options);
-  if(options.ShowSplash())
-  {
-    welcome.GoForIt(0);
-  }
+//   CWelcomeWindow<false> welcome(options);
+//   if(options.ShowSplash())
+//   {
+//     welcome.GoForIt(0);
+//   }
 #endif
 
   g_mainWindow = new CMainWindow(options);
@@ -95,7 +95,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
   nag.EnsureDestroyed();
   welcome.EnsureDestroyed();
 #else
-  welcome.EnsureDestroyed();
+  //welcome.EnsureDestroyed();
 #endif
 
   delete g_mainWindow;

@@ -18,6 +18,7 @@
 #include "DestinationPropertiesImage.hpp"
 #include "DestinationPropertiesFtp.hpp"
 #include "DestinationPropertiesEmail.hpp"
+#include "DestinationPropertiesScreenie.hpp"
 
 class CDestinationProperties :
 	public CPropertySheetImpl<CDestinationProperties>,
@@ -47,13 +48,13 @@ public:
 	ScreenshotDestination::Type GetCurrentType();
 	void Update(const ScreenshotDestination::Type type);
 private:
-	typedef std::vector<util::shared_ptr<DestinationPropertyPage> > PropertyPageContainer;
+	typedef std::vector< util::shared_ptr<DestinationPropertyPage> > PropertyPageContainer;
 
 	PropertyPageContainer m_propertyPages;
 	ScreenshotDestination::Type m_currentType;
 	ScreenshotDestination m_screenshotDestination;
 
-  ScreenshotOptions& m_options;
+	ScreenshotOptions& m_options;
 };
 
 #endif

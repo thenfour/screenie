@@ -19,6 +19,7 @@ struct ScreenshotDestination
 		TYPE_FTP,
 		TYPE_EMAIL,
 		TYPE_CLIPBOARD,
+		TYPE_SCREENIENET
 	};
 
 	enum ScaleType
@@ -79,6 +80,16 @@ struct ScreenshotDestination
 		ScaleType scaleType;
 		int scalePercent;
 		int maxDimension;
+	};
+
+	struct Screenienet
+	{
+		Screenienet() : copyURL(false) { }
+
+		tstd::tstring url;
+		tstd::tstring username;
+		tstd::tstring password;
+		bool copyURL;
 	};
 
 	struct Ftp
@@ -192,6 +203,7 @@ struct ScreenshotDestination
 	Image image;
 	Ftp ftp;
 	Email email;
+	Screenienet screenie;
 
   void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
   {
@@ -217,6 +229,8 @@ struct ScreenshotDestination
 				return tstd::tstring("Send Email");
 			case TYPE_CLIPBOARD:
 				return tstd::tstring("Copy to Clipboard");
+			case TYPE_SCREENIENET:
+				return tstd::tstring("Screenie.net");
 		}
 
 		return tstd::tstring("Unknown");
@@ -232,6 +246,8 @@ struct ScreenshotDestination
 			return TYPE_EMAIL;
 		if (description == tstd::tstring("Copy to Clipboard"))
 			return TYPE_CLIPBOARD;
+		if (description == tstd::tstring("Screenie.net"))
+			return TYPE_SCREENIENET;
 
 		return TYPE_NONE;
 	}

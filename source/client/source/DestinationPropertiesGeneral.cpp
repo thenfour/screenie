@@ -119,6 +119,7 @@ LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPA
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_FTP).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_CLIPBOARD).c_str());
 //	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_EMAIL).c_str());
+	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_SCREENIENET).c_str());
 
 	PopulateFormatList();
 

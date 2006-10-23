@@ -28,6 +28,8 @@
 #define IDR_CHECKED                     242
 #define IDR_MENU1                       243
 #define IDR_CROPMENU                    243
+#define IDD_DIALOG1                     244
+#define IDD_NEW_DESTINATION             244
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -111,10 +113,15 @@
 #define IDC_CONTROLS4                   1055
 #define IDC_BUY                         1056
 #define IDC_DESCRIPTION                 1057
+#define IDC_SCREENIE_COPYURL            1058
+#define IDC_SCREENIE_PASSWORD           1059
+#define IDC_SCREENIE_USERNAME           1060
+#define IDC_SCREENIE_URL                1061
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
 #define IDD_DESTPROP_EMAIL              30122
+#define IDD_DESTPROP_SCREENIE           30123
 #define IDB_WIZ97_HEADER                31000
 #define IDB_WIZ97_WATERMARK             31001
 #define IDC_WIZ97_EXTERIOR_TITLE        31004
@@ -179,9 +186,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        244
+#define _APS_NEXT_RESOURCE_VALUE        245
 #define _APS_NEXT_COMMAND_VALUE         32788
-#define _APS_NEXT_CONTROL_VALUE         1058
+#define _APS_NEXT_CONTROL_VALUE         1062
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

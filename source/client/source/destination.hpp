@@ -24,5 +24,7 @@ bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
+bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status,
+	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard);
 
 #endif

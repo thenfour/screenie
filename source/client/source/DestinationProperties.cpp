@@ -30,6 +30,7 @@ BOOL CDestinationProperties::InitializePages()
 	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesImage()));
 	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesFTP()));
 //	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesEmail()));
+	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesScreenie()));
 
 	for (size_t i = 0; i < m_propertyPages.size(); ++i)
 	{

@@ -185,14 +185,14 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.general.imageFormat = TEXT("image/png");
 	destination.general.filenameFormat = TEXT("%Y%m%d-%h%i%s.png");
 
-  destination.image.scaleType = ScreenshotDestination::SCALE_NONE;
+	destination.image.scaleType = ScreenshotDestination::SCALE_NONE;
 	destination.image.scalePercent = 100;
 	destination.image.maxDimension = 320;
 
 	destination.ftp.hostname = TEXT("ftp.mysite.com");
 	destination.ftp.port = 21;
 	destination.ftp.username = TEXT("username");
-  destination.ftp.SetPassword(TEXT("password"));
+	destination.ftp.SetPassword(TEXT("password"));
 	destination.ftp.remotePath = TEXT("/home/username/public_html/");
 	destination.ftp.resultURL = TEXT("http://mysite.com/~username/");
 	destination.ftp.copyURL = false;

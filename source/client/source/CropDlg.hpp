@@ -266,7 +266,7 @@ public:
 
 	LRESULT OnConfigure(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
-	  CDestinationDlg dialog(m_options, _T("Ok"));
+	  CDestinationDlg dialog(m_options, _T("OK"));
 	  dialog.DoModal();
 	  return 0;
 	}
