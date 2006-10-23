@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\libcurl\include"
+				AdditionalIncludeDirectories="..\libcurl\include;..\wtl"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;_DEBUG"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
