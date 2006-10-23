@@ -20,11 +20,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..\libcurl\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;_DEBUG"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				TreatWChar_tAsBuiltInType="TRUE"
 				UsePrecompiledHeader="3"
 				PrecompiledHeaderThrough="StdAfx.hpp"
@@ -34,7 +34,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib ..\libcurl\output\libcurl-debug.lib ws2_32.lib winmm.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -82,11 +82,11 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..\libcurl\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG"
 				MinimalRebuild="FALSE"
 				ExceptionHandling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				TreatWChar_tAsBuiltInType="TRUE"
 				UsePrecompiledHeader="3"
 				PrecompiledHeaderThrough="StdAfx.hpp"
@@ -96,7 +96,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib ..\libcurl\output\libcurl.lib ws2_32.lib winmm.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
@@ -149,11 +149,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..\libcurl\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;_DEBUG;CRIPPLED"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				TreatWChar_tAsBuiltInType="TRUE"
 				UsePrecompiledHeader="3"
 				PrecompiledHeaderThrough="StdAfx.hpp"
@@ -163,7 +163,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib  ..\libcurl\output\libcurl-debug.lib ws2_32.lib winmm.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -212,11 +212,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				GlobalOptimizations="TRUE"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..\libcurl\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;CRIPPLED"
 				MinimalRebuild="FALSE"
 				ExceptionHandling="TRUE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				BufferSecurityCheck="FALSE"
 				TreatWChar_tAsBuiltInType="TRUE"
 				UsePrecompiledHeader="3"
@@ -227,7 +227,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib"
+				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib  ..\libcurl\output\libcurl.lib ws2_32.lib winmm.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
@@ -468,6 +468,12 @@
 			</File>
 			<File
 				RelativePath=".\source\DestinationPropertiesImage.hpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesScreenie.cpp">
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesScreenie.hpp">
 			</File>
 			<File
 				RelativePath=".\source\DestProperties.hpp">

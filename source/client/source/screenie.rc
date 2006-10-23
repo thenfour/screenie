@@ -63,22 +63,20 @@ IDI_CHECK               ICON                    "resources\\check.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 188, 133
+IDD_ABOUTBOX DIALOGEX 0, 0, 188, 105
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
 CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,131,112,50,14
-    GROUPBOX        "",IDC_STATIC,7,7,174,98
+    DEFPUSHBUTTON   "OK",IDOK,131,84,50,14
+    GROUPBOX        "",IDC_STATIC,7,7,174,71
     CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,
                     WS_EX_STATICEDGE
     LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
     LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",
                     IDC_COPYRIGHT,60,30,108,18
     LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,60,52,85,12
-    EDITTEXT        IDC_REGISTRANT,18,80,155,14,ES_AUTOHSCROLL | ES_READONLY
-    LTEXT           "Registered to:",IDC_STATIC,18,70,45,8
 END
 
 IDD_MAINDLG DIALOGEX 0, 0, 269, 238
@@ -318,7 +316,7 @@ BEGIN
         VERTGUIDE, 18
         VERTGUIDE, 60
         TOPMARGIN, 7
-        BOTTOMMARGIN, 126
+        BOTTOMMARGIN, 98
     END
 
     IDD_MAINDLG, DIALOG

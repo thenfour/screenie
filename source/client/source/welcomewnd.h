@@ -160,9 +160,9 @@ public:
     Version v;
     v.FromFile(GetModuleFileNameX().c_str());
 
-    // registration
-    DrawText_(0, 337, LeftPane, 30, true, DarkGreen, 19, FW_NORMAL, _T("Registered to:"));
-    DrawText_(0, 362, LeftPane, 422-362, true, DarkRed, 21, FW_BOLD, LibCC::Format().s(v.GetRegistrant()).Str(), true);
+//     // registration
+//     DrawText_(0, 337, LeftPane, 30, true, DarkGreen, 19, FW_NORMAL, _T("Registered to:"));
+//     DrawText_(0, 362, LeftPane, 422-362, true, DarkRed, 21, FW_BOLD, LibCC::Format().s(v.GetRegistrant()).Str(), true);
 
     // "Thank you for installing" is now on the graphic
     // DrawText_(LeftPane, 10, RightPane, 30, false, DarkGreen, 25, FW_NORMAL, _T("Thank you for installing"));
@@ -174,51 +174,12 @@ public:
     m_continue.SetImageList(m_continueImages.m_hImageList);
     m_continue.SetImages(normal, pushed);
 
-    if(m_nag)
-    {
-      SetupNag();
-    }
-    else
-    {
       SetupWelcome();
-    }
 
 		return 0;
-	}
+    }
   
 private:
-
-  void SetupNag()
-  {
-    const int indentedRightColmunX = 255;
-    // "the followming features have been disabled"
-    DrawText_(LeftPane, 155, RightPane, 25*3, false, DarkGreen, 19, FW_NORMAL, _T("This demo has the following\r\nrestrictions:"));
-
-    // "cropping"
-    DrawText_(indentedRightColmunX, 200, RightPane, 30, false, DarkGreen, 23, FW_NORMAL, _T("No cropping support"));
-
-    // "ftp uploading"
-    DrawText_(indentedRightColmunX, 240, RightPane, 30, false, DarkGreen, 23, FW_NORMAL, _T("You may only send\r\nscreenshots to one\r\ndestination"));
-
-    // "if you like what you see...."
-    DrawText_(LeftPane, 323, RightPane, 25, false, DarkGreen, 19, FW_NORMAL, _T("This demo is for trial purposes only.\r\nIf you like what you see, please\r\npurchase the full version."));
-
-    const int buttonY = 388;
-
-    // buy
-    CRect rc(LeftPane, buttonY, LeftPane + ButtonWidth, buttonY+ ButtonHeight);
-    m_buyImages.Create(ButtonWidth, ButtonHeight, ILC_COLOR32, 3, 0);
-    int normal = m_buyImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_BUY_NORMAL), _T("BIN")).handle);
-    int pushed = m_buyImages.Add(LoadBitmapResource(MAKEINTRESOURCE(IDR_BUY_PUSHED_HOVER), _T("BIN")).handle);
-    m_buy.SetImageList(m_buyImages.m_hImageList);
-    m_buy.SetImages(normal, pushed);
-    m_buy.Create(m_hWnd, &rc, _T("Buy"), WS_CHILD | WS_VISIBLE, 0, IDC_BUY);
-
-    // continue
-  	//void SetImages(int nNormal, int nPushed = -1, int nFocusOrHover = -1, int nDisabled = -1);
-    rc.SetRect(LeftPane + (RightPane / 2), buttonY, LeftPane + (RightPane / 2) + ButtonWidth, buttonY + ButtonHeight);
-    m_continue.Create(m_hWnd, &rc, _T("Continue"), WS_CHILD | WS_VISIBLE, 0, IDOK);
-  }
 
   void SetupWelcome()
   {
