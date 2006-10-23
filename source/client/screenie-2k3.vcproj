@@ -61,7 +61,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"/>
+				AdditionalIncludeDirectories="$(IntDir);..\wtl"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -82,7 +82,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\libcurl\include"
+				AdditionalIncludeDirectories="..\libcurl\include;..\wtl"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG"
 				MinimalRebuild="FALSE"
 				ExceptionHandling="TRUE"
@@ -127,7 +127,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"/>
+				AdditionalIncludeDirectories="$(IntDir);..\wtl"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -149,7 +149,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\libcurl\include"
+				AdditionalIncludeDirectories="..\libcurl\include;..\wtl"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;_DEBUG;CRIPPLED"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -190,7 +190,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"/>
+				AdditionalIncludeDirectories="$(IntDir);..\wtl"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -212,7 +212,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				GlobalOptimizations="TRUE"
-				AdditionalIncludeDirectories="..\libcurl\include"
+				AdditionalIncludeDirectories="..\libcurl\include;..\wtl"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG;CRIPPLED"
 				MinimalRebuild="FALSE"
 				ExceptionHandling="TRUE"
@@ -258,7 +258,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"/>
+				AdditionalIncludeDirectories="$(IntDir);..\wtl"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
