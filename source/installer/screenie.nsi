@@ -10,24 +10,15 @@
 !define installname "Screenie"
 !endif
 
+!include "MUI.nsh"
+
+SetCompressor lzma
+XPStyle on
+
 ; The name of the installer
 Name "${installname}"
 InstallDir "$PROGRAMFILES\Screenie"
 OutFile "${outfile}"
-
-; Adds an XP manifest to the installer
-XPStyle on
-
-Var "Launch"
-
-Page directory
-
-Page components
-
-Page instfiles
-
-UninstPage uninstConfirm
-UninstPage instfiles
 
 VIProductVersion 1.$WCREV$.$WCMODS?1:0.0
 VIAddVersionKey "ProductName" "${installname}"
@@ -37,9 +28,39 @@ VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net"
 VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0.0
 VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0.0
 
-; The stuff to install
-Section "Screenie Program Files (required)"
+;Interface Settings
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\orange.bmp"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange.bmp"
+!define MUI_HEADERIMAGE_UNBITMAP "${NSISDIR}\Contrib\Graphics\Header\orange-uninstall.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange-uninstall.bmp"
+!define MUI_COMPONENTSPAGE_CHECKBITMAP "${NSISDIR}\Contrib\Graphics\Checks\simple-round2.bmp"
+!define MUI_LICENSEPAGE_RADIOBUTTONS
+!define MUI_ABORTWARNING
+!define MUI_FINISHPAGE_RUN "$INSTDIR\Screenie.exe"
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_LICENSE "License.txt"
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+ 
+!insertmacro MUI_LANGUAGE "English"
+
+; ===============================
+; SECTIONS
+; ===============================
+
+; The stuff to install
+Section "Program Files (required)" program_files
   ;-------------------------
   ; Check for already-installed
   ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Screenie" "DisplayName"
@@ -86,21 +107,14 @@ lbl_VersionOK:
 SectionEnd
 
 ; optional section
-Section "Start Menu Shortcuts"
+Section "Start Menu Shortcuts" sms
   CreateDirectory "$SMPROGRAMS\Screenie"
   CreateShortCut "$SMPROGRAMS\Screenie\Uninstall.lnk" "$INSTDIR\Uninst.exe" "" "$INSTDIR\Uninst.exe" 0
   CreateShortCut "$SMPROGRAMS\Screenie\Screenie.lnk" "$INSTDIR\screenie.exe" "" "$INSTDIR\screenie.exe" 0
 SectionEnd
 
-; optional section
-Section "Launch Screenie"
-  StrCpy "$Launch" "Yes"
-SectionEnd
-
-Function .onInstSuccess
-  StrCmp "$Launch" "Yes" 0 +2
-  Exec "$INSTDIR\screenie.exe"
-FunctionEnd
+;--------------------------------
+;Uninstaller Section
 
 Section "Uninstall"
   FindWindow $0 "ScreenieMainWnd"
@@ -114,3 +128,11 @@ Section "Uninstall"
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Screenie"
 SectionEnd
+
+LangString Desc_Program_Files ${LANG_ENGLISH} "Screenie program files.  This component is required."
+LangString Desc_SMS ${LANG_ENGLISH} "Places shortcut(s) to installed program files in your Windows® Start menu."
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+!insertmacro MUI_DESCRIPTION_TEXT ${program_files} $(Desc_Program_Files)
+!insertmacro MUI_DESCRIPTION_TEXT ${sms} $(Desc_SMS)
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
