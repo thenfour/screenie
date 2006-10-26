@@ -6,14 +6,6 @@
 !define infile "..\..\bin-release\screenie.exe"
 !endif
 
-!ifndef registrant
-!define registrant "[development]"
-!endif
-
-!ifndef serial
-!define serial "0"
-!endif
-
 !ifndef installname
 !define installname "Screenie"
 !endif
@@ -37,14 +29,13 @@ Page instfiles
 UninstPage uninstConfirm
 UninstPage instfiles
 
-VIProductVersion 1.$WCREV$.$WCMODS?1:0$.${serial}
+VIProductVersion 1.$WCREV$.$WCMODS?1:0.0
 VIAddVersionKey "ProductName" "${installname}"
 VIAddVersionKey "CompanyName" "Carl Corcoran & Roger Clark"
-VIAddVersionKey "LegalCopyright" "©2005 Carl Corcoran & Roger Clark.  All Rights Reserved."
+VIAddVersionKey "LegalCopyright" "© 2006 Carl Corcoran & Roger Clark.  All Rights Reserved."
 VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net"
-VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0$.${serial}
-VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0$.${serial}
-VIAddVersionKey "RegisteredTo" "${registrant}"
+VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0.0
+VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0.0
 
 ; The stuff to install
 Section "Screenie Program Files (required)"
@@ -83,6 +74,10 @@ lbl_VersionOK:
   SetOutPath "$INSTDIR"
   Delete "$INSTDIR\screenie.exe"
   File ${infile}
+  File "msvcp71.dll"
+  File "msvcr71.dll"
+  File "gdiplus.dll"
+
   WriteUninstaller $INSTDIR\Uninst.exe
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie" "$INSTDIR\screenie.exe"
   
