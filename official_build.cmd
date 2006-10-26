@@ -10,11 +10,6 @@ echo.
 
 echo Confirming arguments / variables...
   set svnroot=%cd%
-  set serial=%1
-  set registrant=%2
-
-  if "%1" == "" set /P serial=Enter the serial number: 
-  if "%2" == "" set /P registrant=Enter the registrant: 
 
   set bindir=%3
   if "%3" == "" set bindir=bin-release
@@ -25,8 +20,6 @@ echo Confirming arguments / variables...
   if "%4" == "" set /P installname=Enter the installer name, or leave it blank to use "Screenie":
   
   echo   svnroot     =%svnroot%
-  echo   serial      =%serial%
-  echo   registrant  =%registrant%
   echo   bindir      =%bindir%
   echo   installname =%installname%
   echo.
@@ -66,7 +59,7 @@ echo Watermarking screenie.exe...
 
 echo Building Installer...
   rem /O"%outdir%\nsislog.txt" 
-  makensis.exe /Dinstallname="%installname%" /Dregistrant="%registrant%" /Dserial="%serial%" /Dinfile="%outdir%\screenie.exe" /Doutfile="%outdir%\ScreenieSetup.exe" "%outdir%\installer.nsi"
+  makensis.exe /Dinstallname="%installname%" /Dinfile="%outdir%\screenie.exe" /Doutfile="%outdir%\ScreenieSetup.exe" "%outdir%\installer.nsi"
   if %errorlevel% gtr 0 goto NSISError
 
 echo Zipping it...
