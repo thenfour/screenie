@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "..\..\wtl\atlres.h"
+#include "atlres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -300,6 +300,19 @@ BEGIN
     LTEXT           "Type:",IDC_STATIC,12,30,24,12
 END
 
+IDD_PROMPT DIALOGEX 0, 0, 288, 61
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
+CAPTION "User text prompt"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Enter a name or word to be used in your screenshot's filename:",
+                    IDC_PROMPT_LABEL,7,7,269,11
+    EDITTEXT        IDC_PROMPT_TEXT,7,21,274,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,178,40,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,231,40,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -415,6 +428,14 @@ BEGIN
         RIGHTMARGIN, 200
         TOPMARGIN, 7
         BOTTOMMARGIN, 66
+    END
+
+    IDD_PROMPT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 281
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 54
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -537,7 +558,7 @@ IDR_CHECKED             BIN                     "resources\\checked.gif"
 
 STRINGTABLE 
 BEGIN
-    IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)"
+    IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)\r\n%t = prompt for user text"
 END
 
 #endif    // English (U.S.) resources

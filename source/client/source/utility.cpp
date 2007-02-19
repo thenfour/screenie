@@ -15,6 +15,7 @@
 
 #include "screenshotdestination.hpp"
 #include "internet.hpp"
+#include "..\TextPromptDlg.h"
 
 using namespace LibCC;
 
@@ -243,7 +244,32 @@ tstd::tstring MonthNameFromNumber(unsigned int monthNumber)
 	return monthNames[monthNumber];
 }
 
-tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat)
+tstd::tstring StripBadFilenameChars(const tstd::tstring& str)
+{
+	tstd::tstring result;
+
+	// this is really lame
+	for (size_t i = 0; i < str.length(); i++)
+	{
+		switch (str[i])
+		{
+		case '/':
+		case '\\':
+		case ':':
+		case '?':
+		case '&':
+		case '=':
+			break;
+		default:
+			result += str[i];
+			break;
+		}
+	}
+
+	return result;
+}
+
+tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat, bool preview)
 {
 	tstd::tstringstream outputStream;
 
@@ -296,6 +322,24 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 					break;
 				case TEXT('s'):
           outputStream << Format().ui<10,2>(systemTime.wSecond).Str();
+					break;
+				case TEXT('t'):
+					{
+						if (preview)
+						{
+							outputStream << "[text]";
+						}
+						else
+						{
+							CTextPromptDlg dlg(TEXT("Enter filename text"),
+								TEXT("Enter a name or word to be used in your screenshot's filename"), TEXT(""));
+
+							if (dlg.DoModal() == IDOK)
+							{
+								outputStream << StripBadFilenameChars(dlg.GetText());
+							}
+						}
+					}
 					break;
 				default:
 					// this isn't a format specifier character.

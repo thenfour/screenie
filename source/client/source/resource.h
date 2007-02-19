@@ -30,6 +30,8 @@
 #define IDR_CROPMENU                    243
 #define IDD_DIALOG1                     244
 #define IDD_NEW_DESTINATION             244
+#define IDD_DIALOG2                     245
+#define IDD_PROMPT                      245
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -117,6 +119,8 @@
 #define IDC_SCREENIE_PASSWORD           1059
 #define IDC_SCREENIE_USERNAME           1060
 #define IDC_SCREENIE_URL                1061
+#define IDC_PROMPT_TEXT                 1062
+#define IDC_PROMPT_LABEL                1063
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -186,9 +190,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        245
+#define _APS_NEXT_RESOURCE_VALUE        246
 #define _APS_NEXT_COMMAND_VALUE         32788
-#define _APS_NEXT_CONTROL_VALUE         1062
+#define _APS_NEXT_CONTROL_VALUE         1064
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
