@@ -523,6 +523,9 @@
 				RelativePath=".\source\StatusDlg.hpp">
 			</File>
 			<File
+				RelativePath=".\TextPromptDlg.h">
+			</File>
+			<File
 				RelativePath=".\source\welcomewnd.h">
 			</File>
 		</Filter>
