@@ -7,6 +7,7 @@
 #ifndef SCREENIE_TEXTPROMPTDLG_H
 #define SCREENIE_TEXTPROMPTDLG_H
 
+#include "resource.h"
 #include "utility.hpp"
 
 class CTextPromptDlg : public CDialogImpl<CTextPromptDlg>
@@ -34,15 +35,17 @@ private:
 		COMMAND_ID_HANDLER(IDCANCEL, OnCloseCmd)
 	END_MSG_MAP()
 
-	LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
-		SetWindowText(title.c_str());
+		SetWindowText(m_title.c_str());
 		SetDlgItemText(IDC_PROMPT_LABEL, m_label.c_str());
+
+		SendMessage(m_hWnd, WM_NEXTDLGCTL, (WPARAM)(HWND)GetDlgItem(IDC_PROMPT_TEXT), TRUE);
 
 		return TRUE;
 	}
 
-	LRESULT CAboutDlg::OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	LRESULT OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
 		if (wID == IDOK)
 			m_text = GetWindowString(GetDlgItem(IDC_PROMPT_TEXT));

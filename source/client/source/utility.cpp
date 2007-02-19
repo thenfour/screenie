@@ -5,6 +5,7 @@
 //
 
 #include "stdafx.hpp"
+#include "resource.h"
 
 #include <iomanip>
 #include <wininet.h>
@@ -15,7 +16,7 @@
 
 #include "screenshotdestination.hpp"
 #include "internet.hpp"
-#include "..\TextPromptDlg.h"
+#include "TextPromptDlg.h"
 
 using namespace LibCC;
 
@@ -327,7 +328,7 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 					{
 						if (preview)
 						{
-							outputStream << "[text]";
+							outputStream << "(your_text_here)";
 						}
 						else
 						{
