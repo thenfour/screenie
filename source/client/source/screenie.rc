@@ -40,7 +40,6 @@ END
 
 3 TEXTINCLUDE 
 BEGIN
-    "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""resources\\\\screenie.exe.manifest""\r\n"
     "#include ""screenie.rc2""\r\n"
     "\0"
 END
@@ -571,7 +570,6 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "resources\\screenie.exe.manifest"
 #include "screenie.rc2"
 
 /////////////////////////////////////////////////////////////////////////////
