@@ -12,7 +12,7 @@
 
 
 template<bool m_nag>// if false, assume we are showing welcome.
-class CWelcomeWindow : public CWindowImpl<CWelcomeWindow>
+class CWelcomeWindow : public CWindowImpl< CWelcomeWindow<m_nag> >
 {
   static const COLORREF DarkGreen = RGB(23,43,18);
   static const COLORREF DarkRed = RGB(107,23,21);
