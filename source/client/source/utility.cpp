@@ -20,6 +20,20 @@
 
 using namespace LibCC;
 
+tstd::tstring GuidToString(GUID& guid)
+{
+	tstd::tstringstream strm;
+
+	strm << std::hex << std::setw(8) << std::setfill('0') << guid.Data1 << "-";
+	strm << std::hex << std::setw(4) << std::setfill('0') << guid.Data2 << "-";
+	strm << std::hex << std::setw(4) << std::setfill('0') << guid.Data3 << "-";
+
+	for (size_t i = 0; i < 8; i++)
+		strm << std::hex << std::setw(2) << std::setfill('0') << (int)guid.Data4[i];
+
+	return StringToUpper(strm.str());
+}
+
 bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTime, const tstd::tstring& mimeType, const tstd::tstring& formatString)
 {
 	ImageCodecsEnum imageCodecs;
@@ -340,6 +354,13 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 								outputStream << StripBadFilenameChars(dlg.GetText());
 							}
 						}
+					}
+					break;
+				case TEXT('g'):
+					{
+						GUID guid = { 0 };
+						CoCreateGuid(&guid);
+						outputStream << GuidToString(guid);
 					}
 					break;
 				default:
