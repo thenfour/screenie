@@ -27,8 +27,9 @@ tstd::tstring GuidToString(GUID& guid)
 	strm << std::hex << std::setw(8) << std::setfill('0') << guid.Data1 << "-";
 	strm << std::hex << std::setw(4) << std::setfill('0') << guid.Data2 << "-";
 	strm << std::hex << std::setw(4) << std::setfill('0') << guid.Data3 << "-";
+	strm << std::hex << std::setw(2) << std::setfill('0') << (int)guid.Data4[0] << (int)guid.Data4[1] << "-";
 
-	for (size_t i = 0; i < 8; i++)
+	for (size_t i = 2; i < 8; i++)
 		strm << std::hex << std::setw(2) << std::setfill('0') << (int)guid.Data4[i];
 
 	return StringToUpper(strm.str());
