@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "screenie", "client\screenie-2k3.vcproj", "{C842F6FF-88EE-4F49-A446-74A504643F8F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "screenie", "client\screenie.vcproj", "{C842F6FF-88EE-4F49-A446-74A504643F8F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9} = {FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}
 	EndProjectSection
