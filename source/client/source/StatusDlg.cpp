@@ -73,7 +73,7 @@ void ProgressImages::InitializeProgressImages(CImageList& img, RgbPixel32 backgr
     m_bmp = new AnimBitmap<32>();
     m_bmp->SetSize(16, 16);
     m_bmp->Fill(m_background);
-    FilledCircleAAG(8, 8, m_radius, this, DrawHLine, this, DrawAlphaPixel);
+	FilledCircleAAG(8, 8, m_radius, this, &ProgressImages::DrawHLine, this, &ProgressImages::DrawAlphaPixel);
     // add it to the imagelist.
     HBITMAP hbm = m_bmp->DetachHandle();
     m_images.push_back(img.Add(hbm));
