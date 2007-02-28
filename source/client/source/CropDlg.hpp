@@ -126,7 +126,8 @@ public:
 
   void SetZoomFactor(float ideal, bool updateTrackbar)
   {
-    for(size_t i = 0; i < m_zoomFactors.size(); ++ i)
+	size_t i;
+    for(i = 0; i < m_zoomFactors.size(); ++ i)
     {
       if(m_zoomFactors[i] > ideal) break;
     }
