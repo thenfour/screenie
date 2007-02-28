@@ -1,63 +1,107 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="libcurl"
 	ProjectGUID="{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\output"
 			IntermediateDirectory=".\output"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=".\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;CURL_STATICLIB;BUILDING_LIBCURL"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libcurl-debug.lib"/>
+				OutputFile="$(OutDir)/libcurl-debug.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\output"
 			IntermediateDirectory=".\output"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories=".\include"
@@ -65,31 +109,37 @@
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libcurl.lib"/>
+				OutputFile="$(OutDir)/libcurl.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -97,374 +147,494 @@
 	<Files>
 		<Filter
 			Name="include"
-			Filter="">
+			>
 			<Filter
 				Name="curl"
-				Filter="">
+				>
 				<File
-					RelativePath=".\include\curl\curl.h">
+					RelativePath=".\include\curl\curl.h"
+					>
 				</File>
 				<File
-					RelativePath=".\include\curl\curlver.h">
+					RelativePath=".\include\curl\curlver.h"
+					>
 				</File>
 				<File
-					RelativePath=".\include\curl\easy.h">
+					RelativePath=".\include\curl\easy.h"
+					>
 				</File>
 				<File
-					RelativePath=".\include\curl\mprintf.h">
+					RelativePath=".\include\curl\mprintf.h"
+					>
 				</File>
 				<File
-					RelativePath=".\include\curl\multi.h">
+					RelativePath=".\include\curl\multi.h"
+					>
 				</File>
 				<File
-					RelativePath=".\include\curl\stdcheaders.h">
+					RelativePath=".\include\curl\stdcheaders.h"
+					>
 				</File>
 				<File
-					RelativePath=".\include\curl\types.h">
+					RelativePath=".\include\curl\types.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="source"
-			Filter="">
+			>
 			<File
-				RelativePath=".\source\arpa_telnet.h">
+				RelativePath=".\source\arpa_telnet.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\base64.c">
+				RelativePath=".\source\base64.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\base64.h">
+				RelativePath=".\source\base64.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ca-bundle.h">
+				RelativePath=".\source\ca-bundle.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\config-win32.h">
+				RelativePath=".\source\config-win32.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\connect.c">
+				RelativePath=".\source\connect.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\connect.h">
+				RelativePath=".\source\connect.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\content_encoding.c">
+				RelativePath=".\source\content_encoding.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\content_encoding.h">
+				RelativePath=".\source\content_encoding.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\cookie.c">
+				RelativePath=".\source\cookie.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\cookie.h">
+				RelativePath=".\source\cookie.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\curlx.h">
+				RelativePath=".\source\curlx.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\dict.c">
+				RelativePath=".\source\dict.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\dict.h">
+				RelativePath=".\source\dict.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\easy.c">
+				RelativePath=".\source\easy.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\easyif.h">
+				RelativePath=".\source\easyif.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\escape.c">
+				RelativePath=".\source\escape.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\escape.h">
+				RelativePath=".\source\escape.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\file.c">
+				RelativePath=".\source\file.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\file.h">
+				RelativePath=".\source\file.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\formdata.c">
+				RelativePath=".\source\formdata.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\formdata.h">
+				RelativePath=".\source\formdata.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ftp.c">
+				RelativePath=".\source\ftp.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ftp.h">
+				RelativePath=".\source\ftp.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\getenv.c">
+				RelativePath=".\source\getenv.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\getinfo.c">
+				RelativePath=".\source\getinfo.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\getinfo.h">
+				RelativePath=".\source\getinfo.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\gtls.c">
+				RelativePath=".\source\gtls.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\gtls.h">
+				RelativePath=".\source\gtls.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hash.c">
+				RelativePath=".\source\hash.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hash.h">
+				RelativePath=".\source\hash.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostares.c">
+				RelativePath=".\source\hostares.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostasyn.c">
+				RelativePath=".\source\hostasyn.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostip.c">
+				RelativePath=".\source\hostip.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostip.h">
+				RelativePath=".\source\hostip.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostip4.c">
+				RelativePath=".\source\hostip4.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostip6.c">
+				RelativePath=".\source\hostip6.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostsyn.c">
+				RelativePath=".\source\hostsyn.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\hostthre.c">
+				RelativePath=".\source\hostthre.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http.c">
+				RelativePath=".\source\http.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http.h">
+				RelativePath=".\source\http.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_chunks.c">
+				RelativePath=".\source\http_chunks.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_chunks.h">
+				RelativePath=".\source\http_chunks.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_digest.c">
+				RelativePath=".\source\http_digest.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_digest.h">
+				RelativePath=".\source\http_digest.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_negotiate.c">
+				RelativePath=".\source\http_negotiate.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_negotiate.h">
+				RelativePath=".\source\http_negotiate.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_ntlm.c">
+				RelativePath=".\source\http_ntlm.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\http_ntlm.h">
+				RelativePath=".\source\http_ntlm.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\if2ip.c">
+				RelativePath=".\source\if2ip.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\if2ip.h">
+				RelativePath=".\source\if2ip.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\inet_ntoa_r.h">
+				RelativePath=".\source\inet_ntoa_r.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\inet_ntop.c">
+				RelativePath=".\source\inet_ntop.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\inet_ntop.h">
+				RelativePath=".\source\inet_ntop.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\inet_pton.c">
+				RelativePath=".\source\inet_pton.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\inet_pton.h">
+				RelativePath=".\source\inet_pton.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\krb4.c">
+				RelativePath=".\source\krb4.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\krb4.h">
+				RelativePath=".\source\krb4.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ldap.c">
+				RelativePath=".\source\ldap.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ldap.h">
+				RelativePath=".\source\ldap.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\llist.c">
+				RelativePath=".\source\llist.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\llist.h">
+				RelativePath=".\source\llist.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\md5.c">
+				RelativePath=".\source\md5.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\md5.h">
+				RelativePath=".\source\md5.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\memdebug.c">
+				RelativePath=".\source\memdebug.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\memdebug.h">
+				RelativePath=".\source\memdebug.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\memory.h">
+				RelativePath=".\source\memory.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\mprintf.c">
+				RelativePath=".\source\mprintf.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\multi.c">
+				RelativePath=".\source\multi.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\multiif.h">
+				RelativePath=".\source\multiif.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\netrc.c">
+				RelativePath=".\source\netrc.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\netrc.h">
+				RelativePath=".\source\netrc.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\parsedate.c">
+				RelativePath=".\source\parsedate.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\parsedate.h">
+				RelativePath=".\source\parsedate.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\progress.c">
+				RelativePath=".\source\progress.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\progress.h">
+				RelativePath=".\source\progress.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\security.c">
+				RelativePath=".\source\security.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\select.c">
+				RelativePath=".\source\select.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\select.h">
+				RelativePath=".\source\select.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\sendf.c">
+				RelativePath=".\source\sendf.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\sendf.h">
+				RelativePath=".\source\sendf.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\setup.h">
+				RelativePath=".\source\setup.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\share.c">
+				RelativePath=".\source\share.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\share.h">
+				RelativePath=".\source\share.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\sockaddr.h">
+				RelativePath=".\source\sockaddr.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\speedcheck.c">
+				RelativePath=".\source\speedcheck.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\speedcheck.h">
+				RelativePath=".\source\speedcheck.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\splay.c">
+				RelativePath=".\source\splay.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\splay.h">
+				RelativePath=".\source\splay.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\sslgen.c">
+				RelativePath=".\source\sslgen.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\sslgen.h">
+				RelativePath=".\source\sslgen.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ssluse.c">
+				RelativePath=".\source\ssluse.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\ssluse.h">
+				RelativePath=".\source\ssluse.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strequal.c">
+				RelativePath=".\source\strequal.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strequal.h">
+				RelativePath=".\source\strequal.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strerror.c">
+				RelativePath=".\source\strerror.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strerror.h">
+				RelativePath=".\source\strerror.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strtok.c">
+				RelativePath=".\source\strtok.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strtok.h">
+				RelativePath=".\source\strtok.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strtoofft.c">
+				RelativePath=".\source\strtoofft.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\strtoofft.h">
+				RelativePath=".\source\strtoofft.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\telnet.c">
+				RelativePath=".\source\telnet.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\telnet.h">
+				RelativePath=".\source\telnet.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\tftp.c">
+				RelativePath=".\source\tftp.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\tftp.h">
+				RelativePath=".\source\tftp.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\timeval.c">
+				RelativePath=".\source\timeval.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\timeval.h">
+				RelativePath=".\source\timeval.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\transfer.c">
+				RelativePath=".\source\transfer.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\transfer.h">
+				RelativePath=".\source\transfer.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\url.c">
+				RelativePath=".\source\url.c"
+				>
 			</File>
 			<File
-				RelativePath=".\source\url.h">
+				RelativePath=".\source\url.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\urldata.h">
+				RelativePath=".\source\urldata.h"
+				>
 			</File>
 			<File
-				RelativePath=".\source\version.c">
+				RelativePath=".\source\version.c"
+				>
 			</File>
 		</Filter>
 	</Files>
