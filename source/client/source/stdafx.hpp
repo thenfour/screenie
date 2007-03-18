@@ -1,6 +1,8 @@
 #ifndef SCREENIE_STDAFX_HPP
 #define SCREENIE_STDAFX_HPP
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #define WINVER				0x0500
 #define _WIN32_WINNT		0x0500
 #define _WIN32_IE			0x0500
@@ -11,19 +13,19 @@
 #include <shlwapi.h>
 
 #include <atlbase.h>
-#include <atlapp.h>
+#include "..\wtl\atlapp.h"
 
 extern CAppModule _Module;
 
 #include <atlwin.h>
 
-#include <atlframe.h>
-#include <atlctrls.h>
-#include <atlctrlx.h>
-#include <atldlgs.h>
-#include <atlscrl.h>
-#include <atlmisc.h>
-#include <atluser.h>
+#include "..\wtl\atlframe.h"
+#include "..\wtl\atlctrls.h"
+#include "..\wtl\atlctrlx.h"
+#include "..\wtl\atldlgs.h"
+#include "..\wtl\atlscrl.h"
+#include "..\wtl\atlmisc.h"
+#include "..\wtl\atluser.h"
 
 #include <gdiplus.h>
 
