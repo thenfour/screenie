@@ -58,25 +58,6 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
   ScreenshotOptions options;
 	LoadOptionsFromRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
 
-#ifdef CRIPPLED
-  CWelcomeWindow<true> nag(options);
-  CWelcomeWindow<false> welcome(options);
-  if(options.ShowSplash())
-  {
-    nag.GoForIt(&welcome);
-  }
-  else
-  {
-    nag.GoForIt(0);
-  }
-#else
-//   CWelcomeWindow<false> welcome(options);
-//   if(options.ShowSplash())
-//   {
-//     welcome.GoForIt(0);
-//   }
-#endif
-
   g_mainWindow = new CMainWindow(options);
 
 	RECT display = { 0 };
@@ -90,13 +71,6 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 			retval = theLoop.Run();
 		}
 	}
-
-#ifdef CRIPPLED
-  nag.EnsureDestroyed();
-  welcome.EnsureDestroyed();
-#else
-  //welcome.EnsureDestroyed();
-#endif
 
   delete g_mainWindow;
 

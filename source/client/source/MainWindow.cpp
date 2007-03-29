@@ -27,13 +27,6 @@ BOOL CMainWindow::DisplayTrayMenu()
 	CMenu contextMenu(AtlLoadMenu(IDM_CONTEXTMENU));
 	CMenuHandle trayMenu = contextMenu.GetSubMenu(0);
 
-#ifdef CRIPPLED
-  MenuItemInfo buy = MenuItemInfo::CreateText(_T("Buy Screenie..."), ID_TRAYCONTEXTMENU_BUY);
-  MenuItemInfo sep = MenuItemInfo::CreateSeparator();
-  trayMenu.InsertMenuItem(0, TRUE, &sep);
-  trayMenu.InsertMenuItem(0, TRUE, &buy);
-#endif
-
 	::SetForegroundWindow(m_hWnd);
 
 	POINT cursorPos = { 0 };
@@ -138,21 +131,7 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
 		{
 			if (destination.enabled)
       {
-#ifdef CRIPPLED
-        if(enabledDestinations == 0)
-        {
-#endif
-          ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, params.windowTitle, bUsedClipboard);
-#ifdef CRIPPLED
-        }
-        else
-        {
-          // display a warning
-          pThis->m_statusDialog.AsyncCreateMessage(
-            AsyncStatusWindow::MSG_WARNING, AsyncStatusWindow::ITEM_GENERAL, destination.general.name,
-			      _T("This demo only allows you to use one destination per screenshot."));
-        }
-#endif
+        ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, params.windowTitle, bUsedClipboard);
         enabledDestinations ++;
       }
 		}

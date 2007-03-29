@@ -63,53 +63,41 @@ IDI_CHECK               ICON                    "resources\\check.ico"
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 188, 105
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,131,84,50,14
     GROUPBOX        "",IDC_STATIC,7,7,174,71
-    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,
-                    WS_EX_STATICEDGE
+    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,WS_EX_STATICEDGE
     LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
-    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",
-                    IDC_COPYRIGHT,60,30,108,18
+    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",IDC_COPYRIGHT,60,30,108,18
     LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,60,52,85,12
 END
 
 IDD_MAINDLG DIALOGEX 0, 0, 269, 238
-STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | WS_MINIMIZEBOX | 
-    WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_WINDOWEDGE | WS_EX_APPWINDOW
 CAPTION "Screenie Options"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_DESTINATIONS,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | 
-                    WS_BORDER | WS_TABSTOP,16,110,236,70
-    CONTROL         "Confirm destinations before saving screenshots",
-                    IDC_CONFIRM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,20,
-                    174,12
-    CONTROL         "Show cropping window before saving screenshots",
-                    IDC_CROPPING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,32,
-                    178,12
-    CONTROL         "Include cursor in screenshots",IDC_INCLUDECURSOR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,16,44,107,12
+    CONTROL         "",IDC_DESTINATIONS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,16,110,236,70
+    CONTROL         "Confirm destinations before saving screenshots",IDC_CONFIRM,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,20,174,12
+    CONTROL         "Show cropping window before saving screenshots",IDC_CROPPING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,32,178,12
+    CONTROL         "Include cursor in screenshots",IDC_INCLUDECURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,44,107,12
     CONTROL         "Show status window during processing",IDC_SHOWSTATUS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,56,135,12
     PUSHBUTTON      "&New...",IDC_NEW,98,186,50,14
     PUSHBUTTON      "&Edit...",IDC_EDIT,150,186,50,14
     PUSHBUTTON      "&Remove",IDC_REMOVE,202,186,50,14
     PUSHBUTTON      "OK",IDOK,159,217,50,14
-    GROUPBOX        "General",IDC_GENERAL_GROUP,6,7,256,83,0,
-                    WS_EX_TRANSPARENT
-    GROUPBOX        "Destinations",IDC_DESTINATIONS_GROUP,6,96,256,114,0,
-                    WS_EX_TRANSPARENT
+    GROUPBOX        "General",IDC_GENERAL_GROUP,6,7,256,83,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Destinations",IDC_DESTINATIONS_GROUP,6,96,256,114,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "Cancel",IDCANCEL,212,217,50,14
-    CONTROL         "Automatically start Screenie when Windows starts",
-                    IDC_AUTOSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,
-                    68,174,12
+    CONTROL         "Automatically start Screenie when Windows starts",IDC_AUTOSTART,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,68,174,12
 END
 
 IDD_DESTPROP_GENERAL DIALOGEX 0, 0, 235, 262
@@ -118,19 +106,14 @@ CAPTION "General"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     EDITTEXT        IDC_GENERAL_NAME,54,24,162,12,ES_AUTOHSCROLL
-    COMBOBOX        IDC_GENERAL_TYPE,54,42,162,12,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_GENERAL_FORMAT,54,90,162,12,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_GENERAL_TYPE,54,42,162,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_GENERAL_FORMAT,54,90,162,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     EDITTEXT        IDC_FILE_FOLDER,54,108,138,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_FILE_FOLDER_BROWSE,198,108,18,12
     EDITTEXT        IDC_FILENAME_FORMAT,54,126,162,12,ES_AUTOHSCROLL
-    CONTROL         "Use local timezone",IDC_FILENAME_LOCAL,"Button",
-                    BS_AUTORADIOBUTTON,54,219,75,10
-    CONTROL         "Use universal time",IDC_FILENAME_UTC,"Button",
-                    BS_AUTORADIOBUTTON,135,219,74,10
-    EDITTEXT        IDC_FILENAME_FORMATPREVIEW,54,233,162,12,ES_AUTOHSCROLL | 
-                    ES_READONLY
+    CONTROL         "Use local timezone",IDC_FILENAME_LOCAL,"Button",BS_AUTORADIOBUTTON,54,219,75,10
+    CONTROL         "Use universal time",IDC_FILENAME_UTC,"Button",BS_AUTORADIOBUTTON,135,219,74,10
+    EDITTEXT        IDC_FILENAME_FORMATPREVIEW,54,233,162,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "General",IDC_STATIC,7,7,221,59
     LTEXT           "Name:",IDC_STATIC,18,24,36,12
     LTEXT           "Action:",IDC_STATIC,18,42,30,12
@@ -138,23 +121,18 @@ BEGIN
     LTEXT           "Format:",IDC_STATIC,18,90,36,12
     LTEXT           "Folder:",IDC_STATIC,18,108,36,12
     LTEXT           "Filename:",IDC_STATIC,18,126,36,12
-    EDITTEXT        IDC_FILENAME_FORMATDESC,18,144,198,71,ES_MULTILINE | 
-                    ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
+    EDITTEXT        IDC_FILENAME_FORMATDESC,18,144,198,71,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
     LTEXT           "Preview:",IDC_STATIC,18,235,36,12
 END
 
 IDD_STATUS DIALOGEX 0, 0, 258, 225
-STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | 
-    WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Processing Status"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,201,204,50,14
-    CONTROL         "",IDC_MESSAGES,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | 
-                    WS_BORDER | WS_TABSTOP,7,7,244,191
+    CONTROL         "",IDC_MESSAGES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,244,191
 END
 
 IDD_DESTPROP_FTP DIALOGEX 0, 0, 235, 262
@@ -171,18 +149,14 @@ BEGIN
     LTEXT           "Username:",IDC_STATIC,18,92,42,12
     EDITTEXT        IDC_FTP_USERNAME,60,90,156,12,ES_AUTOHSCROLL
     LTEXT           "Password:",IDC_STATIC,18,110,42,12
-    EDITTEXT        IDC_FTP_PASSWORD,60,108,156,12,ES_PASSWORD | 
-                    ES_AUTOHSCROLL
+    EDITTEXT        IDC_FTP_PASSWORD,60,108,156,12,ES_PASSWORD | ES_AUTOHSCROLL
     GROUPBOX        "Remote File",IDC_STATIC,7,138,221,114
-    LTEXT           "File Path (e.g., /home/joe/public_html/screenshots/):",
-                    IDC_STATIC,18,150,198,12
+    LTEXT           "File Path (e.g., /home/joe/public_html/screenshots/):",IDC_STATIC,18,150,198,12
     EDITTEXT        IDC_FTP_REMOTEPATH,18,162,198,12,ES_AUTOHSCROLL
-    LTEXT           "Base URL (e.g., http://mysite.com/~joe/screenshots/):",
-                    IDC_STATIC,18,180,198,12
+    LTEXT           "Base URL (e.g., http://mysite.com/~joe/screenshots/):",IDC_STATIC,18,180,198,12
     EDITTEXT        IDC_FTP_HTTPURL,18,192,198,12,ES_AUTOHSCROLL
-    CONTROL         "Copy image URL to clipboard after processing",
-                    IDC_FTP_COPYURL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,
-                    210,198,12
+    CONTROL         "Copy image URL to clipboard after processing",IDC_FTP_COPYURL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,210,198,12
 END
 
 IDD_DESTPROP_RESIZING DIALOGEX 0, 0, 235, 262
@@ -191,13 +165,10 @@ CAPTION "Resizing"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Resizing Options",IDC_STATIC,7,7,221,77
-    CONTROL         "Resize my screenshot",IDC_RESIZE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,18,24,198,12
-    CONTROL         "Scale (in percent):",IDC_RESIZE_SCALE,"Button",
-                    BS_AUTORADIOBUTTON,30,42,72,12
+    CONTROL         "Resize my screenshot",IDC_RESIZE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,24,198,12
+    CONTROL         "Scale (in percent):",IDC_RESIZE_SCALE,"Button",BS_AUTORADIOBUTTON,30,42,72,12
     EDITTEXT        IDC_RESIZE_SCALE_VALUE,126,42,54,12,ES_AUTOHSCROLL
-    CONTROL         "Limit height or width to:",IDC_RESIZE_LIMIT,"Button",
-                    BS_AUTORADIOBUTTON,30,60,90,12
+    CONTROL         "Limit height or width to:",IDC_RESIZE_LIMIT,"Button",BS_AUTORADIOBUTTON,30,60,90,12
     EDITTEXT        IDC_RESIZE_LIMIT_VALUE,126,60,54,12,ES_AUTOHSCROLL
     LTEXT           "pixels",IDC_RESIZE_LIMIT_LABEL,186,62,30,12
 END
@@ -213,20 +184,17 @@ BEGIN
     LTEXT           "Port:",IDC_STATIC,18,42,30,12
     EDITTEXT        IDC_FTP_PORT,60,42,48,12,ES_AUTOHSCROLL | ES_NUMBER
     GROUPBOX        "Remote File",IDC_STATIC,7,138,221,48
-    LTEXT           "File Path (for example, /home/joe/public_html/screenshots/):",
-                    IDC_STATIC,18,150,198,12
+    LTEXT           "File Path (for example, /home/joe/public_html/screenshots/):",IDC_STATIC,18,150,198,12
     EDITTEXT        IDC_FTP_REMOTEPATH,18,162,198,12,ES_AUTOHSCROLL
     GROUPBOX        "Authentication:",IDC_STATIC,7,72,221,60
     LTEXT           "Username:",IDC_STATIC,18,90,42,12
     EDITTEXT        IDC_FTP_USERNAME,60,90,156,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_FTP_PASSWORD,60,108,156,12,ES_PASSWORD | 
-                    ES_AUTOHSCROLL
+    EDITTEXT        IDC_FTP_PASSWORD,60,108,156,12,ES_PASSWORD | ES_AUTOHSCROLL
     LTEXT           "Password:",IDC_STATIC,18,108,42,12
 END
 
 IDD_CROPDLG DIALOGEX 0, 0, 338, 209
-STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | WS_MAXIMIZEBOX | 
-    WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | WS_MAXIMIZEBOX | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Crop Screenshot"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -240,28 +208,10 @@ BEGIN
     PUSHBUTTON      "Select All",IDC_SELECTALL,226,171,50,14
     LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
     LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,167,8
-    LTEXT           "To Pan: Click and drag with the RIGHT mouse button",
-                    IDC_CONTROLS3,7,179,173,8
+    LTEXT           "To Pan: Click and drag with the RIGHT mouse button",IDC_CONTROLS3,7,179,173,8
     LTEXT           "To Zoom: Use the mouse wheel",IDC_CONTROLS2,7,187,173,8
-    LTEXT           "To Select: Click and drag with the LEFT mouse button",
-                    IDC_CONTROLS4,7,171,173,8
-    LTEXT           "Hold SHIFT for precision. Hold SHIFT+CONTROL for extra precision",
-                    IDC_CONTROLS1,7,195,215,8
-END
-
-IDD_BUY DIALOGEX 0, 0, 202, 79
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
-CAPTION "Demo version"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    PUSHBUTTON      "Cancel",IDCANCEL,102,58,50,14
-    CTEXT           "http://www.screenie.net/",IDC_HYPERLINK,7,43,188,12
-    CONTROL         211,IDC_STATIC,"Static",SS_BITMAP,7,7,35,32,
-                    WS_EX_CLIENTEDGE
-    LTEXT           "example: The demo version of Screenie does not allow uploading to FTP.  Please buy the full version from the URL below.",
-                    IDC_DESCRIPTION,46,11,149,24
-    DEFPUSHBUTTON   "Buy",IDC_BUY,48,58,50,14
+    LTEXT           "To Select: Click and drag with the LEFT mouse button",IDC_CONTROLS4,7,171,173,8
+    LTEXT           "Hold SHIFT for precision. Hold SHIFT+CONTROL for extra precision",IDC_CONTROLS1,7,195,215,8
 END
 
 IDD_DESTPROP_SCREENIE DIALOGEX 0, 0, 235, 262
@@ -276,17 +226,14 @@ BEGIN
     LTEXT           "Username:",-1,18,90,42,12
     EDITTEXT        IDC_SCREENIE_USERNAME,60,90,156,12,ES_AUTOHSCROLL
     LTEXT           "Password:",-1,18,108,42,12
-    EDITTEXT        IDC_SCREENIE_PASSWORD,60,108,156,12,ES_PASSWORD | 
-                    ES_AUTOHSCROLL
-    CONTROL         "Copy image URL to clipboard after processing",
-                    IDC_SCREENIE_COPYURL,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,138,221,12
+    EDITTEXT        IDC_SCREENIE_PASSWORD,60,108,156,12,ES_PASSWORD | ES_AUTOHSCROLL
+    CONTROL         "Copy image URL to clipboard after processing",IDC_SCREENIE_COPYURL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,138,221,12
     LTEXT           "Example: http://users.screenie.net/",-1,18,42,198,12
 END
 
 IDD_NEW_DESTINATION DIALOGEX 0, 0, 207, 73
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Create New Destination"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -294,19 +241,16 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,150,52,50,14
     LTEXT           "Title:",IDC_STATIC,12,12,24,12
     EDITTEXT        IDC_EDIT1,42,12,158,12,ES_AUTOHSCROLL
-    COMBOBOX        IDC_COMBO1,42,30,158,12,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO1,42,30,158,12,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Type:",IDC_STATIC,12,30,24,12
 END
 
 IDD_PROMPT DIALOGEX 0, 0, 288, 61
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
-    WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "User text prompt"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Enter a name or word to be used in your screenshot's filename:",
-                    IDC_PROMPT_LABEL,7,7,269,11
+    LTEXT           "Enter a name or word to be used in your screenshot's filename:",IDC_PROMPT_LABEL,7,7,269,11
     EDITTEXT        IDC_PROMPT_TEXT,7,21,274,12,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,178,40,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,231,40,50,14
@@ -403,16 +347,6 @@ BEGIN
         HORZGUIDE, 203
     END
 
-    IDD_BUY, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 195
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 72
-        HORZGUIDE, 39
-        HORZGUIDE, 55
-    END
-
     IDD_DESTPROP_SCREENIE, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -438,30 +372,6 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Accelerator
-//
-
-IDR_MAINFRAME ACCELERATORS 
-BEGIN
-    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
-    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
-    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
-    "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL
-    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL
-    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL
-    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL
-    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL
-    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT
-    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY, SHIFT
-    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL
-    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY, SHIFT
-    VK_F6,          ID_NEXT_PANE,           VIRTKEY 
-    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
-END
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -521,34 +431,6 @@ BEGIN
     END
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-IDB_HEADER              BITMAP                  "resources\\header.bmp"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// PNG
-//
-
-IDR_SPLASHBACKGROUND    PNG                     "resources\\welcome.png"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// BIN
-//
-
-IDR_BUY_NORMAL          BIN                     "resources\\buy_normal.gif"
-IDR_BUY_PUSHED_HOVER    BIN                     "resources\\buy_pushed_hover.gif"
-IDR_CONTINUE_NORMAL     BIN                     "resources\\continue_normal.gif"
-IDR_CONTINUE_PUSHED_HOVER BIN                     "resources\\continue_pushed_hover.gif"
-IDR_PRTSCR              BIN                     "resources\\prtscr.gif"
-IDR_TRAYSAMPLE          BIN                     "resources\\traysample.gif"
-IDR_UNCHECKED           BIN                     "resources\\unchecked.gif"
-IDR_CHECKED             BIN                     "resources\\checked.gif"
 
 /////////////////////////////////////////////////////////////////////////////
 //

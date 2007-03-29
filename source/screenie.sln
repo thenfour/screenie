@@ -10,27 +10,17 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
-		Debug-Crippled|Win32 = Debug-Crippled|Win32
 		Release|Win32 = Release|Win32
-		Release-Crippled|Win32 = Release-Crippled|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Debug|Win32.Build.0 = Debug|Win32
-		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Debug-Crippled|Win32.ActiveCfg = Debug-Crippled|Win32
-		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Debug-Crippled|Win32.Build.0 = Debug-Crippled|Win32
 		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Release|Win32.ActiveCfg = Release|Win32
 		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Release|Win32.Build.0 = Release|Win32
-		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Release-Crippled|Win32.ActiveCfg = Release-Crippled|Win32
-		{C842F6FF-88EE-4F49-A446-74A504643F8F}.Release-Crippled|Win32.Build.0 = Release-Crippled|Win32
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Debug|Win32.ActiveCfg = Debug|Win32
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Debug|Win32.Build.0 = Debug|Win32
-		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Debug-Crippled|Win32.ActiveCfg = Debug|Win32
-		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Debug-Crippled|Win32.Build.0 = Debug|Win32
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Release|Win32.ActiveCfg = Release|Win32
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Release|Win32.Build.0 = Release|Win32
-		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Release-Crippled|Win32.ActiveCfg = Release|Win32
-		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Release-Crippled|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
