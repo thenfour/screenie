@@ -20,6 +20,8 @@
 #define IDD_NEW_DESTINATION             244
 #define IDD_DIALOG2                     245
 #define IDD_PROMPT                      245
+#define IDB_BITMAP1                     246
+#define IDB_HEADER                      246
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -176,7 +178,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        246
+#define _APS_NEXT_RESOURCE_VALUE        247
 #define _APS_NEXT_COMMAND_VALUE         32788
 #define _APS_NEXT_CONTROL_VALUE         1064
 #define _APS_NEXT_SYMED_VALUE           101
