@@ -40,6 +40,9 @@ private:
 		SetWindowText(m_title.c_str());
 		SetDlgItemText(IDC_PROMPT_LABEL, m_label.c_str());
 
+		SetDlgItemText(IDC_PROMPT_TEXT, m_text.c_str());
+		SendDlgItemMessage(IDC_PROMPT_TEXT, EM_SETSEL, 0, m_text.length());
+
 		SendMessage(m_hWnd, WM_NEXTDLGCTL, (WPARAM)(HWND)GetDlgItem(IDC_PROMPT_TEXT), TRUE);
 
 		return TRUE;

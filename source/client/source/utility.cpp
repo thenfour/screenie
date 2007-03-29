@@ -35,24 +35,6 @@ tstd::tstring GuidToString(GUID& guid)
 	return StringToUpper(strm.str());
 }
 
-bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTime, const tstd::tstring& mimeType, const tstd::tstring& formatString)
-{
-	ImageCodecsEnum imageCodecs;
-	Gdiplus::ImageCodecInfo* codecInfo = imageCodecs.GetCodecByMimeType(mimeType.c_str());
-
-	if (codecInfo != NULL)
-	{
-		tstd::tstring filenameRoot = FormatFilename(systemTime, formatString);
-		tstd::tstring filenameExtension = "JPG";
-
-		filename = LibCC::Format(TEXT("%.%")).s(filenameRoot).s(filenameExtension).Str();
-
-		return true;
-	}
-
-	return false;
-}
-
 tstd::tstring GetUniqueTemporaryFilename()
 {
 	TCHAR pathBuffer[MAX_PATH] = { 0 };
@@ -276,6 +258,9 @@ tstd::tstring StripBadFilenameChars(const tstd::tstring& str)
 		case '&':
 		case '=':
 			break;
+		case ' ':
+			result += '_';
+			break;
 		default:
 			result += str[i];
 			break;
@@ -285,7 +270,8 @@ tstd::tstring StripBadFilenameChars(const tstd::tstring& str)
 	return result;
 }
 
-tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat, bool preview)
+tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat,
+							 const tstd::tstring& windowTitle, bool preview)
 {
 	tstd::tstringstream outputStream;
 
@@ -339,16 +325,21 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 				case TEXT('s'):
           outputStream << Format().ui<10,2>(systemTime.wSecond).Str();
 					break;
+				case TEXT('w'):
 				case TEXT('t'):
 					{
 						if (preview)
 						{
-							outputStream << "(your_text_here)";
+							if (nextCharacter == 'w')
+								outputStream << "(window title)";
+							else
+								outputStream << "(your_text_here)";
 						}
 						else
 						{
 							CTextPromptDlg dlg(TEXT("Enter filename text"),
-								TEXT("Enter a name or word to be used in your screenshot's filename"), TEXT(""));
+								TEXT("Enter a name or word to be used in your screenshot's filename"),
+								(nextCharacter == 'w') ? windowTitle : TEXT(""));
 
 							if (dlg.DoModal() == IDOK)
 							{

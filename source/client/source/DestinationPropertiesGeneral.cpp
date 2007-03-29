@@ -197,7 +197,7 @@ LRESULT CDestinationPropertiesGeneral::OnFilenameFormatChanged(WORD /*wNotifyCod
 	  ::GetSystemTime(&systemTime);
   }
 
-	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString, true);
+	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString, _T(""), true);
 	SetDlgItemText(IDC_FILENAME_FORMATPREVIEW, formattedOutput.c_str());
 
 	return 0;

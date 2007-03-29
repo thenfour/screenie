@@ -48,6 +48,7 @@ BOOL CMainWindow::DisplayTrayMenu()
 BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 {
 	RECT windowRect = { 0 };
+	HWND hWndForeground = ::GetForegroundWindow();
 
 	CBitmap screenshotBitmap;
 	if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
@@ -98,9 +99,12 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 
     unsigned threadID;
     ThreadParams params;
+
     params.options = m_screenshotOptions;// creates a copy for thread safety
     params.pThis = this;
     params.screenshot = screenshot;
+	params.windowTitle = GetWindowString(hWndForeground);
+
     HANDLE hThread = (HANDLE)_beginthreadex(0, 0, ProcessDestinationsThreadProc, &params, 0, &threadID);
     while(WAIT_TIMEOUT == WaitForSingleObject(hThread, 0))
     {
@@ -138,7 +142,7 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
         if(enabledDestinations == 0)
         {
 #endif
-          ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, bUsedClipboard);
+          ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, params.windowTitle, bUsedClipboard);
 #ifdef CRIPPLED
         }
         else

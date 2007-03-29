@@ -123,6 +123,7 @@ private:
     CMainWindow* pThis;
     ScreenshotOptions options;
     util::shared_ptr<Gdiplus::Bitmap> screenshot;
+	tstd::tstring windowTitle;
   };
 
   static unsigned __stdcall ProcessDestinationsThreadProc(void*);

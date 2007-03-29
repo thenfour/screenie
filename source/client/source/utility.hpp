@@ -31,7 +31,8 @@ tstd::tstring GetUniqueFilename(tstd::tstring path);
 tstd::tstring GetWindowString(HWND hwnd);
 tstd::tstring GetComboSelectionString(HWND hWndCombo);
 
-tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat, bool preview = false);
+tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat,
+							 const tstd::tstring& windowTitle, bool preview = false);
 
 tstd::tstring tstring_tolower(const tstd::tstring& input);
 tstd::tstring tstring_toupper(const tstd::tstring& input);

@@ -57,8 +57,8 @@ bool ProcessFtpDestination_ProgressProc(DWORD completed, DWORD total, void* pUse
   return true;
 }
 
-bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status, ScreenshotDestination& destination,
+						   util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard)
 {
   LPARAM msgid = status.AsyncCreateMessage(AsyncStatusWindow::MSG_PROGRESS, AsyncStatusWindow::ITEM_FTP, destination.general.name, _T("Initiating FTP transfer"));
   status.AsyncMessageSetProgress(msgid, 0, 1);// set it to 0%
@@ -83,7 +83,7 @@ bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 	// format the destination filename based on the current time
 	SYSTEMTIME systemTime = { 0 };
   destination.GetNowBasedOnTimeSettings(systemTime);
-	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat);
+	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat, windowTitle);
 
   LibCC::Result r;
   // set up info struct to pass to the progress proc.
@@ -133,8 +133,8 @@ bool ProcessFtpDestination(HWND hwnd, AsyncStatusWindow& status,
 	return true;
 }
 
-bool ProcessFileDestination(HWND hwnd, AsyncStatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+bool ProcessFileDestination(HWND hwnd, AsyncStatusWindow& status, ScreenshotDestination& destination,
+	util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard)
 {
 	bool success = false;
 
@@ -160,7 +160,7 @@ bool ProcessFileDestination(HWND hwnd, AsyncStatusWindow& status,
 	SYSTEMTIME systemTime = { 0 };
   destination.GetNowBasedOnTimeSettings(systemTime);
 
-	tstd::tstring filename = FormatFilename(systemTime, destination.general.filenameFormat);
+	tstd::tstring filename = FormatFilename(systemTime, destination.general.filenameFormat, windowTitle);
 	tstd::tstring fullPath = LibCC::Format(TEXT("%\\%")).s(destination.general.path).s(filename).Str();
 
 	// do the deed
@@ -206,8 +206,8 @@ HBITMAP DuplicateScreenshotBitmap(HBITMAP sourceBitmap)
 	return destBitmap;
 }
 
-bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status, ScreenshotDestination& destination,
+								 util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard)
 {
   if(usedClipboard)
   {
@@ -252,14 +252,14 @@ bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status,
 	return r.Succeeded();
 }
 
-bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+bool ProcessEmailDestination(HWND hwnd, AsyncStatusWindow& status, ScreenshotDestination& destination,
+							 util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard)
 {
 	return true;
 }
 
-bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status, ScreenshotDestination& destination,
+								util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard)
 {
 	CURL* curl = 0;
 	CURLcode result;
@@ -329,7 +329,7 @@ bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status,
 	// format the destination filename based on the current time
 	SYSTEMTIME systemTime = { 0 };
 	destination.GetNowBasedOnTimeSettings(systemTime);
-	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat);
+	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat, windowTitle);
 
 	// delete the temp file
 	DeleteFile(temporaryFilename.c_str());
@@ -368,25 +368,25 @@ bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status,
 	return true;
 }
 
-bool ProcessDestination(HWND hwnd, AsyncStatusWindow& status,
-	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, bool& usedClipboard)
+bool ProcessDestination(HWND hwnd, AsyncStatusWindow& status, ScreenshotDestination& destination,
+	util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard)
 {
 	switch (destination.general.type)
 	{
 		case ScreenshotDestination::TYPE_FILE:
-			return ProcessFileDestination(hwnd, status, destination, image, usedClipboard);
+			return ProcessFileDestination(hwnd, status, destination, image, windowTitle, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_FTP:
-			return ProcessFtpDestination(hwnd, status, destination, image, usedClipboard);
+			return ProcessFtpDestination(hwnd, status, destination, image, windowTitle, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_CLIPBOARD:
-			return ProcessClipboardDestination(hwnd, status, destination, image, usedClipboard);
+			return ProcessClipboardDestination(hwnd, status, destination, image, windowTitle, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_EMAIL:
-			return ProcessEmailDestination(hwnd, status, destination, image, usedClipboard);
+			return ProcessEmailDestination(hwnd, status, destination, image, windowTitle, usedClipboard);
 			break;
 		case ScreenshotDestination::TYPE_SCREENIENET:
-			return ProcessScreenieDestination(hwnd, status, destination, image, usedClipboard);
+			return ProcessScreenieDestination(hwnd, status, destination, image, windowTitle, usedClipboard);
 	}
 
 	return false;
