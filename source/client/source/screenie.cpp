@@ -15,7 +15,6 @@
 #include "MainWindow.hpp"
 #include "viewport.h"
 #include "DestinationDlg.hpp"
-#include "WelcomeWnd.h"
 
 CMainWindow* g_mainWindow;
 CAppModule _Module;

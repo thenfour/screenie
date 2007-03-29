@@ -9,7 +9,6 @@
 
 #include "ImageEditWnd.hpp"
 #include "ZoomWnd.hpp"
-#include "BuyDlg.h"
 #include "destinationDlg.hpp"
 #include "image.hpp"
 

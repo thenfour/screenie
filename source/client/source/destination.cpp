@@ -10,7 +10,6 @@
 // ui
 #include "ScreenshotDestination.hpp"
 #include "StatusDlg.hpp"
-#include "BuyDlg.h"
 
 // general
 #include "clipboard.hpp"
