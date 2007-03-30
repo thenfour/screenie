@@ -152,7 +152,7 @@
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="StdAfx.hpp"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

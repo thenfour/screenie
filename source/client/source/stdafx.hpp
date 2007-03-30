@@ -32,7 +32,7 @@ extern CAppModule _Module;
 #include "tstdlib/tstring.hpp"
 #include "tstdlib/tsstream.hpp"
 
-#include "libcc/ccstr.h"
+#include "libcc/stringutil.h"
 #include "libcc/result.h"
 
 // this header contains Graham Batty's implementation of the C++

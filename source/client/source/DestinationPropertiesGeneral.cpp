@@ -51,11 +51,14 @@ tstd::tstring CDestinationPropertiesGeneral::GetImageFormat()
 
 	// if the correct descriptions were added to the combo box,
 	// there is no excuse for this to fail.
+	tstd::tstring ret;
 
 	if (codecInfo != 0)
-		return tstd::convert<tstd::tchar_t>(codecInfo->MimeType);
+	{
+		LibCC::ConvertString(codecInfo->MimeType, ret);
+	}
 
-	return tstd::tstring();
+	return ret;
 }
 
 void CDestinationPropertiesGeneral::SetImageFormat(const tstd::tstring& imageFormat)
@@ -70,7 +73,8 @@ void CDestinationPropertiesGeneral::SetImageFormat(const tstd::tstring& imageFor
 
 	if (codecInfo != 0)
 	{
-		tstd::tstring description = tstd::convert<tstd::tchar_t>(codecInfo->FormatDescription);
+		tstd::tstring description;
+		LibCC::ConvertString(codecInfo->FormatDescription, description);
 
 		CComboBox fileFormat(GetDlgItem(IDC_GENERAL_FORMAT));
 		fileFormat.SelectString(-1, description.c_str());
@@ -89,7 +93,8 @@ void CDestinationPropertiesGeneral::PopulateFormatList()
 		Gdiplus::ImageCodecInfo* codecInfo = imageCodecs.GetCodec(i);
 
 		std::wstring wideCodecDescription = codecInfo->FormatDescription;
-		tstd::tstring codecDescription = tstd::convert<tstd::tchar_t>(wideCodecDescription);
+		tstd::tstring codecDescription;
+		LibCC::ConvertString(wideCodecDescription, codecDescription);
 
 		fileFormats.AddString(codecDescription.c_str());
 	}

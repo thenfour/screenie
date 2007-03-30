@@ -88,7 +88,8 @@ public:
           else
           {
             hMemLoc = GlobalLock(hMem);
-            LibCC::StringCopyN((WCHAR*)hMemLoc, text.c_str(), text.length() + 1);
+						std::wstring W = LibCC::ToUnicode(text);
+						wcscpy((WCHAR*)hMemLoc, W.c_str());
             GlobalUnlock(hMem);
             if(NULL == SetClipboardData(CF_UNICODETEXT, hMem))
             {
@@ -105,7 +106,8 @@ public:
               else
               {
                 hMemLoc = GlobalLock(hMem);
-                LibCC::StringCopyN((char*)hMemLoc, text.c_str(), text.length() + 1);
+								std::string A = LibCC::ToMBCS(text.c_str());
+								strcpy((char*)hMemLoc, A.c_str());
                 GlobalUnlock(hMem);
                 if(NULL == SetClipboardData(CF_TEXT, hMem))
                 {

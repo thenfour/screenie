@@ -1,30 +1,29 @@
 /*
-  Last updated May 22, 2005 Carl Corcoran
+  LibCC Release "March 9, 2007"
+  Blob Module
+  (c) 2004-2007 Carl Corcoran, carlco@gmail.com
+  Documentation: http://wiki.winprog.org/wiki/LibCC
 
-  (c) 2004-2005 Carl Corcoran, carl@ript.net
-  http://carl.ript.net/stringformat/
-  http://carl.ript.net/wp
-  http://mantis.winprog.org/
-  http://svn.winprog.org/personal/carl/stringformat
+	== License:
 
-  All software on this site is provided 'as-is', without any express or
-  implied warranty, by its respective authors and owners. In no event will
-  the authors be held liable for any damages arising from the use of this
-  software.
+	All software on this site is provided 'as-is', without any express or
+	implied warranty, by its respective authors and owners. In no event will
+	the authors be held liable for any damages arising from the use of this
+	software.
 
-  Permission is granted to anyone to use this software for any purpose,
-  including commercial applications, and to alter it and redistribute it
-  freely, subject to the following restrictions:
+	Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
 
-  1. The origin of this software must not be misrepresented; you must not
-  claim that you wrote the original software. If you use this software in
-  a product, an acknowledgment in the product documentation would be
-  appreciated but is not required.
+	1. The origin of this software must not be misrepresented; you must not
+	claim that you wrote the original software. If you use this software in
+	a product, an acknowledgment in the product documentation would be
+	appreciated but is not required.
 
-  2. Altered source versions must be plainly marked as such, and must not
-  be misrepresented as being the original software.
+	2. Altered source versions must be plainly marked as such, and must not
+	be misrepresented as being the original software.
 
-  3. This notice may not be removed or altered from any source distribution.
+	3. This notice may not be removed or altered from any source distribution.
 */
 
 /*  
@@ -58,7 +57,7 @@
 
 	  Use:
 
-	  PathBlobW x;
+	  BlobW x;
 	  x.Alloc(MAX_PATH);
 	  GetCurrentDirectoryW(x.GetWritableBuffer(), MAX_PATH);
 */
@@ -79,7 +78,7 @@
 
 namespace LibCC
 {
-  template<bool StaticBufferSupport = true, size_t StaticBufferSize = 100>
+  template<bool StaticBufferSupport = true, size_t StaticBufferSize = 100>// in reality, you should never change these, or else Blob types are really incompatible.
   class BlobTraits
   {
   public:
@@ -120,18 +119,7 @@ namespace LibCC
     }
 
     template<typename Trel, typename Trtraits>
-    explicit Blob(const Blob<Trel, Trtraits>& rhs)
-    {
-      // no copy construction available
-    }
-
-    Blob<Tel, Ttraits>& operator =(const Blob<Tel, Ttraits>& rhs)
-    {
-      // no assignment available
-      return *this;
-    }
-
-    explicit Blob(const Blob<Tel, Ttraits>& rhs)
+    Blob(const Blob<Trel, Trtraits>& rhs)
     {
       // no copy construction available
     }
@@ -145,17 +133,17 @@ namespace LibCC
 
     Blob() :
       m_p(_StaticBufferSupport ? m_StaticBuffer : 0),
-      m_sizeAllocated(_StaticBufferSupport ? _StaticBufferSize : 0),
-      m_sizeReported(0)
+      m_allocatedSize(_StaticBufferSupport ? _StaticBufferSize : 0),
+      m_reportedSize(0)
     {
     }
 
-    explicit Blob(size_t size) :
+    Blob(size_t size) :
       m_p(_StaticBufferSupport ? m_StaticBuffer : 0),
-      m_sizeAllocated(_StaticBufferSupport ? _StaticBufferSize : 0),
-      m_sizeReported(0)
+      m_allocatedSize(_StaticBufferSupport ? _StaticBufferSize : 0),
+      m_reportedSize(0)
     {
-      Alloc(size);
+			Alloc(size);
     }
 
     ~Blob()
@@ -176,8 +164,21 @@ namespace LibCC
 
     size_t Size() const
     {
-      return m_sizeReported;
+      return m_reportedSize;
     }
+
+    size_t AllocatedSize() const
+    {
+      return m_allocatedSize;
+    }
+
+		void Fill(const Tel& val)
+		{
+			for(size_t i = 0; i < m_reportedSize; ++ i)
+			{
+				m_p[i] = val;
+			}
+		}
 
     // these are just to break up some if() statements.
     inline bool CurrentlyUsingStaticBuffer() const
@@ -203,8 +204,9 @@ namespace LibCC
         {
           HeapFree(GetProcessHeap(), 0, m_p);
           m_p = m_StaticBuffer;
-          m_sizeAllocated = _StaticBufferSize;
+          m_allocatedSize = _StaticBufferSize;
         }
+        m_reportedSize = 0;
       }
       else
       {
@@ -212,25 +214,26 @@ namespace LibCC
         {
           HeapFree(GetProcessHeap(), 0, m_p);
           m_p = 0;
-          m_sizeAllocated = 0;
+          m_allocatedSize = 0;
         }
+        m_reportedSize = 0;
       }
-      m_sizeReported = 0;
       return true;
     }
 
     bool Alloc(size_t n)
     {
       bool r = false;
-      if(m_sizeAllocated >= n)
+      if(m_allocatedSize >= n)
       {
-        // no need to do anything
+        // no need to allocate; the big question is... what happens if you request smaller than what was already allocated? it will show the lower value.
+        m_reportedSize = n;
         r = true;
       }
       else
       {
         // we definitely need to allocate now.
-        size_t nNewSize = Ttraits::GetNewSize(m_sizeAllocated, n);
+        size_t nNewSize = Ttraits::GetNewSize(m_allocatedSize, n);
         Tel* pNew;
 
         if(CurrentlyUsingStaticBuffer() || CompletelyUnallocated())
@@ -246,7 +249,8 @@ namespace LibCC
             }
 
             m_p = pNew;
-            m_sizeAllocated = nNewSize;
+            m_allocatedSize = nNewSize;
+            m_reportedSize = n;
 
             r = true;
           }
@@ -258,14 +262,12 @@ namespace LibCC
           if(pNew)
           {
             m_p = pNew;
-            m_sizeAllocated = nNewSize;
+            m_allocatedSize = nNewSize;
+            m_reportedSize = n;
             r = true;
           }
         }
       }
-
-      m_sizeReported = r ? n : 0;
-
       return r;
     }
 
@@ -303,15 +305,11 @@ namespace LibCC
     }
 
   private:
-    size_t m_sizeReported;
-    size_t m_sizeAllocated;
+    size_t m_allocatedSize;
+    size_t m_reportedSize;
     Tel* m_p;
     Tel m_StaticBuffer[_StaticBufferSize];
   };
-
-  typedef Blob<wchar_t, BlobTraits<true, MAX_PATH + 1> > PathBlobW;
-  typedef Blob<char, BlobTraits<true, MAX_PATH + 1> > PathBlobA;
-  typedef Blob<TCHAR, BlobTraits<true, MAX_PATH + 1> > PathBlob;
 }
 
 

@@ -1,14 +1,43 @@
 /*
-  Last updated May 26, 2005 carl corcoran
+  LibCC Release "March 9, 2007"
+  Registry Module
+  (c) 2004-2007 Carl Corcoran, carlco@gmail.com
+  Documentation: http://wiki.winprog.org/wiki/LibCC
+
+	== License:
+
+  All software on this site is provided 'as-is', without any express or
+  implied warranty, by its respective authors and owners. In no event will
+  the authors be held liable for any damages arising from the use of this
+  software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+  claim that you wrote the original software. If you use this software in
+  a product, an acknowledgment in the product documentation would be
+  appreciated but is not required.
+
+  2. Altered source versions must be plainly marked as such, and must not
+  be misrepresented as being the original software.
+
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/*
+  Last updated March 8, 2007 carl corcoran
   Created Oct 2004
 */
 
 #pragma once
 
-#include "cctypes.h"
+#ifdef WIN32
+
 #include "blob.h"
 #include "winapi.h"
-
+#include <vector>
 
 namespace LibCC
 {
@@ -20,13 +49,13 @@ namespace LibCC
 
       returns 0 for failure (unrecognized key name)
   */
-  template<typename Char, typename Traits, typename Alloc>
-  HKEY InterpretRegHiveName(const std::basic_string<Char, Traits, Alloc>& s, std::basic_string<Char, Traits, Alloc>& therest)
+  template<typename Char>
+  HKEY InterpretRegHiveName(const std::basic_string<Char>& s, std::basic_string<Char>& therest)
   {
-    typedef std::basic_string<Char, Traits, Alloc> String;
+    typedef std::basic_string<Char> String;
     HKEY r = 0;
     String sKey;
-    String::size_type nSep = StringFindFirstOf(s, "\\/");
+    String::size_type nSep = XStringFindFirstOf(s, "\\/");
     if(nSep == String::npos)
     {
         // no separator... maybe the whole thing is the hive name
@@ -41,19 +70,19 @@ namespace LibCC
 
     sKey = StringToLower(sKey);
 
-    if(StringEquals(sKey, "hklm") || StringEquals(sKey, "hkey_local_machine"))
+    if(XStringEquals(sKey, "hklm") || XStringEquals(sKey, "hkey_local_machine"))
     {
         r = HKEY_LOCAL_MACHINE;
     }
-    else if(StringEquals(sKey, "hkcu") || StringEquals(sKey, "hkey_current_user"))
+    else if(XStringEquals(sKey, "hkcu") || XStringEquals(sKey, "hkey_current_user"))
     {
         r = HKEY_CURRENT_USER;
     }
-    else if(StringEquals(sKey, "hkcr") || StringEquals(sKey, "hkey_classes_root"))
+    else if(XStringEquals(sKey, "hkcr") || XStringEquals(sKey, "hkey_classes_root"))
     {
         r = HKEY_CLASSES_ROOT;
     }
-    else if(StringEquals(sKey, "hku") || StringEquals(sKey, "hkey_users"))
+    else if(XStringEquals(sKey, "hku") || XStringEquals(sKey, "hkey_users"))
     {
         r = HKEY_CLASSES_ROOT;
     }
@@ -128,15 +157,13 @@ namespace LibCC
     };
 
   */
-  template<typename Char, typename Traits, typename Allocator>
+  template<typename Char>
   class RegistryKeyX
   {
   public:
     typedef Char _Char;
-    typedef Traits _Traits;
-    typedef Allocator _Allocator;
-    typedef std::basic_string<_Char, _Traits, _Allocator> _String;
-    typedef RegistryKeyX<_Char, _Traits, _Allocator> _RegistryKey;
+    typedef std::basic_string<_Char> _String;
+    typedef RegistryKeyX<_Char> _RegistryKey;
 
     // x = RegistryKey(HKEY_LOCAL_MACHINE, "software\\crap")
     RegistryKeyX(HKEY key, const _String& subkey, bool bWriteAccess = false) :
@@ -250,14 +277,17 @@ namespace LibCC
       bool Exists() { return m_key.ValueExists(m_name); }
       bool Delete() { return m_key.DeleteValue(m_name); }
 
+      bool SetValue(bool value) { return m_key.SetValue(m_name, value); }
       bool SetValue(int value) { return m_key.SetValue(m_name, value); }
       bool SetValue(DWORD value) { return m_key.SetValue(m_name, value); }
       bool SetValue(const _String& value) { return m_key.SetValue(m_name, value); }
       bool operator =(int value) { return SetValue(value); }
+      bool operator =(bool value) { return SetValue(value); }
       bool operator =(DWORD value) { return SetValue(value); }
       bool operator =(unsigned int value) { return SetValue(static_cast<DWORD>(value)); }
       bool operator =(const _String& value) { return SetValue(value); }
 
+      bool GetValue(bool& value) { return m_key.GetValue(m_name, value); }
       bool GetValue(int& value) { return m_key.GetValue(m_name, value); }
       bool GetValue(DWORD& value) { return m_key.GetValue(m_name, value); }
       bool GetValue(_String& value) { return m_key.GetValue(m_name, value); }
@@ -302,6 +332,11 @@ namespace LibCC
     }
 
     // set string / dword / int
+    //bool SetValue(const _String& name, bool value)// having this function is prone to faulty implicit casts to bool.
+    //{
+    //  DWORD temp = value ? 1 : 0;
+    //  return SetValue(name, temp);
+    //}
     bool SetValue(const _String& name, int value)
     {
       m_bNeedWriteAccess = true;
@@ -322,6 +357,13 @@ namespace LibCC
     }
 
     // get string / dword / int
+    bool GetValue(const _String& name, bool& val)
+    {
+      DWORD temp;
+      if(!GetValue(name, temp)) return false;
+      val = (temp == 1);
+      return true;
+    }
     bool GetValue(const _String& name, int& val)
     {
       if(!__Open()) return false;
@@ -463,9 +505,10 @@ namespace LibCC
 
     std::vector<_RegistryKey> m_subKeys;
   };
-  typedef RegistryKeyX<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> > RegistryKeyW;
-  typedef RegistryKeyX<char, std::char_traits<char>, std::allocator<char> > RegistryKeyA;
-  typedef RegistryKeyX<TCHAR, std::char_traits<TCHAR>, std::allocator<TCHAR> > RegistryKey;
+  typedef RegistryKeyX<wchar_t> RegistryKeyW;
+  typedef RegistryKeyX<char> RegistryKeyA;
+  typedef RegistryKeyX<TCHAR> RegistryKey;
 }
 
 
+#endif

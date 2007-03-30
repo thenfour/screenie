@@ -46,7 +46,8 @@ tstd::tstring GetImageCodecExtension(Gdiplus::ImageCodecInfo* codecInfo, bool do
 
 	if (codecInfo != NULL)
 	{
-		tstd::tstring extensionList = tstd::convert<tstd::tchar_t>(codecInfo->FilenameExtension);
+		tstd::tstring extensionList;
+		LibCC::ConvertString(codecInfo->FilenameExtension, extensionList);
 
 		tstd::tstring::size_type dotPos = extensionList.find_first_of(_TT('.'));
 		tstd::tstring::size_type semicolonPos = extensionList.find_first_of(_TT(';'));
@@ -284,7 +285,7 @@ bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const
 
 	if (codecInfo != NULL)
 	{
-		std::wstring wideFilename = tstd::convert<wchar_t>(filename);
+		std::wstring wideFilename = LibCC::ToUnicode(filename);
 
 		if (image.Save(wideFilename.c_str(), &codecInfo->Clsid, NULL) == Gdiplus::Ok)
 			return true;

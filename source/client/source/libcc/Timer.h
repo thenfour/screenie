@@ -1,6 +1,10 @@
 /*
-  Jun 30 2004 carlc
-  class to automate doing frames per second functionality.
+  LibCC Release "March 9, 2007"
+  Timer Module
+  (c) 2004-2007 Carl Corcoran, carlco@gmail.com
+  Documentation: http://wiki.winprog.org/wiki/LibCC
+
+	== License:
 
   All software on this site is provided 'as-is', without any express or
   implied warranty, by its respective authors and owners. In no event will
@@ -20,26 +24,11 @@
   be misrepresented as being the original software.
 
   3. This notice may not be removed or altered from any source distribution.
-
-  FPS fps;
-  
-  while(each frame)
-  {
-    // do your frame stuff...
-
-    fps.OnFrame();
-    // display the fps
-    display(fps.GetFPSString());
-  }
-
-  call SetRecalcInterval() if you want to refresh the fps less frequently.
 */
 
 #pragma once
 
 #include <windows.h>
-#include "ccstr.h"
-
 
 namespace LibCC
 {
@@ -93,19 +82,9 @@ namespace LibCC
       return (double)m_totalframes / TicksToSeconds(delta);
     }
 
-    inline std::string GetAvgFPSString() const
-    {
-      return Format("%").d<4>(GetAvgFPS()).Str();
-    }
-
     inline double GetFPS() const
     {
       return m_fps;
-    }
-
-    inline std::string GetFPSString() const
-    {
-      return Format("%").d<4>(m_fps).Str();
     }
 
   private:
@@ -161,9 +140,11 @@ namespace LibCC
       return TicksToSeconds(m_delta);
     }
 
-    inline std::string GetLastDeltaString() const
+    inline double GetTimeSinceLastTick() const
     {
-      return Format("%").d<4>(GetLastDelta()).Str();
+      LARGE_INTEGER li;
+      QueryPerformanceCounter(&li);
+      return TicksToSeconds(li.QuadPart - m_lasttick);
     }
 
   private:

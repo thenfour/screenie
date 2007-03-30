@@ -1,10 +1,37 @@
+/*
+  LibCC Release "March 9, 2007"
+  Result Module
+  (c) 2004-2007 Carl Corcoran, carlco@gmail.com
+  Documentation: http://wiki.winprog.org/wiki/LibCC
 
+	== License:
+
+  All software on this site is provided 'as-is', without any express or
+  implied warranty, by its respective authors and owners. In no event will
+  the authors be held liable for any damages arising from the use of this
+  software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+  claim that you wrote the original software. If you use this software in
+  a product, an acknowledgment in the product documentation would be
+  appreciated but is not required.
+
+  2. Altered source versions must be plainly marked as such, and must not
+  be misrepresented as being the original software.
+
+  3. This notice may not be removed or altered from any source distribution.
+*/
 
 #pragma once
 
+#ifdef WIN32
 
-#include "ccstr.h"
-
+#include <windows.h>
+#include "StringUtil.h"
 
 namespace LibCC
 {
@@ -46,6 +73,31 @@ namespace LibCC
     typedef ResultX<Char> This;
     typedef FormatX<Char, std::char_traits<Char>, std::allocator<Char> > Format_T;
 
+  private:
+    // don't allow ambiguous calls
+    explicit ResultX(bool, ...) { }
+    void Assign(bool, ...) { }
+    This& operator =(bool) { return *this; }
+
+  public:
+    // ---------------------------------Statics
+    static This FromWin32(int error)
+    {
+      return This(HRESULT_FROM_WIN32(error), Format_T("Error #%: %").i(error).gle(error).Str());
+    }
+    static This FromGetLastError()
+    {
+      return FromWin32(GetLastError());
+    }
+    static This Success()
+    {
+      return This(S_OK);
+    }
+    static This Failure(HRESULT hr = E_FAIL)
+    {
+      return This(hr);
+    }
+
     // ---------------------------------Constructors
     ResultX() :
       m_hr(S_OK)
@@ -56,68 +108,41 @@ namespace LibCC
       m_String(r.m_String)
     {
     }
-
-    explicit ResultX(HRESULT hr) :
+    ResultX(HRESULT hr) :
       m_hr(hr)
     {
+    }
+    //ResultX(bool b) :
+    //  m_hr(b ? S_OK : E_FAIL)
+    //{
+    //}
+    ResultX(HRESULT hr, const Char* text) :
+      m_hr(hr)
+    {
+			ConvertString(text, m_String);
     }
     ResultX(HRESULT hr, const String& text) :
       m_hr(hr)
     {
-      StringCopy(m_String, text);
-    }
-    ResultX(HRESULT hr, const Format_T& text) :
-      m_hr(hr)
-    {
-      StringCopy(m_String, text.Str());
-    }
-
-    explicit ResultX(bool b) :
-      m_hr(b ? S_OK : E_FAIL)
-    {
-    }
-    ResultX(bool b, const String& text) :
-      m_hr(b ? S_OK : E_FAIL)
-    {
-      StringCopy(m_String, text);
-    }
-    ResultX(bool b, const Format_T& text) :
-      m_hr(b ? S_OK : E_FAIL)
-    {
-      StringCopy(m_String, text.Str());
+			ConvertString(text, m_String);
     }
 
     // --------------------------------- Assignment
-    This& Assign(HRESULT hr)
+    void Assign(HRESULT hr)
     {
       m_hr = hr;
       m_String.clear();
-      return *this;
     }
-    This& Assign(HRESULT hr, const String& text)
+    void Assign(HRESULT hr, const Char* text)
     {
       m_hr = hr;
-      StringCopy(m_String, text);
-      return *this;
+      m_String.assign(text);
     }
-    This& Assign(HRESULT hr, const Format_T& text)
+    void Assign(HRESULT hr, const String& text)
     {
-      return Assign(hr, text.Str());
+      m_hr = hr;
+      m_String.assign(text);
     }
-
-    This& Assign(bool b)
-    {
-      return Assign(b ? S_OK : E_FAIL);
-    }
-    This& Assign(bool b, const String& text)
-    {
-      return Assign(b ? S_OK : E_FAIL, text);
-    }
-    This& Assign(bool b, const Format_T& text)
-    {
-      return Assign(b ? S_OK : E_FAIL, text);
-    }
-
     This& operator =(const This& r)
     {
       m_hr = r.m_hr;
@@ -134,30 +159,38 @@ namespace LibCC
     // --------------------------------- More Assignment
     This& Fail()
     {
-      return Assign(E_FAIL);
+      Assign(E_FAIL);
+      return *this;
     }
+
     // r.Fail("the shit dont work")
     // r.Fail(Format("This shit dont work: %").qs(FileName));
     This& Fail(const String& s)
     {
-      return Assign(E_FAIL, s);
+      Assign(E_FAIL, s);
+      return *this;
     }
-    This& Fail(const Format_T& s)
+    This& Fail(const Char* s)
     {
-      return Fail(s.Str());
+      Assign(E_FAIL, s);
+      return *this;
     }
 
     This& Succeed()
     {
-      return Assign(S_OK);
+      Assign(S_OK);
+      return *this;
     }
+
     This& Succeed(const String& s)
     {
-      return Assign(S_OK, s);
+      Assign(S_OK, s);
+      return *this;
     }
-    This& Succeed(const Format_T& s)
+    This& Succeed(const Char* s)
     {
-      return Assign(s.Str());
+      Assign(S_OK, s);
+      return *this;
     }
 
     This& Prepend(const String& s)
@@ -166,36 +199,11 @@ namespace LibCC
       return *this;
 		}
 
-    This& Prepend(const Format_T& s)
-		{
-      return Prepend(s.Str());
-		}
-
     // --------------------------------- Query
-		class BoolLike
-		{
-      ~BoolLike() {}
-    public:
-      static BoolLike* True()
-      {
-        BoolLike true_;
-        BoolLike* ret = &true_;
-        return ret;
-      }
-      static BoolLike* False()
-      {
-        return 0;
-      }
-      static BoolLike* FromBool(bool b)
-      {
-        return b ? True() : False();
-      }
-		};
-
-    operator BoolLike*() const
-    {
-      return BoolLike::FromBool(Succeeded());
-    }
+    //operator bool() const
+    //{
+    //  return Succeeded();
+    //}
 
     bool operator !() const
     {
@@ -222,6 +230,11 @@ namespace LibCC
       return m_String;
     }
 
+		bool operator ==(const This& rhs)
+		{
+			return rhs.m_hr == m_hr;// ignore string description for comparisons.
+		}
+
   private:
     HRESULT m_hr;
     String m_String;
@@ -233,3 +246,4 @@ namespace LibCC
 
 
 
+#endif

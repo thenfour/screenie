@@ -11,7 +11,7 @@
 #include <vector>
 
 // for tstd::tstring
-#include "tstdlib/tstring.hpp"
+#include "libcc/stringutil.h"
 
 bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTime, 
 	const tstd::tstring& mimeType, const tstd::tstring& formatString);
@@ -36,6 +36,11 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 
 tstd::tstring tstring_tolower(const tstd::tstring& input);
 tstd::tstring tstring_toupper(const tstd::tstring& input);
+
+inline bool IsValidHandle(HANDLE h)
+{
+	return (h != 0) && (h != INVALID_HANDLE_VALUE);
+}
 
 inline tstd::tstring GetPathRelativeToApp(PCTSTR extra)
 {
@@ -74,7 +79,7 @@ public:
   bool operator !=(const Guid& x) const  { return !Equals(x); }
   Guid& Assign(const tstd::tstring& x)
   {
-    std::wstring W = tstd::convert<wchar_t>(x);
+		std::wstring W = LibCC::ToUnicode(x);
     LibCC::Blob<OLECHAR> crap;
     crap.Alloc(W.size()+1);
     wcscpy(crap.GetBuffer(), W.c_str());
@@ -103,7 +108,8 @@ public:
   {
     LPOLESTR p;
     StringFromCLSID(val, &p);
-    tstd::tstring ret = tstd::convert<tstd::tchar_t>(p);
+    tstd::tstring ret;
+		LibCC::ConvertString(p, ret);
     CoTaskMemFree(p);
     return ret;
   }

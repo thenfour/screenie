@@ -1,4 +1,33 @@
 /*
+  LibCC Release "March 9, 2007"
+  PathMatchSpec Module
+  (c) 2004-2007 Carl Corcoran, carlco@gmail.com
+  Documentation: http://wiki.winprog.org/wiki/LibCC
+
+	== License:
+
+  All software on this site is provided 'as-is', without any express or
+  implied warranty, by its respective authors and owners. In no event will
+  the authors be held liable for any damages arising from the use of this
+  software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+  claim that you wrote the original software. If you use this software in
+  a product, an acknowledgment in the product documentation would be
+  appreciated but is not required.
+
+  2. Altered source versions must be plainly marked as such, and must not
+  be misrepresented as being the original software.
+
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+
+/*
     Criteria:   "c*cor?n"
     String:     "carl corcoran"
 
@@ -28,7 +57,8 @@
 #include <string>
 #include <vector>
 #include <stack>
-#include "ccstr.h"
+#include "StringUtil.h"
+#include "Winapi.h"
 
 namespace LibCC
 {
@@ -597,5 +627,198 @@ namespace LibCC
 
 	  return !*wild;
   }
+
+  template<typename Char>
+  class FileIteratorBaseX
+  {
+  public:
+      virtual bool Reset(const std::basic_string<Char>& sDir) = 0;
+      virtual bool Next(std::basic_string<Char>& sFullPath, DWORD* pdwAttributes) = 0;
+  };
+
+
+  // class for iterating through a single directory.
+  template<typename Char>
+  class FileIteratorX : public FileIteratorBaseX<Char>
+  {
+  public:
+      FileIteratorX() :
+        m_hFind(0)
+      {
+      }
+
+      ~FileIteratorX()
+      {
+        _Free();
+      }
+
+      bool Reset(const std::basic_string<Char>& sDir)
+      {
+        bool r = false;
+
+        _Free();
+
+        std::string sQuery;
+        sQuery = PathJoin(sDir, std::basic_string<Char>("*"));
+
+        m_BaseDir = sDir;
+        m_hFind = FindFirstFile(sQuery.c_str(), &m_fd);
+
+        if(IsBadHandle(m_hFind))
+        {
+          // reset back to invalid.
+          m_hFind = 0;
+          m_BaseDir.clear();
+        }
+        else
+        {
+          r = true;
+        }
+
+        return r;
+      }
+
+      bool Next(std::basic_string<Char>& sFullPath, DWORD* pdwAttributes = 0)
+      {
+        bool r = false;
+        if(IsValidHandle(m_hFind))
+        {
+          while(1)
+          {
+            if(IsUsableFileName(&m_fd))
+            {
+              // use it!
+              sFullPath = PathJoin(m_BaseDir, std::basic_string<Char>(m_fd.cFileName));
+              if(pdwAttributes) *pdwAttributes = m_fd.dwFileAttributes;
+              r = true;
+
+              // advance to the next one so we're queued up next call.
+              if(0 == FindNextFile(m_hFind, &m_fd))
+              {
+                FindClose(m_hFind);
+                m_hFind = 0;
+              }
+              break;
+            }
+
+            // otherwise, proceed to the next one.
+            if(0 == FindNextFile(m_hFind, &m_fd))
+            {
+              // failure; make sure we clean everything up and return false.
+              FindClose(m_hFind);
+              m_hFind = 0;
+              break;
+            }
+          }
+        }
+        return r;
+      }
+
+  private:
+      bool IsUsableFileName(const WIN32_FIND_DATA* pfd)
+      {
+        bool r = true;
+        if(pfd->cFileName[0])
+        {
+          if(pfd->cFileName[0] == '.')
+          {
+            if(pfd->cFileName[1] == 0)
+            {
+              // it equals "."
+              r = false;
+            }
+            else
+            {
+              if(pfd->cFileName[1] == '.')
+              {
+                if(pfd->cFileName[2] == 0) r = false;// it equals ".."
+              }
+            }
+          }
+        }
+        return r;
+      }
+
+      bool IsDirectory(const WIN32_FIND_DATA* pfd);
+
+      void _Free()
+      {
+        if(IsValidHandle(m_hFind)) FindClose(m_hFind);
+        m_hFind = 0;
+      }
+
+      std::basic_string<Char> m_BaseDir;// directory for this find
+      HANDLE m_hFind;
+      WIN32_FIND_DATA m_fd;
+  };
+
+  template<typename Char>
+  class RecursiveFileIteratorX : public FileIteratorBaseX<Char>
+  {
+  public:
+      ~RecursiveFileIteratorX()
+      {
+        _Free();
+      }
+
+      bool Reset(const std::basic_string<Char>& sDir)
+      {
+        bool r = false;
+        m_stack.push(CFileIterator());
+        FileIteratorX<Char>& it = m_stack.top();
+        if(it.Reset(sDir))
+        {
+          r = true;
+        }
+        else
+        {
+          m_stack.pop();
+        }
+
+        return r;
+      }
+
+      bool Next(std::basic_string<Char>& sFullPath, DWORD* pdwAttributes = 0)
+      {
+        bool r = false;
+        DWORD dwAttr = 0;
+
+        while(m_stack.size())
+        {
+          FileIteratorX<Char>& it = m_stack.top();
+          if(it.Next(sFullPath, &dwAttr))
+          {
+            if(pdwAttributes) *pdwAttributes = dwAttr;
+            if(dwAttr & FILE_ATTRIBUTE_DIRECTORY)
+            {
+              // push an enum to this thing.
+              m_stack.push(FileIteratorX<Char>());
+              FileIteratorX<Char>& it = m_stack.top();
+              it.Reset(sFullPath);
+            }
+
+            r = true;
+            break;
+          }
+          else
+          {
+            m_stack.pop();
+          }
+        }
+
+        return r;
+      }
+
+  private:
+      std::stack<FileIteratorX<Char> > m_stack;
+      void _Free()
+      {
+        while(m_stack.size())
+        {
+          m_stack.pop();
+        }
+      }
+  };
+
 
 }

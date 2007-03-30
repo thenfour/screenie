@@ -428,7 +428,7 @@ LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& lo
 
   // open the local file.
   Win32Handle hFile = CreateFile(localFile.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-  if(!LibCC::IsValidHandle(hFile.val))
+  if(!IsValidHandle(hFile.val))
   {
     return LibCC::Result(E_FAIL, LibCC::Format("Unable to open the temp file for reading.  Technical info: [CreateFile] [gle: %]").gle().Str());
   }

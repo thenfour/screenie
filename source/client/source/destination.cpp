@@ -269,12 +269,12 @@ bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status, Screenshot
 
 	curl_formadd(&formpost, &lastptr,
 		CURLFORM_COPYNAME, "username",
-		CURLFORM_COPYCONTENTS, tstd::convert<char>(destination.screenie.username).c_str(),
+		CURLFORM_COPYCONTENTS, LibCC::ToMBCS(destination.screenie.username).c_str(),
 		CURLFORM_END);
 
 	curl_formadd(&formpost, &lastptr,
 		CURLFORM_COPYNAME, "password",
-		CURLFORM_COPYCONTENTS, tstd::convert<char>(destination.screenie.password).c_str(),
+		CURLFORM_COPYCONTENTS, LibCC::ToMBCS(destination.screenie.password).c_str(),
 		CURLFORM_END);
 
 
@@ -300,13 +300,13 @@ bool ProcessScreenieDestination(HWND hwnd, AsyncStatusWindow& status, Screenshot
 
 	curl_formadd(&formpost, &lastptr,
 		CURLFORM_COPYNAME, "screenshot",
-		CURLFORM_FILE, tstd::convert<char>(temporaryFilename).c_str(),
+		CURLFORM_FILE, LibCC::ToMBCS(temporaryFilename).c_str(),
 		CURLFORM_END);
 
 	curl = curl_easy_init();
 	headerlist = curl_slist_append(headerlist, "Expect:");
 
-	std::string posturl = tstd::convert<char>(destination.screenie.url);
+	std::string posturl = LibCC::ToMBCS(destination.screenie.url);
 	if (posturl[posturl.length() - 1] != '/')
 		posturl += "/";
 	posturl += "upload.php";
