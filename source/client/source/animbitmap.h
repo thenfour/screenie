@@ -341,20 +341,42 @@ public:
     }
   }
 
-  inline static BYTE InvertColorantForSelection(const BYTE& x, int offset)
-  {
-    int ret = /*(255 - x) +*/x + offset;
-    if(ret < 0) ret = 256 - ret;
-    if(ret > 255) ret -= 256;
-    return static_cast<BYTE>(ret);
-  }
+	void FillCheckerPattern()
+	{
+		// copy adobe photoshop's background look.
+		const int size = 8;
+		const RgbPixel32 colors[2] = { MakeRgbPixel32(204, 204, 204), MakeRgbPixel32(255, 255, 255) };
+
+		// make one of each variation of line
+		LibCC::Blob<RgbPixel32> patterns[2];
+		patterns[0].Alloc(m_x);
+		for(size_t i = 0; i < (size_t)m_x; ++ i)
+		{
+			patterns[0].GetBuffer()[i] = colors[(i / size) & 1];
+		}
+		// same as above except offset 1.
+		patterns[1].Alloc(m_x);
+		for(size_t i = 0; i < (size_t)m_x; ++ i)
+		{
+			patterns[1].GetBuffer()[i] = colors[((i / size) + 1) & 1];
+		}
+
+		// now for each raster, copy mem.
+		RgbPixel32* start = m_pbuf;
+		RgbPixel32* end = m_pbuf + (m_x * m_y);
+
+		for(size_t i = 0; i < (size_t)m_y; start += m_x, i ++)
+		{
+			memcpy(start, patterns[(i / size) & 1].GetBuffer(), sizeof(RgbPixel32) * m_x);
+		}
+	}
 
   inline static RgbPixel32 InvertColorForSelection(const RgbPixel32& x, int offset)
   {
     return MakeRgbPixel32(
-      InvertColorantForSelection(R(x), offset),
-      InvertColorantForSelection(G(x), offset),
-      InvertColorantForSelection(B(x), offset)
+      R(x) + offset,
+      G(x) + offset * 2,
+      B(x) + offset * 3
       );
   }
 
@@ -418,26 +440,112 @@ public:
     SR_IGNOREBOTTOM = 8
   };
 
-  template<int patternFreq, int colorOffset>
+	template<int factor>
+	inline static RgbPixel GrayPixel(RgbPixel c)
+	{
+		//BYTE r = R(c) / 4;
+		//BYTE g = G(c) / 4;
+		//BYTE b = B(c) / 4;
+		//return MakeRgbPixel32(r, g, b);
+		DWORD x = (R(c) + G(c) + B(c)) >> factor;// grays it & dims it at the same time.
+		return MakeRgbPixel32(x,x,x);
+	}
+
+	void GrayRect(int left, int top, int right, int bottom)
+	{
+    clamp(left, 0, m_x);
+    clamp(right, 0, m_x);
+    clamp(top, 0, m_y);
+    clamp(bottom, 0, m_y);
+
+		RgbPixel* pbuf = &m_pbuf[(top * m_x) + left];
+    long width = right - left;
+
+		int y = top;
+		// fill downwards
+    while(y != bottom)
+    {
+			int x = left;
+      // draw a horizontal line
+      for(long tx = 0; tx < width; tx ++)
+      {
+				if(y & (x & 1))
+				{
+					pbuf[tx] = GrayPixel<3>(pbuf[tx]);
+				}
+				else
+				{
+					pbuf[tx] = GrayPixel<4>(pbuf[tx]);
+				}
+				x ++;
+      }
+			pbuf += m_x;
+      y ++;
+    }
+	}
+
+	// faster version of GrayRect that works on entire scanlines.
+	void GrayRasters(int top, int bottom)
+	{
+    clamp(top, 0, m_y);
+    clamp(bottom, 0, m_y);
+
+		RgbPixel* start = m_pbuf + (top * m_x);
+		RgbPixel* end = m_pbuf + (bottom * m_x);
+
+		int y = top;
+		int x = 0;
+
+		for(; start != end; start ++)
+		{
+			if(y & (x & 1))
+			{
+				*start = GrayPixel<3>(*start);
+			}
+			else
+			{
+				*start = GrayPixel<4>(*start);
+			}
+			x ++;
+			if(x == m_x)
+			{
+				y ++;
+				x = 0;
+			}
+		}
+	}
+
+  template<int patternFreq, int colorOffset, bool GrayBorder, bool showAnts>
   void DrawSelectionRectSafe(int patternOffset, RECT& rc, SelectionRectFlags f = SR_DEFAULT)
   {
     // the formula for color is inverted, plus or minus 20 (with wrap) on each colorant.
-    if(!(f & SR_IGNORETOP))
-    {
-      DrawSelectionHLineSafe<patternFreq, colorOffset>(patternOffset, rc.top, rc.left, rc.right);
-    }
-    if(!(f & SR_IGNOREBOTTOM))
-    {
-      DrawSelectionHLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.bottom, rc.left, rc.right);
-    }
-    if(!(f & SR_IGNORELEFT))
-    {
-      DrawSelectionVLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.left, rc.top, rc.bottom);
-    }
-    if(!(f & SR_IGNORERIGHT))
-    {
-      DrawSelectionVLineSafe<patternFreq, colorOffset>(patternOffset, rc.right, rc.top, rc.bottom);
-    }
+		if(showAnts)
+		{
+			if(!(f & SR_IGNORETOP) && (rc.top > 0) && (rc.top < m_y))
+			{
+				DrawSelectionHLineSafe<patternFreq, colorOffset>(patternOffset, rc.top, rc.left, rc.right);
+			}
+			if(!(f & SR_IGNOREBOTTOM) && (rc.bottom > 0) && (rc.bottom < m_y))
+			{
+				DrawSelectionHLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.bottom - 1, rc.left, rc.right + 1);
+			}
+			if(!(f & SR_IGNORELEFT) && (rc.left > 0) && (rc.left < m_x))
+			{
+				DrawSelectionVLineSafe<patternFreq, colorOffset>(patternFreq - patternOffset, rc.left, rc.top, rc.bottom);
+			}
+			if(!(f & SR_IGNORERIGHT) && (rc.right > 0) && (rc.right < m_x))
+			{
+				DrawSelectionVLineSafe<patternFreq, colorOffset>(patternOffset, rc.right - 1, rc.top, rc.bottom);
+			}
+		}
+
+		if(GrayBorder)
+		{
+			GrayRasters(0, rc.top);// top
+			GrayRasters(rc.bottom, m_y);// bottom
+			GrayRect(0, rc.top, rc.left, rc.bottom);// left
+			GrayRect(rc.right, rc.top, m_x, rc.bottom);// right
+		}
   }
 
   bool StretchBlit(AnimBitmap& dest, long destx, long desty, long destw, long desth, long srcx, long srcy, long srcw, long srch, int mode = HALFTONE)
@@ -482,9 +590,9 @@ public:
   }
 
   template<long _Tbpp>
-  bool Blit(AnimBitmap<_Tbpp>& dest, long x, long y, long width, long height)
+  bool Blit(AnimBitmap<_Tbpp>& dest, long destx, long desty, long width, long height, long srcx = 0, long srcy = 0)
   {
-    int r = BitBlt(dest.m_offscreen, 0, 0, width, height, m_offscreen, x, y, SRCCOPY);
+    int r = BitBlt(dest.m_offscreen, destx, desty, width, height, m_offscreen, srcx, srcy, SRCCOPY);
     return r != 0;
   }
 

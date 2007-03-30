@@ -106,7 +106,7 @@ public:
 
   // zoom
   void SetZoomFactor(float n);
-  float GetZoomFactor() const;
+  ViewPortSubPixel GetZoomFactor() const;
 
   void CenterImage();
 
@@ -154,9 +154,10 @@ protected:
 
   // members
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap.
-  AnimBitmap<32> m_dibOriginal;
-  AnimBitmap<32> m_dibStretched;
-  AnimBitmap<32> m_dibOffscreen;
+  AnimBitmap<32> m_dibOriginal;// a cached image of the original bitmap.
+  AnimBitmap<32> m_dibOffscreen;// offscreen canvas
+  AnimBitmap<32> m_dibStretched;// the entire original image, stretched to zoom
+
   Viewport m_view;
   IImageEditWindowEvents* m_notify;
 

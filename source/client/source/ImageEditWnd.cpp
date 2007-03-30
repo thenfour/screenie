@@ -53,7 +53,7 @@ bool CImageEditWindow::GetVirtualSelection(RECT& selectionRect) const
   return m_selectionTool.GetSelection(selectionRect);
 }
 
-float CImageEditWindow::GetZoomFactor() const
+ViewPortSubPixel CImageEditWindow::GetZoomFactor() const
 {
   return m_view.GetZoomFactor();
 }
@@ -277,17 +277,16 @@ void CImageEditWindow::ResetOffscreenBitmaps()
   PointF viewSize(brClient.x - ulClient.x, brClient.y - ulClient.y);
   PointF virtualSize(brVirtual.x - ulVirtual.x, brVirtual.y - ulVirtual.y);
 
-  m_dibStretched.Fill(0);
-  m_dibOriginal.StretchBlit(m_dibStretched,
-    (long)(ulClient.x),
-    (long)(ulClient.y),
-    (long)(viewSize.x),
-    (long)(viewSize.y),
-    (long)(ulVirtual.x),
-    (long)(ulVirtual.y),
-    (long)(virtualSize.x),
-    (long)(virtualSize.y),
-    (m_view.GetZoomFactor() < 1.0f) ? HALFTONE : COLORONCOLOR
+	m_dibOriginal.StretchBlit(m_dibStretched,
+		long(ulClient.x),// destx
+		long(ulClient.y),// desty
+		long(viewSize.x),// destw
+		long(viewSize.y),// desth
+    long(ulVirtual.x),// srcx
+    long(ulVirtual.y),// srcy
+    long(virtualSize.x),// srcw
+    long(virtualSize.y),// srcy
+    (m_view.GetZoomFactor() < 1.0) ? HALFTONE : COLORONCOLOR
     );
 }
 

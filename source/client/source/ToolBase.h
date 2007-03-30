@@ -52,31 +52,7 @@ public:
   virtual void OnStopDragging() = 0;
   virtual void OnStartDragging() = 0;
 };
-//class PencilTool : public ToolBase
-//{
-//public:
-//  void OnInitTool() { }
-//  void OnSelectTool() { }
-//  void OnDeselectTool() { }
-//  void OnCursorMove(PointI p) { }
-//  void OnLeftButtonDown(PointI p) { }
-//  void OnLeftButtonUp(PointI p) { }
-//  void OnLoseCapture() { }
-//  void OnPaint(AnimBitmap<32>& img, const Viewport& view, int marginX, int marginY) { }
-//};
-//
-//class TextTool : public ToolBase
-//{
-//public:
-//  void OnInitTool() { }
-//  void OnSelectTool() { }
-//  void OnDeselectTool() { }
-//  void OnCursorMove(PointI p) { }
-//  void OnLeftButtonDown(PointI p) { }
-//  void OnLeftButtonUp(PointI p) { }
-//  void OnLoseCapture() { }
-//  void OnPaint(AnimBitmap<32>& img, const Viewport& view, int marginX, int marginY) { }
-//};
+
 
 class ISelectionToolCallback
 {
@@ -109,7 +85,7 @@ public:
 
   void OnInitTool()
   {
-    m_ops->CreateTimer(120, TimerProc, this);
+    m_ops->CreateTimer(260, TimerProc, this);
   }
 
   static void TimerProc(void* pUser)
@@ -143,9 +119,11 @@ public:
     if(dragging)
     {
       RECT rcExisting;
+			bool refreshAll = true;
       if(m_haveSelection)
       {
         GetSelection(rcExisting);
+				refreshAll = false;
       }
 
       m_haveSelection = true;
@@ -172,7 +150,14 @@ public:
         CopyRect(&rc, &rcExisting);
       }
 
-      m_ops->Refresh(rc, true);
+			if(refreshAll)
+			{
+				m_ops->Refresh(true);
+			}
+			else
+			{
+				m_ops->Refresh(rc, true);
+			}
     }
   }
 
@@ -188,10 +173,11 @@ public:
   {
     if(m_haveSelection)
     {
-      RECT rc;
-      GetSelection(rc);
+      //RECT rc;
+      //GetSelection(rc);
       m_haveSelection = false;
-      m_ops->Refresh(rc, true);
+      //m_ops->Refresh(rc, true);
+      m_ops->Refresh(true);
     }
 
     m_selectionOrg = PointFtoI(m_ops->GetCursorPosition());
@@ -214,7 +200,7 @@ public:
       OffsetRect(&rc, marginX, marginY);
 
       // now we have a view rect; figure out if we can draw all edges.
-      img.DrawSelectionRectSafe<patternFrequency, 55>(m_patternOffset, rc);
+      img.DrawSelectionRectSafe<patternFrequency, 64, true, true>(m_patternOffset, rc);
     }
   }
 

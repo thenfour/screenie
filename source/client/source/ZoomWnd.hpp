@@ -1,4 +1,4 @@
-//
+//  The name of this class is really not relevant anymore. The ZoomWnd is really the 1:1 window on the left side.
 //
 //
 //
@@ -67,34 +67,18 @@ public:
 	BEGIN_MSG_MAP(CZoomWindow)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
-		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_SIZE, OnSize)
 	END_MSG_MAP()
 
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 	{
-    SetTimer(0, 120);
 		return 0;
 	}
 
   int GetFactor() const
   {
     return m_nFactor;
-  }
-
-  LRESULT OnTimer(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
-  {
-    if(m_haveSelection)
-    {
-      m_patternOffset ++;
-      if(m_patternOffset >= patternFrequency)
-      {
-        m_patternOffset = 0;
-      }
-      RedrawWindow(0, 0, RDW_INVALIDATE | RDW_UPDATENOW);
-    }
-    return 0;
   }
 
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -205,7 +189,7 @@ public:
     CPoint clientUL = ImageToClient(imgUL);
     CPoint clientBR = ImageToClient(imgBR);
 
-    m_dibOffscreen.Fill(0);
+		m_dibOffscreen.FillCheckerPattern();
     m_dibOriginal.StretchBlit(m_dibOffscreen,
       clientUL.x, clientUL.y, clientBR.x - clientUL.x, clientBR.y - clientUL.y,
       imgUL.x, imgUL.y, imgBR.x - imgUL.x, imgBR.y - imgUL.y,
@@ -215,8 +199,7 @@ public:
     if(m_haveSelection)
     {
       CRect rcSelection(ImageToClient(m_selection.TopLeft()), ImageToClient(m_selection.BottomRight()));
-      CRect rcTemp(ClientToImage(rcSelection.TopLeft()), ClientToImage(rcSelection.BottomRight()));
-      m_dibOffscreen.DrawSelectionRectSafe<patternFrequency, 64>(m_patternOffset, rcSelection);
+      m_dibOffscreen.DrawSelectionRectSafe<patternFrequency, 64, true, false>(m_patternOffset, rcSelection);
     }
 
     // draw cross-hair

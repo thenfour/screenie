@@ -3,10 +3,11 @@
 #ifndef VIEWPORT_INCLUDED
 #define VIEWPORT_INCLUDED
 
+typedef double ViewPortSubPixel;
 
-inline int Round(float f)
+inline int Round(ViewPortSubPixel f)
 {
-  return static_cast<int>(f + 0.5f);
+  return static_cast<int>(f + 0.5);
 }
 
 
@@ -67,7 +68,7 @@ public:
     y(0.0f)
   {
   }
-  PointF(float initX, float initY) :
+  PointF(ViewPortSubPixel initX, ViewPortSubPixel initY) :
     x(initX),
     y(initY)
   {
@@ -86,20 +87,20 @@ public:
   }
 
   // Operations
-	void Offset(float xOffset, float yOffset)
+	void Offset(ViewPortSubPixel xOffset, ViewPortSubPixel yOffset)
   {
     x += xOffset;
     y += yOffset;
   }
 
-	void Assign(float X, float Y)
+	void Assign(ViewPortSubPixel X, ViewPortSubPixel Y)
   {
     x = X;
     y = Y;
   }
 
-  float x;
-  float y;
+  ViewPortSubPixel x;
+  ViewPortSubPixel y;
 };
 
 inline PointI PointFtoI(PointF x)
@@ -107,14 +108,9 @@ inline PointI PointFtoI(PointF x)
   return PointI(Round(x.x), Round(x.y));
 }
 
-inline PointF PointItoF(PointI x)
-{
-  return PointF(static_cast<float>(x.x), static_cast<float>(x.y));
-}
-
 
 /*
-  Class to encapsulate translating between a "virtual canvas" and a small view into it (like a huge image & the window that displays part of it).
+  Class to encapsulate translating between a "virtual canvas" and a view into it (e.g. a huge image & the window that displays part of it).
   items this takes into consideration:
   1) view origin (where in the viewport should the canvas origin be centered on?)
   2) virtual origin (where in the virtual canvas is the viewport centered on?)
@@ -160,12 +156,12 @@ public:
     viewOffsetFromZoomed = rhs.viewOffsetFromZoomed;
   }
 
-  void SetZoomFactor(float z)
+  void SetZoomFactor(ViewPortSubPixel z)
   {
     zoomFactor = z;
     CacheValues();
   }
-  float GetZoomFactor() const
+  ViewPortSubPixel GetZoomFactor() const
   {
     return zoomFactor;
   }
@@ -190,61 +186,61 @@ public:
 
   PointI ViewToVirtual(PointI x) const
   {
-    return ZoomedToVirtual(ViewToZoomed(x));
+    return _ZoomedToVirtual(_ViewToZoomed(x));
   }
 
   PointF ViewToVirtual(PointF x) const
   {
-    return ZoomedToVirtual(ViewToZoomed(x));
+    return _ZoomedToVirtual(_ViewToZoomed(x));
   }
 
   PointI VirtualToView(PointI x) const
   {
-    return ZoomedToView(VirtualToZoomed(x));
+    return _ZoomedToView(_VirtualToZoomed(x));
   }
 
   PointF VirtualToView(PointF x) const
   {
-    return ZoomedToView(VirtualToZoomed(x));
+    return _ZoomedToView(_VirtualToZoomed(x));
   }
 
   PointI ViewToVirtualSize(PointI x) const
   {
-    return ZoomedToVirtualSize(x);
+    return _ZoomedToVirtualSize(x);
   }
 
   PointF ViewToVirtualSize(PointF x) const
   {
-    return ZoomedToVirtualSize(x);
+    return _ZoomedToVirtualSize(x);
   }
 
   PointI VirtualToViewSize(PointI x) const
   {
-    return VirtualToZoomedSize(x);
+    return _VirtualToZoomedSize(x);
   }
 
   PointF VirtualToViewSize(PointF x) const
   {
-    return VirtualToZoomedSize(x);
+    return _VirtualToZoomedSize(x);
   }
 
 protected:
-  PointI ZoomedToVirtualSize(PointI x) const
+  PointI _ZoomedToVirtualSize(PointI x) const
   {
     return PointI(
-      Round((static_cast<float>(x.x) / zoomFactor)),
-      Round((static_cast<float>(x.y) / zoomFactor))
+      Round((static_cast<ViewPortSubPixel>(x.x) / zoomFactor)),
+      Round((static_cast<ViewPortSubPixel>(x.y) / zoomFactor))
       );
   }
-  PointF ZoomedToVirtualSize(PointF x) const
+  PointF _ZoomedToVirtualSize(PointF x) const
   {
     return PointF(
-      (static_cast<float>(x.x) / zoomFactor),
-      (static_cast<float>(x.y) / zoomFactor)
+      (static_cast<ViewPortSubPixel>(x.x) / zoomFactor),
+      (static_cast<ViewPortSubPixel>(x.y) / zoomFactor)
       );
   }
 
-  PointI VirtualToZoomedSize(PointI x) const
+  PointI _VirtualToZoomedSize(PointI x) const
   {
     return PointI(
       Round(zoomFactor * x.x),
@@ -252,7 +248,7 @@ protected:
       );
   }
 
-  PointF VirtualToZoomedSize(PointF x) const
+  PointF _VirtualToZoomedSize(PointF x) const
   {
     return PointF(
       zoomFactor * x.x,
@@ -260,7 +256,7 @@ protected:
       );
   }
 
-  PointI ViewToZoomed(PointI x) const
+  PointI _ViewToZoomed(PointI x) const
   {
     /*              origins
                       |
@@ -276,7 +272,7 @@ protected:
       );
   }
 
-  PointF ViewToZoomed(PointF x) const
+  PointF _ViewToZoomed(PointF x) const
   {
     return PointF(
       viewOffsetFromZoomed.x + x.x,
@@ -284,7 +280,7 @@ protected:
       );
   }
 
-  PointI ZoomedToView(PointI x) const
+  PointI _ZoomedToView(PointI x) const
   {
     /*              origins
                       |
@@ -299,7 +295,7 @@ protected:
       (int)(x.y - viewOffsetFromZoomed.y)
       );
   }
-  PointF ZoomedToView(PointF x) const
+  PointF _ZoomedToView(PointF x) const
   {
     return PointF(
       x.x - viewOffsetFromZoomed.x,
@@ -307,7 +303,7 @@ protected:
       );
   }
 
-  PointI ZoomedToVirtual(PointI x) const
+  PointI _ZoomedToVirtual(PointI x) const
   {
     /*
       |=============x===========================| zoomed virtual canvas
@@ -316,19 +312,19 @@ protected:
       <-----> return
     */
     return PointI(
-      Round((static_cast<float>(x.x) / zoomFactor)),
-      Round((static_cast<float>(x.y) / zoomFactor))
+      Round((static_cast<ViewPortSubPixel>(x.x) / zoomFactor)),
+      Round((static_cast<ViewPortSubPixel>(x.y) / zoomFactor))
       );
   }
-  PointF ZoomedToVirtual(PointF x) const
+  PointF _ZoomedToVirtual(PointF x) const
   {
     return PointF(
-      (static_cast<float>(x.x) / zoomFactor),
-      (static_cast<float>(x.y) / zoomFactor)
+      (static_cast<ViewPortSubPixel>(x.x) / zoomFactor),
+      (static_cast<ViewPortSubPixel>(x.y) / zoomFactor)
       );
   }
 
-  PointI VirtualToZoomed(PointI x) const
+  PointI _VirtualToZoomed(PointI x) const
   {
     /*
       |=============x===========================| zoomed virtual canvas
@@ -341,7 +337,7 @@ protected:
       Round(zoomFactor * x.y)
       );
   }
-  PointF VirtualToZoomed(PointF x) const
+  PointF _VirtualToZoomed(PointF x) const
   {
     return PointF(
       zoomFactor * x.x,
@@ -369,7 +365,7 @@ protected:
   // basic members
   PointF viewOrigin;
   PointF virtualOrigin;
-  float zoomFactor;
+  ViewPortSubPixel zoomFactor;
 
   // cached values
   PointF zoomedOrigin;// always virtualOrigin * zoomFactor
