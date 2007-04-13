@@ -7,10 +7,9 @@
 #include "stdafx.hpp"
 #include "resource.h"
 
-#include "options.hpp"
 #include "ScreenshotDestination.hpp"
 #include "ScreenshotOptions.hpp"
-#include "libcc/registry.h"// huhu mixing libraries... very shitty.
+#include "libcc/registry.h"
 
 const TCHAR* KEY_INCLUDECURSOR = TEXT("Include Cursor");
 const TCHAR* KEY_SHOWCROPPINGWINDOW = TEXT("Show Cropping Window");
@@ -51,76 +50,76 @@ const TCHAR* KEY_DEST_IMAGE_SCALETYPE = TEXT("Scale Type");
 const TCHAR* KEY_DEST_IMAGE_SCALEPERCENT = TEXT("Scale Percent");
 const TCHAR* KEY_DEST_IMAGE_MAXDIMENSION = TEXT("Maximum Width/Height");
 
-bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKey& key)
+bool ReadDestinationFromRegistry(ScreenshotDestination& destination, LibCC::RegistryKey& key)
 {
 	// temporary variable for integer settings
 	DWORD temp;
 
-	key.GetDWORD(KEY_DEST_ENABLED, &temp);
+	temp = key[KEY_DEST_ENABLED].GetDWORD();
 	destination.enabled = (temp != 0);
 
 	////////////////////////////////////////
 	// general settings
 	////////////////////////////////////////
 
-	key.GetString(KEY_DEST_GENERAL_NAME, destination.general.name);
+	destination.general.name = key[KEY_DEST_GENERAL_NAME].GetString();
 
-	key.GetDWORD(KEY_DEST_GENERAL_TYPE, &temp);
+	temp = key[KEY_DEST_GENERAL_TYPE].GetDWORD();
 	destination.general.type = static_cast<ScreenshotDestination::Type>(temp);
 
   tstd::tstring sTemp;
-  key.GetString(KEY_DEST_GENERAL_ID, sTemp);
+	sTemp = key[KEY_DEST_GENERAL_ID].GetString();
   destination.general.id.Assign(sTemp);
 
-	key.GetString(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
-	key.GetString(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
-	key.GetString(KEY_DEST_GENERAL_PATH, destination.general.path);
-  key.GetDWORD(KEY_DEST_GENERAL_LOCALTIME, &temp);
+	destination.general.imageFormat = key[KEY_DEST_GENERAL_IMAGEFORMAT].GetString();
+	destination.general.filenameFormat = key[KEY_DEST_GENERAL_FILENAMEFORMAT].GetString();
+	destination.general.path = key[KEY_DEST_GENERAL_PATH].GetString();
+
+	temp = key[KEY_DEST_GENERAL_LOCALTIME].GetDWORD();
   destination.general.localTime = temp == 1 ? true : false;
 
 	////////////////////////////////////////
 	// image settings
 	////////////////////////////////////////
 
-	key.GetDWORD(KEY_DEST_IMAGE_SCALETYPE, &temp);
+	temp = key[KEY_DEST_IMAGE_SCALETYPE].GetDWORD();
 	destination.image.scaleType = static_cast<ScreenshotDestination::ScaleType>(temp);
 
-	key.GetDWORD(KEY_DEST_IMAGE_SCALEPERCENT, &temp);
+	temp = key[KEY_DEST_IMAGE_SCALEPERCENT].GetDWORD();
 	destination.image.scalePercent = static_cast<int>(temp);
 
-	key.GetDWORD(KEY_DEST_IMAGE_MAXDIMENSION, &temp);
+	temp = key[KEY_DEST_IMAGE_MAXDIMENSION].GetDWORD();
 	destination.image.maxDimension = static_cast<int>(temp);
 
 	////////////////////////////////////////
 	// ftp settings
 	////////////////////////////////////////
 
-	key.GetString(KEY_DEST_FTP_HOSTNAME, destination.ftp.hostname);
+	destination.ftp.hostname = key[KEY_DEST_FTP_HOSTNAME].GetString();
 
-	key.GetDWORD(KEY_DEST_FTP_PORT, &temp);
+	temp = key[KEY_DEST_FTP_PORT].GetDWORD();
 	destination.ftp.port = static_cast<unsigned short>(temp);
 
-	key.GetString(KEY_DEST_FTP_USERNAME, destination.ftp.username);
-	key.GetString(KEY_DEST_FTP_REMOTEPATH, destination.ftp.remotePath);
-	key.GetString(KEY_DEST_FTP_RESULTURL, destination.ftp.resultURL);
+	destination.ftp.username = key[KEY_DEST_FTP_USERNAME].GetString();
+	destination.ftp.remotePath = key[KEY_DEST_FTP_REMOTEPATH].GetString();
+	destination.ftp.resultURL = key[KEY_DEST_FTP_RESULTURL].GetString();
 
-  CBuffer<BYTE> tempBuffer;
-  DWORD dwTemp;
-  key.GetBytes(KEY_DEST_FTP_PASSWORD, tempBuffer, &dwTemp);
-  destination.ftp.SetEncryptedPassword(tempBuffer, dwTemp);
+	LibCC::Blob<BYTE> tempBuffer;
+  key.GetValue(KEY_DEST_FTP_PASSWORD, tempBuffer);
+  destination.ftp.SetEncryptedPassword(tempBuffer);
 
-	key.GetDWORD(KEY_DEST_FTP_COPYURL, &temp);
+	temp = key[KEY_DEST_FTP_COPYURL].GetDWORD();
 	destination.ftp.copyURL = (temp != 0);
 
 	//////////////////////////////////////////////////////////////////////////
 	// screenie.net settings
 	//////////////////////////////////////////////////////////////////////////
 
-	key.GetString(KEY_DEST_SCREENIE_URL, destination.screenie.url);
-	key.GetString(KEY_DEST_SCREENIE_USERNAME, destination.screenie.username);
-	key.GetString(KEY_DEST_SCREENIE_PASSWORD, destination.screenie.password);
+	destination.screenie.url = key[KEY_DEST_SCREENIE_URL].GetString();
+	destination.screenie.username = key[KEY_DEST_SCREENIE_USERNAME].GetString();
+	destination.screenie.password = key[KEY_DEST_SCREENIE_PASSWORD].GetString();
 
-	key.GetDWORD(KEY_DEST_SCREENIE_COPYURL, &temp);
+	temp = key[KEY_DEST_SCREENIE_COPYURL].GetDWORD();
 	destination.screenie.copyURL = (temp != 0);
 
 	return true;
@@ -128,46 +127,28 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, CRegistryKe
 
 bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName)
 {
-    CRegistryKey MainKey;
-	if (!MainKey.Init(HKEY_CURRENT_USER, keyName))
-		return false;
+	LibCC::RegistryKey MainKey(HKEY_CURRENT_USER, keyName);
+	if(!MainKey.Exists()) return false;
 
-  LibCC::RegistryKey MainKey2(HKEY_CURRENT_USER, keyName);
-
-	CRegistryKey DestsKey;
-	if (MainKey.OpenSubKey(KEY_DESTINATIONS, &DestsKey))
+	LibCC::RegistryKey DestsKey = MainKey.SubKey(KEY_DESTINATIONS);
+	if(DestsKey.Exists())
 	{
-		CRegistryKeysEnum e;
-
-		e.Reset(&DestsKey);
-
-		CRegistryKey DestKey;
-		while (e.Next(DestKey))
+		std::vector<LibCC::RegistryKey>::iterator it;// oddly vc8 does not recognize SubKeyIterator as a type! i think this is a bug.
+		for(it = DestsKey.EnumSubKeysBegin(); it != DestsKey.EnumSubKeysEnd(); ++ it)
 		{
 			ScreenshotDestination destination;
-			if (ReadDestinationFromRegistry(destination, DestKey))
+			if (ReadDestinationFromRegistry(destination, *it))
 				options.AddDestination(destination);
 		}
 
-		DWORD temp;
-
-		MainKey.GetDWORD(KEY_INCLUDECURSOR, &temp);
-		options.IncludeCursor(temp != 0);
-
-		MainKey.GetDWORD(KEY_SHOWCROPPINGWINDOW, &temp);
-		options.ShowCropWindow(temp != 0);
-
-		MainKey.GetDWORD(KEY_CONFIRMOPTIONS, &temp);
-		options.ConfirmOptions(temp != 0);
-
-		MainKey.GetDWORD(KEY_SHOWSTATUS, &temp);
-		options.ShowStatus(temp != 0);
-
-		MainKey.GetDWORD(KEY_SHOWSPLASH, &temp);
-		options.ShowSplash(temp != 0);
+		options.IncludeCursor(MainKey[KEY_INCLUDECURSOR].GetDWORD() != 0);
+		options.ShowCropWindow(MainKey[KEY_SHOWCROPPINGWINDOW].GetDWORD() != 0);
+		options.ConfirmOptions(MainKey[KEY_CONFIRMOPTIONS].GetDWORD() != 0);
+		options.ShowStatus(MainKey[KEY_SHOWSTATUS].GetDWORD() != 0);
+		options.ShowSplash(MainKey[KEY_SHOWSPLASH].GetDWORD() != 0);
 
     float fTemp;
-    if(MainKey2[KEY_CROPPINGZOOMFACTOR].GetValue(&fTemp, sizeof(fTemp)))
+    if(MainKey[KEY_CROPPINGZOOMFACTOR].GetValue(&fTemp, sizeof(fTemp)))
     {
       options.CroppingZoomFactor(fTemp);
     }
@@ -178,15 +159,15 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
     }
 
     WINDOWPLACEMENT wpTemp;
-    if(MainKey2[KEY_CONFIGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
+    if(MainKey[KEY_CONFIGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
     {
       options.SetConfigPlacement(wpTemp);
     }
-    if(MainKey2[KEY_STATUSWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
+    if(MainKey[KEY_STATUSWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
     {
       options.SetStatusPlacement(wpTemp);
     }
-    if(MainKey2[KEY_CROPPINGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
+    if(MainKey[KEY_CROPPINGWINDOWPLACEMENT].GetValue(&wpTemp, sizeof(wpTemp)))
     {
       options.SetCroppingPlacement(wpTemp);
     }
@@ -194,136 +175,113 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
   return true;
 }
 
-bool WriteDestinationToRegistry(const ScreenshotDestination& destination, CRegistryKey& key)
+bool WriteDestinationToRegistry(const ScreenshotDestination& destination, LibCC::RegistryKey& key)
 {
-	key.SetDWORD(KEY_DEST_ENABLED, destination.enabled);
+	key.SetValue(KEY_DEST_ENABLED, destination.enabled);
 
 	////////////////////////////////////////
 	// general settings
 	////////////////////////////////////////
 
-	key.SetString(KEY_DEST_GENERAL_NAME, destination.general.name);
-	key.SetDWORD(KEY_DEST_GENERAL_TYPE, destination.general.type);
-	key.SetString(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
-	key.SetString(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
-	key.SetString(KEY_DEST_GENERAL_PATH, destination.general.path);
-  key.SetDWORD(KEY_DEST_GENERAL_LOCALTIME, destination.general.localTime ? 1 : 0);
-  key.SetString(KEY_DEST_GENERAL_ID, destination.general.id.ToString());
+	key.SetValue(KEY_DEST_GENERAL_NAME, destination.general.name);
+	key.SetValue(KEY_DEST_GENERAL_TYPE, destination.general.type);
+	key.SetValue(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
+	key.SetValue(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
+	key.SetValue(KEY_DEST_GENERAL_PATH, destination.general.path);
+  key.SetValue(KEY_DEST_GENERAL_LOCALTIME, destination.general.localTime ? 1 : 0);
+  key.SetValue(KEY_DEST_GENERAL_ID, destination.general.id.ToString());
 
 	////////////////////////////////////////
 	// image settings
 	////////////////////////////////////////
 
-	key.SetDWORD(KEY_DEST_IMAGE_SCALETYPE, destination.image.scaleType);
-	key.SetDWORD(KEY_DEST_IMAGE_SCALEPERCENT, destination.image.scalePercent);
-	key.SetDWORD(KEY_DEST_IMAGE_MAXDIMENSION, destination.image.maxDimension);
+	key.SetValue(KEY_DEST_IMAGE_SCALETYPE, destination.image.scaleType);
+	key.SetValue(KEY_DEST_IMAGE_SCALEPERCENT, destination.image.scalePercent);
+	key.SetValue(KEY_DEST_IMAGE_MAXDIMENSION, destination.image.maxDimension);
 
 	////////////////////////////////////////
 	// ftp settings
 	////////////////////////////////////////
 
-	key.SetString(KEY_DEST_FTP_HOSTNAME, destination.ftp.hostname);
-	key.SetDWORD(KEY_DEST_FTP_PORT, destination.ftp.port);
-	key.SetString(KEY_DEST_FTP_USERNAME, destination.ftp.username);
-	key.SetString(KEY_DEST_FTP_REMOTEPATH, destination.ftp.remotePath);
-	key.SetString(KEY_DEST_FTP_RESULTURL, destination.ftp.resultURL);
-	key.SetDWORD(KEY_DEST_FTP_COPYURL, destination.ftp.copyURL);
+	key.SetValue(KEY_DEST_FTP_HOSTNAME, destination.ftp.hostname);
+	key.SetValue(KEY_DEST_FTP_PORT, destination.ftp.port);
+	key.SetValue(KEY_DEST_FTP_USERNAME, destination.ftp.username);
+	key.SetValue(KEY_DEST_FTP_REMOTEPATH, destination.ftp.remotePath);
+	key.SetValue(KEY_DEST_FTP_RESULTURL, destination.ftp.resultURL);
+	key.SetValue(KEY_DEST_FTP_COPYURL, destination.ftp.copyURL);
 
-  CBuffer<BYTE> temp;
-  DWORD size = destination.ftp.GetEncryptedPassword().Size();
-  temp.Alloc(size);
-  memcpy(temp.Lock(), destination.ftp.GetEncryptedPassword().GetBuffer(), size);
-  temp.Unlock();
-  key.SetBytes(KEY_DEST_FTP_PASSWORD, temp, size);
+	const LibCC::Blob<BYTE>& temp = destination.ftp.GetEncryptedPassword();
+  key.SetValue(KEY_DEST_FTP_PASSWORD, temp.GetBuffer(), temp.Size());
 
 	//////////////////////////////////////////////////////////////////////////
 	// screenie.net settings
 	//////////////////////////////////////////////////////////////////////////
 
-	key.SetString(KEY_DEST_SCREENIE_URL, destination.screenie.url);
-	key.SetString(KEY_DEST_SCREENIE_USERNAME, destination.screenie.username);
-	key.SetString(KEY_DEST_SCREENIE_PASSWORD, destination.screenie.password);
-	key.SetDWORD(KEY_DEST_SCREENIE_COPYURL, destination.screenie.copyURL);
+	key.SetValue(KEY_DEST_SCREENIE_URL, destination.screenie.url);
+	key.SetValue(KEY_DEST_SCREENIE_USERNAME, destination.screenie.username);
+	key.SetValue(KEY_DEST_SCREENIE_PASSWORD, destination.screenie.password);
+	key.SetValue(KEY_DEST_SCREENIE_COPYURL, destination.screenie.copyURL);
 
 	return true;
 }
 
 bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName)
 {
-	if (::SHDeleteKey(root, keyName) != ERROR_SUCCESS)
-		return false;
+	DWORD ret = ::SHDeleteKey(root, keyName);
 
-	bool success = false;
+	LibCC::RegistryKey MainKey(root, keyName);
+	MainKey.Create();
 
-	CRegistryKey MainKey;
-  if(MainKey.Init(root, keyName))
-  {
-    success = true;
-
-    LibCC::RegistryKey MainKey2(root, keyName);
-
-    CRegistryKey DestsKey;
-    if(MainKey.OpenSubKey(KEY_DESTINATIONS, &DestsKey))
-    {
-			ScreenshotDestination destination;
-			for (size_t i = 0; i < options.GetNumDestinations(); ++i)
-			{
-				if (options.GetDestination(destination, i))
-				{
-					// generate the key name based on the destination name and index
-					tstd::tstring keyName = LibCC::Format(TEXT("% (%)")).s(destination.general.name).ul(i).Str();
-
-					CRegistryKey DestKey;
-					if (!DestsKey.OpenSubKey(keyName, &DestKey))
-					{
-						success = false;
-						break;
-					}
-
-					WriteDestinationToRegistry(destination, DestKey);
-				}
-			}
+  LibCC::RegistryKey DestsKey = MainKey.SubKey(KEY_DESTINATIONS);
+	for (size_t i = 0; i < options.GetNumDestinations(); ++i)
+	{
+		ScreenshotDestination destination;
+		if (options.GetDestination(destination, i))
+		{
+			// generate the key name based on the destination name and index
+			tstd::tstring keyName = LibCC::Format(TEXT("% (%)")).s(destination.general.name).ul(i).Str();
+			LibCC::RegistryKey destKey = DestsKey.SubKey(keyName);
+			destKey.Create();
+			WriteDestinationToRegistry(destination, destKey);
 		}
-
-		MainKey.SetDWORD(KEY_INCLUDECURSOR, options.IncludeCursor());
-		MainKey.SetDWORD(KEY_CONFIRMOPTIONS, options.ConfirmOptions());
-		MainKey.SetDWORD(KEY_SHOWSTATUS, options.ShowStatus());
-		MainKey.SetDWORD(KEY_SHOWCROPPINGWINDOW, options.ShowCropWindow());
-		MainKey.SetDWORD(KEY_SHOWSPLASH, options.ShowSplash());
-
-    {
-      LibCC::RegistryKey autoStartKey(root, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
-      if(options.AutoStartup())
-      {
-        TCHAR fileName[1024];
-        GetModuleFileName(NULL, fileName, 1024);
-        autoStartKey.SetValue(_T("Screenie"), fileName);
-      }
-      else
-      {
-        // make sure it's not in the registry.
-        autoStartKey.DeleteValue(_T("Screenie"));
-      }
-    }
-
-    float temp = options.CroppingZoomFactor();
-    MainKey2[KEY_CROPPINGZOOMFACTOR].SetValue(&temp, sizeof(temp));
-
-    if(options.HaveConfigPlacement())
-    {
-      MainKey2[KEY_CONFIGWINDOWPLACEMENT].SetValue(&options.GetConfigPlacement(), sizeof(WINDOWPLACEMENT));
-    }
-    if(options.HaveCroppingPlacement())
-    {
-      MainKey2[KEY_CROPPINGWINDOWPLACEMENT].SetValue(&options.GetCroppingPlacement(), sizeof(WINDOWPLACEMENT));
-    }
-    if(options.HaveStatusPlacement())
-    {
-      MainKey2[KEY_STATUSWINDOWPLACEMENT].SetValue(&options.GetStatusPlacement(), sizeof(WINDOWPLACEMENT));
-    }
-
-		MainKey.Uninit();
 	}
+
+	MainKey.SetValue(KEY_INCLUDECURSOR, options.IncludeCursor());
+	MainKey.SetValue(KEY_CONFIRMOPTIONS, options.ConfirmOptions());
+	MainKey.SetValue(KEY_SHOWSTATUS, options.ShowStatus());
+	MainKey.SetValue(KEY_SHOWCROPPINGWINDOW, options.ShowCropWindow());
+	MainKey.SetValue(KEY_SHOWSPLASH, options.ShowSplash());
+
+  {
+    LibCC::RegistryKey autoStartKey(root, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
+    if(options.AutoStartup())
+    {
+      TCHAR fileName[1024];
+      GetModuleFileName(NULL, fileName, 1024);
+      autoStartKey.SetValue(_T("Screenie"), fileName);
+    }
+    else
+    {
+      // make sure it's not in the registry.
+      autoStartKey.DeleteValue(_T("Screenie"));
+    }
+  }
+
+  float temp = options.CroppingZoomFactor();
+  MainKey[KEY_CROPPINGZOOMFACTOR].SetValue(&temp, sizeof(temp));
+
+  if(options.HaveConfigPlacement())
+  {
+    MainKey[KEY_CONFIGWINDOWPLACEMENT].SetValue(&options.GetConfigPlacement(), sizeof(WINDOWPLACEMENT));
+  }
+  if(options.HaveCroppingPlacement())
+  {
+    MainKey[KEY_CROPPINGWINDOWPLACEMENT].SetValue(&options.GetCroppingPlacement(), sizeof(WINDOWPLACEMENT));
+  }
+  if(options.HaveStatusPlacement())
+  {
+    MainKey[KEY_STATUSWINDOWPLACEMENT].SetValue(&options.GetStatusPlacement(), sizeof(WINDOWPLACEMENT));
+  }
 
 	return true;
 }

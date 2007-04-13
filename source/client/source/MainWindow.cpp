@@ -77,8 +77,6 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 			}
 		}
 
-    
-
 		if (m_screenshotOptions.ShowStatus())
     {
       ShowStatusWindow();

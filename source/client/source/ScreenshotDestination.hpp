@@ -7,7 +7,6 @@
 #ifndef SCREENIE_DESTINATION_HPP
 #define SCREENIE_DESTINATION_HPP
 
-#include "buffer.hpp"
 #include "utility.hpp"
 
 struct ScreenshotDestination
@@ -144,10 +143,9 @@ struct ScreenshotDestination
       return m_passwordEncrypted;
     }
 
-    void SetEncryptedPassword(CBuffer<BYTE>& crap, DWORD size)
+		void SetEncryptedPassword(LibCC::Blob<BYTE>& crap)
     {
-      m_passwordEncrypted.Alloc(size);
-      memcpy(m_passwordEncrypted.GetBuffer(), crap.buf(), size);
+      m_passwordEncrypted.Assign(crap);
     }
 
     void SetPassword(const tstd::tstring& pass)
@@ -163,8 +161,7 @@ struct ScreenshotDestination
       }
 
       m_passwordEncrypted.Alloc(out.cbData);
-      memcpy(m_passwordEncrypted.GetBuffer(), out.pbData, m_passwordEncrypted.Size());
-
+      memcpy(m_passwordEncrypted.GetBuffer(), out.pbData, out.cbData);
       LocalFree(out.pbData);
     }
 

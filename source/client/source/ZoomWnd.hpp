@@ -1,5 +1,5 @@
 //  The name of this class is really not relevant anymore. The ZoomWnd is really the 1:1 window on the left side.
-//
+// TODO: make this work in the same way as the other window pane.
 //
 //
 //
@@ -189,7 +189,8 @@ public:
     CPoint clientUL = ImageToClient(imgUL);
     CPoint clientBR = ImageToClient(imgBR);
 
-		m_dibOffscreen.FillCheckerPattern();
+		CRect rcTemp(0,0,0,0);
+		m_dibOffscreen.FillCheckerPattern(rcTemp);
     m_dibOriginal.StretchBlit(m_dibOffscreen,
       clientUL.x, clientUL.y, clientBR.x - clientUL.x, clientBR.y - clientUL.y,
       imgUL.x, imgUL.y, imgBR.x - imgUL.x, imgBR.y - imgUL.y,
@@ -199,7 +200,7 @@ public:
     if(m_haveSelection)
     {
       CRect rcSelection(ImageToClient(m_selection.TopLeft()), ImageToClient(m_selection.BottomRight()));
-      m_dibOffscreen.DrawSelectionRectSafe<patternFrequency, 64, true, false>(m_patternOffset, rcSelection);
+      //m_dibOffscreen.DrawSelectionRectSafe<patternFrequency, 64, true, false>(m_patternOffset, rcSelection);
     }
 
     // draw cross-hair

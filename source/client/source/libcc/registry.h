@@ -36,7 +36,7 @@
 #ifdef WIN32
 
 #include "blob.h"
-#include "winapi.h"
+#include "Winapi.h"
 #include <vector>
 
 namespace LibCC
@@ -425,6 +425,7 @@ namespace LibCC
 
     // SUB-KEY ENUMERATION
     typedef typename std::vector<_RegistryKey>::iterator SubKeyIterator;
+
     SubKeyIterator EnumSubKeysBegin()
     {
       if(!__Open())

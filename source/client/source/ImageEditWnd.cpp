@@ -3,6 +3,7 @@
 #include "ImageEditWnd.hpp"
 #include "image.hpp"
 
+
 ATL::CWndClassInfo& CImageEditWindow::GetWndClassInfo()
 {
   static ATL::CWndClassInfo wc =
@@ -21,7 +22,7 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_notify(this),
   m_mouseEntrancy(false),
   m_bIsPanning(false),
-  m_selectionTool(this, this),
+  m_selectionTool(this),
   m_nextTimerID(0),
   m_haveCapture(false),
   m_lastCursor(0,0),
@@ -29,8 +30,9 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_panningTimer(0)
 {
   CopyImage(m_dibOriginal, *bitmap);
-  m_view.SetZoomFactor(3.0f);
-  m_view.SetVirtualOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
+	m_display.SetOriginalImage(m_dibOriginal);
+  m_display.SetZoomFactor(3.0f);
+  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
 
   if(pNotify)
   {
@@ -38,24 +40,9 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   }
 }
 
-bool CImageEditWindow::HasSelection() const
-{
-  return m_selectionTool.HasSelection();
-}
-
-void CImageEditWindow::ClearSelection()
-{
-  m_selectionTool.ClearSelection();
-}
-
-bool CImageEditWindow::GetVirtualSelection(RECT& selectionRect) const
-{
-  return m_selectionTool.GetSelection(selectionRect);
-}
-
 ViewPortSubPixel CImageEditWindow::GetZoomFactor() const
 {
-  return m_view.GetZoomFactor();
+  return m_display.GetViewport().GetZoomFactor();
 }
 
 util::shared_ptr<Gdiplus::Bitmap> CImageEditWindow::GetBitmapRect(const RECT& rectToCopy)
@@ -87,12 +74,12 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
     PointF delta;
     delta.x = (float)(m_panningStart.x - cursorPos.x);
     delta.y = (float)(m_panningStart.y - cursorPos.y);
-    delta = m_view.ViewToVirtualSize(delta);
+    delta = m_display.GetViewport().ViewToImageSize(delta);
     PointF newOrg = m_panningStartVirtual;
     newOrg.x += delta.x;
     newOrg.y += delta.y;
     ClampToImage(newOrg);
-    m_view.SetVirtualOrigin(newOrg);
+    m_display.SetImageOrigin(newOrg);
 
     Refresh(true);
   }
@@ -112,8 +99,9 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
       ClampToImage(m_lastCursorVirtual);
 
       // replace the mouse cursor to reflect the slowdown.
-      PointI newCursorPosX = m_view.VirtualToView(PointFtoI(m_lastCursorVirtual));
-      CPoint newCursorPos(newCursorPosX.x, newCursorPosX.y);
+      PointF newCursorPosX = m_display.GetViewport().ImageToView(m_lastCursorVirtual);
+			
+      CPoint newCursorPos = newCursorPosX.Round();
 
       cursorPos = newCursorPos;
       ClientToScreen(&newCursorPos);
@@ -121,7 +109,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
     }
     else
     {
-      m_lastCursorVirtual = m_view.ViewToVirtual(PointF(
+      m_lastCursorVirtual = m_display.GetViewport().ViewToImage(PointF(
         static_cast<float>(cursorPos.x),
         static_cast<float>(cursorPos.y) ));
     }
@@ -167,7 +155,7 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
-  PointF pt = m_view.ViewToVirtual(PointF((float)cursorPos.x, (float)cursorPos.y));
+  PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
   // fire tool events.
   m_selectionTool.OnLeftButtonDown(pt);
@@ -188,7 +176,7 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
-  PointF pt = m_view.ViewToVirtual(PointF((float)cursorPos.x, (float)cursorPos.y));
+  PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
   if(m_haveCapture)
   {
@@ -210,7 +198,7 @@ LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 
     POINTS& psTemp = MAKEPOINTS(lParam);
     m_panningStart.SetPoint(psTemp.x, psTemp.y);
-    m_panningStartVirtual = m_view.GetVirtualOrigin();
+    m_panningStartVirtual = m_display.GetViewport().GetImageOrigin();
     SetCapture();
     m_hPreviousCursor = SetCursor(LoadCursor(0, IDC_HAND));
   }
@@ -249,62 +237,22 @@ LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   return 0;
 }
 
-
-void CImageEditWindow::ResetOffscreenBitmaps()
-{
-	CRect clientRect;
-	GetClientRect(&clientRect);
-
-  if(m_dibOffscreen.GetWidth() < clientRect.right || m_dibOffscreen.GetHeight() < clientRect.bottom)
-  {
-    m_dibOffscreen.SetSize(clientRect.right, clientRect.bottom);
-    m_dibStretched.SetSize(clientRect.right, clientRect.bottom);
-  }
-
-  // figure out an integral place to start drawing (client 0,0 may be at a fraction of a virtual coord)
-  PointF ulVirtual = m_view.ViewToVirtual(PointF((float)clientRect.left, (float)clientRect.top));
-  ulVirtual.x = floor(ulVirtual.x);// make integral
-  ulVirtual.y = floor(ulVirtual.y);// make integral
-  PointF ulClient = m_view.VirtualToView(ulVirtual);// now this is guaranteed to be at the start of an integral virtual coord
-
-  // do the similar stuff for bottom-right
-  PointF brVirtual = m_view.ViewToVirtual(PointF((float)clientRect.right, (float)clientRect.bottom));
-  brVirtual.x = ceil(brVirtual.x);// make integral
-  brVirtual.y = ceil(brVirtual.y);// make integral
-  PointF brClient = m_view.VirtualToView(brVirtual);// now this is guaranteed to be at the start of an integral virtual coord
-
-  // figure out the dimensions of the entire original image to draw
-  PointF viewSize(brClient.x - ulClient.x, brClient.y - ulClient.y);
-  PointF virtualSize(brVirtual.x - ulVirtual.x, brVirtual.y - ulVirtual.y);
-
-	m_dibOriginal.StretchBlit(m_dibStretched,
-		long(ulClient.x),// destx
-		long(ulClient.y),// desty
-		long(viewSize.x),// destw
-		long(viewSize.y),// desth
-    long(ulVirtual.x),// srcx
-    long(ulVirtual.y),// srcy
-    long(virtualSize.x),// srcw
-    long(virtualSize.y),// srcy
-    (m_view.GetZoomFactor() < 1.0) ? HALFTONE : COLORONCOLOR
-    );
-}
-
 void CImageEditWindow::CenterImage()
 {
   CRect rc;
   GetClientRect(&rc);
   m_lastCursor.SetPoint(rc.Width() / 2, rc.Height() / 2);
-  PointF viewOrg(PointF((float)m_lastCursor.x, (float)m_lastCursor.y));
-  m_lastCursorVirtual = m_view.ViewToVirtual(viewOrg);
-  m_view.SetViewOrigin(viewOrg);
-  m_view.SetVirtualOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
-  ResetOffscreenBitmaps();
+  PointF viewOrg((ViewPortSubPixel)m_lastCursor.x, (ViewPortSubPixel)m_lastCursor.y);
+  m_lastCursorVirtual = m_display.GetViewport().ViewToImage(viewOrg);
+  m_display.SetViewOrigin(viewOrg);
+  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
 }
 
 LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*handled*/)
 {
-  ResetOffscreenBitmaps();
+  CRect rc;
+  GetClientRect(&rc);
+	m_display.SetClientSize(rc.Width(), rc.Height());
   return 0;
 }
 
@@ -313,18 +261,7 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	PAINTSTRUCT paintStruct = { 0 };
 	HDC dc = BeginPaint(&paintStruct);
 
-	RECT clientRect;
-	GetClientRect(&clientRect);
-
-	int width = clientRect.right - clientRect.left;
-	int height = clientRect.bottom - clientRect.top;
-
-  m_dibStretched.Blit(m_dibOffscreen, 0, 0, width, height);
-
-  // fire tool events.
-  m_selectionTool.OnPaint(m_dibOffscreen, m_view, 0, 0);
-
-  m_dibOffscreen.Blit(dc, 0, 0, width, height);
+	m_display.Render(dc);
 
 	EndPaint(&paintStruct);
 	return 0;
@@ -337,8 +274,8 @@ PanningSpec CImageEditWindow::GetPanningSpec()
 	RECT clientRect;
 	GetClientRect(&clientRect);
 
-  PointF ul = m_view.ViewToVirtual(PointF(0, 0));
-  PointF br = m_view.ViewToVirtual(PointF((float)clientRect.right, (float)clientRect.bottom));
+  PointF ul = m_display.GetViewport().ViewToImage(PointF(0, 0));
+  PointF br = m_display.GetViewport().ViewToImage(PointF((ViewPortSubPixel)clientRect.right, (ViewPortSubPixel)clientRect.bottom));
 
   PointF pos = m_lastCursorVirtual;
 
@@ -378,11 +315,11 @@ void CImageEditWindow::Pan(const PanningSpec& ps, bool updateNow)
 
 void CImageEditWindow::Pan(int x, int y, bool updateNow)
 {
-  PointF org = m_view.GetVirtualOrigin();
+  PointF org = m_display.GetViewport().GetImageOrigin();
   org.x += x;
   org.y += y;
   ClampToImage(org);
-  m_view.SetVirtualOrigin(org);
+  m_display.SetImageOrigin(org);
 
   // the thing about panning is that now the mouse cursor position also changes (relative to the view).
   // so, send a mousemove if necessary.
@@ -412,23 +349,16 @@ PointF CImageEditWindow::GetCursorPosition()
   return m_lastCursorVirtual;
 }
 
-int CImageEditWindow::GetImageHeight()
+int CImageEditWindow::GetImageHeight() const
 {
   return m_bitmap->GetHeight();
 }
 
-int CImageEditWindow::GetImageWidth()
+int CImageEditWindow::GetImageWidth() const
 {
   return m_bitmap->GetWidth();
 }
 
-void CImageEditWindow::ClampToImage(PointI& p)
-{
-  if(p.x < 0) p.x = 0;
-  if(p.y < 0) p.y = 0;
-  if(p.x > GetImageWidth()) p.x = static_cast<int>(GetImageWidth());
-  if(p.y > GetImageHeight()) p.y = static_cast<int>(GetImageHeight());
-}
 
 void CImageEditWindow::ClampToImage(PointF& p)
 {
@@ -440,21 +370,17 @@ void CImageEditWindow::ClampToImage(PointF& p)
 
 void CImageEditWindow::Refresh(bool now)
 {
-  ResetOffscreenBitmaps();
   RedrawWindow(0, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
 }
 
 void CImageEditWindow::Refresh(const RECT& imageCoords, bool now)
 {
-  ResetOffscreenBitmaps();
+  PointF ulImage(imageCoords.left, imageCoords.top);
+  PointF brImage(imageCoords.right, imageCoords.bottom);
+  PointF ulScreen = m_display.GetViewport().ImageToView(ulImage);
+  PointF brScreen = m_display.GetViewport().ImageToView(brImage);
 
-  PointI ulImage(imageCoords.left, imageCoords.top);
-  PointI brImage(imageCoords.right, imageCoords.bottom);
-  PointI ulScreen = m_view.VirtualToView(ulImage);
-  PointI brScreen = m_view.VirtualToView(brImage);
-
-  CRect rcScreen(ulScreen.x, ulScreen.y, brScreen.x, brScreen.y);
-
+  CRect rcScreen(ulScreen.Floor(), brScreen.Ceil());
   rcScreen.InflateRect(5,5);
 
   RedrawWindow(&rcScreen, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
@@ -485,12 +411,8 @@ LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL&
 {
   // fire tool events
   m_selectionTool.OnInitTool();
+	m_display.SetHWND(this->m_hWnd);
   return 0;
-}
-
-void CImageEditWindow::OnSelectionToolSelectionChanged()
-{
-  m_notify->OnSelectionChanged();
 }
 
 void CImageEditWindow::SetZoomFactor(float n)
@@ -505,12 +427,12 @@ void CImageEditWindow::SetZoomFactor(float n)
   if(client.y < 1) client.y = 1;
   if(client.x > (rcClient.right - 1)) client.x = rcClient.right - 1;
   if(client.y > (rcClient.bottom - 1)) client.x = rcClient.bottom - 1;
-  m_view.SetViewOrigin(client);
+  m_display.SetViewOrigin(client);
   PointF virtual_(m_lastCursorVirtual);
   ClampToImage(virtual_);
-  m_view.SetVirtualOrigin(virtual_);
+  m_display.SetImageOrigin(virtual_);
 
-  m_view.SetZoomFactor(n);
+  m_display.SetZoomFactor(n);
   m_notify->OnZoomFactorChanged();
   Refresh(false);
 }

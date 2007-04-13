@@ -27,6 +27,8 @@
 #include "animbitmap.h"
 #include "viewport.h"
 #include "ToolBase.h"
+#include "SelectionTool.h"
+#include "ImageEditRenderer.h"
 #include <map>
 
 
@@ -66,8 +68,7 @@ public:
 class CImageEditWindow :
   public CWindowImpl<CImageEditWindow>,
   public IImageEditWindowEvents,
-  public IToolOperations,
-  public ISelectionToolCallback
+  public IToolOperations
 {
   // global const settings
   static const int patternFrequency = 8;
@@ -81,28 +82,24 @@ public:
   void OnSelectionChanged() { };
   void OnZoomFactorChanged() { };
 
-  // ISelectionToolCallback methods
-  void OnSelectionToolSelectionChanged();
-
   // IToolOperations methods
   void Pan(int x, int y, bool updateNow);
   PointF GetCursorPosition();
-  int GetImageHeight();
-  int GetImageWidth();
-  void ClampToImage(PointI& p);
+  int GetImageHeight() const;
+  int GetImageWidth() const;
   void ClampToImage(PointF& p);
   void Refresh(bool now);
   void Refresh(const RECT& imageCoords, bool now);
   UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData);
   void DeleteTimer(UINT_PTR cookie);
+	const Viewport& GetViewport() const { return m_display.GetViewport(); }
+	void ClearSelection() { m_display.ClearSelection(); }
+	void SetSelection(const RECT& rc) { m_display.SetSelectionRect(rc); }
+	bool HasSelection() const { return m_display.HasSelection(); }
+	CRect GetSelection() const { return m_display.GetSelection(); }
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
-
-  // selection
-	bool HasSelection() const;
-	void ClearSelection();
-	bool GetVirtualSelection(RECT& selectionRect) const;
 
   // zoom
   void SetZoomFactor(float n);
@@ -139,8 +136,6 @@ protected:
   LRESULT OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnTimer(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
-  void ResetOffscreenBitmaps();
-
   enum CursorMoveType
   {
     CM_NORMAL,
@@ -154,12 +149,10 @@ protected:
 
   // members
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap.
+	ImageEditRenderer m_display;
   AnimBitmap<32> m_dibOriginal;// a cached image of the original bitmap.
-  AnimBitmap<32> m_dibOffscreen;// offscreen canvas
-  AnimBitmap<32> m_dibStretched;// the entire original image, stretched to zoom
 
-  Viewport m_view;
-  IImageEditWindowEvents* m_notify;
+	IImageEditWindowEvents* m_notify;
 
   // tool selection stuff
   ToolBase* m_currentTool;

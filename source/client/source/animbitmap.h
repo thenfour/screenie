@@ -105,7 +105,8 @@ public:
     m_y(0),
     m_x(0),
     m_bmp(0),
-    m_pbuf(0)
+    m_pbuf(0),
+		m_checkerPattern(0)
   {
     // store our offscreen hdc
     HDC hscreen = ::GetDC(0);
@@ -120,6 +121,10 @@ public:
       SelectObject(m_offscreen, m_oldBitmap);
       DeleteObject(m_bmp);
     }
+		if(m_checkerPattern)
+		{
+			DeleteObject(m_checkerPattern);
+		}
     DeleteDC(m_offscreen);
   }
 
@@ -341,34 +346,65 @@ public:
     }
   }
 
-	void FillCheckerPattern()
+	void FillCheckerPattern(CRect& exclusionArea)
 	{
-		// copy adobe photoshop's background look.
-		const int size = 8;
-		const RgbPixel32 colors[2] = { MakeRgbPixel32(204, 204, 204), MakeRgbPixel32(255, 255, 255) };
-
-		// make one of each variation of line
-		LibCC::Blob<RgbPixel32> patterns[2];
-		patterns[0].Alloc(m_x);
-		for(size_t i = 0; i < (size_t)m_x; ++ i)
+		if(m_checkerPattern == 0)
 		{
-			patterns[0].GetBuffer()[i] = colors[(i / size) & 1];
-		}
-		// same as above except offset 1.
-		patterns[1].Alloc(m_x);
-		for(size_t i = 0; i < (size_t)m_x; ++ i)
-		{
-			patterns[1].GetBuffer()[i] = colors[((i / size) + 1) & 1];
+			// copy adobe photoshop's background look.
+			const int size = 8;
+			HBRUSH h1 = CreateSolidBrush(RGB(204, 204, 204));
+			HBRUSH h2 = CreateSolidBrush(RGB(255, 255, 255));
+
+			// CREATE A PATTERN BRUSH
+			HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
+			HDC dc = CreateCompatibleDC(m_offscreen);
+			
+			HGDIOBJ hOld = SelectObject(dc, hbm);
+			RECT rc;
+
+			rc.top = 0;
+			rc.bottom = size * 2;
+			rc.left = 0;
+			rc.right = size * 2;
+			FillRect(dc, &rc, h1);
+
+			rc.top = 0;
+			rc.bottom = size;
+			rc.left = 0;
+			rc.right = size;
+			FillRect(dc, &rc, h2);
+
+			rc.top = size;
+			rc.bottom = size * 2;
+			rc.left = size;
+			rc.right = size * 2;
+			FillRect(dc, &rc, h2);
+
+			m_checkerPattern = CreatePatternBrush(hbm);
+
+			SelectObject(dc, hOld);
+			DeleteDC(dc);
+			DeleteObject(hbm);
+			DeleteObject(h2);
+			DeleteObject(h1);
 		}
 
-		// now for each raster, copy mem.
-		RgbPixel32* start = m_pbuf;
-		RgbPixel32* end = m_pbuf + (m_x * m_y);
+		HGDIOBJ hOld = SelectObject(m_offscreen, m_checkerPattern);
 
-		for(size_t i = 0; i < (size_t)m_y; start += m_x, i ++)
-		{
-			memcpy(start, patterns[(i / size) & 1].GetBuffer(), sizeof(RgbPixel32) * m_x);
-		}
+		// top
+		if(exclusionArea.top > 0)
+			PatBlt(m_offscreen, 0, 0, m_x, exclusionArea.top, PATCOPY);
+		// left
+		if(exclusionArea.left > 0)
+			PatBlt(m_offscreen, 0, exclusionArea.top, exclusionArea.left, exclusionArea.Height(), PATCOPY);
+		// right
+		if(exclusionArea.right < m_x)
+			PatBlt(m_offscreen, exclusionArea.right, exclusionArea.top, m_x - exclusionArea.right, exclusionArea.Height(), PATCOPY);
+		// bottom
+		if(exclusionArea.bottom < m_y)
+			PatBlt(m_offscreen, 0, exclusionArea.bottom, m_x, m_y, PATCOPY);
+
+		SelectObject(m_offscreen, hOld);
 	}
 
   inline static RgbPixel32 InvertColorForSelection(const RgbPixel32& x, int offset)
@@ -443,12 +479,33 @@ public:
 	template<int factor>
 	inline static RgbPixel GrayPixel(RgbPixel c)
 	{
-		//BYTE r = R(c) / 4;
-		//BYTE g = G(c) / 4;
-		//BYTE b = B(c) / 4;
-		//return MakeRgbPixel32(r, g, b);
 		DWORD x = (R(c) + G(c) + B(c)) >> factor;// grays it & dims it at the same time.
 		return MakeRgbPixel32(x,x,x);
+	}
+
+	void GrayOut()
+	{
+		RgbPixel* i = m_pbuf;
+		RgbPixel* end = m_pbuf + (m_y * m_x);
+		int x = 0;
+		int y = 0;
+		for(; i < end; i ++)
+		{
+			if(y & (x & 1))
+			{
+				*i = GrayPixel<3>(*i);
+			}
+			else
+			{
+				*i = GrayPixel<4>(*i);
+			}
+			x ++;
+			if(x == m_x)
+			{
+				x = 0;
+				y ++;
+			}
+		}
 	}
 
 	void GrayRect(int left, int top, int right, int bottom)
@@ -463,7 +520,7 @@ public:
 
 		int y = top;
 		// fill downwards
-    while(y != bottom)
+    while(y < bottom)
     {
 			int x = left;
       // draw a horizontal line
@@ -496,7 +553,7 @@ public:
 		int y = top;
 		int x = 0;
 
-		for(; start != end; start ++)
+		for(; start < end; start ++)
 		{
 			if(y & (x & 1))
 			{
@@ -516,7 +573,7 @@ public:
 	}
 
   template<int patternFreq, int colorOffset, bool GrayBorder, bool showAnts>
-  void DrawSelectionRectSafe(int patternOffset, RECT& rc, SelectionRectFlags f = SR_DEFAULT)
+	void DrawSelectionRectSafe(int patternOffset, RECT& rc, SelectionRectFlags f = SR_DEFAULT)
   {
     // the formula for color is inverted, plus or minus 20 (with wrap) on each colorant.
 		if(showAnts)
@@ -656,6 +713,8 @@ private:
   HBITMAP m_bmp;
   HBITMAP m_oldBitmap;
   RgbPixel* m_pbuf;
+
+	HBRUSH m_checkerPattern;
 
   template<typename T, typename Tmin, typename Tmax>
   inline bool clamp(T& l, const Tmin& minval, const Tmax& maxval)

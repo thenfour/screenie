@@ -126,7 +126,7 @@ namespace LibCC
     }
 
     // call this to "tick" the timer... the time between the previous tick and this one is now stored.
-    inline Tick()
+    inline void Tick()
     {
       LARGE_INTEGER li;
       QueryPerformanceCounter(&li);

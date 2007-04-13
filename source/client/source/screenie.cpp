@@ -16,6 +16,8 @@
 #include "viewport.h"
 #include "DestinationDlg.hpp"
 
+extern void TestMain();
+
 CMainWindow* g_mainWindow;
 CAppModule _Module;
 
@@ -49,9 +51,6 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	CMessageLoop theLoop;
 	_Module.AddMessageLoop(&theLoop);
 
-  LibCC::SinglePrecisionFloat f(0.5f);
-  f.RemoveDecimal();
-
 	int retval = 0;
 
   ScreenshotOptions options;
@@ -71,6 +70,8 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 		}
 	}
 
+ 	SaveOptionsToRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+
   delete g_mainWindow;
 
 	_Module.RemoveMessageLoop();
@@ -80,6 +81,9 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 {
+	//TestMain();
+	//return 0;
+
 	// try to create a global mutex object. if it already exists, it means there's
 	// another instance of this program already running, and we shouldn't run another.
 

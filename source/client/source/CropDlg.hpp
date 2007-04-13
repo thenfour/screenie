@@ -29,7 +29,8 @@ public:
     m_zoomWnd(bitmap.get()),
     m_options(options),
     m_hIconSmall(0),
-    m_hIcon(0)
+    m_hIcon(0),
+		m_didCropping(false)
   {
   }
 
@@ -142,22 +143,16 @@ public:
     // populate the list of zoom factors.
     bool bHitOne = false;
     m_zoomFactors.push_back(0.1f);
-    m_zoomFactors.push_back(0.15f);
     m_zoomFactors.push_back(0.25f);
-    m_zoomFactors.push_back(0.40f);
-    m_zoomFactors.push_back(0.666667f);
+    m_zoomFactors.push_back(0.50f);
     m_zoomFactors.push_back(1.00f);
-    m_zoomFactors.push_back(1.5f);
     m_zoomFactors.push_back(2.0f);
     m_zoomFactors.push_back(3.0f);
     m_zoomFactors.push_back(4.0f);
     m_zoomFactors.push_back(6.0f);
     m_zoomFactors.push_back(8.0f);
-    m_zoomFactors.push_back(10.0f);
     m_zoomFactors.push_back(12.5f);
-    m_zoomFactors.push_back(15.0f);
     m_zoomFactors.push_back(18.0f);
-    m_zoomFactors.push_back(23.0f);
     m_zoomFactors.push_back(30.0f);
 
     // set icons
@@ -212,9 +207,9 @@ public:
 
   void SyncZoomWindowSelection()
   {
-    CRect rc;
-    if(m_editWnd.GetVirtualSelection(rc))
-    {
+		if(m_editWnd.HasSelection())
+		{
+	    CRect rc = m_editWnd.GetSelection();
       SetDlgItemText(IDC_SELECTIONSTATIC,
         LibCC::Format("(%,%)-(%,%); % x %")
           .i(rc.left)
@@ -268,9 +263,9 @@ public:
 	{
 		if (nVal == IDOK)
 		{
-			RECT selectionRect = { 0 };
-			if (m_editWnd.GetVirtualSelection(selectionRect))
+			if(m_editWnd.HasSelection())
 			{
+				CRect selectionRect = m_editWnd.GetSelection();
 				m_croppedBitmap = m_editWnd.GetBitmapRect(selectionRect);
 				m_didCropping = true;
 			}
@@ -280,6 +275,8 @@ public:
     WINDOWPLACEMENT wp;
     GetWindowPlacement(&wp);
     m_options.SetCroppingPlacement(wp);
+
+   	SaveOptionsToRegistry(m_options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
 
 		EndDialog(nVal); 
 	}

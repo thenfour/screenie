@@ -1012,7 +1012,7 @@ namespace LibCC
 		ConvertString(mbcs, len, ret, codepage);
 		return ret;
 	}
-	inline std::wstring ToUnicode(const Blob<BYTE> mbcs, UINT codepage = CP_ACP)
+	inline std::wstring ToUnicode(const Blob<BYTE>& mbcs, UINT codepage = CP_ACP)
 	{
 		std::wstring ret;
 		ConvertString(mbcs, ret, codepage);
@@ -1040,7 +1040,7 @@ namespace LibCC
 		ConvertString(mbcs, len, ret, codepage);
 		return ret;
 	}
-	inline std::string ToMBCS(const Blob<BYTE> mbcs, UINT codepage = CP_ACP)
+	inline std::string ToMBCS(const Blob<BYTE>& mbcs, UINT codepage = CP_ACP)
 	{
 		std::string ret;
 		ConvertString(mbcs, ret, codepage);
@@ -1085,7 +1085,7 @@ namespace LibCC
 	{
 		return ToMBCS(mbcs, len, CP_UTF8);
 	}
-	inline std::string ToUTF8(const Blob<BYTE> mbcs)
+	inline std::string ToUTF8(const Blob<BYTE>& mbcs)
 	{
 		return ToMBCS(mbcs, CP_UTF8);
 	}

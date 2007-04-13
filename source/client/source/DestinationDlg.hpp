@@ -9,6 +9,7 @@
 
 #include "ScreenshotDestination.hpp"
 #include "ScreenshotOptions.hpp"
+#include "resource.h"
 
 class CDestinationDlg :
 	public CDialogImpl<CDestinationDlg>,
