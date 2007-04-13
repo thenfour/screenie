@@ -247,7 +247,7 @@ namespace LibCC
       InternalType e = (m_val & ExponentMask) >> MantissaBits;
       Mantissa m = static_cast<Mantissa>(m_val & MantissaMask);
 
-      if(m)
+      //if(m)
       {
         if(e >= ExponentBias)
         {

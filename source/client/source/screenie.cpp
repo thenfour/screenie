@@ -81,8 +81,8 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 {
-	//TestMain();
-	//return 0;
+	TestMain();
+	return 0;
 
 	// try to create a global mutex object. if it already exists, it means there's
 	// another instance of this program already running, and we shouldn't run another.

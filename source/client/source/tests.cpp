@@ -90,16 +90,16 @@ void TestMain()
 	//f = v.ImageToView(f);
 
 	// just startup with the cropping dialog.
-	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	ULONG_PTR gdiplusToken;
-	Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	{
-		HBITMAP hbm;
-		GetScreenshotBitmap(hbm, FALSE, FALSE);
-		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
-		CCropDlg cropDialog(screenshot, ScreenshotOptions());
-		cropDialog.DoModal();
-	}
-	Gdiplus::GdiplusShutdown(gdiplusToken);
+	//Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	//ULONG_PTR gdiplusToken;
+	//Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	//{
+	//	HBITMAP hbm;
+	//	GetScreenshotBitmap(hbm, FALSE, FALSE);
+	//	util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
+	//	CCropDlg cropDialog(screenshot, ScreenshotOptions());
+	//	cropDialog.DoModal();
+	//}
+	//Gdiplus::GdiplusShutdown(gdiplusToken);
 }
 
