@@ -190,7 +190,7 @@ public:
     CPoint clientBR = ImageToClient(imgBR);
 
 		CRect rcTemp(0,0,0,0);
-		m_dibOffscreen.FillCheckerPattern(rcTemp);
+		//m_dibOffscreen.FillCheckerPattern();
     m_dibOriginal.StretchBlit(m_dibOffscreen,
       clientUL.x, clientUL.y, clientBR.x - clientUL.x, clientBR.y - clientUL.y,
       imgUL.x, imgUL.y, imgBR.x - imgUL.x, imgBR.y - imgUL.y,

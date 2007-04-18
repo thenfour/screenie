@@ -14,13 +14,13 @@
 	I did a few simple optimizations and basically in the worst case, execution time is cut 7%.
 	it's cut dramatically though for most cases - probably about 60%.
 
-	original:                                4.376 seconds
-	using GDI functions:                     4.262 seconds
-	same, but this time caching GDI objects: 4.186 seconds
-	now with tiny exclusion rectangle:       4.153 seconds
-	with medium sized exclusion rectangle:   1.836 seconds
-
-	So, code optimizations did not really help much. The biggest benefit will be eliminating redundant operations.
+	original:                                4.376 seconds / 228 fps
+	using GDI functions:                     4.262 seconds / 234 fps
+	same, but this time caching GDI objects: 4.186 seconds / 238 fps
+	now with tiny exclusion rectangle:       4.153 seconds / 240 fps
+	with medium sized exclusion rectangle:   1.836 seconds / 544 fps (100,100,901,901)
+	ok this time caching the entire bitmap:  2.677 seconds / 373 fps <-- this was also done on a faster processor though....
+	same thing with big exclusion rectangle: 0.512 seconds / 1953 fps -- obviously the clear winner.
 */
 
 void TestMain()
@@ -28,14 +28,19 @@ void TestMain()
 	//LibCC::g_pLog = new LibCC::Log("testlog.txt", GetModuleHandle(0));
 
 	//AnimBitmap<32> x;
+	//AnimBitmap<32> y;
 	//x.SetSize(1000, 1000);
+	//y.SetSize(1000, 1000);
+	//x.FillCheckerPattern();
 
 	//LibCC::Timer t;
 	//t.Tick();
 	//for(int i = 0; i < 1000; i ++)
 	//{
-	//	CRect rc(100, 100, 901, 901);
-	//	x.FillCheckerPattern(rc);
+	//	CRect rc(100, 100, 101, 101);
+	//	//x.FillCheckerPattern(rc);
+	//	//x.Blit(y, 0, 0);
+	//	x.ExclusionBlit(y, rc);
 	//}
 	//t.Tick();
 	//LibCC::g_pLog->Message(LibCC::Format("FillCheckerPattern: % seconds").d<3>(t.GetLastDelta()).CStr());
@@ -90,16 +95,16 @@ void TestMain()
 	//f = v.ImageToView(f);
 
 	// just startup with the cropping dialog.
-	//Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	//ULONG_PTR gdiplusToken;
-	//Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	//{
-	//	HBITMAP hbm;
-	//	GetScreenshotBitmap(hbm, FALSE, FALSE);
-	//	util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
-	//	CCropDlg cropDialog(screenshot, ScreenshotOptions());
-	//	cropDialog.DoModal();
-	//}
-	//Gdiplus::GdiplusShutdown(gdiplusToken);
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::Status status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	{
+		HBITMAP hbm;
+		GetScreenshotBitmap(hbm, FALSE, FALSE);
+		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
+		CCropDlg cropDialog(screenshot, ScreenshotOptions());
+		cropDialog.DoModal();
+	}
+	Gdiplus::GdiplusShutdown(gdiplusToken);
 }
 

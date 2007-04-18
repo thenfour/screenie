@@ -78,10 +78,9 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
     PointF newOrg = m_panningStartVirtual;
     newOrg.x += delta.x;
     newOrg.y += delta.y;
-    ClampToImage(newOrg);
-    m_display.SetImageOrigin(newOrg);
 
-    Refresh(true);
+		ClampImageOrigin(newOrg);
+    m_display.SetImageOrigin(newOrg);
   }
   else
   {
@@ -253,6 +252,11 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
   CRect rc;
   GetClientRect(&rc);
 	m_display.SetClientSize(rc.Width(), rc.Height());
+	PointF io = m_display.GetViewport().GetImageOrigin();
+	ClampImageOrigin(io);
+	m_display.SetImageOrigin(io);
+
+	m_offscreen.SetSize(rc.Width(), rc.Height());
   return 0;
 }
 
@@ -261,7 +265,10 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	PAINTSTRUCT paintStruct = { 0 };
 	HDC dc = BeginPaint(&paintStruct);
 
-	m_display.Render(dc);
+	m_display.Render(m_offscreen, paintStruct.rcPaint);
+	m_offscreen.Blit(paintStruct.hdc, paintStruct.rcPaint.left, paintStruct.rcPaint.top, paintStruct.rcPaint.right - paintStruct.rcPaint.left,
+		paintStruct.rcPaint.bottom - paintStruct.rcPaint.top,
+		paintStruct.rcPaint.left, paintStruct.rcPaint.top);
 
 	EndPaint(&paintStruct);
 	return 0;
@@ -308,17 +315,22 @@ PanningSpec CImageEditWindow::GetPanningSpec()
   return ret;
 }
 
-void CImageEditWindow::Pan(const PanningSpec& ps, bool updateNow)
+void CImageEditWindow::Pan(const PanningSpec& ps)
 {
-  Pan(ps.m_x, ps.m_y, updateNow);
+  Pan(ps.m_x, ps.m_y);
 }
 
-void CImageEditWindow::Pan(int x, int y, bool updateNow)
+void CImageEditWindow::Pan(int x, int y)
 {
   PointF org = m_display.GetViewport().GetImageOrigin();
   org.x += x;
   org.y += y;
-  ClampToImage(org);
+  
+	RECT rcClient;
+  GetClientRect(&rcClient);
+
+	ClampImageOrigin(org);
+
   m_display.SetImageOrigin(org);
 
   // the thing about panning is that now the mouse cursor position also changes (relative to the view).
@@ -330,8 +342,6 @@ void CImageEditWindow::Pan(int x, int y, bool updateNow)
   if(!m_haveCapture)
   {
     // is the cursor inside the window?
-    RECT rcClient;
-    GetClientRect(&rcClient);
     doit = (PtInRect(&rcClient, pt) == TRUE);
   }
   if(doit)
@@ -340,8 +350,6 @@ void CImageEditWindow::Pan(int x, int y, bool updateNow)
     LPARAM lParam = MAKELPARAM(pt.x, pt.y);
     OnMouseMove(WM_MOUSEMOVE, 0, lParam, temp);
   }
-
-  Refresh(updateNow);
 }
 
 PointF CImageEditWindow::GetCursorPosition()
@@ -367,24 +375,24 @@ void CImageEditWindow::ClampToImage(PointF& p)
   if(p.x > GetImageWidth()) p.x = static_cast<float>(GetImageWidth());
   if(p.y > GetImageHeight()) p.y = static_cast<float>(GetImageHeight());
 }
-
-void CImageEditWindow::Refresh(bool now)
-{
-  RedrawWindow(0, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
-}
-
-void CImageEditWindow::Refresh(const RECT& imageCoords, bool now)
-{
-  PointF ulImage(imageCoords.left, imageCoords.top);
-  PointF brImage(imageCoords.right, imageCoords.bottom);
-  PointF ulScreen = m_display.GetViewport().ImageToView(ulImage);
-  PointF brScreen = m_display.GetViewport().ImageToView(brImage);
-
-  CRect rcScreen(ulScreen.Floor(), brScreen.Ceil());
-  rcScreen.InflateRect(5,5);
-
-  RedrawWindow(&rcScreen, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
-}
+//
+//void CImageEditWindow::Refresh(bool now)
+//{
+//  RedrawWindow(0, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
+//}
+//
+//void CImageEditWindow::Refresh(const RECT& imageCoords, bool now)
+//{
+//  PointF ulImage(imageCoords.left, imageCoords.top);
+//  PointF brImage(imageCoords.right, imageCoords.bottom);
+//  PointF ulScreen = m_display.GetViewport().ImageToView(ulImage);
+//  PointF brScreen = m_display.GetViewport().ImageToView(brImage);
+//
+//  CRect rcScreen(ulScreen.Floor(), brScreen.Ceil());
+//  rcScreen.InflateRect(5,5);
+//
+//  RedrawWindow(&rcScreen, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
+//}
 
 LRESULT CImageEditWindow::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
@@ -434,6 +442,5 @@ void CImageEditWindow::SetZoomFactor(float n)
 
   m_display.SetZoomFactor(n);
   m_notify->OnZoomFactorChanged();
-  Refresh(false);
 }
 

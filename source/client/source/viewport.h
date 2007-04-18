@@ -27,6 +27,11 @@ public:
     y(initY)
   {
   }
+	explicit PointF(const CPoint& p)
+	{
+		x = (T)p.x;
+		y = (T)p.y;
+	}
   PointF(const This_T& rhs) :
     x(rhs.x),
     y(rhs.y)
@@ -87,6 +92,13 @@ public:
 	}
   T x;
   T y;
+
+	bool IsEqual(const PointF& rhs, T accuracy) const
+	{
+		if(abs(x - rhs.x) > accuracy) return false;
+		if(abs(y - rhs.y) > accuracy) return false;
+		return true;
+	}
 };
 
 /*
@@ -149,6 +161,7 @@ public:
     imageOrigin = rhs.imageOrigin;
     viewOrigin = rhs.viewOrigin;
     zoomFactor = rhs.zoomFactor;
+		return *this;
   }
 
   void SetZoomFactor(ViewPortSubPixel z)

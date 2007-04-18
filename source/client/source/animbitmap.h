@@ -14,6 +14,41 @@
 
 #include <windows.h>
 
+// turns a source rect + subtract rect into 4 rects which define
+class SubtractRectHelper
+{
+public:
+	SubtractRectHelper(const CRect& src, const CRect& subtract)
+	{
+		// to really understand this you just need to draw a diagram and figure it out.
+		top.top = src.top;
+		top.bottom = max(src.top, subtract.top);
+		top.left = src.left;
+		top.right = src.right;
+
+		bottom.top = min(src.bottom, subtract.bottom);
+		bottom.bottom = src.bottom;
+		bottom.left = top.left;
+		bottom.right = top.right;
+
+		left.top = top.bottom;
+		left.bottom = bottom.top;// how confusing is all of this?!
+		left.left = src.left;
+		left.right = max(src.left, subtract.left);
+
+		right.top = top.bottom;
+		right.bottom = bottom.top;
+		right.left = min(src.right, subtract.right);
+		right.right = src.right;
+	}
+
+	// resulting rectangles...
+	CRect top;
+	CRect left;
+	CRect right;
+	CRect bottom;
+};
+
 
 // compare 2 floating point numbers to see if they are in a certain range.
 template<typename Tl, typename Tr, typename Terr>
@@ -101,12 +136,19 @@ public:
   static const long bpp = Tbpp;
   typedef typename BitmapTypes<bpp>::RgbPixel RgbPixel;
 
+	CRect GetArea() const
+	{
+		return CRect(0, 0, m_x, m_y);
+	}
+
   AnimBitmap() :
     m_y(0),
     m_x(0),
     m_bmp(0),
     m_pbuf(0),
-		m_checkerPattern(0)
+		m_checkerPattern(0),
+		m_checkerPatternGrayA(0),
+		m_checkerPatternGrayB(0)
   {
     // store our offscreen hdc
     HDC hscreen = ::GetDC(0);
@@ -124,6 +166,8 @@ public:
 		if(m_checkerPattern)
 		{
 			DeleteObject(m_checkerPattern);
+			DeleteObject(m_checkerPatternGrayA);
+			DeleteObject(m_checkerPatternGrayB);
 		}
     DeleteDC(m_offscreen);
   }
@@ -346,66 +390,172 @@ public:
     }
   }
 
-	void FillCheckerPattern(CRect& exclusionArea)
+	HBRUSH _CreatePatternBrush(HBITMAP src, int srcwidth, int srcheight, int destwidth, int destheight)
+	{
+		// god this is annoying all this work just to 1) create a bitmap, 2) patblt, 3) createpatternbrush
+		HBRUSH tbr = CreatePatternBrush(src);
+		HBITMAP tbmp = CreateCompatibleBitmap(m_offscreen, destwidth, destheight);
+		HDC dc2 = CreateCompatibleDC(m_offscreen);
+
+		HBITMAP bmpOld = (HBITMAP)SelectObject(dc2, tbmp);
+		HBRUSH brOld = (HBRUSH)SelectObject(dc2, tbr);
+
+		::PatBlt(dc2, 0, 0, destwidth, destheight, PATCOPY);
+
+		SelectObject(dc2, brOld);
+		SelectObject(dc2, bmpOld);
+
+		HBRUSH ret = CreatePatternBrush(tbmp);
+
+		DeleteDC(dc2);
+		DeleteObject(tbmp);
+		DeleteObject(tbr);
+
+		return ret;
+	}
+
+	void CacheCheckerPattern()
 	{
 		if(m_checkerPattern == 0)
 		{
-			// copy adobe photoshop's background look.
+			HBITMAP normal = 0;
+			HBITMAP grayA = 0;
+			HBITMAP grayB = 0;
 			const int size = 8;
-			HBRUSH h1 = CreateSolidBrush(RGB(204, 204, 204));
-			HBRUSH h2 = CreateSolidBrush(RGB(255, 255, 255));
+			const int cacheSize = 256;// size of the cached pattern.
 
-			// CREATE A PATTERN BRUSH
-			HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
-			HDC dc = CreateCompatibleDC(m_offscreen);
-			
-			HGDIOBJ hOld = SelectObject(dc, hbm);
-			RECT rc;
+			{
+				HBRUSH h1 = CreateSolidBrush(RGB(204, 204, 204));
+				HBRUSH h2 = CreateSolidBrush(RGB(255, 255, 255));
 
-			rc.top = 0;
-			rc.bottom = size * 2;
-			rc.left = 0;
-			rc.right = size * 2;
-			FillRect(dc, &rc, h1);
+				HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
+				HDC dc = CreateCompatibleDC(m_offscreen);
+				
+				HGDIOBJ hOld = SelectObject(dc, hbm);
+				// generate this pattern.
+				CRect rc(0, 0, size * 2, size * 2);
+				FillRect(dc, &rc, h1);
+				rc.SetRect(0, 0, size, size);
+				FillRect(dc, &rc, h2);
+				rc.SetRect(size, size, size*2, size*2);
+				FillRect(dc, &rc, h2);
 
-			rc.top = 0;
-			rc.bottom = size;
-			rc.left = 0;
-			rc.right = size;
-			FillRect(dc, &rc, h2);
+				m_checkerPattern = _CreatePatternBrush(hbm, size * 2, size * 2, cacheSize, cacheSize);
 
-			rc.top = size;
-			rc.bottom = size * 2;
-			rc.left = size;
-			rc.right = size * 2;
-			FillRect(dc, &rc, h2);
+				SelectObject(dc, hOld);
+				DeleteDC(dc);
+				DeleteObject(hbm);
+				DeleteObject(h2);
+				DeleteObject(h1);
+			}
+			{
+				HBRUSH h1 = CreateSolidBrush(RGB(255, 204, 204));
+				HBRUSH h2 = CreateSolidBrush(RGB(0, 255, 255));
 
-			m_checkerPattern = CreatePatternBrush(hbm);
+				HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
+				HDC dc = CreateCompatibleDC(m_offscreen);
+				
+				HGDIOBJ hOld = SelectObject(dc, hbm);
+				// generate this pattern.
+				CRect rc(0, 0, size * 2, size * 2);
+				FillRect(dc, &rc, h1);
+				rc.SetRect(0, 0, size, size);
+				FillRect(dc, &rc, h2);
+				rc.SetRect(size, size, size*2, size*2);
+				FillRect(dc, &rc, h2);
 
-			SelectObject(dc, hOld);
-			DeleteDC(dc);
-			DeleteObject(hbm);
-			DeleteObject(h2);
-			DeleteObject(h1);
+				m_checkerPatternGrayA = _CreatePatternBrush(hbm, size * 2, size * 2, cacheSize, cacheSize);
+
+				SelectObject(dc, hOld);
+				DeleteDC(dc);
+				DeleteObject(hbm);
+				DeleteObject(h2);
+				DeleteObject(h1);
+			}
+			{
+				HBRUSH h1 = CreateSolidBrush(RGB(204, 255, 204));
+				HBRUSH h2 = CreateSolidBrush(RGB(255, 0, 255));
+
+				HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
+				HDC dc = CreateCompatibleDC(m_offscreen);
+				
+				HGDIOBJ hOld = SelectObject(dc, hbm);
+				// generate this pattern.
+				CRect rc(0, 0, size * 2, size * 2);
+				FillRect(dc, &rc, h1);
+				rc.SetRect(0, 0, size, size);
+				FillRect(dc, &rc, h2);
+				rc.SetRect(size, size, size*2, size*2);
+				FillRect(dc, &rc, h2);
+
+				m_checkerPatternGrayB = _CreatePatternBrush(hbm, size * 2, size * 2, cacheSize, cacheSize);
+
+				SelectObject(dc, hOld);
+				DeleteDC(dc);
+				DeleteObject(hbm);
+				DeleteObject(h2);
+				DeleteObject(h1);
+			}
 		}
-
-		HGDIOBJ hOld = SelectObject(m_offscreen, m_checkerPattern);
-
-		// top
-		if(exclusionArea.top > 0)
-			PatBlt(m_offscreen, 0, 0, m_x, exclusionArea.top, PATCOPY);
-		// left
-		if(exclusionArea.left > 0)
-			PatBlt(m_offscreen, 0, exclusionArea.top, exclusionArea.left, exclusionArea.Height(), PATCOPY);
-		// right
-		if(exclusionArea.right < m_x)
-			PatBlt(m_offscreen, exclusionArea.right, exclusionArea.top, m_x - exclusionArea.right, exclusionArea.Height(), PATCOPY);
-		// bottom
-		if(exclusionArea.bottom < m_y)
-			PatBlt(m_offscreen, 0, exclusionArea.bottom, m_x, m_y, PATCOPY);
-
+	}
+	void _PatBlt(const RECT& rc)
+	{
+		PatBlt(m_offscreen, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
+	}
+	void FillCheckerPatternExclusion(const CRect& exclusionArea, bool grayed)
+	{
+		CacheCheckerPattern();
+		HGDIOBJ hOld;
+		if(!grayed)
+		{
+			hOld = SelectObject(m_offscreen, m_checkerPattern);
+		}
+		else
+		{
+			if((exclusionArea.left & 1) == (exclusionArea.top & 1))// determine if we should gray out the even or odd pattern. this sorta goes against the blackbox nature of this, but it's easy so meh.
+			{
+				hOld = SelectObject(m_offscreen, m_checkerPatternGrayA);
+			}
+			else
+			{
+				hOld = SelectObject(m_offscreen, m_checkerPatternGrayB);
+			}
+		}
+		SubtractRectHelper s(CRect(0, 0, m_x, m_y), exclusionArea);
+		_PatBlt(s.top);
+		_PatBlt(s.left);
+		_PatBlt(s.right);
+		_PatBlt(s.bottom);
 		SelectObject(m_offscreen, hOld);
 	}
+	//void FillCheckerPattern(const CRect& rc)
+	//{
+	//	CacheCheckerPattern();
+	//	HGDIOBJ hOld = SelectObject(m_offscreen, m_checkerPattern);
+	//	_PatBlt(rc);
+	//	SelectObject(m_offscreen, hOld);
+	//}
+	//void FillCheckerPattern()
+	//{
+	//	CacheCheckerPattern();
+	//	HGDIOBJ hOld = SelectObject(m_offscreen, m_checkerPattern);
+	//	PatBlt(m_offscreen, 0, 0, m_x, m_y, PATCOPY);
+	//	SelectObject(m_offscreen, hOld);
+	//}
+	//void FillCheckerPatternGrayA()
+	//{
+	//	CacheCheckerPattern();
+	//	HGDIOBJ hOld = SelectObject(m_offscreen, m_checkerPatternGrayA);
+	//	PatBlt(m_offscreen, 0, 0, m_x, m_y, PATCOPY);
+	//	SelectObject(m_offscreen, hOld);
+	//}
+	//void FillCheckerPatternGrayB()
+	//{
+	//	CacheCheckerPattern();
+	//	HGDIOBJ hOld = SelectObject(m_offscreen, m_checkerPatternGrayB);
+	//	PatBlt(m_offscreen, 0, 0, m_x, m_y, PATCOPY);
+	//	SelectObject(m_offscreen, hOld);
+	//}
 
   inline static RgbPixel32 InvertColorForSelection(const RgbPixel32& x, int offset)
   {
@@ -493,7 +643,7 @@ public:
 		{
 			if(y & (x & 1))
 			{
-				*i = GrayPixel<3>(*i);
+				*i = GrayPixel<2>(*i);
 			}
 			else
 			{
@@ -528,11 +678,11 @@ public:
       {
 				if(y & (x & 1))
 				{
-					pbuf[tx] = GrayPixel<3>(pbuf[tx]);
+					pbuf[tx] = GrayPixel<4>(pbuf[tx]);
 				}
 				else
 				{
-					pbuf[tx] = GrayPixel<4>(pbuf[tx]);
+					pbuf[tx] = GrayPixel<2>(pbuf[tx]);
 				}
 				x ++;
       }
@@ -541,36 +691,41 @@ public:
     }
 	}
 
-	// faster version of GrayRect that works on entire scanlines.
-	void GrayRasters(int top, int bottom)
+	void GrayRect(const CRect& rc)
 	{
-    clamp(top, 0, m_y);
-    clamp(bottom, 0, m_y);
-
-		RgbPixel* start = m_pbuf + (top * m_x);
-		RgbPixel* end = m_pbuf + (bottom * m_x);
-
-		int y = top;
-		int x = 0;
-
-		for(; start < end; start ++)
-		{
-			if(y & (x & 1))
-			{
-				*start = GrayPixel<3>(*start);
-			}
-			else
-			{
-				*start = GrayPixel<4>(*start);
-			}
-			x ++;
-			if(x == m_x)
-			{
-				y ++;
-				x = 0;
-			}
-		}
+		GrayRect(rc.left, rc.top, rc.right, rc.bottom);
 	}
+
+	// faster version of GrayRect that works on entire scanlines.
+	//void GrayRasters(int top, int bottom)
+	//{
+ //   clamp(top, 0, m_y);
+ //   clamp(bottom, 0, m_y);
+
+	//	RgbPixel* start = m_pbuf + (top * m_x);
+	//	RgbPixel* end = m_pbuf + (bottom * m_x);
+
+	//	int y = top;
+	//	int x = 0;
+
+	//	for(; start < end; start ++)
+	//	{
+	//		if(y & (x & 1))
+	//		{
+	//			*start = GrayPixel<3>(*start);
+	//		}
+	//		else
+	//		{
+	//			*start = GrayPixel<4>(*start);
+	//		}
+	//		x ++;
+	//		if(x == m_x)
+	//		{
+	//			y ++;
+	//			x = 0;
+	//		}
+	//	}
+	//}
 
   template<int patternFreq, int colorOffset, bool GrayBorder, bool showAnts>
 	void DrawSelectionRectSafe(int patternOffset, RECT& rc, SelectionRectFlags f = SR_DEFAULT)
@@ -646,6 +801,28 @@ public:
     return r != 0;
   }
 
+  // copies directly from rc to rc.
+  template<long _Tbpp>
+  bool Blit(AnimBitmap<_Tbpp>& dest, const RECT& rc)
+  {
+    int r = BitBlt(dest.m_offscreen,
+		rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 
+		m_offscreen,
+		rc.left, rc.top, SRCCOPY);
+	return r != 0;
+  }
+
+	  // blits to a similar-sized destination, MINUS some rectangle
+  template<long _Tbpp>
+  void ExclusionBlit(AnimBitmap<_Tbpp>& dest, const RECT& rcSubtraction)
+  {
+	  SubtractRectHelper s(CRect(0, 0, m_x, m_y), rcSubtraction);
+	  Blit(dest, s.top);
+	  Blit(dest, s.left);
+	  Blit(dest, s.right);
+	  Blit(dest, s.bottom);
+  }
+
   template<long _Tbpp>
   bool Blit(AnimBitmap<_Tbpp>& dest, long destx, long desty, long width, long height, long srcx = 0, long srcy = 0)
   {
@@ -705,6 +882,10 @@ public:
     }
     return ret;
   }
+	HBITMAP GetHBITMAP()
+	{
+		return m_bmp;
+	}
 
 private:
   long m_x;
@@ -715,6 +896,8 @@ private:
   RgbPixel* m_pbuf;
 
 	HBRUSH m_checkerPattern;
+	HBRUSH m_checkerPatternGrayA;
+	HBRUSH m_checkerPatternGrayB;
 
   template<typename T, typename Tmin, typename Tmax>
   inline bool clamp(T& l, const Tmin& minval, const Tmax& maxval)

@@ -23,7 +23,6 @@ public:
     {
 			m_selectionPt = p;
 			m_ops->SetSelection(GetSelection());
-			m_ops->Refresh(true);
     }
   }
 
@@ -35,7 +34,6 @@ public:
     if(m_ops->HasSelection())
     {
       m_ops->ClearSelection();
-		m_ops->Refresh(true);
     }
     m_selectionOrg = m_ops->GetCursorPosition();
 		m_selectionOrg.SelfRound();// always start the selection on an integral point.
@@ -43,7 +41,11 @@ public:
   }
 
   void OnStopDragging(){}
-  void OnPaint(AnimBitmap<32>& img){}
+  void OnPaintClient(const AnimBitmap<32>& clean, AnimBitmap<32>& dest, const CRect& rcPaint)
+	{
+		// copy ant area from base to image to make sure we're clean
+		// draw ants!
+	}
 
 private:
 	// returns selection in image coordinates.

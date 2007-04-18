@@ -83,13 +83,13 @@ public:
   void OnZoomFactorChanged() { };
 
   // IToolOperations methods
-  void Pan(int x, int y, bool updateNow);
+  void Pan(int x, int y);
   PointF GetCursorPosition();
   int GetImageHeight() const;
   int GetImageWidth() const;
   void ClampToImage(PointF& p);
-  void Refresh(bool now);
-  void Refresh(const RECT& imageCoords, bool now);
+  //void Refresh(bool now);
+  //void Refresh(const RECT& imageCoords, bool now);
   UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData);
   void DeleteTimer(UINT_PTR cookie);
 	const Viewport& GetViewport() const { return m_display.GetViewport(); }
@@ -151,6 +151,28 @@ protected:
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap.
 	ImageEditRenderer m_display;
   AnimBitmap<32> m_dibOriginal;// a cached image of the original bitmap.
+	AnimBitmap<32> m_offscreen;// backbuffer.
+
+	void ClampImageOrigin(PointF& org)
+	{
+		RECT rcClient;
+		GetClientRect(&rcClient);
+		InflateRect(&rcClient, -max(10, rcClient.right / 10), -max(10, rcClient.bottom / 10));
+
+		PointF v = m_display.GetViewport().GetViewOrigin();
+		PointF a(rcClient.right - v.x, rcClient.bottom - v.y);// size of the rect from view_origin to the BR corner of the screen.
+		a = m_display.GetViewport().ViewToImageSize(a);// convert that to image coords. violà!
+
+		PointF b(v.x - rcClient.left, v.y - rcClient.top);
+		b = m_display.GetViewport().ViewToImageSize(b);// for this one, need to also add the image size
+		b.x += m_dibOriginal.GetWidth();
+		b.y += m_dibOriginal.GetHeight();		
+
+		if(org.x < -a.x) org.x = -a.x;
+		if(org.y < -a.y) org.y = -a.y;
+		if(org.x > b.x) org.x = b.x;
+		if(org.y > b.y) org.y = b.y;
+	}
 
 	IImageEditWindowEvents* m_notify;
 
@@ -185,12 +207,12 @@ protected:
   PanningSpec m_panningSpec;
   UINT_PTR m_panningTimer;
   PanningSpec CImageEditWindow::GetPanningSpec();
-  void Pan(const PanningSpec& ps, bool updateNow);
+  void Pan(const PanningSpec& ps);
   static void PanningTimerProc(void* pUser)
   {
     // pan based on current velocity / direction
     CImageEditWindow* pThis = reinterpret_cast<CImageEditWindow*>(pUser);
-    pThis->Pan(pThis->m_panningSpec, true);
+    pThis->Pan(pThis->m_panningSpec);
   }
 };
 
