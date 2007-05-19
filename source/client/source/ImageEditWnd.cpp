@@ -23,16 +23,17 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_mouseEntrancy(false),
   m_bIsPanning(false),
   m_selectionTool(this),
-  m_nextTimerID(0),
+  m_nextTimerID(123),
   m_haveCapture(false),
   m_lastCursor(0,0),
   m_lastCursorVirtual(0,0),
-  m_panningTimer(0)
+  m_panningTimer(0),
+	m_currentTool(&m_selectionTool)
 {
   CopyImage(m_dibOriginal, *bitmap);
 	m_display.SetOriginalImage(m_dibOriginal);
   m_display.SetZoomFactor(3.0f);
-  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
+  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2), "ImageEditWnd()");
 
   if(pNotify)
   {
@@ -71,7 +72,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 
   if(m_bIsPanning)
   {
-    PointF delta;
+		PointF delta;
     delta.x = (float)(m_panningStart.x - cursorPos.x);
     delta.y = (float)(m_panningStart.y - cursorPos.y);
     delta = m_display.GetViewport().ViewToImageSize(delta);
@@ -80,7 +81,14 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
     newOrg.y += delta.y;
 
 		ClampImageOrigin(newOrg);
-    m_display.SetImageOrigin(newOrg);
+
+		m_display.SetImageOrigin(newOrg, LibCC::FormatA("OnMouseMove - m_bIsPanning. z:% / v:(%,%) / i:(%,%)")
+			(m_display.GetViewport().GetZoomFactor())
+			(m_display.GetViewport().GetViewOrigin().x)
+			(m_display.GetViewport().GetViewOrigin().y)
+			(m_display.GetViewport().GetImageOrigin().x)
+			(m_display.GetViewport().GetImageOrigin().y)
+			.CStr());
   }
   else
   {
@@ -117,7 +125,8 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   m_lastCursor = cursorPos;
 
   // fire tool events.
-  m_selectionTool.OnCursorMove(m_lastCursorVirtual, m_haveCapture && !m_bIsPanning);
+	if(m_currentTool != 0)
+		m_currentTool->OnCursorMove(m_lastCursorVirtual, m_haveCapture && !m_bIsPanning);
 
   if(m_haveCapture)
   {
@@ -128,16 +137,13 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
       if(!m_panningTimer)
       {
         m_panningTimer = CreateTimer(30, CImageEditWindow::PanningTimerProc, this);
+				OutputDebugString(LibCC::Format("CreateTimer (id %)\r\n")(m_panningTimer).CStr());
       }
     }
     else
     {
-      if(m_panningTimer)
-      {
-        DeleteTimer(m_panningTimer);
-        m_panningTimer = 0;
-      }
-    }
+			KillPanningTimer();
+		}
   }
 
   CPoint pt;
@@ -146,6 +152,15 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   m_notify->OnCursorPositionChanged(pt.x, pt.y);
 
   return MouseLeave();
+}
+
+void CImageEditWindow::KillPanningTimer()
+{
+  if(m_panningTimer)
+  {
+    DeleteTimer(m_panningTimer);
+    m_panningTimer = 0;
+  }
 }
 
 LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled)
@@ -157,13 +172,15 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
   // fire tool events.
-  m_selectionTool.OnLeftButtonDown(pt);
+	if(m_currentTool != 0)
+	  m_currentTool->OnLeftButtonDown(pt);
 
   if(!m_haveCapture)
   {
     SetCapture();
     m_haveCapture = true;
-    m_selectionTool.OnStartDragging();
+		if(m_currentTool != 0)
+		  m_currentTool->OnStartDragging();
   }
 
   return MouseLeave();
@@ -183,7 +200,8 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
   }
 
   // fire tool events.
-  m_selectionTool.OnLeftButtonUp(pt);
+	if(m_currentTool != 0)
+	  m_currentTool->OnLeftButtonUp(pt);
 
   return MouseLeave();
 }
@@ -216,6 +234,8 @@ LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 
 LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	OutputDebugString("OnLoseCapture\r\n");
+	KillPanningTimer();
   if(m_bIsPanning)
   {
     SetCursor(m_hPreviousCursor);
@@ -225,12 +245,8 @@ LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   {
     // fire tool events.
     m_haveCapture = false;
-    if(m_panningTimer)
-    {
-      DeleteTimer(m_panningTimer);
-      m_panningTimer = 0;
-    }
-    m_selectionTool.OnStopDragging();
+	 	if(m_currentTool != 0)
+			m_currentTool->OnStopDragging();
   }
 
   return 0;
@@ -244,7 +260,7 @@ void CImageEditWindow::CenterImage()
   PointF viewOrg((ViewPortSubPixel)m_lastCursor.x, (ViewPortSubPixel)m_lastCursor.y);
   m_lastCursorVirtual = m_display.GetViewport().ViewToImage(viewOrg);
   m_display.SetViewOrigin(viewOrg);
-  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2));
+  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2), "center image");
 }
 
 LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*handled*/)
@@ -254,7 +270,7 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_display.SetClientSize(rc.Width(), rc.Height());
 	PointF io = m_display.GetViewport().GetImageOrigin();
 	ClampImageOrigin(io);
-	m_display.SetImageOrigin(io);
+	m_display.SetImageOrigin(io, "on size");
 
 	m_offscreen.SetSize(rc.Width(), rc.Height());
   return 0;
@@ -331,7 +347,7 @@ void CImageEditWindow::Pan(int x, int y)
 
 	ClampImageOrigin(org);
 
-  m_display.SetImageOrigin(org);
+  m_display.SetImageOrigin(org, "Pan()");
 
   // the thing about panning is that now the mouse cursor position also changes (relative to the view).
   // so, send a mousemove if necessary.
@@ -375,24 +391,6 @@ void CImageEditWindow::ClampToImage(PointF& p)
   if(p.x > GetImageWidth()) p.x = static_cast<float>(GetImageWidth());
   if(p.y > GetImageHeight()) p.y = static_cast<float>(GetImageHeight());
 }
-//
-//void CImageEditWindow::Refresh(bool now)
-//{
-//  RedrawWindow(0, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
-//}
-//
-//void CImageEditWindow::Refresh(const RECT& imageCoords, bool now)
-//{
-//  PointF ulImage(imageCoords.left, imageCoords.top);
-//  PointF brImage(imageCoords.right, imageCoords.bottom);
-//  PointF ulScreen = m_display.GetViewport().ImageToView(ulImage);
-//  PointF brScreen = m_display.GetViewport().ImageToView(brImage);
-//
-//  CRect rcScreen(ulScreen.Floor(), brScreen.Ceil());
-//  rcScreen.InflateRect(5,5);
-//
-//  RedrawWindow(&rcScreen, 0, RDW_INVALIDATE | (now ? RDW_UPDATENOW : 0));
-//}
 
 LRESULT CImageEditWindow::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
@@ -418,7 +416,8 @@ void CImageEditWindow::DeleteTimer(UINT_PTR cookie)
 LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
   // fire tool events
-  m_selectionTool.OnInitTool();
+	if(m_currentTool != 0)
+	  m_currentTool->OnInitTool();
 	m_display.SetHWND(this->m_hWnd);
   return 0;
 }
@@ -438,9 +437,17 @@ void CImageEditWindow::SetZoomFactor(float n)
   m_display.SetViewOrigin(client);
   PointF virtual_(m_lastCursorVirtual);
   ClampToImage(virtual_);
-  m_display.SetImageOrigin(virtual_);
+	m_display.SetImageOrigin(virtual_, LibCC::FormatA("SetZoomFactor(z:% / v:(%,%) / i:(%,%) )")(n)
+		(m_display.GetViewport().GetViewOrigin().x)
+		(m_display.GetViewport().GetViewOrigin().y)
+		(m_display.GetViewport().GetImageOrigin().x)
+		(m_display.GetViewport().GetImageOrigin().y)
+		.CStr());
 
   m_display.SetZoomFactor(n);
+
+	// if we are currently panning, this is going to screw up some coords
+
   m_notify->OnZoomFactorChanged();
 }
 

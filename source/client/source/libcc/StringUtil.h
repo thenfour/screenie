@@ -135,7 +135,7 @@ namespace LibCC
     }
     bool IsDenormalized() const// exponent = 0  &&  mantissa != 0
     {
-      return (!(m_val & ExponentMask)) && (m_val & MantissaMask));
+      return (!(m_val & ExponentMask)) && (m_val & MantissaMask);
     }
     bool IsPositiveInfinity() const// exponent == MAX
     {

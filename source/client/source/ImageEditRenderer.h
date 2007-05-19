@@ -1,39 +1,34 @@
-/*
-	let's try caching bitmaps at almost every stage of render...
-	here are the stages of rendering:
-	1) original image
-	   this is irelevant to caching; it never changes.
-	2) zoomed original image
-	   this is a huge candidate for caching because it doesn't change very much, and when it does,
-	   users won't be pissed it if shows a performance diference. HOWEVER, the problem is that i can
-	   only cache a window of the image, because at high zoom levels it would mean very very large cached
-	   images. So the best way to cache this is going to be to only cache a "window" of the original image.
-	   Now there will be non-constant performance while panning... so we will need to cache a window that's bigger
-	   in general than the visible area. that way while you are panning, there will be a buffer which will
-	   reduce the number of refreshes. this logic will be in a separate class so i don't get confused =)
-	3) selection overlay (grayed out)
-   definitely should be cached. this will be simply a copy of the zoomed original image, with a gray overlay.
-	   it might need to be lazy-cached or else it would result in #2 being well over 2x as much processing. also,
-	   if you think about it, when there is grayed out area, it is rarely the entire image. so it might make sense
-	   to also lazy-cache AREAS of the grayed area. If that's necessary i'd do it later.
-	4) ants marching.
-	   this could be quite difficult to cache because it's an animation. there are only 2 states of each pixel in
-	   the animation, but unfortunately it would need to be determined if a ton of BitBlt's is going to be faster
-	   than just dealing with pixel-by-pixel.
-	5) other tools... to be written of course. i'm assuming that there would be 2 or more different stages of
-	   rendering though for tools. stuff could be rendered as part of the original image, or as part of the tool
-	   layer, like selection.
-
-	   for changes to the original image, obviously that would mean re-caching all these images for each change...
-	   for example, if you have a selection (so, a grayed area), and you have some pencil tool. If you are drawing
-	   around with it, the pencil tool would need to draw to all the cached bitmaps as well as the original.
-
-	   We will address that when it comes up.
-*/
 
 #pragma once
 
 #include "image.hpp"
+
+template<typename T>
+std::wstring RectToString(const T& rc)
+{
+	return LibCC::FormatW(L"(%,%)-(%,%) / w:% / h:%")
+		(rc.left)(rc.top)(rc.right)(rc.bottom)
+		(rc.right - rc.left)
+		(rc.bottom - rc.top)
+		.Str();
+}
+
+template<typename T>
+std::wstring PointToString(const T& pt)
+{
+	return LibCC::FormatW(L"(%,%)")
+		(pt.x)(pt.y)
+		.Str();
+}
+
+template<typename T>
+std::wstring SizeToString(const T& pt)
+{
+	return LibCC::FormatW(L"(%,%)")
+		(pt.cx)(pt.cy)
+		.Str();
+}
+
 
 // this helps with all bitmap displaying / caching / etc used by the image edit window.
 // this way, the image window can handle mechanics of GUI, and all the muck of 
@@ -97,6 +92,12 @@ public:
 	}
 	void SetSelectionRect(const CRect& imgCoords)
 	{
+		if((imgCoords.Width() < 1) || (imgCoords.Height() < 1))
+		{
+			ClearSelection();
+			return;
+		}
+
 		if(!m_queued.hasSelection || m_queued.selectionRect != imgCoords)
 		{
 			SelectionDirty = true;
@@ -126,8 +127,10 @@ public:
 			InvalidateAll();
 		}
 	}
-	void SetImageOrigin(const PointF& o)
+	void SetImageOrigin(const PointF& o, const char* reason)
 	{
+		//OutputDebugString(LibCC::Format("SetImageOrigin(%,%) : %|")(o.x)(o.y)(reason).CStr());
+
 		if(!o.IsEqual(m_queued.view.GetImageOrigin(), 0.001))
 		{
 			PanningDirty = true;
@@ -149,6 +152,8 @@ public:
 	/////////////////////////////////////////////////
 	void Render(AnimBitmap<32>& dest, const CRect& rcArea)
 	{
+		CalculateRenderingValues();
+
 		/*
 			cases:
 			#1- if nothing changed, nothing!
@@ -157,147 +162,52 @@ public:
 			#4- if panning and client size did NOT change, but selection changed
 		*/
 
-		// NOTE: the checkered background will be applied to the offscreen bitmap directly, after other stuff has been drawn.
-
-		const int zoomedBuffer = 25;// in client pixels
-
-		if(true || ZoomDirty)
+		//if(ZoomDirty || PanningDirty || ClientSizeDirty)
 		{
-			//OutputDebugString(LibCC::Format("Img(%,%) / View(%,%)|")
-			//	(m_queued.view.GetImageOrigin().x)
-			//	(m_queued.view.GetImageOrigin().y)
-			//	(m_queued.view.GetViewOrigin().x)
-			//	(m_queued.view.GetViewOrigin().y)
-			//	.CStr());
-
-			{// generate the zoomed bitmap.
-				// get the image coords of the area we should cache.
-				m_zoomedUL = m_queued.view.ViewToImage(PointF(-zoomedBuffer, -zoomedBuffer));
-				m_zoomedBR = m_queued.view.ViewToImage(PointF(m_queued.clientWidth + zoomedBuffer, m_queued.clientHeight + zoomedBuffer));
-				// don't cache stuff outside of the image.
-				ClampToImage(m_zoomedUL);
-				ClampToImage(m_zoomedBR);
-				// since stretchblt only works on whole pixels, make all of them integral, erring on the side of being bigger.
-				CPoint imgul = m_zoomedUL.Floor();
-				CPoint imgbr = m_zoomedBR.Ceil();
-				m_zoomedUL.SelfFloor();
-				m_zoomedBR.SelfCeil();
-				// couple more calculations and we're almost done
-				int imgwidth = imgbr.x - imgul.x;
-				int imgheight = imgbr.y - imgul.y;
-				m_zoomedSize = m_queued.view.ImageToViewSize(PointF(imgwidth, imgheight));// store the non-integral size, for accuracy reasons.
-				CPoint intDestSize = m_zoomedSize.Round();
-
-				if((m_zoomed.GetWidth() < intDestSize.x) || (m_zoomed.GetHeight() < intDestSize.y))
-				{
-					m_zoomed.SetSize(intDestSize.x, intDestSize.y);
-				}
-
-				// blit!
-				int mode = m_queued.view.GetZoomFactor() >= 1.0 ? COLORONCOLOR : HALFTONE;
-				m_original->StretchBlit(m_zoomed,
-					0,
-					0,
-					intDestSize.x,
-					intDestSize.y,
-					imgul.x,
-					imgul.y,
-					imgwidth,
-					imgheight,
-					mode);
-			}
-
-			{// now generate the zoomedgrayed
-
-				//CPoint zoomedSize = m_zoomedSize.Round();
-				//if((m_zoomedGrayed.GetWidth() < zoomedSize.x) || (m_zoomedGrayed.GetHeight() < zoomedSize.y))
-				//{
-				//	m_zoomedGrayed.SetSize(zoomedSize.x, zoomedSize.y);
-				//}
-				//m_zoomed.Blit(m_zoomedGrayed, 0, 0, zoomedSize.x, zoomedSize.y);
-
-				if(!m_queued.hasSelection)
-				{
-					m_cachedSelectionArea.SetRectEmpty();
-				}
-				else
-				{
-					// cache the area that's grayed.
-					CPoint zoomedSize = m_zoomedSize.Round();
-					if((m_zoomedGrayed.GetWidth() < zoomedSize.x) || (m_zoomedGrayed.GetHeight() < zoomedSize.y))
-					{
-						m_zoomedGrayed.SetSize(zoomedSize.x, zoomedSize.y);
-					}
-					m_cachedSelectionArea = m_queued.selectionRect;
-
-					// figure out where in m_zoomed the selection rect lies. easiest way to do this is use the Viewport to help
-					// translate from image coords -> m_zoomedGrayed coords.
-					CRect sel = GetSelectionCoordsOfZoomed();
-
-					SubtractRectHelper s(CRect(0, 0, zoomedSize.x, zoomedSize.y), sel);
-					m_zoomed.Blit(m_zoomedGrayed, s.top);
-					m_zoomed.Blit(m_zoomedGrayed, s.left);
-					m_zoomed.Blit(m_zoomedGrayed, s.right);
-					m_zoomed.Blit(m_zoomedGrayed, s.bottom);
-
-					m_zoomedGrayed.GrayRect(s.top);
-					m_zoomedGrayed.GrayRect(s.left);
-					m_zoomedGrayed.GrayRect(s.right);
-					m_zoomedGrayed.GrayRect(s.bottom);
-				}
-			}
-
-			{// blit from zoomed to offscreen
-				// strategy here is 1) figure out what stuff we need. 2) find the respective coords in the zoomed cache, 3) blit.
-				// so... here i find the image coords that bound the visible area.
-				PointF imgul = m_queued.view.ViewToImage(PointF(0, 0));
-				PointF imgbr = m_queued.view.ViewToImage(PointF(m_queued.clientWidth, m_queued.clientHeight));
-				// don't care about coords outside of image
-				ClampToImage(imgul);
-				ClampToImage(imgbr);
-				// calculate the easy destination coords
-				CPoint destul = m_queued.view.ImageToView(imgul).Round();
-				CPoint destbr = m_queued.view.ImageToView(imgbr).Round();
-				CRect dest(destul, destbr);
-				// figure out the starting point of the zoomed cache.
-				PointF srculf(imgul.x - m_zoomedUL.x, imgul.y - m_zoomedUL.y);// calculate the area in the zoomed cache that we don't care about- right now in img coords
-				CPoint srcul = m_queued.view.ImageToViewSize(srculf).Round();// now UL is in usable screen coords
-				CRect src(srcul.x, srcul.y, srcul.x + dest.Width(), srcul.y + dest.Height());
-
-				if((m_offscreen.GetWidth() != m_queued.clientWidth) || (m_offscreen.GetHeight() != m_queued.clientHeight))
-				{
-					m_offscreen.SetSize(m_queued.clientWidth, m_queued.clientHeight);
-				}
-
-				// blit.
-				if(!m_queued.hasSelection)
-				{
-					m_zoomed.Blit(m_offscreen, dest.left, dest.top, dest.Width(), dest.Height(), src.left, src.top);
-				}
-				else
-				{
-					// figure out where in zoomed the selection is, and do the above blit but in 5 parts.
-					CRect selsrc = GetSelectionCoordsOfZoomed();
-					// get those same coords for the display.
-					PointF seldestUL = m_queued.view.ImageToView(PointF(m_queued.selectionRect.TopLeft()));
-					PointF seldestBR = m_queued.view.ImageToView(PointF(m_queued.selectionRect.BottomRight()));
-					CRect seldest(seldestUL.Round(), seldestBR.Round());
-
-					SubtractRectHelper subsrc(src, selsrc);
-					SubtractRectHelper subdest(dest, seldest);
-
-					m_zoomed.Blit(m_offscreen, seldest.left, seldest.top, seldest.Width(), seldest.Height(), selsrc.left, selsrc.top);
-					m_zoomedGrayed.Blit(m_offscreen, subdest.top.left, subdest.top.top, subdest.top.Width(), subdest.top.Height(), subsrc.top.left, subsrc.top.top);
-					m_zoomedGrayed.Blit(m_offscreen, subdest.left.left, subdest.left.top, subdest.left.Width(), subdest.left.Height(), subsrc.left.left, subsrc.left.top);
-					m_zoomedGrayed.Blit(m_offscreen, subdest.right.left, subdest.right.top, subdest.right.Width(), subdest.right.Height(), subsrc.right.left, subsrc.right.top);
-					m_zoomedGrayed.Blit(m_offscreen, subdest.bottom.left, subdest.bottom.top, subdest.bottom.Width(), subdest.bottom.Height(), subsrc.bottom.left, subsrc.bottom.top);
-				}
-
-				// draw checkers
-				CRect exclusion(destul, destbr);
-				m_offscreen.FillCheckerPatternExclusion(exclusion, m_queued.hasSelection);
-			}
+			RenderZoomed();
+			RenderGrayed();
+			RenderOffscreen();
 		}
+		//else if(SelectionDirty)
+		//{
+		//	RenderGrayed();
+		//	RenderOffscreen();
+		//}
+
+		//OutputDebugString(LibCC::Format(
+		//	"AfterRender.|"
+		//	"  Client screen coords:                  (%,%)|"
+		//	"  Original image coords:                 (%,%)|"
+		//	"  Zoom level:                            %|"
+		//	"  Visible image origin:                  %|"
+		//	"  CalculateZoomedBufferImageCoords       %|"
+		//	"  CalculateZoomedBufferScreenCoords      %|"
+		//	"  CalculateZoomedBufferSize              %||"
+		//	"  CalculateZoomedVisibleImageCoords      %|"
+		//	"  CalculateZoomedVisibleScreenCoords     %|"
+		//	"  CalculateZoomedVisibleBufferCoords     %|"
+		//	"  CalculateZoomedVisibleSize             %||"
+		//	"  CalculateSelectionCoordsOfZoomedBuffer %|"
+		//	"  CalculateSelectionCoordsOfScreen       %|"
+		//	)
+		//	(m_queued.clientWidth)
+		//	(m_queued.clientHeight)
+		//	(m_original->GetWidth())
+		//	(m_original->GetHeight())
+
+		//	(m_queued.view.GetZoomFactor())
+		//	(PointToString(m_queued.view.ViewToImage(PointF(0, 0))))
+		//	(RectToString(zoomedBufferImageCoords))
+		//	(RectToString(zoomedBufferScreenCoords))
+		//	(SizeToString(zoomedBufferScreenCoords.Size()))
+		//	(RectToString(zoomedVisibleImageCoords))
+		//	(RectToString(zoomedVisibleScreenCoords))
+		//	(RectToString(zoomedVisibleBufferCoords))
+		//	(SizeToString(zoomedVisibleScreenCoords.Size()))
+		//	(RectToString(selectionZoomedCoords))
+		//	(RectToString(selectionScreenCoords))
+		//	.CStr()
+		//	);
 
 		m_params = m_queued;
 		SetDirty(false);
@@ -323,28 +233,19 @@ private:
 		if(rc.bottom < constraint.top) rc.bottom = constraint.top;
 		if(rc.bottom > constraint.bottom) rc.bottom = constraint.bottom;
 	}
-
-	// gets the coords in m_zoomed which correspond to the selection rect.
-	CRect GetSelectionCoordsOfZoomed() const
-	{
-		Viewport v(m_queued.view);
-		v.SetImageOrigin(m_zoomedUL);// top-left coord of m_zoomed
-		v.SetViewOrigin(PointF(0, 0));// top-left coord of m_zoomed
-		PointF selUL = v.ImageToView(PointF(m_queued.selectionRect.TopLeft()));
-		PointF selBR = v.ImageToView(PointF(m_queued.selectionRect.BottomRight()));
-		CRect ret(selUL.Round(), selBR.Round());
-		CPoint zoomedSize = m_zoomedSize.Round();
-		ClampRect(ret, CRect(0, 0, zoomedSize.x, zoomedSize.y));
-		return ret;
-	}
-
 	static inline bool IsBigEnough(const AnimBitmap<32>& b, int x, int y)
 	{
 		if(b.GetWidth() < x) return false;
 		if(b.GetHeight() < y) return false;
 		return true;
 	}
-
+	static inline void MakeBigEnough(AnimBitmap<32>& b, int x, int y)
+	{
+		if(!IsBigEnough(b, x, y))
+		{
+			b.SetSize(x, y);
+		}
+	}
 	inline void ClampToImage(PointF& p) const
 	{
 		if(p.x < 0) p.x = 0;
@@ -352,12 +253,151 @@ private:
 		if(p.x > m_original->GetWidth()) p.x = m_original->GetWidth();
 		if(p.y > m_original->GetHeight()) p.y = m_original->GetHeight();
 	}
+	inline void ClampToImage(RectF& rc) const
+	{
+		ClampToImage(rc.ul);
+		ClampToImage(rc.br);
+	}
+
+	// a bunch of rendering values.
+	CRect zoomedBufferImageCoords;
+	CRect zoomedBufferScreenCoords;
+	CRect zoomedVisibleImageCoords;
+	CRect zoomedVisibleScreenCoords;
+	CRect zoomedVisibleBufferCoords;
+	CRect selectionZoomedCoords;
+	CRect selectionScreenCoords;
+
+	void CalculateRenderingValues()
+	{
+		static const int zoomedBuffer = 25;// in screen pixels
+		RectF ret;
+
+		// calculate zoomedBufferImageCoords
+		// zoomedBufferScreenCoords
+		ret.Assign(-zoomedBuffer, -zoomedBuffer, m_queued.clientWidth + zoomedBuffer, m_queued.clientHeight + zoomedBuffer);
+		ret = m_queued.view.ViewToImage(ret);
+		ClampToImage(ret);
+		// now we have image coords. StretchBlt cannot blit from sub-pixels, so...
+		zoomedBufferImageCoords = ret.QuantizeInflate();
+		zoomedBufferScreenCoords = m_queued.view.ImageToView(RectF(zoomedBufferImageCoords)).Round();
+
+		// calculate zoomedVisibleImageCoords
+		// zoomedVisibleScreenCoords
+		ret.Assign(0, 0, m_queued.clientWidth, m_queued.clientHeight);
+		ret = m_queued.view.ViewToImage(ret);
+		ClampToImage(ret);
+		zoomedVisibleImageCoords = ret.QuantizeInflate();
+		zoomedVisibleScreenCoords = m_queued.view.ImageToView(RectF(zoomedVisibleImageCoords)).Round();
+
+		// set up a method of converting screen coords to coords relative to the zoomed buffer.
+		Viewport v;// "image" = buffer. "view" = screen.
+		v.SetZoomFactor(1.0);
+		v.SetImageOrigin(PointF(0, 0));
+		v.SetViewOrigin(PointF(zoomedBufferScreenCoords.TopLeft()));
+
+			// calculate zoomedVisibleBufferCoords
+		zoomedVisibleBufferCoords = v.ViewToImage(RectF(zoomedVisibleScreenCoords)).Round();
+
+		// calculate selectionZoomedCoords and selectionScreenCoords
+		selectionScreenCoords = m_queued.view.ImageToView(RectF(m_queued.selectionRect)).Round();
+		selectionZoomedCoords = v.ViewToImage(RectF(selectionScreenCoords)).Round();
+	}
+
+	void RenderZoomed()
+	{
+		MakeBigEnough(m_zoomed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height());
+		m_zoomed.Fill(MakeRgbPixel32(255, 0, 0));
+
+		int mode = m_queued.view.GetZoomFactor() >= 1.0 ? COLORONCOLOR : HALFTONE;
+		m_original->StretchBlit(m_zoomed,
+			0,
+			0,
+			zoomedBufferScreenCoords.Width(),
+			zoomedBufferScreenCoords.Height(),
+			zoomedBufferImageCoords.left,
+			zoomedBufferImageCoords.top,
+			zoomedBufferImageCoords.Width(),
+			zoomedBufferImageCoords.Height(),
+			mode);
+	}
+
+	void RenderGrayed()
+	{
+		//// simple rendering code for debugging purposes.
+		//MakeBigEnough(m_zoomedGrayed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Width());
+		//m_zoomed.Blit(m_zoomedGrayed, 0, 0, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Width());
+		//m_zoomedGrayed.GrayOut();
+		//return;
+
+		if(!m_queued.hasSelection)
+		{
+			m_cachedSelectionArea.SetRectEmpty();
+		}
+		else
+		{
+			// cache the area that's grayed.
+			MakeBigEnough(m_zoomedGrayed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height());
+			m_zoomedGrayed.Fill(MakeRgbPixel32(0,255,0));
+
+			m_cachedSelectionArea = m_queued.selectionRect;
+
+			SubtractRectHelper s(CRect(0, 0, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height()), selectionZoomedCoords);
+			m_zoomed.Blit(m_zoomedGrayed, s.top);
+			m_zoomed.Blit(m_zoomedGrayed, s.left);
+			m_zoomed.Blit(m_zoomedGrayed, s.right);
+			m_zoomed.Blit(m_zoomedGrayed, s.bottom);
+
+			m_zoomedGrayed.GrayRect(s.top);
+			m_zoomedGrayed.GrayRect(s.left);
+			m_zoomedGrayed.GrayRect(s.right);
+			m_zoomedGrayed.GrayRect(s.bottom);
+		}
+	}
+
+	void RenderOffscreen()
+	{
+		MakeBigEnough(m_offscreen, m_queued.clientWidth, m_queued.clientHeight);
+		m_offscreen.Fill(MakeRgbPixel32(0,0,255));
+
+		// blit.
+		if(!m_queued.hasSelection)
+		{
+			m_zoomed.Blit(
+				m_offscreen,
+				zoomedVisibleScreenCoords.left,
+				zoomedVisibleScreenCoords.top,
+				zoomedVisibleScreenCoords.Width(),
+				zoomedVisibleScreenCoords.Height(),
+				zoomedVisibleBufferCoords.left,
+				zoomedVisibleBufferCoords.top);
+		}
+		else
+		{
+			m_zoomed.Blit(m_offscreen,
+				selectionScreenCoords.left,
+				selectionScreenCoords.top,
+				selectionScreenCoords.Width(),
+				selectionScreenCoords.Height(),
+				selectionZoomedCoords.left,
+				selectionZoomedCoords.top);
+
+			SubtractRectHelper sZoomed(zoomedVisibleBufferCoords, selectionZoomedCoords);
+			SubtractRectHelper sScreen(zoomedVisibleScreenCoords, selectionScreenCoords);
+
+			m_zoomedGrayed.Blit(m_offscreen, sScreen.top.left, sScreen.top.top, sScreen.top.Width(), sScreen.top.Height(), sZoomed.top.left, sZoomed.top.top);
+			m_zoomedGrayed.Blit(m_offscreen, sScreen.left.left, sScreen.left.top, sScreen.left.Width(), sScreen.left.Height(), sZoomed.left.left, sZoomed.left.top);
+			m_zoomedGrayed.Blit(m_offscreen, sScreen.right.left, sScreen.right.top, sScreen.right.Width(), sScreen.right.Height(), sZoomed.right.left, sZoomed.right.top);
+			m_zoomedGrayed.Blit(m_offscreen, sScreen.bottom.left, sScreen.bottom.top, sScreen.bottom.Width(), sScreen.bottom.Height(), sZoomed.bottom.left, sZoomed.bottom.top);
+		}
+
+		// draw checkers
+		m_offscreen.FillCheckerPatternExclusion(zoomedVisibleScreenCoords, m_queued.hasSelection);
+	}
+
 	AnimBitmap<32>* m_original;
 
 	AnimBitmap<32> m_zoomed;
-	PointF m_zoomedUL;// upper-left coord of the IMAGE coordinate where m_zoomed starts
-	PointF m_zoomedBR;// bottom-right of the same thing.
-	PointF m_zoomedSize;// since m_zoomed might actually be bigger than necessary, this specifies the size that's relevant, in screen units
 
 	AnimBitmap<32> m_zoomedGrayed;
 	CRect m_cachedSelectionArea;// describes the area which is SUROUNDED by grayed area in the cached bitmap. if this is the entire rect of the zoomedGrayed bitmap, then no graying has been done. This is valid even if m_hasSelection is false!!

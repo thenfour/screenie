@@ -308,6 +308,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\fundamental.h"
+				>
+			</File>
+			<File
 				RelativePath=".\source\geom.h"
 				>
 			</File>

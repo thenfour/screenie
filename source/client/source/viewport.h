@@ -3,103 +3,8 @@
 #ifndef VIEWPORT_INCLUDED
 #define VIEWPORT_INCLUDED
 
-typedef double ViewPortSubPixel;
+#include "fundamental.h"
 
-
-class PointF
-{
-public:
-  typedef PointF This_T;
-	typedef ViewPortSubPixel T;
-
-	static inline int Round(ViewPortSubPixel f)
-	{
-		return static_cast<int>(f + 0.5);
-	}
-
-  PointF() :
-    x(0),
-    y(0)
-  {
-  }
-  PointF(const T& initX, const T& initY) :
-    x(initX),
-    y(initY)
-  {
-  }
-	explicit PointF(const CPoint& p)
-	{
-		x = (T)p.x;
-		y = (T)p.y;
-	}
-  PointF(const This_T& rhs) :
-    x(rhs.x),
-    y(rhs.y)
-  {
-  }
-  This_T& operator =(const This_T& rhs)
-  {
-    x = rhs.x;
-    y = rhs.y;
-    return *this;
-  }
-  // Operations
-	void Offset(const T& xOffset, const T& yOffset)
-  {
-    x += xOffset;
-    y += yOffset;
-  }
-	void Assign(const T& X, const T& Y)
-  {
-    x = X;
-    y = Y;
-  }
-	CPoint Round() const 
-	{
-		CPoint ret;
-		ret.x = static_cast<int>(Round(x));
-		ret.y = static_cast<int>(Round(y));
-		return ret;
-	}
-	CPoint Floor() const
-	{
-		CPoint ret;
-		ret.x = static_cast<int>(floor(x));
-		ret.y = static_cast<int>(floor(y));
-		return ret;
-	}
-	CPoint Ceil() const
-	{
-		CPoint ret;
-		ret.x = static_cast<int>(ceil(x));
-		ret.y = static_cast<int>(ceil(y));
-		return ret;
-	}
-	void SelfRound()
-	{
-		x = Round(x);
-		y = Round(y);
-	}
-	void SelfFloor()
-	{
-		x = floor(x);
-		y = floor(y);
-	}
-	void SelfCeil()
-	{
-		x = ceil(x);
-		y = ceil(y);
-	}
-  T x;
-  T y;
-
-	bool IsEqual(const PointF& rhs, T accuracy) const
-	{
-		if(abs(x - rhs.x) > accuracy) return false;
-		if(abs(y - rhs.y) > accuracy) return false;
-		return true;
-	}
-};
 
 /*
   Class to encapsulate translating between a image and a view into it (e.g. a huge image & the window that displays part of it).
@@ -190,7 +95,7 @@ public:
   }
 
 	// ********************************************** CONVERSIONS (the reason this class exists)
-  PointF ViewToImage(PointF p) const
+  PointF ViewToImage(const PointF& p) const
   {
 		/*
 		|VIEW:                         |-----*----------.----|      <-- definition of the view origin
@@ -220,18 +125,18 @@ public:
 
 		return ret;
   }
-  PointF ImageToView(PointF p) const
+  PointF ImageToView(const PointF& p) const
   {
 		// this is quite literally the inverse of the above.
 		// 1) make it relative to the origin
 		// 2) scale it to the new coords
 		// 3) offset it
 		PointF ret;
-		ret.x = p.x -= imageOrigin.x;
+		ret.x = p.x - imageOrigin.x;
 		ret.x *= zoomFactor;
 		ret.x += viewOrigin.x;
 
-		ret.y = p.y -= imageOrigin.y;
+		ret.y = p.y - imageOrigin.y;
 		ret.y *= zoomFactor;
 		ret.y += viewOrigin.y;
 		return ret;
@@ -245,6 +150,22 @@ public:
   {
     return PointF(zoomFactor * p.x, zoomFactor * p.y);
   }
+
+	RectF ViewToImage(const RectF& rc) const
+	{
+		RectF ret;
+		ret.ul = ViewToImage(rc.ul);
+		ret.br = ViewToImage(rc.br);
+		return ret;
+	}
+
+	RectF ImageToView(const RectF& rc) const
+	{
+		RectF ret;
+		ret.ul = ImageToView(rc.ul);
+		ret.br = ImageToView(rc.br);
+		return ret;
+	}
 
 protected:
   // basic members

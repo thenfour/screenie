@@ -197,10 +197,10 @@ protected:
   bool m_mouseEntrancy;
 
   // panning.
-  bool m_bIsPanning;
+  bool m_bIsPanning;// true during right-mouse button dragging
   HCURSOR m_hPreviousCursor;
-  CPoint m_panningStart;// in client coords
-  PointF m_panningStartVirtual;// virtual coords.
+	CPoint m_panningStart;// in client coords
+  PointF m_panningStartVirtual;// image coords.
   bool m_haveCapture;
 
   // for panning when the cursor is off the display & we have mouse capture
@@ -208,6 +208,7 @@ protected:
   UINT_PTR m_panningTimer;
   PanningSpec CImageEditWindow::GetPanningSpec();
   void Pan(const PanningSpec& ps);
+	void KillPanningTimer();
   static void PanningTimerProc(void* pUser)
   {
     // pan based on current velocity / direction
