@@ -19,6 +19,7 @@ public:
 
   void OnCursorMove(PointF p, bool dragging)
   {
+		//OutputDebugString(LibCC::Format("OnCursorMove(dragging=%, pt=(%,%))|")(dragging ? "true" : "false")(p.x)(p.y).CStr());
     if(dragging)
     {
 			m_selectionPt = p;

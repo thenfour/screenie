@@ -92,6 +92,7 @@ public:
 	}
 	void SetSelectionRect(const CRect& imgCoords)
 	{
+		//OutputDebugString(LibCC::Format("SetSelectionRect(%)|")(RectToString(imgCoords)).CStr());
 		if((imgCoords.Width() < 1) || (imgCoords.Height() < 1))
 		{
 			ClearSelection();
@@ -153,6 +154,7 @@ public:
 	void Render(AnimBitmap<32>& dest, const CRect& rcArea)
 	{
 		CalculateRenderingValues();
+		//OutputDebugString(LibCC::Format("Render|").CStr());
 
 		/*
 			cases:
@@ -162,17 +164,17 @@ public:
 			#4- if panning and client size did NOT change, but selection changed
 		*/
 
-		//if(ZoomDirty || PanningDirty || ClientSizeDirty)
+		if(ZoomDirty || PanningDirty || ClientSizeDirty)
 		{
 			RenderZoomed();
 			RenderGrayed();
 			RenderOffscreen();
 		}
-		//else if(SelectionDirty)
-		//{
-		//	RenderGrayed();
-		//	RenderOffscreen();
-		//}
+		else if(SelectionDirty)
+		{
+			RenderGrayed();
+			RenderOffscreen();
+		}
 
 		//OutputDebugString(LibCC::Format(
 		//	"AfterRender.|"
@@ -336,7 +338,7 @@ private:
 		}
 		else
 		{
-			// cache the area that's grayed.
+			// cache the area that's grayed AND that isn't already cached.
 			MakeBigEnough(m_zoomedGrayed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height());
 			m_zoomedGrayed.Fill(MakeRgbPixel32(0,255,0));
 

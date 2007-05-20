@@ -64,11 +64,23 @@ float GetDeltaMin(int val, bool bSuperDooper)
 
 LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	OutputDebugString("OnMouseMove{\r\n");
   bHandled = TRUE;
-  if(!MouseEnter()) return 0;
+  if(!MouseEnter())
+	{
+		OutputDebugString("} OnMouseMove\r\n");
+		return 0;
+	}
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
+
+	// this is necessary to prevent an endless loop when calling SetCursorPos().
+	if((psTemp.x == m_lastCursor.x) && (psTemp.y == m_lastCursor.y))
+	{
+		MouseLeave();
+		return 0;
+	}
 
   if(m_bIsPanning)
   {
@@ -107,7 +119,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 
       // replace the mouse cursor to reflect the slowdown.
       PointF newCursorPosX = m_display.GetViewport().ImageToView(m_lastCursorVirtual);
-			
+
       CPoint newCursorPos = newCursorPosX.Round();
 
       cursorPos = newCursorPos;
@@ -137,7 +149,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
       if(!m_panningTimer)
       {
         m_panningTimer = CreateTimer(30, CImageEditWindow::PanningTimerProc, this);
-				OutputDebugString(LibCC::Format("CreateTimer (id %)\r\n")(m_panningTimer).CStr());
+				//OutputDebugString(LibCC::Format("CreateTimer (id %)\r\n")(m_panningTimer).CStr());
       }
     }
     else
@@ -151,6 +163,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   pt.y = static_cast<LONG>(m_lastCursorVirtual.y);
   m_notify->OnCursorPositionChanged(pt.x, pt.y);
 
+	OutputDebugString("} OnMouseMove\r\n");
   return MouseLeave();
 }
 
@@ -234,7 +247,7 @@ LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 
 LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	OutputDebugString("OnLoseCapture\r\n");
+	//OutputDebugString("OnLoseCapture\r\n");
 	KillPanningTimer();
   if(m_bIsPanning)
   {
@@ -278,6 +291,8 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
 
 LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
+	//OutputDebugString("--OnPaint\r\n");
+
 	PAINTSTRUCT paintStruct = { 0 };
 	HDC dc = BeginPaint(&paintStruct);
 
