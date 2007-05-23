@@ -64,11 +64,9 @@ float GetDeltaMin(int val, bool bSuperDooper)
 
 LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	OutputDebugString("OnMouseMove{\r\n");
   bHandled = TRUE;
   if(!MouseEnter())
 	{
-		OutputDebugString("} OnMouseMove\r\n");
 		return 0;
 	}
 
@@ -163,7 +161,6 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   pt.y = static_cast<LONG>(m_lastCursorVirtual.y);
   m_notify->OnCursorPositionChanged(pt.x, pt.y);
 
-	OutputDebugString("} OnMouseMove\r\n");
   return MouseLeave();
 }
 

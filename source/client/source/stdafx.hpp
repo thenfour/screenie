@@ -1,6 +1,9 @@
 #ifndef SCREENIE_STDAFX_HPP
 #define SCREENIE_STDAFX_HPP
 
+#define UNICODE
+#define _UNICODE
+
 #define _CRT_SECURE_NO_DEPRECATE
 
 #define WINVER				0x0500

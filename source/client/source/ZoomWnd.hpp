@@ -16,7 +16,7 @@ class CZoomWindow :
   public CWindowImpl<CZoomWindow>
 {
 public:
-	DECLARE_WND_CLASS("ScreenieCropperWnd")
+	DECLARE_WND_CLASS(_T("ScreenieCropperWnd"))
 
   static const int patternFrequency = 8;
 

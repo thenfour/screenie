@@ -219,31 +219,31 @@ struct ScreenshotDestination
 		switch (type)
 		{
 			case TYPE_FILE:
-				return tstd::tstring("Save to Local File");
+				return tstd::tstring(_T("Save to Local File"));
 			case TYPE_FTP:
-				return tstd::tstring("Upload via FTP");
+				return tstd::tstring(_T("Upload via FTP"));
 			case TYPE_EMAIL:
-				return tstd::tstring("Send Email");
+				return tstd::tstring(_T("Send Email"));
 			case TYPE_CLIPBOARD:
-				return tstd::tstring("Copy to Clipboard");
+				return tstd::tstring(_T("Copy to Clipboard"));
 			case TYPE_SCREENIENET:
-				return tstd::tstring("Screenie.net");
+				return tstd::tstring(_T("Screenie.net"));
 		}
 
-		return tstd::tstring("Unknown");
+		return tstd::tstring(_T("Unknown"));
 	};
 
 	static Type StringToType(const tstd::tstring& description)
 	{
-		if (description == tstd::tstring("Save to Local File"))
+		if (description == tstd::tstring(_T("Save to Local File")))
 			return TYPE_FILE;
-		if (description == tstd::tstring("Upload via FTP"))
+		if (description == tstd::tstring(_T("Upload via FTP")))
 			return TYPE_FTP;
-		if (description == tstd::tstring("Send Email"))
+		if (description == tstd::tstring(_T("Send Email")))
 			return TYPE_EMAIL;
-		if (description == tstd::tstring("Copy to Clipboard"))
+		if (description == tstd::tstring(_T("Copy to Clipboard")))
 			return TYPE_CLIPBOARD;
-		if (description == tstd::tstring("Screenie.net"))
+		if (description == tstd::tstring(_T("Screenie.net")))
 			return TYPE_SCREENIENET;
 
 		return TYPE_NONE;

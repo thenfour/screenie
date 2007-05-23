@@ -1,10 +1,7 @@
 #ifndef SCREENIE_SCREENSHOTOPTIONS_HPP
 #define SCREENIE_SCREENSHOTOPTIONS_HPP
 
-// for std::vector
 #include <vector>
-
-// for ScreenshotDestination
 #include "ScreenshotDestination.hpp"
 
 class ScreenshotOptions

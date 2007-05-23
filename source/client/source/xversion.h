@@ -36,23 +36,23 @@ public:
     // registrant
     PCSTR pStr;
     if(!VerQueryValue(data.GetBuffer(), _T("\\StringFileInfo\\040904b0\\RegisteredTo"), (void**)&pStr, &ffilen)) return;
-    m_registrant = pStr;
+    m_registrant = (PCTSTR)pStr;
 
     // copyright
     if(!VerQueryValue(data.GetBuffer(), _T("\\StringFileInfo\\040904b0\\LegalCopyright"), (void**)&pStr, &ffilen)) return;
-    m_copyright = pStr;
+    m_copyright = (PCTSTR)pStr;
   }
 
   WORD GetA() const { return m_a; }
   WORD GetB() const { return m_b; }
   WORD GetC() const { return m_c; }
   WORD GetD() const { return m_d; }
-  std::string GetRegistrant() const { return m_registrant; }
-  std::string GetCopyright() const { return m_copyright; }
+	tstd::tstring GetRegistrant() const { return m_registrant; }
+  tstd::tstring GetCopyright() const { return m_copyright; }
 
 private:
-  std::string m_registrant;
-  std::string m_copyright;
+  tstd::tstring m_registrant;
+  tstd::tstring m_copyright;
 
   WORD m_a;
   WORD m_b;

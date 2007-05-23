@@ -24,13 +24,13 @@ tstd::tstring GuidToString(GUID& guid)
 {
 	tstd::tstringstream strm;
 
-	strm << std::hex << std::setw(8) << std::setfill('0') << guid.Data1 << "-";
-	strm << std::hex << std::setw(4) << std::setfill('0') << guid.Data2 << "-";
-	strm << std::hex << std::setw(4) << std::setfill('0') << guid.Data3 << "-";
-	strm << std::hex << std::setw(2) << std::setfill('0') << (int)guid.Data4[0] << (int)guid.Data4[1] << "-";
+	strm << std::hex << std::setw(8) << std::setfill(_T('0')) << guid.Data1 << _T("-");
+	strm << std::hex << std::setw(4) << std::setfill(_T('0')) << guid.Data2 << _T("-");
+	strm << std::hex << std::setw(4) << std::setfill(_T('0')) << guid.Data3 << _T("-");
+	strm << std::hex << std::setw(2) << std::setfill(_T('0')) << (int)guid.Data4[0] << (int)guid.Data4[1] << _T("-");
 
 	for (size_t i = 2; i < 8; i++)
-		strm << std::hex << std::setw(2) << std::setfill('0') << (int)guid.Data4[i];
+		strm << std::hex << std::setw(2) << std::setfill(_T('0')) << (int)guid.Data4[i];
 
 	return StringToUpper(strm.str());
 }
@@ -192,7 +192,7 @@ tstd::tstring GetComboSelectionString(HWND hWndCombo)
 tstd::tstring WeekdayNameFromNumber(unsigned int weekdayNumber)
 {
 	if (weekdayNumber >= 7)
-		return tstd::tstring("");
+		return tstd::tstring();
 
 	std::vector<tstd::tstring> weekdayNames(7);
 
@@ -214,7 +214,7 @@ tstd::tstring WeekdayNameFromNumber(unsigned int weekdayNumber)
 tstd::tstring MonthNameFromNumber(unsigned int monthNumber)
 {
 	if (monthNumber >= 7)
-		return tstd::tstring("");
+		return tstd::tstring();
 
 	std::vector<tstd::tstring> monthNames(12);
 
@@ -399,7 +399,7 @@ tstd::tstring tstring_toupper(const tstd::tstring& input)
 LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFileName, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser)
 {
   // open / login
-	WinInetHandle internet = ::InternetOpen("Screenie v1.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+	WinInetHandle internet = ::InternetOpen(_T("Screenie v1.0"), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
 	if (internet.handle == NULL)
 	{
     return LibCC::Result(E_FAIL, LibCC::Format("Failed to connect to the FTP site.  Technical info: [InternetOpen] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
