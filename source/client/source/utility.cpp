@@ -20,21 +20,6 @@
 
 using namespace LibCC;
 
-tstd::tstring GuidToString(GUID& guid)
-{
-	tstd::tstringstream strm;
-
-	strm << std::hex << std::setw(8) << std::setfill(_T('0')) << guid.Data1 << _T("-");
-	strm << std::hex << std::setw(4) << std::setfill(_T('0')) << guid.Data2 << _T("-");
-	strm << std::hex << std::setw(4) << std::setfill(_T('0')) << guid.Data3 << _T("-");
-	strm << std::hex << std::setw(2) << std::setfill(_T('0')) << (int)guid.Data4[0] << (int)guid.Data4[1] << _T("-");
-
-	for (size_t i = 2; i < 8; i++)
-		strm << std::hex << std::setw(2) << std::setfill(_T('0')) << (int)guid.Data4[i];
-
-	return StringToUpper(strm.str());
-}
-
 tstd::tstring GetUniqueTemporaryFilename()
 {
 	TCHAR pathBuffer[MAX_PATH] = { 0 };
@@ -44,36 +29,6 @@ tstd::tstring GetUniqueTemporaryFilename()
 	::GetTempFileName(pathBuffer, TEXT("SCR"), 0, filenameBuffer);
 
 	return tstd::tstring(filenameBuffer);
-}
-
-tstd::tstring GetLastErrorString(DWORD lastError)
-{
-	tstd::tstring message;
-	TCHAR* buffer = 0;
-
-	::FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		FORMAT_MESSAGE_FROM_SYSTEM | 
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		lastError,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(PTSTR)&buffer,
-		0,
-		NULL 
-		);
-
-	if (buffer)
-	{
-		message = buffer;
-		::LocalFree(buffer);
-	}
-	else
-	{
-		message = LibCC::Format(TEXT("Unknown error 0x%")).ul<16, 8, TEXT('0')>(lastError).Str();
-	}
-
-	return message;
 }
 
 tstd::tstring GetWinInetErrorString()
@@ -102,27 +57,6 @@ tstd::tstring GetWinInetErrorString()
 	return tstd::tstring(&buffer[0]);
 }
 
-bool GetStringResource(HINSTANCE instance, UINT id, tstd::tstring& stringOut)
-{
-	for (int bufferLength = 256; ; bufferLength *= 2)
-	{
-		std::vector<tstd::tchar_t> buffer(bufferLength);
-		std::fill(buffer.begin(), buffer.end(), 0);
-
-		int lengthRead = ::LoadString(instance, id, &buffer[0], bufferLength);
-
-		if (lengthRead == 0)
-			break;
-
-		if (lengthRead < (bufferLength - 1))
-		{
-			stringOut = &buffer[0];
-			return true;
-		}
-	}
-
-	return false;
-}
 
 BOOL CALLBACK EnableChildWindowsEnumProc(HWND hwnd, LPARAM lParam)
 {
@@ -350,9 +284,9 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 					break;
 				case TEXT('g'):
 					{
-						GUID guid = { 0 };
-						CoCreateGuid(&guid);
-						outputStream << GuidToString(guid);
+						Guid g;
+						g.CreateNew();
+						outputStream << g.ToString();
 					}
 					break;
 				default:

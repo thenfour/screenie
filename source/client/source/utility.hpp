@@ -19,10 +19,6 @@ bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTi
 tstd::tstring GetUniqueTemporaryFilename();
 tstd::tstring GetWinInetErrorString();
 
-tstd::tstring GetLastErrorString(DWORD lastError);
-
-bool GetStringResource(HINSTANCE instance, UINT id, tstd::tstring& stringOut);
-
 BOOL EnableChildWindows(HWND parent, BOOL enable);
 
 bool GetSpecialFolderPath(tstd::tstring& path, int folder);

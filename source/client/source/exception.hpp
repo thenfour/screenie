@@ -17,7 +17,7 @@ class Win32Exception : public Exception
 public:
 	Win32Exception(DWORD lastErrorIn) : lastError(lastErrorIn)
 	{
-		errorString = GetLastErrorString(lastError);
+		errorString = LibCC::Format().gle(lastErrorIn).Str();
 	}
 
 	virtual ~Win32Exception() { }

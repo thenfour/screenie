@@ -6,6 +6,7 @@
 
 #include "stdafx.hpp"
 #include "resource.h"
+#include "libcc/winapi.h"
 
 #include "codec.hpp"
 #include "image.hpp"
@@ -123,14 +124,13 @@ LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPA
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_FILE).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_FTP).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_CLIPBOARD).c_str());
-//	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_EMAIL).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_SCREENIENET).c_str());
 
 	PopulateFormatList();
 
-	tstd::tstring formatDescription;
-	if (GetStringResource(_Module.GetResourceInstance(), IDS_FORMATDESCRIPTION, formatDescription))
-		SetDlgItemText(IDC_FILENAME_FORMATDESC, formatDescription.c_str());
+	tstd::tstring formatStr;
+	LibCC::LoadStringX(_Module.GetResourceInstance(), IDS_FORMATDESCRIPTION, formatStr);
+	SetDlgItemText(IDC_FILENAME_FORMATDESC, formatStr.c_str());
 
 	ShowSettings();
 
