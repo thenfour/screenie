@@ -276,7 +276,7 @@ public:
     GetWindowPlacement(&wp);
     m_options.SetCroppingPlacement(wp);
 
-   	SaveOptionsToRegistry(m_options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+		m_options.SaveSettings();
 
 		EndDialog(nVal); 
 	}

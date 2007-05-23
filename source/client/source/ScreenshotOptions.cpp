@@ -125,7 +125,7 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, LibCC::Regi
 	return true;
 }
 
-bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName)
+bool ScreenshotOptions::LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName)
 {
 	LibCC::RegistryKey MainKey(HKEY_CURRENT_USER, keyName);
 	if(!MainKey.Exists()) return false;
@@ -175,86 +175,33 @@ bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyNa
   return true;
 }
 
-bool WriteDestinationToRegistry(const ScreenshotDestination& destination, LibCC::RegistryKey& key)
+void ScreenshotOptions::Serialize(Xml::Element parent) const
 {
-	key.SetValue(KEY_DEST_ENABLED, destination.enabled);
+	Xml::Serialize(parent, KEY_DESTINATIONS, m_destinations);
 
-	////////////////////////////////////////
-	// general settings
-	////////////////////////////////////////
+	Xml::Serialize(parent, L"IncludeCursor", m_includeCursor);
+	Xml::Serialize(parent, L"ConfirmOptions", m_confirmOptions);
+	Xml::Serialize(parent, L"ShowStatus", m_showStatus);
+	Xml::Serialize(parent, L"ShowCropWindow", m_showCropWindow);
+	Xml::Serialize(parent, L"ShowSplash", m_showSplash);
+	Xml::Serialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
 
-	key.SetValue(KEY_DEST_GENERAL_NAME, destination.general.name);
-	key.SetValue(KEY_DEST_GENERAL_TYPE, destination.general.type);
-	key.SetValue(KEY_DEST_GENERAL_IMAGEFORMAT, destination.general.imageFormat);
-	key.SetValue(KEY_DEST_GENERAL_FILENAMEFORMAT, destination.general.filenameFormat);
-	key.SetValue(KEY_DEST_GENERAL_PATH, destination.general.path);
-  key.SetValue(KEY_DEST_GENERAL_LOCALTIME, destination.general.localTime ? 1 : 0);
-  key.SetValue(KEY_DEST_GENERAL_ID, destination.general.id.ToString());
-
-	////////////////////////////////////////
-	// image settings
-	////////////////////////////////////////
-
-	key.SetValue(KEY_DEST_IMAGE_SCALETYPE, destination.image.scaleType);
-	key.SetValue(KEY_DEST_IMAGE_SCALEPERCENT, destination.image.scalePercent);
-	key.SetValue(KEY_DEST_IMAGE_MAXDIMENSION, destination.image.maxDimension);
-
-	////////////////////////////////////////
-	// ftp settings
-	////////////////////////////////////////
-
-	key.SetValue(KEY_DEST_FTP_HOSTNAME, destination.ftp.hostname);
-	key.SetValue(KEY_DEST_FTP_PORT, destination.ftp.port);
-	key.SetValue(KEY_DEST_FTP_USERNAME, destination.ftp.username);
-	key.SetValue(KEY_DEST_FTP_REMOTEPATH, destination.ftp.remotePath);
-	key.SetValue(KEY_DEST_FTP_RESULTURL, destination.ftp.resultURL);
-	key.SetValue(KEY_DEST_FTP_COPYURL, destination.ftp.copyURL);
-
-	const LibCC::Blob<BYTE>& temp = destination.ftp.GetEncryptedPassword();
-  key.SetValue(KEY_DEST_FTP_PASSWORD, temp.GetBuffer(), temp.Size());
-
-	//////////////////////////////////////////////////////////////////////////
-	// screenie.net settings
-	//////////////////////////////////////////////////////////////////////////
-
-	key.SetValue(KEY_DEST_SCREENIE_URL, destination.screenie.url);
-	key.SetValue(KEY_DEST_SCREENIE_USERNAME, destination.screenie.username);
-	key.SetValue(KEY_DEST_SCREENIE_PASSWORD, destination.screenie.password);
-	key.SetValue(KEY_DEST_SCREENIE_COPYURL, destination.screenie.copyURL);
-
-	return true;
-}
-
-bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName)
-{
-	DWORD ret = ::SHDeleteKey(root, keyName);
-
-	LibCC::RegistryKey MainKey(root, keyName);
-	MainKey.Create();
-
-  LibCC::RegistryKey DestsKey = MainKey.SubKey(KEY_DESTINATIONS);
-	for (size_t i = 0; i < options.GetNumDestinations(); ++i)
+	if(m_haveConfigPlacement)
 	{
-		ScreenshotDestination destination;
-		if (options.GetDestination(destination, i))
-		{
-			// generate the key name based on the destination name and index
-			tstd::tstring keyName = LibCC::Format(TEXT("% (%)")).s(destination.general.name).ul(i).Str();
-			LibCC::RegistryKey destKey = DestsKey.SubKey(keyName);
-			destKey.Create();
-			WriteDestinationToRegistry(destination, destKey);
-		}
+		Xml::Serialize(parent, L"ConfigWindowPlacement", Xml::BinaryData(&m_configPlacement));
+	}
+	if(m_haveCroppingPlacement)
+	{
+		Xml::Serialize(parent, L"CroppingWindowPlacement", Xml::BinaryData(&m_croppingPlacement));
+	}
+	if(m_haveStatusPlacement)
+	{
+		Xml::Serialize(parent, L"StatusWindowPlacement", Xml::BinaryData(&m_statusPlacement));
 	}
 
-	MainKey.SetValue(KEY_INCLUDECURSOR, options.IncludeCursor());
-	MainKey.SetValue(KEY_CONFIRMOPTIONS, options.ConfirmOptions());
-	MainKey.SetValue(KEY_SHOWSTATUS, options.ShowStatus());
-	MainKey.SetValue(KEY_SHOWCROPPINGWINDOW, options.ShowCropWindow());
-	MainKey.SetValue(KEY_SHOWSPLASH, options.ShowSplash());
-
   {
-    LibCC::RegistryKey autoStartKey(root, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
-    if(options.AutoStartup())
+    LibCC::RegistryKey autoStartKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
+    if(AutoStartup())
     {
       TCHAR fileName[1024];
       GetModuleFileName(NULL, fileName, 1024);
@@ -266,22 +213,49 @@ bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName
       autoStartKey.DeleteValue(_T("Screenie"));
     }
   }
+}
 
-  float temp = options.CroppingZoomFactor();
-  MainKey[KEY_CROPPINGZOOMFACTOR].SetValue(&temp, sizeof(temp));
+void ScreenshotOptions::Deserialize(Xml::Element parent)
+{
+	Xml::Deserialize(parent, KEY_DESTINATIONS, m_destinations);
 
-  if(options.HaveConfigPlacement())
-  {
-    MainKey[KEY_CONFIGWINDOWPLACEMENT].SetValue(&options.GetConfigPlacement(), sizeof(WINDOWPLACEMENT));
-  }
-  if(options.HaveCroppingPlacement())
-  {
-    MainKey[KEY_CROPPINGWINDOWPLACEMENT].SetValue(&options.GetCroppingPlacement(), sizeof(WINDOWPLACEMENT));
-  }
-  if(options.HaveStatusPlacement())
-  {
-    MainKey[KEY_STATUSWINDOWPLACEMENT].SetValue(&options.GetStatusPlacement(), sizeof(WINDOWPLACEMENT));
-  }
+	Xml::Deserialize(parent, L"IncludeCursor", m_includeCursor);
+	Xml::Deserialize(parent, L"ConfirmOptions", m_confirmOptions);
+	Xml::Deserialize(parent, L"ShowStatus", m_showStatus);
+	Xml::Deserialize(parent, L"ShowCropWindow", m_showCropWindow);
+	Xml::Deserialize(parent, L"ShowSplash", m_showSplash);
+	Xml::Deserialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
 
-	return true;
+	LibCC::Blob<BYTE> temp;
+	if(Xml::Deserialize(parent, L"ConfigWindowPlacement", temp))
+	{
+		if(temp.Size() == sizeof(m_configPlacement))
+		{
+			memcpy(&m_configPlacement, temp.GetBuffer(), temp.Size());
+			m_haveConfigPlacement = true;
+		}
+	}
+
+	if(Xml::Deserialize(parent, L"CroppingWindowPlacement", temp))
+	{
+		if(temp.Size() == sizeof(m_croppingPlacement))
+		{
+			memcpy(&m_croppingPlacement, temp.GetBuffer(), temp.Size());
+			m_haveCroppingPlacement = true;
+		}
+	}
+
+	if(Xml::Deserialize(parent, L"StatusWindowPlacement", temp))
+	{
+		if(temp.Size() == sizeof(m_statusPlacement))
+		{
+			memcpy(&m_statusPlacement, temp.GetBuffer(), temp.Size());
+			m_haveStatusPlacement = true;
+		}
+	}
+
+  {
+    LibCC::RegistryKey autoStartKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
+    m_autoStartup = autoStartKey.ValueExists(_T("Screenie"));
+  }
 }

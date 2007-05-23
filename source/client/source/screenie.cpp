@@ -54,7 +54,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	int retval = 0;
 
   ScreenshotOptions options;
-	LoadOptionsFromRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+	options.LoadSettings();
 
   g_mainWindow = new CMainWindow(options);
 
@@ -70,7 +70,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 		}
 	}
 
- 	SaveOptionsToRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+	options.SaveSettings();
 
   delete g_mainWindow;
 

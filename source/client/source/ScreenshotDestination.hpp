@@ -8,6 +8,7 @@
 #define SCREENIE_DESTINATION_HPP
 
 #include "utility.hpp"
+#include "serialization.h"
 
 struct ScreenshotDestination
 {
@@ -193,6 +194,85 @@ struct ScreenshotDestination
 		ftp = rightHand.ftp;
 
 		return (*this);
+	}
+
+	// xml serialization
+	void Serialize(Xml::Element parent) const
+	{
+		Xml::Serialize(parent, L"Enabled", enabled);
+		// general settings
+		Xml::Serialize(parent, L"GeneralName", general.name);
+		Xml::Serialize(parent, L"GeneralType", (int)general.type);
+		Xml::Serialize(parent, L"GeneralImageFormat", general.imageFormat);
+		Xml::Serialize(parent, L"GeneralFilenameFormat", general.filenameFormat);
+		Xml::Serialize(parent, L"GeneralPath", general.path);
+		Xml::Serialize(parent, L"GeneralLocalTime", general.localTime);
+		Xml::Serialize(parent, L"GeneralID", general.id.ToString());
+
+		// image settings
+		Xml::Serialize(parent, L"ImageScaleType", (int)image.scaleType);
+		Xml::Serialize(parent, L"ImageScalePercent", image.scalePercent);
+		Xml::Serialize(parent, L"ImageMaxDimension", image.maxDimension);
+
+		// ftp settings
+		Xml::Serialize(parent, L"FtpHostName", ftp.hostname);
+		Xml::Serialize(parent, L"FtpPort", ftp.port);
+		Xml::Serialize(parent, L"FtpUsername", ftp.username);
+		Xml::Serialize(parent, L"FtpRemotePath",  ftp.remotePath);
+		Xml::Serialize(parent, L"FtpResultURL", ftp.resultURL);
+		Xml::Serialize(parent, L"FtpCopyURL", ftp.copyURL);
+
+		//((ScreenshotDestination*)this)->ftp.SetPassword(L"c7b9b13");
+		const LibCC::Blob<BYTE>& temp = ftp.GetEncryptedPassword();
+		Xml::Serialize(parent, L"FtpPassword", Xml::BinaryData(temp.GetBuffer(), temp.Size()));
+
+		// screenie.net settings
+		Xml::Serialize(parent, L"ScreenieNetURL", screenie.url);
+		Xml::Serialize(parent, L"ScreenieNetUserName", screenie.username);
+		Xml::Serialize(parent, L"ScreenieNetPassword", screenie.password);
+		Xml::Serialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
+	}
+
+	void Deserialize(Xml::Element parent)
+	{
+		Xml::Deserialize(parent, L"Enabled", enabled);
+		//DWORD temp;
+		std::wstring strTemp;
+
+		// general settings
+		Xml::Deserialize(parent, L"GeneralName", general.name);
+		Xml::Deserialize(parent, L"GeneralType", (int&)general.type);
+
+		Xml::Deserialize(parent, L"GeneralImageFormat", general.imageFormat);
+		Xml::Deserialize(parent, L"GeneralFilenameFormat", general.filenameFormat);
+		Xml::Deserialize(parent, L"GeneralPath", general.path);
+		Xml::Deserialize(parent, L"GeneralLocalTime", general.localTime);
+		Xml::Deserialize(parent, L"GeneralID", strTemp);
+		general.id.Assign(strTemp);
+
+		// image settings
+		Xml::Deserialize(parent, L"ImageScaleType", (int&)image.scaleType);
+		Xml::Deserialize(parent, L"ImageScalePercent", image.scalePercent);
+		Xml::Deserialize(parent, L"ImageMaxDimension", image.maxDimension);
+
+		// ftp settings
+		Xml::Deserialize(parent, L"FtpHostName", ftp.hostname);
+		Xml::Deserialize(parent, L"FtpPort", ftp.port);
+		Xml::Deserialize(parent, L"FtpUsername", ftp.username);
+		Xml::Deserialize(parent, L"FtpRemotePath",  ftp.remotePath);
+		Xml::Deserialize(parent, L"FtpResultURL", ftp.resultURL);
+		Xml::Deserialize(parent, L"FtpCopyURL", ftp.copyURL);
+
+		LibCC::Blob<BYTE> binaryTemp;
+		Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
+		ftp.SetEncryptedPassword(binaryTemp);
+		//std::wstring pass = ftp.DecryptPassword();
+
+		// screenie.net settings
+		Xml::Deserialize(parent, L"ScreenieNetURL", screenie.url);
+		Xml::Deserialize(parent, L"ScreenieNetUserName", screenie.username);
+		Xml::Deserialize(parent, L"ScreenieNetPassword", screenie.password);
+		Xml::Deserialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
 	}
 
 	bool enabled;

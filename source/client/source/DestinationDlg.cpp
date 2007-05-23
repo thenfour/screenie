@@ -308,7 +308,7 @@ void CDestinationDlg::CloseDialog(bool bSaveOptions)
   if(bSaveOptions)
   {
     m_optionsFinal = m_optionsCopy;
-   	SaveOptionsToRegistry(m_optionsFinal, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+		m_optionsFinal.SaveSettings();
   }
 
   EndDialog(bSaveOptions ? TRUE : FALSE);

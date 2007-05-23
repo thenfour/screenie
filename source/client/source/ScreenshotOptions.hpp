@@ -3,6 +3,8 @@
 
 #include <vector>
 #include "ScreenshotDestination.hpp"
+#include "serialization.h"
+#include "libcc/winapi.h"
 
 class ScreenshotOptions
 {
@@ -68,6 +70,30 @@ public:
 
 		return (*this);
 	}
+
+	void LoadSettings()
+	{
+		// try to load from XML first
+		tstd::tstring fileName = GenerateXmlFileName(false);
+		if(TRUE == PathFileExists(fileName.c_str()))
+		{
+			Xml::Deserialize(*this, fileName);
+			return;
+		}
+
+		// no xml file. try from registry.
+		LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+	}
+
+	void SaveSettings()
+	{
+		Xml::Serialize(*this, GenerateXmlFileName(true));
+ 		//SaveOptionsToRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+	}
+
+	// xml serialization
+	void Serialize(Xml::Element parent) const;
+	void Deserialize(Xml::Element parent);
 
 	// accessors for general options
 
@@ -164,6 +190,26 @@ public:
 		m_destinations.clear();
 	}
 private:
+	static bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
+	static bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
+	tstd::tstring GenerateXmlFileName(bool createDirectories)
+	{
+		// use the users' application data path
+		tstd::tstring ret;
+		GetSpecialFolderPath(ret, CSIDL_APPDATA);
+		ret = LibCC::PathJoin(ret, tstd::tstring(_T("Screenie")));
+		if(createDirectories)
+		{
+			DWORD attrib = GetFileAttributes(ret.c_str());
+			if((attrib == 0xffffffff) || (!(attrib & FILE_ATTRIBUTE_DIRECTORY)))
+			{
+				CreateDirectory(ret.c_str(), 0);
+			}
+		}
+		ret = LibCC::PathJoin(ret, tstd::tstring(_T("config.xml")));
+		return ret;
+	}
+
 	DestinationCollection m_destinations;
 
   bool m_haveStatusPlacement;
@@ -183,7 +229,6 @@ private:
   bool m_showSplash;
 };
 
-bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
-bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
+
 
 #endif

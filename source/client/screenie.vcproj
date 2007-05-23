@@ -332,6 +332,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\serialization.h"
+				>
+			</File>
+			<File
 				RelativePath=".\source\utility.cpp"
 				>
 			</File>
