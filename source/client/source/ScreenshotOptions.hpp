@@ -21,7 +21,8 @@ public:
 	  m_showCropWindow(true),
     m_croppingZoomFactor(2.0f),
     m_autoStartup(true),
-    m_showSplash(true)
+    m_showSplash(true),
+		m_savedInAppDir(false)
   {
   }
 
@@ -71,14 +72,28 @@ public:
 		return (*this);
 	}
 
+	bool m_savedInAppDir;// this is true if the configuration was loaded from the application directory (as opposed to Application Data directory)
+
 	void LoadSettings()
 	{
 		// try to load from XML first
-		tstd::tstring fileName = GenerateXmlFileName(false);
+		m_savedInAppDir = false;// default
+		tstd::tstring fileName;
+		fileName = GenerateXmlFileNameInAppDir();
 		if(TRUE == PathFileExists(fileName.c_str()))
 		{
+			m_savedInAppDir = true;
 			Xml::Deserialize(*this, fileName);
 			return;
+		}
+		else
+		{
+			fileName = GenerateXmlFileName(false);
+			if(TRUE == PathFileExists(fileName.c_str()))
+			{
+				Xml::Deserialize(*this, fileName);
+				return;
+			}
 		}
 
 		// no xml file. try from registry.
@@ -87,8 +102,14 @@ public:
 
 	void SaveSettings()
 	{
-		Xml::Serialize(*this, GenerateXmlFileName(true));
- 		//SaveOptionsToRegistry(options, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+		if(m_savedInAppDir)
+		{
+			Xml::Serialize(*this, GenerateXmlFileNameInAppDir());
+		}
+		else
+		{
+			Xml::Serialize(*this, GenerateXmlFileName(true));
+		}
 	}
 
 	// xml serialization
@@ -206,8 +227,13 @@ private:
 				CreateDirectory(ret.c_str(), 0);
 			}
 		}
-		ret = LibCC::PathJoin(ret, tstd::tstring(_T("config.xml")));
+		ret = LibCC::PathJoin(ret, tstd::tstring(_T("screenieConfig.xml")));
 		return ret;
+	}
+
+	tstd::tstring GenerateXmlFileNameInAppDir()
+	{
+		return GetPathRelativeToApp(_T("screenieConfig.xml"));
 	}
 
 	DestinationCollection m_destinations;
