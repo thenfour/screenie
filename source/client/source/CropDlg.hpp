@@ -8,7 +8,6 @@
 #define _SCREENIE_CROPDLG_H_
 
 #include "ImageEditWnd.hpp"
-#include "ZoomWnd.hpp"
 #include "destinationDlg.hpp"
 #include "image.hpp"
 
@@ -26,7 +25,7 @@ public:
 	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
     m_editWnd(bitmap, this),
-    m_zoomWnd(bitmap.get()),
+    m_zoomWnd(bitmap, 0),
     m_options(options),
     m_hIconSmall(0),
     m_hIcon(0),
@@ -84,7 +83,7 @@ public:
   void OnCursorPositionChanged(int x, int y)// image coords
   {
     SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
-    m_zoomWnd.UpdateBitmapCursorPos(CPoint(x,y));
+		m_zoomWnd.CenterOnImage(x, y);
     SyncZoomWindowSelection();
   }
   void OnZoomFactorChanged()
@@ -178,6 +177,10 @@ public:
     ScreenToClient(&rcImage);
     ::DestroyWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_ZOOM);
+		m_zoomWnd.SetZoomFactor(1.0f);
+		m_zoomWnd.SetShowCursor(true);
+		m_zoomWnd.SetEnablePanning(false);
+		m_zoomWnd.SetEnableTools(false);
 
     DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
@@ -220,11 +223,11 @@ public:
           .i(rc.Height())
           .CStr()
         );
-      m_zoomWnd.UpdateBitmapSelectionBox(rc);
+			m_zoomWnd.SetSelection(rc);
     }
     else
     {
-      m_zoomWnd.RemoveSelectionBox();
+      m_zoomWnd.ClearSelection();
     }
   }
 
@@ -284,7 +287,7 @@ private:
 	bool m_didCropping;
 	util::shared_ptr<Gdiplus::Bitmap> m_croppedBitmap;
   util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
-	CZoomWindow m_zoomWnd;
+	CImageEditWindow m_zoomWnd;
 	CImageEditWindow m_editWnd;
   ScreenshotOptions& m_options;
 

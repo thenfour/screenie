@@ -570,10 +570,12 @@ public:
 			if(y & (x & 1))
 			{
 				*i = GrayPixel<2>(*i);
+				//*i = InvertColorForSelection(*i, 32);
 			}
 			else
 			{
 				*i = GrayPixel<4>(*i);
+				//*i = InvertColorForSelection(*i, -32);
 			}
 			x ++;
 			if(x == m_x)
@@ -605,10 +607,12 @@ public:
 				if(y & (x & 1))
 				{
 					pbuf[tx] = GrayPixel<4>(pbuf[tx]);
+					//pbuf[tx] = InvertColorForSelection(pbuf[tx], 32);
 				}
 				else
 				{
 					pbuf[tx] = GrayPixel<2>(pbuf[tx]);
+					//pbuf[tx] = InvertColorForSelection(pbuf[tx], -32);
 				}
 				x ++;
       }

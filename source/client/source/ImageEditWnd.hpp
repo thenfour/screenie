@@ -88,24 +88,35 @@ public:
   int GetImageHeight() const;
   int GetImageWidth() const;
   void ClampToImage(PointF& p);
-  //void Refresh(bool now);
-  //void Refresh(const RECT& imageCoords, bool now);
   UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData);
   void DeleteTimer(UINT_PTR cookie);
 	const Viewport& GetViewport() const { return m_display.GetViewport(); }
-	void ClearSelection() { m_display.ClearSelection(); }
-	void SetSelection(const RECT& rc) { m_display.SetSelectionRect(rc); }
+	void ClearSelection()
+	{
+		m_display.ClearSelection();
+		m_notify->OnSelectionChanged();
+	}
+	void SetSelection(const RECT& rc)
+	{
+		m_display.SetSelectionRect(rc);
+		m_notify->OnSelectionChanged();
+	}
 	bool HasSelection() const { return m_display.HasSelection(); }
 	CRect GetSelection() const { return m_display.GetSelection(); }
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
+	void CenterOnImage(int x, int y);// centers the display on the given image coords
 
   // zoom
   void SetZoomFactor(float n);
   ViewPortSubPixel GetZoomFactor() const;
 
   void CenterImage();
+
+	void SetShowCursor(bool b) { m_showCursor = b; }
+	void SetEnablePanning(bool b) { m_enablePanning = b; }
+	void SetEnableTools(bool b) { m_enableTools = b; }
 
   // gets the specified section of the original image.
 	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
@@ -152,6 +163,10 @@ protected:
 	ImageEditRenderer m_display;
   AnimBitmap<32> m_dibOriginal;// a cached image of the original bitmap.
 	AnimBitmap<32> m_offscreen;// backbuffer.
+
+	bool m_showCursor;
+	bool m_enablePanning;
+	bool m_enableTools;
 
 	void ClampImageOrigin(PointF& org)
 	{

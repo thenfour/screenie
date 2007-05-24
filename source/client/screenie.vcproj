@@ -468,10 +468,6 @@
 				RelativePath=".\source\MainWindow.hpp"
 				>
 			</File>
-			<File
-				RelativePath=".\source\ZoomWnd.hpp"
-				>
-			</File>
 			<Filter
 				Name="Image Editor"
 				>

@@ -28,7 +28,10 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_lastCursor(0,0),
   m_lastCursorVirtual(0,0),
   m_panningTimer(0),
-	m_currentTool(&m_selectionTool)
+	m_currentTool(&m_selectionTool),
+	m_showCursor(false),
+	m_enablePanning(true),
+	m_enableTools(true)
 {
   CopyImage(m_dibOriginal, *bitmap);
 	m_display.SetOriginalImage(m_dibOriginal);
@@ -135,7 +138,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
   m_lastCursor = cursorPos;
 
   // fire tool events.
-	if(m_currentTool != 0)
+	if(m_currentTool != 0 && m_enableTools)
 		m_currentTool->OnCursorMove(m_lastCursorVirtual, m_haveCapture && !m_bIsPanning);
 
   if(m_haveCapture)
@@ -182,14 +185,14 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
   // fire tool events.
-	if(m_currentTool != 0)
+	if(m_currentTool != 0 && m_enableTools)
 	  m_currentTool->OnLeftButtonDown(pt);
 
   if(!m_haveCapture)
   {
     SetCapture();
     m_haveCapture = true;
-		if(m_currentTool != 0)
+		if(m_currentTool != 0 && m_enableTools)
 		  m_currentTool->OnStartDragging();
   }
 
@@ -210,7 +213,7 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
   }
 
   // fire tool events.
-	if(m_currentTool != 0)
+	if(m_currentTool != 0 && m_enableTools)
 	  m_currentTool->OnLeftButtonUp(pt);
 
   return MouseLeave();
@@ -218,6 +221,7 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 
 LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
+	if(!m_enablePanning) return 0;
   if(!MouseEnter()) return 0;
   if(m_haveCapture == false)
   {
@@ -234,6 +238,7 @@ LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 
 LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
+	if(!m_enablePanning) return 0;
   if(!MouseEnter()) return 0;
   if(m_bIsPanning)
   {
@@ -255,7 +260,7 @@ LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   {
     // fire tool events.
     m_haveCapture = false;
-	 	if(m_currentTool != 0)
+	 	if(m_currentTool != 0 && m_enableTools)
 			m_currentTool->OnStopDragging();
   }
 
@@ -294,6 +299,21 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	HDC dc = BeginPaint(&paintStruct);
 
 	m_display.Render(m_offscreen, paintStruct.rcPaint);
+
+	if(m_showCursor)
+	{
+		RECT clientRect;
+		GetClientRect(&clientRect);
+    ICONINFO ii = {0};
+    GetIconInfo(LoadCursor(0, IDC_CROSS), &ii);
+    DeleteObject(ii.hbmColor);
+    DeleteObject(ii.hbmMask);
+    ::DrawIcon(m_offscreen.GetDC(),
+      (clientRect.right / 2) - ii.xHotspot,
+      (clientRect.bottom / 2) - ii.yHotspot,
+      LoadCursor(0, IDC_CROSS));
+	}
+
 	m_offscreen.Blit(paintStruct.hdc, paintStruct.rcPaint.left, paintStruct.rcPaint.top, paintStruct.rcPaint.right - paintStruct.rcPaint.left,
 		paintStruct.rcPaint.bottom - paintStruct.rcPaint.top,
 		paintStruct.rcPaint.left, paintStruct.rcPaint.top);
@@ -428,7 +448,7 @@ void CImageEditWindow::DeleteTimer(UINT_PTR cookie)
 LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
   // fire tool events
-	if(m_currentTool != 0)
+	if(m_currentTool != 0 && m_enableTools)
 	  m_currentTool->OnInitTool();
 	m_display.SetHWND(this->m_hWnd);
   return 0;
@@ -463,3 +483,13 @@ void CImageEditWindow::SetZoomFactor(float n)
   m_notify->OnZoomFactorChanged();
 }
 
+void CImageEditWindow::CenterOnImage(int x, int y)
+{
+	m_display.SetImageOrigin(PointF(x, y), "CenterOnImage");
+
+	RECT rc;
+	this->GetClientRect(&rc);
+	m_display.SetViewOrigin(PointF(rc.right / 2, rc.bottom / 2));
+
+	return;
+}
