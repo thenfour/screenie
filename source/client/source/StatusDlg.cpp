@@ -167,7 +167,8 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
     m_iconWarning = m_imageList.AddIcon(::LoadIcon(NULL, IDI_WARNING));
 		m_iconError = m_imageList.AddIcon(::LoadIcon(NULL, IDI_ERROR));
 
-    HICON hCheck = ::LoadIcon(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_CHECK));
+    HICON hCheck = (HICON)::LoadImage(_Module.GetResourceInstance(),
+			MAKEINTRESOURCE(IDI_CHECK), IMAGE_ICON, 16, 16, 0);
     m_iconCheck = m_imageList.AddIcon(hCheck);
     DestroyIcon(hCheck);
 

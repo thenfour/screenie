@@ -20,6 +20,20 @@
 
 using namespace LibCC;
 
+void AutoSetComboBoxHeight(CComboBox& c)
+{
+	int itemCount = c.GetCount() + 1;
+	int itemHeight = c.GetItemHeight(0);
+	int editAreaHeight = c.GetItemHeight(0);
+	int targetHeight = editAreaHeight + (itemHeight * itemCount);
+	RECT rc;
+	c.GetWindowRect(&rc);
+	c.GetParent().ScreenToClient(&rc);
+	rc.bottom = rc.top + targetHeight;
+	c.MoveWindow(&rc, FALSE);
+}
+
+
 tstd::tstring GetUniqueTemporaryFilename()
 {
 	TCHAR pathBuffer[MAX_PATH] = { 0 };

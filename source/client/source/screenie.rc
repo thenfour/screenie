@@ -446,7 +446,7 @@ IDB_HEADER              BITMAP                  "resources\\header.bmp"
 
 STRINGTABLE 
 BEGIN
-    IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)\r\n%t = prompt for user text"
+    IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)\r\n%t = prompt for user text\r\n%w = window title"
 END
 
 #endif    // English (U.S.) resources

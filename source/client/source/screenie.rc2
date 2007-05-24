@@ -12,9 +12,6 @@
 // Add manually edited resources here...
 
 /////////////////////////////////////////////////////////////////////////////
-// CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "resources\\screenie.exe.manifest"
-// "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""resources\\\\screenie.exe.manifest""\r\n"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //

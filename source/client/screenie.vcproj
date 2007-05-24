@@ -87,6 +87,8 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="source\resources\screenie.exe.manifest"
+				VerboseOutput="true"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -357,19 +359,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\resources\checked.ico"
-				>
-			</File>
-			<File
 				RelativePath=".\source\resources\header.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\gipsysoft\marqueehorizontal.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\gipsysoft\marqueevertical.bmp"
 				>
 			</File>
 			<File
@@ -382,14 +372,6 @@
 			</File>
 			<File
 				RelativePath=".\source\screenie.rc2"
-				>
-			</File>
-			<File
-				RelativePath=".\source\resources\unchecked.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\source\resources\watermark.bmp"
 				>
 			</File>
 		</Filter>

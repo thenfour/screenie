@@ -262,13 +262,18 @@ private:
 	}
 
 	// a bunch of rendering values.
-	CRect zoomedBufferImageCoords;
-	CRect zoomedBufferScreenCoords;
-	CRect zoomedVisibleImageCoords;
-	CRect zoomedVisibleScreenCoords;
-	CRect zoomedVisibleBufferCoords;
-	CRect selectionZoomedCoords;
-	CRect selectionScreenCoords;
+	struct RenderingValues
+	{
+		CRect zoomedBufferImageCoords;
+		CRect zoomedBufferScreenCoords;
+		CRect zoomedVisibleImageCoords;
+		CRect zoomedVisibleScreenCoords;
+		CRect zoomedVisibleBufferCoords;
+		CRect selectionZoomedCoords;
+		CRect selectionScreenCoords;
+	};
+	RenderingValues oldRP;
+	RenderingValues newRP;
 
 	void CalculateRenderingValues()
 	{
@@ -281,46 +286,46 @@ private:
 		ret = m_queued.view.ViewToImage(ret);
 		ClampToImage(ret);
 		// now we have image coords. StretchBlt cannot blit from sub-pixels, so...
-		zoomedBufferImageCoords = ret.QuantizeInflate();
-		zoomedBufferScreenCoords = m_queued.view.ImageToView(RectF(zoomedBufferImageCoords)).Round();
+		newRP.zoomedBufferImageCoords = ret.QuantizeInflate();
+		newRP.zoomedBufferScreenCoords = m_queued.view.ImageToView(RectF(newRP.zoomedBufferImageCoords)).Round();
 
 		// calculate zoomedVisibleImageCoords
 		// zoomedVisibleScreenCoords
 		ret.Assign(0, 0, m_queued.clientWidth, m_queued.clientHeight);
 		ret = m_queued.view.ViewToImage(ret);
 		ClampToImage(ret);
-		zoomedVisibleImageCoords = ret.QuantizeInflate();
-		zoomedVisibleScreenCoords = m_queued.view.ImageToView(RectF(zoomedVisibleImageCoords)).Round();
+		newRP.zoomedVisibleImageCoords = ret.QuantizeInflate();
+		newRP.zoomedVisibleScreenCoords = m_queued.view.ImageToView(RectF(newRP.zoomedVisibleImageCoords)).Round();
 
 		// set up a method of converting screen coords to coords relative to the zoomed buffer.
 		Viewport v;// "image" = buffer. "view" = screen.
 		v.SetZoomFactor(1.0);
 		v.SetImageOrigin(PointF(0, 0));
-		v.SetViewOrigin(PointF(zoomedBufferScreenCoords.TopLeft()));
+		v.SetViewOrigin(PointF(newRP.zoomedBufferScreenCoords.TopLeft()));
 
 			// calculate zoomedVisibleBufferCoords
-		zoomedVisibleBufferCoords = v.ViewToImage(RectF(zoomedVisibleScreenCoords)).Round();
+		newRP.zoomedVisibleBufferCoords = v.ViewToImage(RectF(newRP.zoomedVisibleScreenCoords)).Round();
 
 		// calculate selectionZoomedCoords and selectionScreenCoords
-		selectionScreenCoords = m_queued.view.ImageToView(RectF(m_queued.selectionRect)).Round();
-		selectionZoomedCoords = v.ViewToImage(RectF(selectionScreenCoords)).Round();
+		newRP.selectionScreenCoords = m_queued.view.ImageToView(RectF(m_queued.selectionRect)).Round();
+		newRP.selectionZoomedCoords = v.ViewToImage(RectF(newRP.selectionScreenCoords)).Round();
 	}
 
 	void RenderZoomed()
 	{
-		MakeBigEnough(m_zoomed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height());
-		m_zoomed.Fill(MakeRgbPixel32(255, 0, 0));
+		MakeBigEnough(m_zoomed, newRP.zoomedBufferScreenCoords.Width(), newRP.zoomedBufferScreenCoords.Height());
+		//m_zoomed.Fill(MakeRgbPixel32(255, 0, 0));
 
 		int mode = m_queued.view.GetZoomFactor() >= 1.0 ? COLORONCOLOR : HALFTONE;
 		m_original->StretchBlit(m_zoomed,
 			0,
 			0,
-			zoomedBufferScreenCoords.Width(),
-			zoomedBufferScreenCoords.Height(),
-			zoomedBufferImageCoords.left,
-			zoomedBufferImageCoords.top,
-			zoomedBufferImageCoords.Width(),
-			zoomedBufferImageCoords.Height(),
+			newRP.zoomedBufferScreenCoords.Width(),
+			newRP.zoomedBufferScreenCoords.Height(),
+			newRP.zoomedBufferImageCoords.left,
+			newRP.zoomedBufferImageCoords.top,
+			newRP.zoomedBufferImageCoords.Width(),
+			newRP.zoomedBufferImageCoords.Height(),
 			mode);
 	}
 
@@ -339,12 +344,12 @@ private:
 		else
 		{
 			// cache the area that's grayed AND that isn't already cached.
-			MakeBigEnough(m_zoomedGrayed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height());
-			m_zoomedGrayed.Fill(MakeRgbPixel32(0,255,0));
+			MakeBigEnough(m_zoomedGrayed, newRP.zoomedBufferScreenCoords.Width(), newRP.zoomedBufferScreenCoords.Height());
+			//m_zoomedGrayed.Fill(MakeRgbPixel32(0,255,0));
 
 			m_cachedSelectionArea = m_queued.selectionRect;
 
-			SubtractRectHelper s(CRect(0, 0, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Height()), selectionZoomedCoords);
+			SubtractRectHelper s(CRect(0, 0, newRP.zoomedBufferScreenCoords.Width(), newRP.zoomedBufferScreenCoords.Height()), newRP.selectionZoomedCoords);
 			m_zoomed.Blit(m_zoomedGrayed, s.top);
 			m_zoomed.Blit(m_zoomedGrayed, s.left);
 			m_zoomed.Blit(m_zoomedGrayed, s.right);
@@ -360,32 +365,32 @@ private:
 	void RenderOffscreen()
 	{
 		MakeBigEnough(m_offscreen, m_queued.clientWidth, m_queued.clientHeight);
-		m_offscreen.Fill(MakeRgbPixel32(0,0,255));
+		//m_offscreen.Fill(MakeRgbPixel32(0,0,255));
 
 		// blit.
 		if(!m_queued.hasSelection)
 		{
 			m_zoomed.Blit(
 				m_offscreen,
-				zoomedVisibleScreenCoords.left,
-				zoomedVisibleScreenCoords.top,
-				zoomedVisibleScreenCoords.Width(),
-				zoomedVisibleScreenCoords.Height(),
-				zoomedVisibleBufferCoords.left,
-				zoomedVisibleBufferCoords.top);
+				newRP.zoomedVisibleScreenCoords.left,
+				newRP.zoomedVisibleScreenCoords.top,
+				newRP.zoomedVisibleScreenCoords.Width(),
+				newRP.zoomedVisibleScreenCoords.Height(),
+				newRP.zoomedVisibleBufferCoords.left,
+				newRP.zoomedVisibleBufferCoords.top);
 		}
 		else
 		{
 			m_zoomed.Blit(m_offscreen,
-				selectionScreenCoords.left,
-				selectionScreenCoords.top,
-				selectionScreenCoords.Width(),
-				selectionScreenCoords.Height(),
-				selectionZoomedCoords.left,
-				selectionZoomedCoords.top);
+				newRP.selectionScreenCoords.left,
+				newRP.selectionScreenCoords.top,
+				newRP.selectionScreenCoords.Width(),
+				newRP.selectionScreenCoords.Height(),
+				newRP.selectionZoomedCoords.left,
+				newRP.selectionZoomedCoords.top);
 
-			SubtractRectHelper sZoomed(zoomedVisibleBufferCoords, selectionZoomedCoords);
-			SubtractRectHelper sScreen(zoomedVisibleScreenCoords, selectionScreenCoords);
+			SubtractRectHelper sZoomed(newRP.zoomedVisibleBufferCoords, newRP.selectionZoomedCoords);
+			SubtractRectHelper sScreen(newRP.zoomedVisibleScreenCoords, newRP.selectionScreenCoords);
 
 			m_zoomedGrayed.Blit(m_offscreen, sScreen.top.left, sScreen.top.top, sScreen.top.Width(), sScreen.top.Height(), sZoomed.top.left, sZoomed.top.top);
 			m_zoomedGrayed.Blit(m_offscreen, sScreen.left.left, sScreen.left.top, sScreen.left.Width(), sScreen.left.Height(), sZoomed.left.left, sZoomed.left.top);
@@ -394,7 +399,9 @@ private:
 		}
 
 		// draw checkers
-		m_offscreen.FillCheckerPatternExclusion(zoomedVisibleScreenCoords, m_queued.hasSelection);
+		m_offscreen.FillCheckerPatternExclusion(newRP.zoomedVisibleScreenCoords, m_queued.hasSelection);
+
+		oldRP = newRP;
 	}
 
 	AnimBitmap<32>* m_original;

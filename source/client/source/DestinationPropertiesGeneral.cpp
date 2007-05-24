@@ -99,6 +99,8 @@ void CDestinationPropertiesGeneral::PopulateFormatList()
 
 		fileFormats.AddString(codecDescription.c_str());
 	}
+
+	AutoSetComboBoxHeight(fileFormats);
 }
 
 void CDestinationPropertiesGeneral::ShowSettings()
@@ -125,6 +127,7 @@ LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPA
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_FTP).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_CLIPBOARD).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_SCREENIENET).c_str());
+	AutoSetComboBoxHeight(destinationType);
 
 	PopulateFormatList();
 

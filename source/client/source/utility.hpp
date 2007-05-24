@@ -19,6 +19,8 @@ bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTi
 tstd::tstring GetUniqueTemporaryFilename();
 tstd::tstring GetWinInetErrorString();
 
+void AutoSetComboBoxHeight(CComboBox& c);
+
 BOOL EnableChildWindows(HWND parent, BOOL enable);
 
 bool GetSpecialFolderPath(tstd::tstring& path, int folder);
