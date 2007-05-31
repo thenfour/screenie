@@ -37,6 +37,7 @@ extern CAppModule _Module;
 
 #include "libcc/stringutil.h"
 #include "libcc/result.h"
+#include "libcc/log.h"
 
 // this header contains Graham Batty's implementation of the C++
 // Technical Report 1 smart pointers (shared_ptr and weak_ptr).

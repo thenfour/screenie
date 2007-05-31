@@ -647,7 +647,7 @@ namespace LibCC
     std::wstring m_fileName;
   };
 
-	static Log* g_pLog = 0;
+	extern Log* g_pLog;
 
   class LogScopeMessage
   {

@@ -88,7 +88,7 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="source\resources\screenie.exe.manifest"
-				VerboseOutput="true"
+				VerboseOutput="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -186,6 +186,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="source\resources\screenie.exe.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

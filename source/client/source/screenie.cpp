@@ -23,6 +23,11 @@ CAppModule _Module;
 
 HHOOK g_keyboardHook;
 
+namespace LibCC
+{
+	Log* g_pLog = 0;
+}
+
 LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
 {
 	KBDLLHOOKSTRUCT* ks = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
@@ -48,6 +53,12 @@ LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
+	bool logEnabled = false;
+#ifdef _DEBUG
+	logEnabled = true;
+#endif
+	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance(), logEnabled, logEnabled, logEnabled);
+
 	CMessageLoop theLoop;
 	_Module.AddMessageLoop(&theLoop);
 
@@ -76,6 +87,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	_Module.RemoveMessageLoop();
 
+	delete LibCC::g_pLog;
 	return retval;
 }
 

@@ -129,13 +129,14 @@ struct ScreenshotDestination
       in.cbData = m_passwordEncrypted.Size();
       if(FALSE == CryptUnprotectData(&in, NULL, NULL, NULL, 0, 0, &out))
       {
-        // omg error;
+				LibCC::g_pLog->Message(LibCC::Format("DecryptPassword error. Blob length: %").ul(in.cbData));
         return _T("");
       }
 
       ret = reinterpret_cast<PCTSTR>(out.pbData);
       LocalFree(out.pbData);
 
+			LibCC::g_pLog->Message(LibCC::Format("DecryptPassword returning %. Blob length: %").qs(ret).ul(in.cbData));
       return ret;
     }
 
@@ -146,6 +147,7 @@ struct ScreenshotDestination
 
 		void SetEncryptedPassword(LibCC::Blob<BYTE>& crap)
     {
+			LibCC::g_pLog->Message(LibCC::Format("SetEncryptedPassword; length %").ul(crap.Size()));
       m_passwordEncrypted.Assign(crap);
     }
 
@@ -157,11 +159,12 @@ struct ScreenshotDestination
       in.cbData = sizeof(TCHAR) * (pass.size() + 1);
       if(FALSE == CryptProtectData(&in, NULL, NULL, NULL, 0, 0, &out))
       {
+				LibCC::g_pLog->Message("SetPassword error");
         // omg error;
         return;
       }
-
       m_passwordEncrypted.Alloc(out.cbData);
+			LibCC::g_pLog->Message(LibCC::Format("SetPassword %; encrypted length %").qs(pass).ul(out.cbData));
       memcpy(m_passwordEncrypted.GetBuffer(), out.pbData, out.cbData);
       LocalFree(out.pbData);
     }
