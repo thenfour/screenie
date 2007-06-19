@@ -84,6 +84,7 @@ public:
 
 	int GetSelectedDestination();
 	void PopulateDestinationList();
+	void SetEnabledButtons();
 
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -102,6 +103,8 @@ public:
 	void CloseDialog(bool bSaveOptions);
 private:
 	CListViewCtrl m_listView;
+	CButton m_editButton;
+	CButton m_removeButton;
 	ScreenshotOptions m_optionsCopy;
 	ScreenshotOptions& m_optionsFinal;// this is the external ref that we copy to when the user hits OK
   tstd::tstring m_OKbuttonText;

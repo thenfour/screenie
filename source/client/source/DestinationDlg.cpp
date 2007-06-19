@@ -52,6 +52,13 @@ int CDestinationDlg::GetSelectedDestination()
 	return -1;
 }
 
+void CDestinationDlg::SetEnabledButtons()
+{
+	BOOL enableButtons = m_listView.GetSelectedCount() > 0 ? TRUE : FALSE;
+	m_editButton.EnableWindow(enableButtons);
+	m_removeButton.EnableWindow(enableButtons);
+}
+
 void CDestinationDlg::PopulateDestinationList()
 {
 	m_listView.DeleteAllItems();
@@ -88,6 +95,8 @@ void CDestinationDlg::PopulateDestinationList()
   // auto size those columns
   m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
   m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
+
+  SetEnabledButtons();
 }
 
 LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -112,6 +121,9 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
   {
     SetWindowPlacement(&m_optionsCopy.GetConfigPlacement());
   }
+
+	m_editButton = GetDlgItem(IDC_EDIT);
+	m_removeButton = GetDlgItem(IDC_REMOVE);
 
 	// set up the list view columns
 	m_listView = GetDlgItem(IDC_DESTINATIONS);
@@ -165,6 +177,8 @@ LRESULT CDestinationDlg::OnItemChanged(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
 		BOOL checked = m_listView.GetCheckState(nmlv->iItem);
 		m_optionsCopy.GetDestination(static_cast<size_t>(nmlv->lParam)).enabled = (checked == TRUE);
 	}
+
+	SetEnabledButtons();
 
 	return 0;
 }
@@ -241,14 +255,14 @@ LRESULT CDestinationDlg::OnRemoveDestination(WORD /*wNotifyCode*/, WORD /*wID*/,
 	if ((selectedIndex = GetSelectedDestination()) != -1)
 	{
 		// remove the destination from the collection
-    if(IDYES == MessageBox(LibCC::Format("Are you sure you want to remove destination %").qs(m_optionsCopy.GetDestination(selectedIndex).general.name).CStr(),
-      _T("Delete destination"), MB_YESNO | MB_ICONQUESTION))
-    {
-      m_optionsCopy.RemoveDestination(selectedIndex);
-		  // update the destination listview
-		  PopulateDestinationList();
-	  }
-  }
+		if(IDYES == MessageBox(LibCC::Format("Are you sure you want to remove destination %").qs(m_optionsCopy.GetDestination(selectedIndex).general.name).CStr(),
+			_T("Delete destination"), MB_YESNO | MB_ICONQUESTION))
+		{
+			m_optionsCopy.RemoveDestination(selectedIndex);
+			// update the destination listview
+			PopulateDestinationList();
+		}
+	}
 	return 0;
 }
 
