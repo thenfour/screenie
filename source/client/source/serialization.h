@@ -130,7 +130,7 @@ namespace Xml
 		try
 		{
 			_variant_t var = parent->getAttribute(name.c_str());
-			if(var.vt == VT_EMPTY)
+			if (var.vt == VT_EMPTY || var.vt == VT_NULL)
 			{
 				return false;
 			}
