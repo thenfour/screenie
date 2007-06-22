@@ -36,11 +36,12 @@ class IImageEditWindowEvents
 {
 public:
   virtual void OnSelectionChanged() = 0;
-  virtual void OnCursorPositionChanged(int x, int y) = 0;
+  virtual void OnCursorPositionChanged(const PointF&) = 0;
   virtual void OnZoomFactorChanged() = 0;
 };
 
 
+// simply specifies an amount to pan, in image coords
 class PanningSpec
 {
 public:
@@ -78,7 +79,7 @@ public:
   static ATL::CWndClassInfo& GetWndClassInfo();
 
   // IImageEditWindowEvents methods
-  void OnCursorPositionChanged(int x, int y) { }
+  void OnCursorPositionChanged(const PointF&) { }
   void OnSelectionChanged() { };
   void OnZoomFactorChanged() { };
 
@@ -106,7 +107,7 @@ public:
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
-	void CenterOnImage(int x, int y);// centers the display on the given image coords
+	void CenterOnImage(const PointF&);// centers the display on the given image coords
 
   // zoom
   void SetZoomFactor(float n);
@@ -155,8 +156,9 @@ protected:
   };
 
   // cursor stuff
-	PointF m_lastCursorVirtual;// virtual coords.
-  CPoint m_lastCursor;// in client coords
+	PointF m_lastCursorImage;// in image coords.
+  PointF m_lastCursor;// in client coords
+	bool m_isLeftClickDragging;
 
   // members
 	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap.
@@ -214,9 +216,12 @@ protected:
   // panning.
   bool m_bIsPanning;// true during right-mouse button dragging
   HCURSOR m_hPreviousCursor;
-	CPoint m_panningStart;// in client coords
-  PointF m_panningStartVirtual;// image coords.
-  bool m_haveCapture;
+
+	// Capture
+	void AddCapture();
+	void ReleaseCapture();
+	inline bool HaveCapture() { return 0 != m_captureRefs; }
+	int m_captureRefs;
 
   // for panning when the cursor is off the display & we have mouse capture
   PanningSpec m_panningSpec;

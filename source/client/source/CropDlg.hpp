@@ -80,10 +80,11 @@ public:
   {
     SyncZoomWindowSelection();
   }
-  void OnCursorPositionChanged(int x, int y)// image coords
+  void OnCursorPositionChanged(const PointF& pf)// image coords
   {
-    SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(x).i(y).CStr());
-		m_zoomWnd.CenterOnImage(x, y);
+		CPoint p = pf.Round();
+    SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(p.x).i(p.y).CStr());
+		m_zoomWnd.CenterOnImage(pf);
     SyncZoomWindowSelection();
   }
   void OnZoomFactorChanged()
