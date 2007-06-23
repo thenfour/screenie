@@ -22,7 +22,9 @@ public:
     m_croppingZoomFactor(2.0f),
     m_autoStartup(true),
     m_showSplash(true),
-		m_savedInAppDir(false)
+		m_savedInAppDir(false),
+		m_enableArchive(true),
+		m_archiveLimit(100)
   {
   }
 
@@ -37,6 +39,8 @@ public:
 		m_showCropWindow = copy.m_showCropWindow;
     m_croppingZoomFactor = copy.m_croppingZoomFactor;
     m_showSplash = copy.m_showSplash;
+		m_enableArchive = copy.m_enableArchive;
+		m_archiveLimit = copy.m_archiveLimit;
 
     m_haveStatusPlacement = copy.m_haveStatusPlacement;
     m_haveCroppingPlacement = copy.m_haveCroppingPlacement;
@@ -61,6 +65,8 @@ public:
 		m_showCropWindow = rightHand.m_showCropWindow;
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
     m_showSplash = rightHand.m_showSplash;
+		m_enableArchive = rightHand.m_enableArchive;
+		m_archiveLimit = rightHand.m_archiveLimit;
 
     m_haveStatusPlacement = rightHand.m_haveStatusPlacement;
     m_haveCroppingPlacement = rightHand.m_haveCroppingPlacement;
@@ -140,6 +146,11 @@ public:
 
 	bool ShowCropWindow() { return m_showCropWindow; }
 	void ShowCropWindow(bool newval) { m_showCropWindow = newval; }
+
+	bool EnableArchive() const { return m_enableArchive; }
+	void EnableArchive(bool newval) { m_enableArchive = newval; }
+	int ArchiveLimit() const { return m_archiveLimit; }
+	void ArchiveLimit(int newval) { m_archiveLimit = newval; }
 
   bool HaveStatusPlacement() const { return m_haveStatusPlacement; }
   bool HaveCroppingPlacement() const { return m_haveCroppingPlacement; }
@@ -255,6 +266,9 @@ private:
 	bool m_confirmOptions;
 	bool m_showCropWindow;
   bool m_showSplash;
+
+	bool m_enableArchive;
+	int m_archiveLimit;
 };
 
 

@@ -2,10 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "screenie", "client\screenie.vcproj", "{C842F6FF-88EE-4F49-A446-74A504643F8F}"
 	ProjectSection(ProjectDependencies) = postProject
+		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33} = {B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9} = {FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcurl", "libcurl\libcurl.vcproj", "{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite", "sqlite\sqlite.vcproj", "{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +24,10 @@ Global
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Debug|Win32.Build.0 = Debug|Win32
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Release|Win32.ActiveCfg = Release|Win32
 		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}.Release|Win32.Build.0 = Release|Win32
+		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Debug|Win32.Build.0 = Debug|Win32
+		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Release|Win32.ActiveCfg = Release|Win32
+		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

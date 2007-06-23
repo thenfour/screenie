@@ -5,6 +5,7 @@
 #include <vector>
 #include "polarlut.h"
 #include "animbitmap.h"
+#include "ScreenshotArchive.hpp"
 
 
 class ProgressImages
@@ -40,21 +41,6 @@ private:
 
 struct AsyncStatusWindow
 {
-	enum MessageIcon
-	{
-		MSG_INFO,
-    MSG_WARNING,
-		MSG_ERROR,
-    MSG_CHECK,
-    MSG_PROGRESS
-	};
-  enum MessageType
-  {
-    ITEM_GENERAL,
-    ITEM_FTP,
-    ITEM_FILE
-  };
-
   virtual LPARAM AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T("")) = 0;
   virtual void AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon) = 0;
   virtual void AsyncMessageSetProgress(LPARAM msgID, int pos, int total) = 0;
@@ -73,6 +59,7 @@ private:
   ProgressImages m_progress;
 	CListViewCtrl m_listView;
   ScreenshotOptions& m_options;
+  ScreenshotArchive& m_archive;
 
   static const short ID_COPYURL = 4000;
   static const short ID_COPYMESSAGE = 4001;
@@ -85,10 +72,14 @@ private:
 public:
 	enum { IDD = IDD_STATUS };
 
-  CStatusDlg(ScreenshotOptions& options) :
+	int m_screenshotArchiveCookie;// for new messages. in a world where you could be processing multiple screenshots at the same time this would not be possible.
+
+  CStatusDlg(ScreenshotOptions& options, ScreenshotArchive& archive) :
     m_options(options),
+		m_archive(archive),
     m_hIconSmall(0),
-    m_hIcon(0)
+    m_hIcon(0),
+		m_screenshotArchiveCookie(0)
   {
   }
 	virtual ~CStatusDlg()
@@ -174,6 +165,7 @@ private:
   {
     MessageType type;
     tstd::tstring url;
+		int archiveCookie;
   };
 
   int MessageIDToItemID(LPARAM msgID);

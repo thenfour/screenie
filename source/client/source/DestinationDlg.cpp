@@ -58,6 +58,11 @@ void CDestinationDlg::SetEnabledButtons()
 	m_editButton.EnableWindow(enableButtons);
 	m_removeButton.EnableWindow(enableButtons);
 	m_duplicateButton.EnableWindow(enableButtons);
+
+	bool checked = (BST_CHECKED == IsDlgButtonChecked(IDC_ENABLEARCHIVE));
+	GetDlgItem(IDC_LIMITARCHIVESTATIC1).EnableWindow(checked);
+	GetDlgItem(IDC_LIMITARCHIVESTATIC2).EnableWindow(checked);
+	GetDlgItem(IDC_ARCHIVELIMIT).EnableWindow(checked);
 }
 
 void CDestinationDlg::PopulateDestinationList()
@@ -157,6 +162,12 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 		CheckDlgButton(IDC_AUTOSTART, BST_CHECKED);
   if (m_optionsCopy.ShowSplash())
     CheckDlgButton(IDC_SHOWSPLASH, BST_CHECKED);
+	if (m_optionsCopy.EnableArchive())
+    CheckDlgButton(IDC_ENABLEARCHIVE, BST_CHECKED);
+
+	SetDlgItemInt(IDC_ARCHIVELIMIT, m_optionsCopy.ArchiveLimit() / 1024 / 1024);
+
+	SetEnabledButtons();
 
   SetForegroundWindow(*this);
 
@@ -314,6 +325,10 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 	case IDC_INCLUDECURSOR:
 		m_optionsCopy.IncludeCursor(checked);
 		break;
+	case IDC_ENABLEARCHIVE:
+		m_optionsCopy.EnableArchive(checked);
+		SetEnabledButtons();
+		break;
 	}
 
 	return 0;
@@ -321,6 +336,7 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 
 LRESULT CDestinationDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+	m_optionsCopy.ArchiveLimit(1024 * 1024 * GetDlgItemInt(IDC_ARCHIVELIMIT));
 	CloseDialog(true);
 
 	return 0;

@@ -53,6 +53,7 @@ public:
 		COMMAND_HANDLER(IDC_INCLUDECURSOR, BN_CLICKED, OnCheckboxClicked)
     COMMAND_HANDLER(IDC_AUTOSTART, BN_CLICKED, OnCheckboxClicked)
     COMMAND_HANDLER(IDC_SHOWSPLASH, BN_CLICKED, OnCheckboxClicked)
+    COMMAND_HANDLER(IDC_ENABLEARCHIVE, BN_CLICKED, OnCheckboxClicked)
 
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_NEW, OnNewDestination)
@@ -102,6 +103,7 @@ public:
 
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnEnableArchive(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 	void CloseDialog(bool bSaveOptions);
 private:

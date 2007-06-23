@@ -64,6 +64,7 @@
 #define IDC_RESIZE_SCALE                1020
 #define IDC_EDIT2                       1021
 #define IDC_RESIZE_SCALE_VALUE          1021
+#define IDC_ARCHIVELIMIT                1021
 #define IDC_RADIO2                      1022
 #define IDC_RESIZE_LIMIT                1022
 #define IDC_FILENAME_UTC                1022
@@ -104,20 +105,17 @@
 #define IDC_CONTROLS3                   1053
 #define IDC_CONTROLS2                   1054
 #define IDC_CONTROLS4                   1055
-#define IDC_SCREENIE_COPYURL            1058
-#define IDC_SCREENIE_PASSWORD           1059
-#define IDC_SCREENIE_USERNAME           1060
-#define IDC_SCREENIE_URL                1061
 #define IDC_PROMPT_TEXT                 1062
 #define IDC_PROMPT_LABEL                1063
 #define IDC_CONFIGPATH                  1064
-#define IDC_BUTTON1                     1065
 #define IDC_DUPLICATE                   1065
+#define IDC_ENABLEARCHIVE               1067
+#define IDC_LIMITARCHIVESTATIC1         1068
+#define IDC_LIMITARCHIVESTATIC2         1069
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
 #define IDD_DESTPROP_EMAIL              30122
-#define IDD_DESTPROP_SCREENIE           30123
 #define IDB_WIZ97_HEADER                31000
 #define IDB_WIZ97_WATERMARK             31001
 #define IDC_WIZ97_EXTERIOR_TITLE        31004
@@ -184,7 +182,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        247
 #define _APS_NEXT_COMMAND_VALUE         32788
-#define _APS_NEXT_CONTROL_VALUE         1066
+#define _APS_NEXT_CONTROL_VALUE         1070
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

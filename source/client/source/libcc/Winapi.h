@@ -430,6 +430,14 @@ namespace LibCC
     sPath.append(sFilename);
   }
 
+	// added 2007-06-23
+  // PathAppend
+  template<typename Char, typename Traits, typename Alloc>
+  inline void PathAppendX(IN OUT std::basic_string<Char, Traits, Alloc>& sPath, const Char* sFilename)
+  {
+		PathAppendX(sPath, std::basic_string<Char, Traits, Alloc>(sFilename));
+  }
+
   template<typename Char>
   inline bool PathFileExistsX(const Char* path)
   {

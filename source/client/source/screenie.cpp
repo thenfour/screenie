@@ -15,6 +15,7 @@
 #include "MainWindow.hpp"
 #include "viewport.h"
 #include "DestinationDlg.hpp"
+#include "ScreenshotArchive.hpp"
 
 extern void TestMain();
 
@@ -67,7 +68,9 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
   ScreenshotOptions options;
 	options.LoadSettings();
 
-  g_mainWindow = new CMainWindow(options);
+	ScreenshotArchive archive(options);
+
+  g_mainWindow = new CMainWindow(options, archive);
 
 	RECT display = { 0 };
 	if (g_mainWindow->Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))

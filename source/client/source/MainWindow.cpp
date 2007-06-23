@@ -82,11 +82,10 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
       ShowStatusWindow();
     }
 
-    //for(int aoeu = 0; aoeu <= 110; aoeu ++)
-    //{
-    //  LPARAM id = m_statusDialog.CreateProgressMessage(_T("test"), LibCC::Format("%^%").i(aoeu).Str());
-    //  m_statusDialog.MessageSetProgress(id, aoeu, 100);
-    //}
+		if(m_screenshotOptions.EnableArchive())
+		{
+			m_statusDialog.m_screenshotArchiveCookie = m_archive.RegisterNewScreenshot(screenshot);
+		}
 
     unsigned threadID;
     ThreadParams params;

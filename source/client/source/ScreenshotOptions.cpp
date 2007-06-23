@@ -189,6 +189,8 @@ void ScreenshotOptions::Serialize(Xml::Element parent) const
 	Xml::Serialize(parent, L"ShowCropWindow", m_showCropWindow);
 	Xml::Serialize(parent, L"ShowSplash", m_showSplash);
 	Xml::Serialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
+	Xml::Serialize(parent, L"EnableArchive", m_enableArchive);
+	Xml::Serialize(parent, L"ArchiveLimit", m_archiveLimit);
 
 	if(m_haveConfigPlacement)
 	{
@@ -229,6 +231,8 @@ void ScreenshotOptions::Deserialize(Xml::Element parent)
 	Xml::Deserialize(parent, L"ShowCropWindow", m_showCropWindow);
 	Xml::Deserialize(parent, L"ShowSplash", m_showSplash);
 	Xml::Deserialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
+	Xml::Deserialize(parent, L"EnableArchive", m_enableArchive);
+	Xml::Deserialize(parent, L"ArchiveLimit", m_archiveLimit);
 
 	LibCC::Blob<BYTE> temp;
 	if(Xml::Deserialize(parent, L"ConfigWindowPlacement", temp))

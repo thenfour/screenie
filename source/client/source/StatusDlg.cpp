@@ -401,6 +401,12 @@ LPARAM CStatusDlg::AsyncCreateMessage(const MessageIcon icon, const MessageType 
     ItemSpec* newSpec = new ItemSpec;
     ret = reinterpret_cast<LPARAM>(newSpec);
 
+		newSpec->archiveCookie = 0;
+		if(m_options.EnableArchive())
+		{
+			newSpec->archiveCookie = m_archive.RegisterNewEvent(m_screenshotArchiveCookie, icon, type, destination, message, url);
+		}
+
     newSpec->type = type;
     newSpec->url = url;
 

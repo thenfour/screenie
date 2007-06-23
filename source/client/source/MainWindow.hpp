@@ -19,6 +19,8 @@
 // for StatusWindow, CStatusDialog
 #include "StatusDlg.hpp"
 
+#include "ScreenshotArchive.hpp"
+
 
 // for entrancy issues around print screen handler & the destinations dialog & such:
 extern LONG g_GUIEntrancyRefs;
@@ -56,9 +58,10 @@ public:
 		WM_TAKESCREENSHOT = WM_APP + 3
 	};
 
-  CMainWindow(ScreenshotOptions& options) :
+  CMainWindow(ScreenshotOptions& options, ScreenshotArchive& archive) :
     m_screenshotOptions(options),
-    m_statusDialog(options)
+		m_archive(archive),
+    m_statusDialog(options, archive)
   {
     m_uTaskbarCreatedMsg = RegisterWindowMessage(_T("TaskbarCreated"));
     m_iconData.hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDI_SCREENIE), 
@@ -114,6 +117,8 @@ public:
   // returns false if canceled.
   bool OnConfigure(const tstd::tstring& OKbuttonText);
 
+	int CreateStatusMessage();
+
 private:
 
   struct ThreadParams
@@ -134,6 +139,7 @@ private:
 
   CStatusDlg m_statusDialog;
 	ScreenshotOptions& m_screenshotOptions;
+	ScreenshotArchive& m_archive;
 };
 
 #endif

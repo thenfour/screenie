@@ -488,15 +488,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\TextPromptDlg.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Archiving"
+			>
+			<File
+				RelativePath=".\source\ScreenshotArchive.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\ScreenshotArchive.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\StatusDlg.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\source\StatusDlg.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TextPromptDlg.h"
 				>
 			</File>
 		</Filter>
