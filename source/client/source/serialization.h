@@ -10,6 +10,106 @@ extern "C" size_t Curl_base64_encode(const char *input, size_t size, char **str)
 extern "C" size_t Curl_base64_decode(const char *source, unsigned char **outptr);
 
 
+
+inline _bstr_t _Format(MSXML2::IXMLDOMNodePtr ptrNode, int iTabLevel)
+{
+ _bstr_t bstrNode;
+
+ switch (ptrNode->GetnodeType())
+ {
+ case MSXML2::NODE_DOCUMENT:
+ case MSXML2::NODE_DOCUMENT_FRAGMENT:
+  {
+   // All children of document/document fragment are at same level.
+   for (long i=0; i<ptrNode->GetchildNodes()->Getlength(); i++)
+    bstrNode += _Format(ptrNode->GetchildNodes()->Getitem(i), iTabLevel);
+  }
+  break;
+
+ case MSXML2::NODE_TEXT:
+  // Format like IE5 renders.
+  {
+   bool bPartOfMixedContent =
+    ptrNode->GetparentNode()->GetchildNodes()->Getlength() > 1;
+   if (bPartOfMixedContent)
+    // Indent if part of mixed content.
+		bstrNode = std::wstring(iTabLevel, '\t').c_str();
+
+   // Call Getxml() here, otherwise entities (&gt;) get expanded.
+   // Trim leading and trailing whitespace to mimic Gettext().
+   CString strXML((PWSTR)ptrNode->Getxml());
+   strXML.TrimLeft(); strXML.TrimRight();
+   bstrNode += (LPCTSTR)strXML;
+
+   if (bPartOfMixedContent)
+    // Add carriage-return/line feed if part of mixed content.
+    bstrNode += L"\r\n";
+  }
+  break;
+
+ case MSXML2::NODE_ELEMENT:
+  {
+   // Indent.
+	bstrNode = std::wstring(iTabLevel, '\t').c_str();
+
+   // Open the start tag.
+   bstrNode += L"<" + ptrNode->GetnodeName();
+
+   // Add the attributes.
+   for (long i=0; i<ptrNode->Getattributes()->Getlength(); i++)
+    bstrNode +=
+     L" " + ptrNode->Getattributes()->Getitem(i)->Getxml();
+
+   // Determine how to close start tag with help of following bools.
+   bool bHasChildNodes = ptrNode->hasChildNodes() == VARIANT_TRUE;
+   bool bHasOnlyATextChildNode =
+    bHasChildNodes &&
+    ptrNode->GetchildNodes()->Getlength() == 1 &&
+    ptrNode->GetchildNodes()->Getitem(0)->GetnodeType() ==
+    MSXML2::NODE_TEXT;
+
+   if (!bHasChildNodes)
+    // It is an empty element; close it.
+    bstrNode += L"/>\r\n";
+   else if (bHasOnlyATextChildNode)
+    // It has a single text node; don't add carriage return.
+    bstrNode += L">";
+   else
+    // It has more than one text child node; add carriage return.
+    bstrNode += L">\r\n";
+
+   // Recurse if it has children.
+   if (bHasChildNodes)
+    for (int i=0; i<ptrNode->GetchildNodes()->Getlength(); i++)
+     bstrNode +=
+      _Format
+      (
+       ptrNode->GetchildNodes()->Getitem(i),
+       iTabLevel+1
+      );
+
+   // Indent properly and add end tag.
+   if (!bHasOnlyATextChildNode && bHasChildNodes)
+		 bstrNode += std::wstring(iTabLevel, '\t').c_str();
+   if (bHasChildNodes)
+    bstrNode += L"</" + ptrNode->GetnodeName() + L">\r\n";
+  }
+  break;
+
+ case MSXML2::NODE_ENTITY:
+ case MSXML2::NODE_ATTRIBUTE:
+  // These cases should never occur, but don't do anything if they do.
+  break;
+
+ default:
+  // All other node types should return their XML (properly indented).
+  bstrNode = std::wstring(iTabLevel, '\t').c_str() + ptrNode->Getxml() + L"\r\n";
+  break;
+ } 
+
+ return bstrNode;
+}
+
 namespace Xml
 {
 	typedef MSXML2::IXMLDOMDocumentPtr Document;
@@ -227,7 +327,11 @@ namespace Xml
 					Serialize(root, L"Settings", o);
 
 					// save
-					doc->save(fileName.c_str());
+					_bstr_t newXml = _Format(doc, 0);
+					Document n;
+					n.CreateInstance(L"Msxml2.DOMDocument");
+					n->loadXML(newXml);
+					n->save(fileName.c_str());
 				}
 			}
 			catch(_com_error&)
