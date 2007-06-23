@@ -202,6 +202,8 @@ HBITMAP DuplicateScreenshotBitmap(HBITMAP sourceBitmap)
 	::SelectObject(destDC, destOldObj);
 	::DeleteDC(destDC);
 
+	::ReleaseDC(NULL, desktopDC);
+
 	return destBitmap;
 }
 
@@ -229,10 +231,11 @@ bool ProcessClipboardDestination(HWND hwnd, AsyncStatusWindow& status, Screensho
     }
     else
 		{
-			// the system will take care of deleting this bitmap.
 			HBITMAP bitmapCopy = DuplicateScreenshotBitmap(clipboardBitmap);
+			DeleteObject(clipboardBitmap);
 
       LibCC::Result r = Clipboard(hwnd).SetBitmap(bitmapCopy);
+			DeleteObject(bitmapCopy);
       if(r.Succeeded())
       {
         status.AsyncCreateMessage(MSG_CHECK, ITEM_GENERAL, destination.general.name,

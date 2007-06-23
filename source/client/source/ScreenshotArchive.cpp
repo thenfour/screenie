@@ -267,6 +267,7 @@ bool ScreenshotArchive::EnsureDatabaseHasSpace(size_t extra)
 
 			// now vacuum
 			conn.executenonquery("vacuum");
+			conn.close();
 		}
 		catch(sqlite3x::database_error& er)
 		{
@@ -312,6 +313,7 @@ int ScreenshotArchive::RegisterNewScreenshot(util::shared_ptr<Gdiplus::Bitmap> b
 
 		cmd.executenonquery();
 		ret = (int)conn.insertid();
+		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
 	{
@@ -343,6 +345,7 @@ int ScreenshotArchive::RegisterNewEvent(int screenshotID,
 		conn.executenonquery(sql);
 
 		ret = (int)conn.insertid();
+		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
 	{
