@@ -100,16 +100,18 @@ public:
 		LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
 	}
 
-	void SaveSettings()
+	std::wstring GetConfigPath() const
 	{
 		if(m_savedInAppDir)
 		{
-			Xml::Serialize(*this, GenerateXmlFileNameInAppDir());
+			return GenerateXmlFileNameInAppDir();
 		}
-		else
-		{
-			Xml::Serialize(*this, GenerateXmlFileName(true));
-		}
+		return GenerateXmlFileName(true);
+	}
+
+	void SaveSettings()
+	{
+		Xml::Serialize(*this, GetConfigPath());
 	}
 
 	// xml serialization
@@ -213,7 +215,7 @@ public:
 private:
 	static bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
 	static bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
-	tstd::tstring GenerateXmlFileName(bool createDirectories)
+	tstd::tstring GenerateXmlFileName(bool createDirectories) const
 	{
 		// use the users' application data path
 		tstd::tstring ret;
@@ -231,7 +233,7 @@ private:
 		return ret;
 	}
 
-	tstd::tstring GenerateXmlFileNameInAppDir()
+	tstd::tstring GenerateXmlFileNameInAppDir() const
 	{
 		return GetPathRelativeToApp(_T("screenieConfig.xml"));
 	}

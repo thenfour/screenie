@@ -178,14 +178,6 @@ LRESULT CMainWindow::OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 	return 0;
 }
 
-LRESULT CMainWindow::OnBuy(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
-{
-  // taken from atlctrlx.h / hyperlink control::Navigate()
-  SHELLEXECUTEINFO shExeInfo = { sizeof(SHELLEXECUTEINFO), 0, 0, _T("open"), _T("http://screenie.net"), 0, 0, SW_SHOWNORMAL, 0, 0, 0, 0, 0, 0, 0 };
-	::ShellExecuteEx(&shExeInfo);
-  return 0;
-}
-
 void CMainWindow::ShowStatusWindow()
 {
 	m_statusDialog.ShowWindow(SW_SHOW);
@@ -229,7 +221,7 @@ LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& han
 
 LRESULT CMainWindow::OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
-	CAboutDlg dlg;
+	CAboutDlg dlg(this->m_screenshotOptions);
 	dlg.DoModal();
 
 	return 0;

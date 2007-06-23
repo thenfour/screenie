@@ -18,8 +18,8 @@ struct ScreenshotDestination
 		TYPE_FILE,
 		TYPE_FTP,
 		TYPE_EMAIL,
-		TYPE_CLIPBOARD,
-		TYPE_SCREENIENET
+		TYPE_CLIPBOARD//,
+		//TYPE_SCREENIENET
 	};
 
 	enum ScaleType
@@ -82,19 +82,22 @@ struct ScreenshotDestination
 		int maxDimension;
 	};
 
-	struct Screenienet
-	{
-		Screenienet() : copyURL(false) { }
+	//struct Screenienet
+	//{
+	//	Screenienet() : copyURL(false) { }
 
-		tstd::tstring url;
-		tstd::tstring username;
-		tstd::tstring password;
-		bool copyURL;
-	};
+	//	tstd::tstring url;
+	//	tstd::tstring username;
+	//	tstd::tstring password;
+	//	bool copyURL;
+	//};
 
 	struct Ftp
 	{
-    Ftp() { }
+		Ftp() :
+			passwordOptions(PO_Protected)
+		{
+		}
 		Ftp(const Ftp& copy) { operator=(copy); }
 		~Ftp() { }
 
@@ -106,11 +109,19 @@ struct ScreenshotDestination
 			remotePath = rightHand.remotePath;
 			resultURL = rightHand.resultURL;
 			copyURL = rightHand.copyURL;
+			passwordOptions = rightHand.passwordOptions;
 
       m_passwordEncrypted.Assign(rightHand.m_passwordEncrypted);
 
 			return (*this);
 		}
+
+		enum PasswordOptions
+		{
+			PO_Plaintext = 0,
+			PO_XOR = 1,
+			PO_Protected = 2
+		} passwordOptions;
 
 		tstd::tstring hostname;
 		unsigned short port;
@@ -129,26 +140,13 @@ struct ScreenshotDestination
       in.cbData = m_passwordEncrypted.Size();
       if(FALSE == CryptUnprotectData(&in, NULL, NULL, NULL, 0, 0, &out))
       {
-				LibCC::g_pLog->Message(LibCC::Format("DecryptPassword error. Blob length: %").ul(in.cbData));
         return _T("");
       }
 
       ret = reinterpret_cast<PCTSTR>(out.pbData);
       LocalFree(out.pbData);
 
-			LibCC::g_pLog->Message(LibCC::Format("DecryptPassword returning %. Blob length: %").qs(ret).ul(in.cbData));
       return ret;
-    }
-
-    const LibCC::Blob<BYTE>& GetEncryptedPassword() const
-    {
-      return m_passwordEncrypted;
-    }
-
-		void SetEncryptedPassword(LibCC::Blob<BYTE>& crap)
-    {
-			LibCC::g_pLog->Message(LibCC::Format("SetEncryptedPassword; length %").ul(crap.Size()));
-      m_passwordEncrypted.Assign(crap);
     }
 
     void SetPassword(const tstd::tstring& pass)
@@ -159,14 +157,61 @@ struct ScreenshotDestination
       in.cbData = sizeof(TCHAR) * (pass.size() + 1);
       if(FALSE == CryptProtectData(&in, NULL, NULL, NULL, 0, 0, &out))
       {
-				LibCC::g_pLog->Message("SetPassword error");
         // omg error;
         return;
       }
       m_passwordEncrypted.Alloc(out.cbData);
-			LibCC::g_pLog->Message(LibCC::Format("SetPassword %; encrypted length %").qs(pass).ul(out.cbData));
+			//LibCC::g_pLog->Message(LibCC::Format("SetPassword %; encrypted length %").qs(pass).ul(out.cbData));
       memcpy(m_passwordEncrypted.GetBuffer(), out.pbData, out.cbData);
       LocalFree(out.pbData);
+    }
+
+
+    const LibCC::Blob<BYTE>& SerializePasswordEncrypted() const
+    {
+      return m_passwordEncrypted;
+    }
+
+		static const wchar_t xorKey[];// defined in screenshotoptions.cpp
+		static const int xorKeyLength;
+
+		const void SerializePasswordXOR(LibCC::Blob<BYTE>& out) const
+    {
+			//LibCC::LogScopeMessage x("Serialize Password");
+
+			// assume 16-bit chars & 8-bit BYTES
+			std::wstring pass = DecryptPassword();
+			out.Alloc(pass.length() * 2);
+			for(size_t i = 0; i < pass.length(); ++ i)
+			{
+				wchar_t n = pass[i] ^ xorKey[i % xorKeyLength];
+				//LibCC::g_pLog->Message(LibCC::Format("i=%")(i));
+				//LibCC::g_pLog->Message(LibCC::Format("  pass[i]=%").c(pass[i]));
+				//LibCC::g_pLog->Message(LibCC::Format("  xorkey index = %").i(i % xorKeyLength));
+				//LibCC::g_pLog->Message(LibCC::Format("  xorkey val = %").i<16>(xorKey[i % xorKeyLength]));
+				//LibCC::g_pLog->Message(LibCC::Format("  result = % { % % }").i<16>(n).i<16>((BYTE)(n & 0xFF)).i<16>((BYTE)((n >> 8) & 0xFF)));
+				out[i*2] = (BYTE)(n & 0xFF);
+				out[i*2+1] = (BYTE)((n >> 8) & 0xFF);
+			}
+    }
+
+		void DeserializeXORPassword(LibCC::Blob<BYTE>& crap)
+    {
+			//LibCC::LogScopeMessage x("Deserialize Password");
+
+			std::wstring pass;
+			for(size_t i = 0; i < crap.Size() / 2; ++ i)
+			{
+				wchar_t n = (wchar_t)crap[i*2] | (crap[i*2+1] << 8);
+				n ^= xorKey[i % xorKeyLength];
+				pass.push_back(n);
+			}
+      SetPassword(pass);
+    }
+
+		void DeserializePassword(LibCC::Blob<BYTE>& crap)
+    {
+      m_passwordEncrypted.Assign(crap);
     }
 
   private:
@@ -224,16 +269,35 @@ struct ScreenshotDestination
 		Xml::Serialize(parent, L"FtpRemotePath",  ftp.remotePath);
 		Xml::Serialize(parent, L"FtpResultURL", ftp.resultURL);
 		Xml::Serialize(parent, L"FtpCopyURL", ftp.copyURL);
+		Xml::Serialize(parent, L"FtpPasswordOptions", (int)ftp.passwordOptions);
 
-		//((ScreenshotDestination*)this)->ftp.SetPassword(L"c7b9b13");
-		const LibCC::Blob<BYTE>& temp = ftp.GetEncryptedPassword();
-		Xml::Serialize(parent, L"FtpPassword", Xml::BinaryData(temp.GetBuffer(), temp.Size()));
+		switch(ftp.passwordOptions)
+		{
+		case Ftp::PO_Plaintext:
+			Xml::Serialize(parent, L"FtpPassword", ftp.DecryptPassword());
+			break;
+		case Ftp::PO_XOR:
+			{
+				LibCC::Blob<BYTE> temp;
+				ftp.SerializePasswordXOR(temp);
+				Xml::Serialize(parent, L"FtpPassword", Xml::BinaryData(temp.GetBuffer(), temp.Size()));
+				break;
+			}
+		case Ftp::PO_Protected:
+			{
+				const LibCC::Blob<BYTE>& temp = ftp.SerializePasswordEncrypted();
+				Xml::Serialize(parent, L"FtpPassword", Xml::BinaryData(temp.GetBuffer(), temp.Size()));
+				break;
+			}
+		default:
+			break;
+		}
 
 		// screenie.net settings
-		Xml::Serialize(parent, L"ScreenieNetURL", screenie.url);
-		Xml::Serialize(parent, L"ScreenieNetUserName", screenie.username);
-		Xml::Serialize(parent, L"ScreenieNetPassword", screenie.password);
-		Xml::Serialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
+		//Xml::Serialize(parent, L"ScreenieNetURL", screenie.url);
+		//Xml::Serialize(parent, L"ScreenieNetUserName", screenie.username);
+		//Xml::Serialize(parent, L"ScreenieNetPassword", screenie.password);
+		//Xml::Serialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
 	}
 
 	void Deserialize(Xml::Element parent)
@@ -265,17 +329,45 @@ struct ScreenshotDestination
 		Xml::Deserialize(parent, L"FtpRemotePath",  ftp.remotePath);
 		Xml::Deserialize(parent, L"FtpResultURL", ftp.resultURL);
 		Xml::Deserialize(parent, L"FtpCopyURL", ftp.copyURL);
+		Xml::Deserialize(parent, L"FtpPasswordOptions", (int&)ftp.passwordOptions);
 
-		LibCC::Blob<BYTE> binaryTemp;
-		Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
-		ftp.SetEncryptedPassword(binaryTemp);
-		//std::wstring pass = ftp.DecryptPassword();
+		switch(ftp.passwordOptions)
+		{
+		case Ftp::PO_Plaintext:
+			{
+				std::wstring str;
+				Xml::Deserialize(parent, L"FtpPassword", str);
+				ftp.SetPassword(str);
+				break;
+			}
+		case Ftp::PO_XOR:
+			{
+				LibCC::Blob<BYTE> binaryTemp;
+				Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
+				ftp.DeserializeXORPassword(binaryTemp);
+				break;
+			}
+		case Ftp::PO_Protected:
+			{
+				LibCC::Blob<BYTE> binaryTemp;
+				Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
+				ftp.DeserializePassword(binaryTemp);
+				break;
+			}
+			break;
+		default:
+			ftp.SetPassword(L"");
+			break;
+		}
+		//LibCC::Blob<BYTE> binaryTemp;
+		//Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
+		//ftp.DeserializePassword(binaryTemp);
 
 		// screenie.net settings
-		Xml::Deserialize(parent, L"ScreenieNetURL", screenie.url);
-		Xml::Deserialize(parent, L"ScreenieNetUserName", screenie.username);
-		Xml::Deserialize(parent, L"ScreenieNetPassword", screenie.password);
-		Xml::Deserialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
+		//Xml::Deserialize(parent, L"ScreenieNetURL", screenie.url);
+		//Xml::Deserialize(parent, L"ScreenieNetUserName", screenie.username);
+		//Xml::Deserialize(parent, L"ScreenieNetPassword", screenie.password);
+		//Xml::Deserialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
 	}
 
 	bool enabled;
@@ -283,7 +375,7 @@ struct ScreenshotDestination
 	Image image;
 	Ftp ftp;
 	Email email;
-	Screenienet screenie;
+//	Screenienet screenie;
 
   void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
   {
@@ -309,8 +401,8 @@ struct ScreenshotDestination
 				return tstd::tstring(_T("Send Email"));
 			case TYPE_CLIPBOARD:
 				return tstd::tstring(_T("Copy to Clipboard"));
-			case TYPE_SCREENIENET:
-				return tstd::tstring(_T("Screenie.net"));
+			//case TYPE_SCREENIENET:
+			//	return tstd::tstring(_T("Screenie.net"));
 		}
 
 		return tstd::tstring(_T("Unknown"));
@@ -326,8 +418,8 @@ struct ScreenshotDestination
 			return TYPE_EMAIL;
 		if (description == tstd::tstring(_T("Copy to Clipboard")))
 			return TYPE_CLIPBOARD;
-		if (description == tstd::tstring(_T("Screenie.net")))
-			return TYPE_SCREENIENET;
+		//if (description == tstd::tstring(_T("Screenie.net")))
+		//	return TYPE_SCREENIENET;
 
 		return TYPE_NONE;
 	}

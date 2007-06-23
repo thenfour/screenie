@@ -27,6 +27,14 @@ void CDestinationPropertiesFTP::ShowSettings()
 		::EnableChildWindows(m_hWnd,
 			(m_parentSheet->GetCurrentType() == ScreenshotDestination::TYPE_FTP));
 
+		CComboBox passwordOptions(GetDlgItem(IDC_PASSWORDOPTIONS));
+		// indices must correspond directly to enum values.
+		passwordOptions.AddString(_T("Insecure; store as plain text"));
+		passwordOptions.AddString(_T("Obscure; basic symmetric encryption"));
+		passwordOptions.AddString(_T("Most secure, but only usable on this computer"));
+		passwordOptions.SetCurSel((int)m_settings.passwordOptions);
+		AutoSetComboBoxHeight(passwordOptions);
+
 		SetDlgItemText(IDC_FTP_HOSTNAME, m_settings.hostname.c_str());
 		SetDlgItemInt(IDC_FTP_PORT, m_settings.port, FALSE);
 		SetDlgItemText(IDC_FTP_USERNAME, m_settings.username.c_str());
@@ -72,6 +80,8 @@ void CDestinationPropertiesFTP::GetSettings(ScreenshotDestination& destination)
 		m_settings.remotePath = GetWindowString(GetDlgItem(IDC_FTP_REMOTEPATH));
 		m_settings.resultURL = GetWindowString(GetDlgItem(IDC_FTP_HTTPURL));
 		m_settings.copyURL = (IsDlgButtonChecked(IDC_FTP_COPYURL) == TRUE);
+		CComboBox passwordOptions(GetDlgItem(IDC_PASSWORDOPTIONS));
+		m_settings.passwordOptions = (ScreenshotDestination::Ftp::PasswordOptions)passwordOptions.GetCurSel();
 	}
 
 	destination.ftp = m_settings;

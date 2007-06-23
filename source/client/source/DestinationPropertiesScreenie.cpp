@@ -4,7 +4,7 @@
 // Copyright (c) 2003 Carl Corcoran
 //
 
-#include "stdafx.hpp"
+#include "stdafx.hpp"/*
 #include "resource.h"
 
 #include "utility.hpp"
@@ -83,3 +83,4 @@ void CDestinationPropertiesScreenie::SetParentSheet(DestinationPropertySheet* pa
 {
 	m_parentSheet = parentSheet;
 }
+*/

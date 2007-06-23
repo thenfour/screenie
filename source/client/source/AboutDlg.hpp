@@ -9,15 +9,18 @@
 
 #include "xversion.h"
 #include "utility.hpp"
+#include "ScreenshotOptions.hpp"
 
 class CAboutDlg : public CDialogImpl<CAboutDlg>
 {
 public:
 	enum { IDD = IDD_ABOUTBOX };
+	const ScreenshotOptions& m_options;
 
-  CAboutDlg() :
+	CAboutDlg(const ScreenshotOptions& opt) :
     m_hIconSmall(0),
-    m_hIcon(0)
+    m_hIcon(0),
+		m_options(opt)
   {
   }
 
@@ -51,6 +54,9 @@ public:
     SetDlgItemText(IDC_PRODUCTVERSION, LibCC::Format("Screenie v%.%.%").ui(v.GetA()).ui(v.GetB()).ui(v.GetC()).CStr());
     SetDlgItemText(IDC_COPYRIGHT, v.GetCopyright().c_str());
     SetDlgItemText(IDC_REGISTRANT, v.GetRegistrant().c_str());
+
+		// other stuff
+		SetDlgItemText(IDC_CONFIGPATH, m_options.GetConfigPath().c_str());
 
     CenterWindow(GetParent());
 		m_link.SubclassWindow(GetDlgItem(IDC_HYPERLINK));

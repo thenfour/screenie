@@ -39,6 +39,7 @@
 #define IDC_COMBO2                      1006
 #define IDC_GENERAL_FILENAME            1006
 #define IDC_FILENAME_FORMAT             1006
+#define IDC_PASSWORDOPTIONS             1006
 #define IDC_GENERAL_FILENAMEPREVIEW     1007
 #define IDC_FILENAME_FORMATPREVIEW      1007
 #define IDC_CONFIRM                     1008
@@ -109,6 +110,9 @@
 #define IDC_SCREENIE_URL                1061
 #define IDC_PROMPT_TEXT                 1062
 #define IDC_PROMPT_LABEL                1063
+#define IDC_CONFIGPATH                  1064
+#define IDC_BUTTON1                     1065
+#define IDC_DUPLICATE                   1065
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -180,7 +184,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        247
 #define _APS_NEXT_COMMAND_VALUE         32788
-#define _APS_NEXT_CONTROL_VALUE         1064
+#define _APS_NEXT_CONTROL_VALUE         1066
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

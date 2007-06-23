@@ -11,6 +11,10 @@
 #include "ScreenshotOptions.hpp"
 #include "libcc/registry.h"
 
+const wchar_t ScreenshotDestination::Ftp::xorKey[] = { 62171, 50087, 61907, 5753, 59244, 31190, 14869, 15056, 6894, 40105, 16528, 27281, 10301 };
+const int ScreenshotDestination::Ftp::xorKeyLength = 13;
+
+
 const TCHAR* KEY_INCLUDECURSOR = TEXT("Include Cursor");
 const TCHAR* KEY_SHOWCROPPINGWINDOW = TEXT("Show Cropping Window");
 const TCHAR* KEY_CONFIRMOPTIONS = TEXT("Confirm Options");
@@ -106,7 +110,7 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, LibCC::Regi
 
 	LibCC::Blob<BYTE> tempBuffer;
   key.GetValue(KEY_DEST_FTP_PASSWORD, tempBuffer);
-  destination.ftp.SetEncryptedPassword(tempBuffer);
+	destination.ftp.DeserializePassword(tempBuffer);
 
 	temp = key[KEY_DEST_FTP_COPYURL].GetDWORD();
 	destination.ftp.copyURL = (temp != 0);
@@ -115,12 +119,12 @@ bool ReadDestinationFromRegistry(ScreenshotDestination& destination, LibCC::Regi
 	// screenie.net settings
 	//////////////////////////////////////////////////////////////////////////
 
-	destination.screenie.url = key[KEY_DEST_SCREENIE_URL].GetString();
-	destination.screenie.username = key[KEY_DEST_SCREENIE_USERNAME].GetString();
-	destination.screenie.password = key[KEY_DEST_SCREENIE_PASSWORD].GetString();
+	//destination.screenie.url = key[KEY_DEST_SCREENIE_URL].GetString();
+	//destination.screenie.username = key[KEY_DEST_SCREENIE_USERNAME].GetString();
+	//destination.screenie.password = key[KEY_DEST_SCREENIE_PASSWORD].GetString();
 
-	temp = key[KEY_DEST_SCREENIE_COPYURL].GetDWORD();
-	destination.screenie.copyURL = (temp != 0);
+//	temp = key[KEY_DEST_SCREENIE_COPYURL].GetDWORD();
+//	destination.screenie.copyURL = (temp != 0);
 
 	return true;
 }

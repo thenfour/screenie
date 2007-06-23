@@ -57,6 +57,7 @@ void CDestinationDlg::SetEnabledButtons()
 	BOOL enableButtons = m_listView.GetSelectedCount() > 0 ? TRUE : FALSE;
 	m_editButton.EnableWindow(enableButtons);
 	m_removeButton.EnableWindow(enableButtons);
+	m_duplicateButton.EnableWindow(enableButtons);
 }
 
 void CDestinationDlg::PopulateDestinationList()
@@ -124,6 +125,7 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 
 	m_editButton = GetDlgItem(IDC_EDIT);
 	m_removeButton = GetDlgItem(IDC_REMOVE);
+	m_duplicateButton = GetDlgItem(IDC_DUPLICATE);
 
 	// set up the list view columns
 	m_listView = GetDlgItem(IDC_DESTINATIONS);
@@ -207,6 +209,7 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.ftp.port = 21;
 	destination.ftp.username = TEXT("username");
 	destination.ftp.SetPassword(TEXT("password"));
+	destination.ftp.passwordOptions = ScreenshotDestination::Ftp::PO_Plaintext;
 	destination.ftp.remotePath = TEXT("/home/username/public_html/");
 	destination.ftp.resultURL = TEXT("http://mysite.com/~username/");
 	destination.ftp.copyURL = false;
@@ -246,6 +249,24 @@ LRESULT CDestinationDlg::OnEditDestination(WORD /*wNotifyCode*/, WORD /*wID*/, H
 		}
 	}
 
+	return 0;
+}
+
+LRESULT CDestinationDlg::OnDuplicateDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	int selectedIndex = -1;
+	if ((selectedIndex = GetSelectedDestination()) != -1)
+	{
+		ScreenshotDestination existing;
+		if (m_optionsCopy.GetDestination(existing, selectedIndex))
+		{
+			ScreenshotDestination duplicate = existing;
+			duplicate.general.id.CreateNew();
+			duplicate.general.name = L"Copy of " + duplicate.general.name;
+			m_optionsCopy.AddDestination(duplicate);
+			PopulateDestinationList();
+		}
+	}
 	return 0;
 }
 

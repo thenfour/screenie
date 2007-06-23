@@ -56,6 +56,7 @@ public:
 
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_NEW, OnNewDestination)
+		COMMAND_ID_HANDLER(IDC_DUPLICATE, OnDuplicateDestination)
 		COMMAND_ID_HANDLER(IDC_EDIT, OnEditDestination)
 		COMMAND_ID_HANDLER(IDC_REMOVE, OnRemoveDestination)
 		COMMAND_ID_HANDLER(IDOK, OnOK)
@@ -74,6 +75,7 @@ public:
     DLGRESIZE_CONTROL(IDC_DESTINATIONS, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_NEW, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDC_EDIT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_DUPLICATE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDC_REMOVE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 
     DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
@@ -94,6 +96,7 @@ public:
   
 	LRESULT OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnEditDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnDuplicateDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnRemoveDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
@@ -104,6 +107,7 @@ public:
 private:
 	CListViewCtrl m_listView;
 	CButton m_editButton;
+	CButton m_duplicateButton;
 	CButton m_removeButton;
 	ScreenshotOptions m_optionsCopy;
 	ScreenshotOptions& m_optionsFinal;// this is the external ref that we copy to when the user hits OK
