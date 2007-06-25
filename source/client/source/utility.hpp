@@ -243,6 +243,192 @@ protected:
   LibCC::Blob<TCHAR> m_string;// why blob?  because freaking menuitem structs take non-const strings, so this is the easiest way to be good-bear
 };
 
+
+
+class BlobStream : public IStream
+{
+	LibCC::Blob<BYTE> m_blob;
+	size_t m_cursor;
+public:
+	BlobStream() :
+		m_cursor(0)
+	{
+	}
+
+	void* GetBuffer() const 
+	{
+		return (void*)m_blob.GetBuffer();
+	}
+	int GetLength() const
+	{
+		return m_blob.Size();
+	}
+
+	// IUnknown
+  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	{
+		if(riid == IID_IUnknown)
+		{
+			*ppvObject = (IUnknown*)this; 
+			return S_OK;
+		}
+		if(riid == IID_IStream)
+		{
+			*ppvObject = (IStream*)this; 
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+  ULONG STDMETHODCALLTYPE AddRef( void)
+	{
+		return 1;
+	}
+  ULONG STDMETHODCALLTYPE Release( void)
+	{
+		return 1;
+	}
+
+	// IStream
+  HRESULT STDMETHODCALLTYPE Read(void *pv, ULONG cb, ULONG *pcbRead)
+	{
+		if(m_cursor >= m_blob.Size())
+		{
+			return STG_E_INVALIDPOINTER;
+		}
+		size_t sizeLeft = m_blob.Size() - m_cursor;
+		size_t toRead = min(cb, sizeLeft);
+		memcpy(pv, m_blob.GetBuffer() + m_cursor, toRead);
+		m_cursor += toRead;
+		if(pcbRead)
+			*pcbRead = toRead;
+		return toRead == cb ? S_OK : S_FALSE;
+	}
+	  
+	HRESULT STDMETHODCALLTYPE Write(const void *pv, ULONG cb, ULONG *pcbWritten)
+	{
+		if(m_cursor > m_blob.Size())
+		{
+			return STG_E_INVALIDPOINTER;
+		}
+		size_t cursorAfter = m_cursor + cb;
+		if(cursorAfter > m_blob.Size())
+		{
+			m_blob.Alloc(cursorAfter);
+		}
+		memcpy(m_blob.GetBuffer() + m_cursor, pv, cb);
+		*pcbWritten = cb;
+		m_cursor = cursorAfter;
+		return S_OK;
+	}
+	HRESULT STDMETHODCALLTYPE Seek( LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+	{
+		if(dlibMove.HighPart > 0)
+		{
+			return STG_E_INVALIDPOINTER;
+		}
+
+		switch(dwOrigin)
+		{
+		case STREAM_SEEK_CUR:
+			m_cursor += (int)dlibMove.LowPart;
+			break;
+		case STREAM_SEEK_END:
+			m_cursor = m_blob.Size() + (int)dlibMove.LowPart;
+			break;
+		case STREAM_SEEK_SET:
+			m_cursor = dlibMove.LowPart;
+			break;
+		default:
+			return STG_E_INVALIDFUNCTION;
+		}
+		if(m_cursor > m_blob.Size())
+		{
+			return STG_E_INVALIDPOINTER;
+		}
+		
+		if(plibNewPosition)
+			plibNewPosition->QuadPart = 0;
+
+		return S_OK;
+	}
+  
+  HRESULT STDMETHODCALLTYPE SetSize( ULARGE_INTEGER libNewSize)
+	{
+		if(libNewSize.HighPart > 0) return STG_E_MEDIUMFULL;
+		m_blob.Alloc(libNewSize.LowPart);
+		return S_OK;
+	}
+  
+  HRESULT STDMETHODCALLTYPE CopyTo(  IStream *pstm, ULARGE_INTEGER cb,ULARGE_INTEGER *pcbRead,ULARGE_INTEGER *pcbWritten)
+	{
+		if(m_cursor > m_blob.Size())
+		{
+			return STG_E_INVALIDPOINTER;
+		}
+		if(cb.HighPart > 0) return STG_E_MEDIUMFULL;
+
+		ULONG bw = 0;
+		HRESULT hr = pstm->Write(m_blob.GetBuffer() + m_cursor, cb.LowPart, &bw);
+		if(pcbWritten)
+		{
+			pcbWritten->HighPart = 0;
+			pcbWritten->LowPart = bw;
+		}
+		return hr;
+	}
+  
+  HRESULT STDMETHODCALLTYPE Commit( DWORD grfCommitFlags)
+	{
+		return S_OK;
+	}
+  
+  HRESULT STDMETHODCALLTYPE Revert( void)
+	{
+		return E_NOTIMPL;
+	}
+  
+  HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+	{
+		return E_NOTIMPL;
+	}
+  
+  HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+	{
+		return E_NOTIMPL;
+	}
+  
+  HRESULT STDMETHODCALLTYPE Stat(  STATSTG *pstatstg,DWORD grfStatFlag)
+	{
+		if(grfStatFlag & STATFLAG_NONAME)
+		{
+			// uh i should really set more stuff here, but i don't need to at the moment.
+			pstatstg->cbSize.QuadPart = m_blob.Size();
+			return S_OK;
+		}
+		return E_NOTIMPL;
+	}
+  
+  HRESULT STDMETHODCALLTYPE Clone( IStream **ppstm)
+	{
+		return E_NOTIMPL;
+	}
+};
+
+
+inline std::wstring LoadTextFileResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
+{
+    HRSRC hrsrc=FindResource(hInstance, szResName, szResType);
+    if(!hrsrc) return L"";
+    HGLOBAL hg1 = LoadResource(hInstance, hrsrc);
+    DWORD sz = SizeofResource(hInstance, hrsrc);
+    void* ptr1 = LockResource(hg1);
+
+		// assume the encoding is ASCII.
+		std::string a((const char*)ptr1, sz);
+		return LibCC::ToUnicode(a);
+} 
+
+
 #endif
 
 

@@ -82,10 +82,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
       ShowStatusWindow();
     }
 
-		if(m_screenshotOptions.EnableArchive())
-		{
-			m_statusDialog.m_screenshotArchiveCookie = m_archive.RegisterNewScreenshot(screenshot);
-		}
+		ScreenshotID screenshotID = m_statusDialog.RegisterScreenshot(screenshot);
 
     unsigned threadID;
     ThreadParams params;
@@ -93,6 +90,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
     params.options = m_screenshotOptions;// creates a copy for thread safety
     params.pThis = this;
     params.screenshot = screenshot;
+		params.screenshotID = screenshotID;
 	params.windowTitle = GetWindowString(hWndForeground);
 
     HANDLE hThread = (HANDLE)_beginthreadex(0, 0, ProcessDestinationsThreadProc, &params, 0, &threadID);
@@ -128,7 +126,7 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
 		{
 			if (destination.enabled)
       {
-        ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, params.windowTitle, bUsedClipboard);
+				ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, params.windowTitle, bUsedClipboard, params.screenshotID);
         enabledDestinations ++;
       }
 		}

@@ -1,177 +1,10 @@
 #include "StdAfx.hpp"
 #include "ScreenshotArchive.hpp"
 #include "codec.hpp"
-#include "libcc\blob.h"
+#include "..\sqlite\sqlite3.h"
 #include "image.hpp"
-
-class BlobStream : public IStream
-{
-	LibCC::Blob<BYTE> m_blob;
-	size_t m_cursor;
-public:
-	BlobStream() :
-		m_cursor(0)
-	{
-	}
-
-	void* GetBuffer() const 
-	{
-		return (void*)m_blob.GetBuffer();
-	}
-	int GetLength() const
-	{
-		return m_blob.Size();
-	}
-
-	// IUnknown
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
-	{
-		if(riid == IID_IUnknown)
-		{
-			*ppvObject = (IUnknown*)this; 
-			return S_OK;
-		}
-		if(riid == IID_IStream)
-		{
-			*ppvObject = (IStream*)this; 
-			return S_OK;
-		}
-		return E_NOINTERFACE;
-	}
-  ULONG STDMETHODCALLTYPE AddRef( void)
-	{
-		return 1;
-	}
-  ULONG STDMETHODCALLTYPE Release( void)
-	{
-		return 1;
-	}
-
-	// IStream
-  HRESULT STDMETHODCALLTYPE Read(void *pv, ULONG cb, ULONG *pcbRead)
-	{
-		if(m_cursor >= m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		size_t sizeLeft = m_blob.Size() - m_cursor;
-		size_t toRead = min(cb, sizeLeft);
-		memcpy(pv, m_blob.GetBuffer() + m_cursor, toRead);
-		m_cursor += toRead;
-		if(pcbRead)
-			*pcbRead = toRead;
-		return toRead == cb ? S_OK : S_FALSE;
-	}
-	  
-	HRESULT STDMETHODCALLTYPE Write(const void *pv, ULONG cb, ULONG *pcbWritten)
-	{
-		if(m_cursor > m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		size_t cursorAfter = m_cursor + cb;
-		if(cursorAfter > m_blob.Size())
-		{
-			m_blob.Alloc(cursorAfter);
-		}
-		memcpy(m_blob.GetBuffer() + m_cursor, pv, cb);
-		*pcbWritten = cb;
-		m_cursor = cursorAfter;
-		return S_OK;
-	}
-	HRESULT STDMETHODCALLTYPE Seek( LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
-	{
-		if(dlibMove.HighPart > 0)
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-
-		switch(dwOrigin)
-		{
-		case STREAM_SEEK_CUR:
-			m_cursor += (int)dlibMove.LowPart;
-			break;
-		case STREAM_SEEK_END:
-			m_cursor = m_blob.Size() + (int)dlibMove.LowPart;
-			break;
-		case STREAM_SEEK_SET:
-			m_cursor = dlibMove.LowPart;
-			break;
-		default:
-			return STG_E_INVALIDFUNCTION;
-		}
-		if(m_cursor > m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		
-		if(plibNewPosition)
-			plibNewPosition->QuadPart = 0;
-
-		return S_OK;
-	}
-  
-  HRESULT STDMETHODCALLTYPE SetSize( ULARGE_INTEGER libNewSize)
-	{
-		if(libNewSize.HighPart > 0) return STG_E_MEDIUMFULL;
-		m_blob.Alloc(libNewSize.LowPart);
-		return S_OK;
-	}
-  
-  HRESULT STDMETHODCALLTYPE CopyTo(  IStream *pstm, ULARGE_INTEGER cb,ULARGE_INTEGER *pcbRead,ULARGE_INTEGER *pcbWritten)
-	{
-		if(m_cursor > m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		if(cb.HighPart > 0) return STG_E_MEDIUMFULL;
-
-		ULONG bw = 0;
-		HRESULT hr = pstm->Write(m_blob.GetBuffer() + m_cursor, cb.LowPart, &bw);
-		if(pcbWritten)
-		{
-			pcbWritten->HighPart = 0;
-			pcbWritten->LowPart = bw;
-		}
-		return hr;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Commit( DWORD grfCommitFlags)
-	{
-		return S_OK;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Revert( void)
-	{
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
-	{
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
-	{
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Stat(  STATSTG *pstatstg,DWORD grfStatFlag)
-	{
-		if(grfStatFlag & STATFLAG_NONAME)
-		{
-			// uh i should really set more stuff here, but i don't need to at the moment.
-			pstatstg->cbSize.QuadPart = m_blob.Size();
-			return S_OK;
-		}
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Clone( IStream **ppstm)
-	{
-		return E_NOTIMPL;
-	}
-};
+#include "resource.h"
+#include "utility.hpp"
 
 std::wstring QuoteSql(const std::wstring& in)
 {
@@ -229,6 +62,10 @@ std::wstring ScreenshotArchive::GetDBFilename() const
 }
 
 // TODO: Optimize this.
+// Idea #1: Use transactions to optimize 1 pass
+// Idea #2: Group passes into 1 (remove multiple screenshots at the same time)
+// Idea #3: To reduce the frequency that this needs to do cleanup, have a buffer zone. So, when it gets to 50mb, then vacuum up until 30mb.
+// Idea #4: ???
 bool ScreenshotArchive::EnsureDatabaseHasSpace(size_t extra)
 {
 	size_t extraMB = extra;
@@ -258,7 +95,9 @@ bool ScreenshotArchive::EnsureDatabaseHasSpace(size_t extra)
 
 			int count = conn.executeint("select count(*) from screenshots");
 			if(count == 0)// there are no records, but we know that there's no space. nothing we can do.
+			{
 				return false;
+			}
 
 			std::wstring screenshotDate = conn.executestring16("select min([date]) from screenshots");
 			int screenshotID = conn.executeint(LibCC::Format("select [id] from screenshots where [date] = '%'").s(screenshotDate).Str());
@@ -281,9 +120,14 @@ bool ScreenshotArchive::EnsureDatabaseHasSpace(size_t extra)
 	return true;
 }
 
-int ScreenshotArchive::RegisterNewScreenshot(util::shared_ptr<Gdiplus::Bitmap> bmp)
+
+ScreenshotID ScreenshotArchive::RegisterScreenshot(util::shared_ptr<Gdiplus::Bitmap> bmp)
 {
-	int ret = 0;
+	if(!m_options.EnableArchive())
+		return 0;
+
+	ScreenshotID ret = 0;
+
 	// save a lossless PNG file to a memory stream
 	BlobStream stream;
 	ImageCodecsEnum codecs;
@@ -300,7 +144,8 @@ int ScreenshotArchive::RegisterNewScreenshot(util::shared_ptr<Gdiplus::Bitmap> b
 
 		// and save to the database.
 		sqlite3x::sqlite3_connection conn;
-		if(!OpenDatabase(conn)) return 0;
+		if(!OpenDatabase(conn))
+			return 0;
 		sqlite3x::sqlite3_command cmd(conn, "insert into Screenshots ([bitmapData], [date]) values (?, strftime('%Y-%m-%dT%H:%M:%f', 'now'))");
 		cmd.bind(1, stream.GetBuffer(), stream.GetLength());
 
@@ -312,7 +157,7 @@ int ScreenshotArchive::RegisterNewScreenshot(util::shared_ptr<Gdiplus::Bitmap> b
 		//delete x;
 
 		cmd.executenonquery();
-		ret = (int)conn.insertid();
+		ret = (ScreenshotID)conn.insertid();
 		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
@@ -323,28 +168,29 @@ int ScreenshotArchive::RegisterNewScreenshot(util::shared_ptr<Gdiplus::Bitmap> b
 	return ret;
 }
 
-int ScreenshotArchive::RegisterNewEvent(int screenshotID,
-	MessageIcon icon, MessageType messageType,
-	const std::wstring& destinationName, const std::wstring& messageText, const std::wstring& data1)
+EventID ScreenshotArchive::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
 {
-	int ret = 0;
+	if(!m_options.EnableArchive())
+		return 0;
+
+	EventID ret = 0;
 	try
 	{
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn)) return 0;
-		std::wstring sql = LibCC::Format("insert into Events (screenshotID, icon, messageType, destinationName, messageText, data1, [date]) values "
+		std::wstring sql = LibCC::Format("insert into Events (screenshotID, icon, eventType, destinationName, eventText, url, [date]) values "
 			"(%, %, %, '%', '%', '%', strftime('^%Y-^%m-^%dT^%H:^%M:^%f', 'now'))")
-			(screenshotID)
+			((int)screenshotID)
 			((int)icon)
-			((int)messageType)
-			(QuoteSql(destinationName))
-			(QuoteSql(messageText))
-			(QuoteSql(data1))
+			((int)type)
+			(QuoteSql(destination))
+			(QuoteSql(message))
+			(QuoteSql(url))
 			.Str();
 
 		conn.executenonquery(sql);
 
-		ret = (int)conn.insertid();
+		ret = (EventID)conn.insertid();
 		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
@@ -354,32 +200,95 @@ int ScreenshotArchive::RegisterNewEvent(int screenshotID,
 	return ret;
 }
 
+void ScreenshotArchive::EventSetIcon(EventID id, EventIcon icon)
+{
+	if(!m_options.EnableArchive())
+		return;
+
+	try
+	{
+		sqlite3x::sqlite3_connection conn;
+		if(!OpenDatabase(conn)) return;
+
+		std::wstring sql = LibCC::Format("update Events set icon = %").i((int)icon).Str();
+
+		conn.executenonquery(sql);
+		conn.close();
+	}
+	catch(sqlite3x::database_error& er)
+	{
+		LibCC::g_pLog->Message(LibCC::Format("Database exception in EventSetIcon. %").qs(er.what()));
+	}
+}
+
+void ScreenshotArchive::EventSetText(EventID id, const std::wstring& msg)
+{
+	if(!m_options.EnableArchive())
+		return;
+
+	try
+	{
+		sqlite3x::sqlite3_connection conn;
+		if(!OpenDatabase(conn)) return;
+		std::wstring sql = LibCC::Format("update Events set eventText = '%'").s(QuoteSql(msg)).Str();
+		conn.executenonquery(sql);
+		conn.close();
+	}
+	catch(sqlite3x::database_error& er)
+	{
+		LibCC::g_pLog->Message(LibCC::Format("Database exception in EventSetText. %").qs(er.what()));
+	}
+}
+
+void ScreenshotArchive::EventSetURL(EventID id, const std::wstring& url)
+{
+	if(!m_options.EnableArchive())
+		return;
+
+	try
+	{
+		sqlite3x::sqlite3_connection conn;
+		if(!OpenDatabase(conn)) return;
+		std::wstring sql = LibCC::Format("update Events set url = '%'").s(QuoteSql(url)).Str();
+		conn.executenonquery(sql);
+		conn.close();
+	}
+	catch(sqlite3x::database_error& er)
+	{
+		LibCC::g_pLog->Message(LibCC::Format("Database exception in EventSetExtraData. %").qs(er.what()));
+	}
+}
+
+
 bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 {
 	std::wstring path = GetDBFilename(); 
 	bool openSuccessful = false;
+
+	std::wstring DatabaseVersion = L"1";
 
 	if(PathFileExists(path.c_str()))
 	{
 		try
 		{
 			out.open(path.c_str());
-			sqlite3x::sqlite3_command cmd(out, "select [intValue] from Settings where [Name] like 'Version'");
-			int i = cmd.executeint();
-			if(i == DatabaseVersion)
+			sqlite3x::sqlite3_command cmd(out, "select [stringValue] from Settings where [Name] like 'SchemaVersion'");
+			std::wstring cur = cmd.executestring16();
+
+			if(cur == GetDatabaseSchemaVersion())
 			{
 				openSuccessful = true;
 			}
 			else
 			{
-				LibCC::g_pLog->Message(LibCC::Format("Database % is the wrong version (it's %, but I expected %)").qs(path).i(i).i(DatabaseVersion));
+				LibCC::g_pLog->Message(LibCC::Format("Database % is the wrong version (it's %, but I expected %)").qs(path)(cur)(DatabaseVersion));
 				out.close();
 			}
 		}
 		catch(sqlite3x::database_error& er)
 		{
 			// no big deal; the database probable doesn't exist.
-			LibCC::g_pLog->Message(LibCC::Format("Database exception while opening %: %; trying to create a new database.").qs(path).qs(er.what()));
+			LibCC::g_pLog->Message(LibCC::Format("Database exception while opening %: %; trying to open a database.").qs(path).qs(er.what()));
 		}
 	}
 
@@ -387,13 +296,23 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 	{
 		try
 		{
+			out.close();
 			DeleteFile(path.c_str());
 			out.open(path.c_str());
 			// create schema
-			out.executenonquery("create table Settings ([Name] text, [intValue] int, [stringValue] text)");
-			out.executenonquery("create table Screenshots ([id] INTEGER PRIMARY KEY AUTOINCREMENT, [bitmapData] blob, [date] text)");
-			out.executenonquery("create table Events ([id] INTEGER PRIMARY KEY AUTOINCREMENT, screenshotID int, icon int, messageType int, destinationName text, messageText text, data1 text, [date] text)");
-			out.executenonquery(LibCC::Format("insert into Settings ([Name], [intValue]) values ('Version', %)")(DatabaseVersion).Str());
+			std::wstring createScript = LoadTextFileResource(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_SCHEMA), L"TEXT");
+
+			std::vector<std::wstring> commands;
+			LibCC::StringSplit(createScript, L";", std::back_inserter(commands));
+
+			for(std::vector<std::wstring>::iterator it = commands.begin(); it != commands.end(); ++ it)
+			{
+				std::wstring q = LibCC::StringTrim(*it, L"\r\n \t");
+				if(q.length())
+					out.executenonquery(q);
+			}
+
+			out.executenonquery(LibCC::Format("insert into Settings ([Name], [stringValue]) values ('SchemaVersion', '%')")(GetDatabaseSchemaVersion()).Str());
 			openSuccessful = true;
 		}
 		catch(sqlite3x::database_error& er)
@@ -408,5 +327,30 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 		return false;
 	}
 
+	sqlite3_enable_shared_cache(1);
 	return true;
+}
+
+extern "C" 
+void Curl_md5it(unsigned char *outbuffer, /* 16 bytes */
+                const unsigned char *input);
+	extern "C" size_t Curl_base64_encode(const char *input, size_t size, char **str);
+
+std::wstring ScreenshotArchive::GetDatabaseSchemaVersion()
+{
+	if(!m_schemaVersion.empty())
+		return m_schemaVersion;
+
+	// the schema version is just a MD5 of the original schema create script. so when the schema changes,
+	// the database knows to re-create.
+	unsigned char md5a[17] = {0};
+	std::wstring schemaTextW = LoadTextFileResource(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_SCHEMA), L"TEXT");
+	std::string schemaTextA = LibCC::ToMBCS(schemaTextW);
+	Curl_md5it(md5a, (const unsigned char*)schemaTextA.c_str());
+	char* encodedA;
+	Curl_base64_encode((const char*)md5a, 16, &encodedA);
+	std::string ret = encodedA;
+	free(encodedA);
+	m_schemaVersion = LibCC::ToUnicode(ret);
+	return m_schemaVersion;
 }

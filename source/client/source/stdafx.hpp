@@ -54,4 +54,9 @@ namespace util
 	using std::tr1::weak_ptr;
 };
 
+namespace Gdiplus
+{
+	typedef std::tr1::shared_ptr<Gdiplus::Bitmap> BitmapPtr;
+}
+
 #endif

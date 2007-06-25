@@ -113,3 +113,4 @@ inline AutoGdiBitmap LoadBitmapResource(LPCTSTR szResName, LPCTSTR szResType)
 }
 
 #endif
+

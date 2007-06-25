@@ -14,12 +14,10 @@ struct ScreenshotDestination
 {
 	enum Type
 	{
-		TYPE_NONE,
-		TYPE_FILE,
-		TYPE_FTP,
-		TYPE_EMAIL,
-		TYPE_CLIPBOARD//,
-		//TYPE_SCREENIENET
+		TYPE_NONE = 0,
+		TYPE_FILE = 1,
+		TYPE_FTP = 2,
+		TYPE_CLIPBOARD = 4
 	};
 
 	enum ScaleType
@@ -397,12 +395,8 @@ struct ScreenshotDestination
 				return tstd::tstring(_T("Save to Local File"));
 			case TYPE_FTP:
 				return tstd::tstring(_T("Upload via FTP"));
-			case TYPE_EMAIL:
-				return tstd::tstring(_T("Send Email"));
 			case TYPE_CLIPBOARD:
 				return tstd::tstring(_T("Copy to Clipboard"));
-			//case TYPE_SCREENIENET:
-			//	return tstd::tstring(_T("Screenie.net"));
 		}
 
 		return tstd::tstring(_T("Unknown"));
@@ -414,12 +408,8 @@ struct ScreenshotDestination
 			return TYPE_FILE;
 		if (description == tstd::tstring(_T("Upload via FTP")))
 			return TYPE_FTP;
-		if (description == tstd::tstring(_T("Send Email")))
-			return TYPE_EMAIL;
 		if (description == tstd::tstring(_T("Copy to Clipboard")))
 			return TYPE_CLIPBOARD;
-		//if (description == tstd::tstring(_T("Screenie.net")))
-		//	return TYPE_SCREENIENET;
 
 		return TYPE_NONE;
 	}

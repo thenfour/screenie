@@ -2,97 +2,9 @@
 
 #include "stdafx.hpp"
 #include "resource.h"
-#include "geom.h"
-#include "image.hpp"
 
 #include "clipboard.hpp"
 #include "StatusDlg.hpp"
-
-void ProgressImages::DrawHLine(long x1, long x2, long y)
-{
-  // draw horizontal line.
-  long xleft = min(x1, x2);
-  long xright = max(x1, x2) + 1;
-  while(xleft != xright)
-  {
-    m_bmp->SetPixel(xleft, y, PositionToColor(xleft, y));
-    xleft ++;
-  }
-}
-
-void ProgressImages::DrawAlphaPixel(long cx, long cy, long x, long y, long f, long fmax)
-{
-  m_bmp->SetPixel(cx+x, cy+y, MixColorsInt(f, fmax, PositionToColor(cx+x, cy+y), m_background));
-  m_bmp->SetPixel(cx+x, cy-y-1, MixColorsInt(f, fmax, PositionToColor(cx+x, cy-y-1), m_background));
-  m_bmp->SetPixel(cx-x-1, cy+y, MixColorsInt(f, fmax, PositionToColor(cx-x-1, cy+y), m_background));
-  m_bmp->SetPixel(cx-x-1, cy-y-1, MixColorsInt(f, fmax, PositionToColor(cx-x-1, cy-y-1), m_background));
-}
-
-// x and y are relative to the 
-RgbPixel32 ProgressImages::PositionToColor(long x, long y)
-{
-  if(m_i == m_perimeter) return m_filled;// 100% one is all filled.
-  float a = m_angles.GetAngle(x - m_radius, y - m_radius);// GetAngle() needs coords relative to the center of the circle
-
-  // rotate it 90 degrees counter-clockwise.
-  a += static_cast<float>(m_perimeter) / 4;
-  if(a < 0) a += m_perimeter;
-  if(a > m_perimeter) a -= m_perimeter;
-
-  /* to fake anti-aliasing inside the pie, just calculate using a narrow gradient.
-   --filled---k====a====l----unfilled------
-              |---------| = blur size.
-    the gradient is from k to l.  i may be anywhere in this diagram.
-  */
-  // get the distance from i to the center of the blurring window.
-  float aa = a + (m_pieBlurringSize / 2) - static_cast<float>(m_i);
-  if(aa <= 0) return m_filled;
-  if(aa > m_pieBlurringSize) return m_unfilled;
-  // multiply by 100 because we are casting to integer
-  return MixColorsInt(static_cast<long>(aa * 100.0f), static_cast<long>(m_pieBlurringSize * 100.0f), m_unfilled, m_filled);
-}
-
-void ProgressImages::InitializeProgressImages(CImageList& img, RgbPixel32 background, RgbPixel32 filled, RgbPixel32 unfilled)
-{
-  m_background = background;
-  m_unfilled = unfilled;
-  m_filled = filled;
-  m_diameter = 14;
-  m_radius = 7;
-  m_pieBlurringSize = 2;
-  m_perimeter = static_cast<int>(GetPI() * m_diameter);
-  m_background = background;
-  m_images.clear();
-  m_images.reserve(m_perimeter+1);
-
-  // add 1 for complete coverage, to be on the safe side.
-  m_angles.Resize(m_radius + 1, static_cast<float>(m_perimeter), 0);// the values returned from m_angles will be in the range 0-perimeter, or in other words, 0-m_images.size().
-
-  for(m_i = 0; m_i < m_perimeter; m_i ++)
-  {
-    m_bmp = new AnimBitmap<32>();
-    m_bmp->SetSize(16, 16);
-    m_bmp->Fill(m_background);
-	FilledCircleAAG(8, 8, m_radius, this, &ProgressImages::DrawHLine, this, &ProgressImages::DrawAlphaPixel);
-    // add it to the imagelist.
-    HBITMAP hbm = m_bmp->DetachHandle();
-    m_images.push_back(img.Add(hbm));
-    DeleteObject(hbm);
-    delete m_bmp;
-    m_bmp = 0;
-  }
-}
-
-int ProgressImages::GetImageFromProgress(int pos, int total)
-{
-  // pos / total = index / m_images.size();
-  int index = (int)(0.05f + (float)pos * (float)m_images.size() / (float)total);
-  // bounds checking.
-  if(index < 0) index = 0;
-  if(index >= (int)m_images.size()) index = m_images.size() - 1;
-  return m_images[index];
-}
-
 
 BOOL CStatusDlg::PreTranslateMessage(MSG* pMsg)
 {
@@ -174,7 +86,9 @@ LRESULT CStatusDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 
     // set up the list view for messages
 		m_listView = GetDlgItem(IDC_MESSAGES);
-    
+
+		m_activity.Attach(GetDlgItem(IDC_ACTIVITY));
+
     m_progress.InitializeProgressImages(m_imageList,
       COLORREFToRgbPixel32(m_listView.GetBkColor()),
       MakeRgbPixel32(222,123,16),
@@ -248,13 +162,13 @@ LRESULT CStatusDlg::OnRightClick(int idCtrl, LPNMHDR pnmh, BOOL& bHandled)
     switch(spec->type)
     {
     default:
-    case ITEM_GENERAL:
+    case ET_GENERAL:
       break;
-    case ITEM_FTP:
+    case ET_FTP:
       menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
       menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open URL..."), ID_OPENURL));
       break;
-    case ITEM_FILE:
+    case ET_FILE:
       menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy path"), ID_COPYURL));
       menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Explore..."), ID_EXPLORE));
       menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open file..."), ID_OPENFILE));
@@ -390,28 +304,31 @@ void CStatusDlg::CloseDialog(int nVal)
 	ShowWindow(SW_HIDE);
 }
 
-
-LPARAM CStatusDlg::AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url)
+ScreenshotID CStatusDlg::RegisterScreenshot(Gdiplus::BitmapPtr image)
 {
-  LPARAM ret = 0;
+//	ScreenshotID x = m_activity.RegisterScreenshot(image);
+	//return x;
+	return 0;
+}
+
+EventID CStatusDlg::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url)
+{
+  EventID ret = 0;
 
 	if (m_listView.IsWindow())
 	{
 		int itemID = m_listView.GetItemCount() + 1;
     ItemSpec* newSpec = new ItemSpec;
-    ret = reinterpret_cast<LPARAM>(newSpec);
+    ret = reinterpret_cast<EventID>(newSpec);
 
 		newSpec->archiveCookie = 0;
-		if(m_options.EnableArchive())
-		{
-			newSpec->archiveCookie = m_archive.RegisterNewEvent(m_screenshotArchiveCookie, icon, type, destination, message, url);
-		}
+		newSpec->archiveCookie = m_archive.RegisterEvent(screenshotID, icon, type, destination, message, url);
 
     newSpec->type = type;
     newSpec->url = url;
 
-		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), MessageIconToIconIndex(icon));
-		m_listView.SetItemData(itemID, ret);
+		itemID = m_listView.AddItem(itemID, 0, destination.c_str(), EventIconToIconIndex(icon));
+		m_listView.SetItemData(itemID, (LPARAM)ret);
 		m_listView.SetItemText(itemID, 1, message.c_str());
 
     m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
@@ -421,54 +338,57 @@ LPARAM CStatusDlg::AsyncCreateMessage(const MessageIcon icon, const MessageType 
   return ret;
 }
 
-void CStatusDlg::AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon)
+void CStatusDlg::EventSetIcon(EventID msgID, EventIcon icon)
 {
   CriticalSection::ScopeLock lock(m_cs);
   int item;
-  if(-1 != (item = MessageIDToItemID(msgID)))
+  if(-1 != (item = EventIDToItemID(msgID)))
   {
-    m_listView.SetItem(item, 0, LVIF_IMAGE, 0, MessageIconToIconIndex(icon), 0, 0, 0);
+    m_listView.SetItem(item, 0, LVIF_IMAGE, 0, EventIconToIconIndex(icon), 0, 0, 0);
+		m_archive.EventSetIcon(msgID, icon);
   }
 }
 
-void CStatusDlg::AsyncMessageSetProgress(LPARAM msgID, int pos, int total)
+void CStatusDlg::EventSetProgress(EventID msgID, int pos, int total)
 {
   int item;
-  if(-1 != (item = MessageIDToItemID(msgID)))
+  if(-1 != (item = EventIDToItemID(msgID)))
   {
     int iimage = m_progress.GetImageFromProgress(pos, total);
     if(pos >= total)
     {
       // 100% - use a special image.
-      iimage = MessageIconToIconIndex(MSG_CHECK);
+      iimage = EventIconToIconIndex(EI_CHECK);
     }
     m_listView.SetItem(item, 0, LVIF_IMAGE, 0, iimage, 0, 0, 0);
   }
 }
 
-void CStatusDlg::AsyncMessageSetText(LPARAM msgID, const tstd::tstring& msg)
+void CStatusDlg::EventSetText(EventID msgID, const tstd::tstring& msg)
 {
   int item;
-  if(-1 != (item = MessageIDToItemID(msgID)))
+  if(-1 != (item = EventIDToItemID(msgID)))
   {
     m_listView.SetItemText(item, 1, msg.c_str());
+		m_archive.EventSetText(msgID, msg);
   }
 }
 
-void CStatusDlg::AsyncMessageSetURL(LPARAM msgID, const tstd::tstring& url)
+void CStatusDlg::EventSetURL(EventID msgID, const tstd::tstring& url)
 {
-  ItemSpec* pItem = MessageIDToItemSpec(msgID);
+  ItemSpec* pItem = EventIDToItemSpec(msgID);
   if(pItem)
   {
     pItem->url = url;
+		m_archive.EventSetURL(msgID, url);
   }
 }
 
-int CStatusDlg::MessageIDToItemID(LPARAM msgID)
+int CStatusDlg::EventIDToItemID(EventID msgID)
 {
   LVFINDINFO fi = {0};
   fi.flags = LVFI_PARAM;
-  fi.lParam = msgID;
+  fi.lParam = (LPARAM)msgID;
   return m_listView.FindItem(&fi, -1);
 }
 
@@ -481,9 +401,9 @@ CStatusDlg::ItemSpec* CStatusDlg::ItemToItemSpec(int id)
   return 0;
 }
 
-CStatusDlg::ItemSpec* CStatusDlg::MessageIDToItemSpec(LPARAM msgID)
+CStatusDlg::ItemSpec* CStatusDlg::EventIDToItemSpec(EventID msgID)
 {
-  if(-1 == MessageIDToItemID(msgID))
+  if(-1 == EventIDToItemID(msgID))
   {
     return 0;
   }

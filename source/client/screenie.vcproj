@@ -396,14 +396,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\DestinationPropertiesEmail.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\DestinationPropertiesEmail.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\source\DestinationPropertiesFtp.cpp"
 				>
 			</File>
@@ -425,14 +417,6 @@
 			</File>
 			<File
 				RelativePath=".\source\DestinationPropertiesImage.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\DestinationPropertiesScreenie.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\DestinationPropertiesScreenie.hpp"
 				>
 			</File>
 			<File
@@ -496,6 +480,14 @@
 			Name="Archiving"
 			>
 			<File
+				RelativePath=".\source\ActivityList.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\ActivityList.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\ScreenshotArchive.cpp"
 				>
 			</File>
@@ -512,6 +504,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\source\ArchiveSchema.sql"
+			>
+		</File>
 	</Files>
 	<Globals>
 		<Global

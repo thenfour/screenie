@@ -17,8 +17,6 @@
 #include "DestinationPropertiesGeneral.hpp"
 #include "DestinationPropertiesImage.hpp"
 #include "DestinationPropertiesFtp.hpp"
-#include "DestinationPropertiesEmail.hpp"
-#include "DestinationPropertiesScreenie.hpp"
 
 class CDestinationProperties :
 	public CPropertySheetImpl<CDestinationProperties>,

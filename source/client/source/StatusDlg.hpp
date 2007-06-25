@@ -3,53 +3,12 @@
 
 #include "ScreenshotOptions.hpp"
 #include <vector>
-#include "polarlut.h"
-#include "animbitmap.h"
 #include "ScreenshotArchive.hpp"
+#include "ActivityList.hpp"
 
-
-class ProgressImages
-{
-public:
-  void InitializeProgressImages(CImageList& img, RgbPixel32 background, RgbPixel32 filled, RgbPixel32 unfilled);
-  int GetImageFromProgress(int pos, int total);
-private:
-  /*
-    this will hold linear from 0-perimiter.
-    assume that the image list indices will not change.
-  */
-  std::vector<int> m_images;
-  AngleLut<float> m_angles;
-
-  void DrawHLine(long x1, long x2, long y);
-  void DrawAlphaPixel(long cx, long cy, long x, long y, long f, long fmax);
-  RgbPixel32 PositionToColor(long x, long y);
-
-  // stuff that we persist between drawing calls
-  AnimBitmap<32>* m_bmp;
-  int m_i;
-
-  float m_pieBlurringSize;
-  int m_perimeter;
-  int m_diameter;
-  int m_radius;
-  RgbPixel32 m_background;
-  RgbPixel32 m_unfilled;
-  RgbPixel32 m_filled;
-};
-
-
-struct AsyncStatusWindow
-{
-  virtual LPARAM AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T("")) = 0;
-  virtual void AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon) = 0;
-  virtual void AsyncMessageSetProgress(LPARAM msgID, int pos, int total) = 0;
-  virtual void AsyncMessageSetText(LPARAM msgID, const tstd::tstring& msg) = 0;
-  virtual void AsyncMessageSetURL(LPARAM msgID, const tstd::tstring& url) = 0;
-};
 
 class CStatusDlg :
-	public AsyncStatusWindow,
+	public IActivity,
 	public CDialogImpl<CStatusDlg>,
 	public CMessageFilter,
 	public CDialogResize<CStatusDlg>
@@ -58,6 +17,7 @@ private:
 	CImageList m_imageList;
   ProgressImages m_progress;
 	CListViewCtrl m_listView;
+	ActivityList m_activity;
   ScreenshotOptions& m_options;
   ScreenshotArchive& m_archive;
 
@@ -72,14 +32,11 @@ private:
 public:
 	enum { IDD = IDD_STATUS };
 
-	int m_screenshotArchiveCookie;// for new messages. in a world where you could be processing multiple screenshots at the same time this would not be possible.
-
   CStatusDlg(ScreenshotOptions& options, ScreenshotArchive& archive) :
     m_options(options),
 		m_archive(archive),
     m_hIconSmall(0),
-    m_hIcon(0),
-		m_screenshotArchiveCookie(0)
+    m_hIcon(0)
   {
   }
 	virtual ~CStatusDlg()
@@ -114,18 +71,20 @@ public:
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CStatusDlg)
-		DLGRESIZE_CONTROL(IDC_MESSAGES, DLSZ_SIZE_X | DLSZ_SIZE_Y)
+		DLGRESIZE_CONTROL(IDC_MESSAGES, DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_ACTIVITY, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
 
 	//
-	// AsyncStatusWindow implementation
+	// IActivity implementation
 	//
-  LPARAM AsyncCreateMessage(const MessageIcon icon, const MessageType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url = _T(""));
-  void AsyncMessageSetIcon(LPARAM msgID, const MessageIcon icon);
-  void AsyncMessageSetProgress(LPARAM msgID, int pos, int total);
-  void AsyncMessageSetText(LPARAM msgID, const tstd::tstring& msg);
-  void AsyncMessageSetURL(LPARAM msgID, const tstd::tstring& url);
+	ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image);
+	EventID RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"");
+	void EventSetIcon(EventID eventID, EventIcon icon);
+	void EventSetProgress(EventID eventID, int pos, int total);
+	void EventSetText(EventID eventID, const std::wstring& msg);
+	void EventSetURL(EventID eventID, const std::wstring& url);
 
 	//
 	// message handlers and whatnot
@@ -163,29 +122,31 @@ private:
   */
   struct ItemSpec
   {
-    MessageType type;
+    EventType type;
     tstd::tstring url;
-		int archiveCookie;
+		EventID archiveCookie;
+		EventID activityListCookie;
+		ScreenshotID screenshotID;
   };
 
-  int MessageIDToItemID(LPARAM msgID);
-  ItemSpec* MessageIDToItemSpec(LPARAM msgID);// returns 0 if not found.
+  int EventIDToItemID(EventID msgID);
+  ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found.
   ItemSpec* ItemToItemSpec(int id);// returns 0 if not found.
   ItemSpec* GetSelectedItemSpec();// returns 0 if not found.
 
-  int MessageIconToIconIndex(const MessageIcon& t)
+  int EventIconToIconIndex(const EventIcon& t)
   {
     switch(t)
     {
-    case MSG_INFO:
+    case EI_INFO:
       return m_iconInfo;
-    case MSG_WARNING:
+    case EI_WARNING:
       return m_iconWarning;
-    case MSG_ERROR:
+    case EI_ERROR:
       return m_iconError;
-    case MSG_CHECK:
+    case EI_CHECK:
       return m_iconCheck;
-    case MSG_PROGRESS:
+    case EI_PROGRESS:
       return m_progress.GetImageFromProgress(0,1);// just return 0%
     }
     return m_iconError;

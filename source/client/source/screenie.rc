@@ -135,11 +135,12 @@ END
 IDD_STATUS DIALOGEX 0, 0, 258, 225
 STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_APPWINDOW
-CAPTION "Processing Status"
+CAPTION "Screenie Activity"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,201,204,50,14
-    CONTROL         "",IDC_MESSAGES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,244,191
+    DEFPUSHBUTTON   "Close",IDOK,201,204,50,14
+    CONTROL         "",IDC_MESSAGES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,244,177
+    CONTROL         "",IDC_ACTIVITY,"SysListView32",LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,188,244,12
 END
 
 IDD_DESTPROP_FTP DIALOGEX 0, 0, 235, 262
@@ -302,6 +303,9 @@ BEGIN
         RIGHTMARGIN, 251
         TOPMARGIN, 7
         BOTTOMMARGIN, 218
+        HORZGUIDE, 83
+        HORZGUIDE, 188
+        HORZGUIDE, 204
     END
 
     IDD_DESTPROP_FTP, DIALOG
@@ -430,6 +434,13 @@ END
 //
 
 IDB_HEADER              BITMAP                  "resources\\header.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXT
+//
+
+IDR_SCHEMA              TEXT                    "ArchiveSchema.sql"
 
 /////////////////////////////////////////////////////////////////////////////
 //

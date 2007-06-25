@@ -130,7 +130,7 @@ public:
 	}
 	void SetImageOrigin(const PointF& o, const char* reason)
 	{
-		//OutputDebugString(LibCC::Format("SetImageOrigin(%,%) : %|")(o.x)(o.y)(reason).CStr());
+		//LibCC::g_pLog->Message(LibCC::Format("SetImageOrigin(%,%) : %|")(o.x)(o.y)(reason).CStr());
 
 		if(!o.IsEqual(m_queued.view.GetImageOrigin(), 0.001))
 		{
