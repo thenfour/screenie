@@ -35,6 +35,7 @@ public:
   CStatusDlg(ScreenshotOptions& options, ScreenshotArchive& archive) :
     m_options(options),
 		m_archive(archive),
+		m_activity(archive),
     m_hIconSmall(0),
     m_hIcon(0)
   {
@@ -85,6 +86,8 @@ public:
 	void EventSetProgress(EventID eventID, int pos, int total);
 	void EventSetText(EventID eventID, const std::wstring& msg);
 	void EventSetURL(EventID eventID, const std::wstring& url);
+	void DeleteEvent(EventID eventID);
+	void DeleteScreenshot(ScreenshotID screenshotID);
 
 	//
 	// message handlers and whatnot
@@ -122,11 +125,11 @@ private:
   */
   struct ItemSpec
   {
+		ScreenshotID screenshotID;
     EventType type;
     tstd::tstring url;
-		EventID archiveCookie;
-		EventID activityListCookie;
-		ScreenshotID screenshotID;
+		EventID archiveID;
+		EventID activityListID;
   };
 
   int EventIDToItemID(EventID msgID);
@@ -151,6 +154,12 @@ private:
     }
     return m_iconError;
   }
+
+	// for THIS class's return ScreenshotID, well just use the Archive's returned ID.
+	// but i need a way to map that to activity's ScreenshotIDs.
+	typedef std::map<ScreenshotID, ScreenshotID> ScreenshotIDMap;// maps archive's IDs to activity list's
+	ScreenshotIDMap m_screenshotIDMap;
+	// NOTE that THIS class's returned EventIDs are pointers to ItemSpec, not any sequential ID.
 };
 
 #endif

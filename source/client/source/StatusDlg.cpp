@@ -306,9 +306,10 @@ void CStatusDlg::CloseDialog(int nVal)
 
 ScreenshotID CStatusDlg::RegisterScreenshot(Gdiplus::BitmapPtr image)
 {
-//	ScreenshotID x = m_activity.RegisterScreenshot(image);
-	//return x;
-	return 0;
+	ScreenshotID activityID = m_activity.RegisterScreenshot(image);
+	ScreenshotID archiveID = m_archive.RegisterScreenshot(image);
+	m_screenshotIDMap[archiveID] = activityID;
+	return archiveID;
 }
 
 EventID CStatusDlg::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const tstd::tstring& destination, const tstd::tstring& message, const tstd::tstring& url)
@@ -321,9 +322,8 @@ EventID CStatusDlg::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, Eve
     ItemSpec* newSpec = new ItemSpec;
     ret = reinterpret_cast<EventID>(newSpec);
 
-		newSpec->archiveCookie = 0;
-		newSpec->archiveCookie = m_archive.RegisterEvent(screenshotID, icon, type, destination, message, url);
-
+		newSpec->archiveID = m_archive.RegisterEvent(screenshotID, icon, type, destination, message, url);
+		newSpec->activityListID = m_activity.RegisterEvent(m_screenshotIDMap[screenshotID], icon, type, destination, message, url);
     newSpec->type = type;
     newSpec->url = url;
 
@@ -344,8 +344,15 @@ void CStatusDlg::EventSetIcon(EventID msgID, EventIcon icon)
   int item;
   if(-1 != (item = EventIDToItemID(msgID)))
   {
-    m_listView.SetItem(item, 0, LVIF_IMAGE, 0, EventIconToIconIndex(icon), 0, 0, 0);
-		m_archive.EventSetIcon(msgID, icon);
+	  ItemSpec* pItem = EventIDToItemSpec(msgID);
+		if(pItem)
+		{
+			m_listView.SetItem(item, 0, LVIF_IMAGE, 0, EventIconToIconIndex(icon), 0, 0, 0);
+
+			// forward
+			m_archive.EventSetIcon(pItem->archiveID, icon);
+			m_activity.EventSetIcon(pItem->activityListID, icon);
+		}
   }
 }
 
@@ -354,13 +361,21 @@ void CStatusDlg::EventSetProgress(EventID msgID, int pos, int total)
   int item;
   if(-1 != (item = EventIDToItemID(msgID)))
   {
-    int iimage = m_progress.GetImageFromProgress(pos, total);
-    if(pos >= total)
-    {
-      // 100% - use a special image.
-      iimage = EventIconToIconIndex(EI_CHECK);
-    }
-    m_listView.SetItem(item, 0, LVIF_IMAGE, 0, iimage, 0, 0, 0);
+	  ItemSpec* pItem = EventIDToItemSpec(msgID);
+		if(pItem)
+		{
+			int iimage = m_progress.GetImageFromProgress(pos, total);
+			if(pos >= total)
+			{
+				// 100% - use a special image.
+				iimage = EventIconToIconIndex(EI_CHECK);
+			}
+			m_listView.SetItem(item, 0, LVIF_IMAGE, 0, iimage, 0, 0, 0);
+
+			// forward
+			m_archive.EventSetProgress(pItem->archiveID, pos, total);
+			m_activity.EventSetProgress(pItem->activityListID, pos, total);
+		}
   }
 }
 
@@ -369,8 +384,14 @@ void CStatusDlg::EventSetText(EventID msgID, const tstd::tstring& msg)
   int item;
   if(-1 != (item = EventIDToItemID(msgID)))
   {
-    m_listView.SetItemText(item, 1, msg.c_str());
-		m_archive.EventSetText(msgID, msg);
+	  ItemSpec* pItem = EventIDToItemSpec(msgID);
+		if(pItem)
+		{
+			m_listView.SetItemText(item, 1, msg.c_str());
+
+			m_archive.EventSetText(pItem->archiveID, msg);
+			m_activity.EventSetText(pItem->activityListID, msg);
+		}
   }
 }
 
@@ -379,9 +400,33 @@ void CStatusDlg::EventSetURL(EventID msgID, const tstd::tstring& url)
   ItemSpec* pItem = EventIDToItemSpec(msgID);
   if(pItem)
   {
-    pItem->url = url;
-		m_archive.EventSetURL(msgID, url);
+		pItem->url = url;
+
+		m_archive.EventSetURL(pItem->archiveID, url);
+		m_activity.EventSetURL(pItem->activityListID, url);
   }
+}
+
+void CStatusDlg::DeleteEvent(EventID eventID)
+{
+  int item;
+  if(-1 != (item = EventIDToItemID(eventID)))
+  {
+		m_listView.DeleteItem(item);
+
+		ItemSpec* pItem = EventIDToItemSpec(eventID);
+		if(pItem)
+		{
+			m_archive.DeleteEvent(pItem->archiveID);
+			m_activity.DeleteEvent(pItem->activityListID);
+		}
+	}
+}
+
+void CStatusDlg::DeleteScreenshot(ScreenshotID screenshotID)
+{
+	m_archive.DeleteScreenshot(screenshotID);
+	m_activity.DeleteScreenshot(screenshotID);
 }
 
 int CStatusDlg::EventIDToItemID(EventID msgID)
@@ -414,3 +459,22 @@ CStatusDlg::ItemSpec* CStatusDlg::GetSelectedItemSpec()
 {
   return ItemToItemSpec(m_listView.GetSelectedIndex());
 }
+//
+//void CStatusDlg::ALE_OnDeleteScreenshot(ScreenshotID screenshotID)// screenshotID is the ACTIVITY LIST'n screenshotID
+//{
+//	ScreenshotID archiveScreenshotID;
+//	for(ScreenshotIDMap::const_iterator it = m_screenshotIDMap.begin(); it != m_screenshotIDMap.end(); ++ it)
+//	{
+//		if(it->second == screenshotID)
+//		{
+//			archiveScreenshotID = it->first;
+//			break;
+//		}
+//	}
+//	m_archive.DeleteScreenshot(archiveScreenshotID);
+//}
+//
+//void CStatusDlg::ALE_OnDeleteAll()
+//{
+//	m_archive.DeleteAll();
+//}

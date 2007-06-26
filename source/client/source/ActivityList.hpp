@@ -1,12 +1,11 @@
 /*
 Where do messages go?
 
-(destination.cpp) -> statusdlg -> activitylist
-                               -> archive
+(destination.cpp) -> statusdlg -> activitylist -> archive
 
-When do messages show up?
-when you first open it up, it shows all messages in the archive, period. thumbnails are cached in the database.
-
+It's simplest to forward messages like this. the ONLY time that the reverse flow needs to happen
+is when the archive self-cleans, and needs to tell the activitylist to remove something. No problem,
+that's what IArchiveNotifications is for.
 
 */
 
@@ -51,29 +50,33 @@ private:
 
 class ActivityList :
   public CWindowImpl<ActivityList>,
-	public IActivity
+	public IActivity,
+	public IArchiveNotifications
 {
-	CListViewCtrl m_ctl;
 public:
-	ActivityList() { }
+	ActivityList(ScreenshotArchive& archive) :
+		m_archive(archive)
+	{}
 
 	BEGIN_MSG_MAP(ActivityList)
 	END_MSG_MAP()
 
-	void Attach(HWND h)
-	{
-		m_ctl = h;
-		SubclassWindow(h);
-	}
+	void Attach(HWND h);
 
 	virtual ~ActivityList() { }
 
-	ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image){ return 0;}
-	EventID RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L""){return 0;}
-	void EventSetIcon(EventID eventID, EventIcon icon){}
-	void EventSetProgress(EventID eventID, int pos, int total){}
-	void EventSetText(EventID eventID, const std::wstring& msg){}
-	void EventSetURL(EventID eventID, const std::wstring& url){}
+	// IActivity
+	ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image);
+	EventID RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"");
+	void EventSetIcon(EventID eventID, EventIcon icon);
+	void EventSetProgress(EventID eventID, int pos, int total);
+	void EventSetText(EventID eventID, const std::wstring& msg);
+	void EventSetURL(EventID eventID, const std::wstring& url);
+	void DeleteEvent(EventID eventID);
+	void DeleteScreenshot(ScreenshotID screenshotID);
+
+	// IArchiveNotifications events
+	void OnPruneScreenshot(ScreenshotID screenshotID);
 
 private:
 	struct ItemSpec// attached to each item of a listview
@@ -98,6 +101,10 @@ private:
 	};
 
 	ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found.
+
+	CListViewCtrl m_ctl;
+
+	ScreenshotArchive& m_archive;
 };
 
 #endif

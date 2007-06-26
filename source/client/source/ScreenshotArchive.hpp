@@ -40,17 +40,32 @@ struct IActivity
   virtual void EventSetProgress(EventID eventID, int pos, int total) = 0;
   virtual void EventSetText(EventID eventID, const tstd::tstring& msg) = 0;
   virtual void EventSetURL(EventID eventID, const tstd::tstring& url) = 0;
+	virtual void DeleteEvent(EventID eventID) = 0;
+	virtual void DeleteScreenshot(ScreenshotID screenshotID) = 0;
 };
 
+// callback to hear when the archive deletes shit during its cleanup
+struct IArchiveNotifications
+{
+	virtual void OnPruneScreenshot(ScreenshotID screenshotID) = 0;
+};
 
 class ScreenshotArchive :
 	public IActivity
 {
+	friend class Screenshot;
 public:
 	ScreenshotArchive(ScreenshotOptions& opt);
 	~ScreenshotArchive();
 
-	class Event
+	// because modifications can actually come FROM this class (actually, only deletions can - when the db is being cleaned up)
+	// we need a method of notifying others about changes.
+	void SetListener(IArchiveNotifications* p)
+	{
+		m_pNotify = p;
+	}
+
+	struct Event
 	{
 		EventID id;
 		ScreenshotID screenshotID;
@@ -59,18 +74,36 @@ public:
 		std::wstring destinationName;
 		std::wstring messageText;
 		std::wstring url;
+		std::wstring date;
 	};
 
 	// basically the same as a message in the status dlg
 	class Screenshot
 	{
+		ScreenshotArchive* m_owner;
 	public:
-		int id;
+		Screenshot(ScreenshotArchive* owner);
+		Screenshot(const Screenshot& rhs) :
+			id(rhs.id),
+			m_owner(rhs.m_owner)
+		{
+		}
+		Screenshot& operator =(const Screenshot& rhs)
+		{
+			id = rhs.id;
+			m_owner = rhs.m_owner;
+			return *this;
+		}
+
+		ScreenshotID id;
 		util::shared_ptr<Gdiplus::Bitmap> RetrieveImage();
+		util::shared_ptr<Gdiplus::Bitmap> RetrieveThumbnail();
 		std::vector<Event> RetreiveEvents();// returns a list of events
 	};
 
 	std::vector<Screenshot> RetreiveScreenshots();
+
+	void DeleteAll();
 
 	// IActivity events
 	ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image);
@@ -79,8 +112,15 @@ public:
 	void EventSetProgress(EventID eventID, int pos, int total) { }// not implemented; this is not stored in the archive.
 	void EventSetText(EventID eventID, const std::wstring& msg);
 	void EventSetURL(EventID eventID, const std::wstring& url);
+	void DeleteEvent(EventID eventID);
+	void DeleteScreenshot(ScreenshotID screenshotID);
 
 private:
+	IArchiveNotifications* m_pNotify;
+
+	ScreenshotID m_nextScreenshotID;// used only when archiving is disabled so we still give out unique IDs
+	EventID m_nextEventID;// same deal.
+
 	ScreenshotOptions& m_options;
 
 	std::wstring m_schemaVersion;

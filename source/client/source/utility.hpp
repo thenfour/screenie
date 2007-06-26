@@ -247,9 +247,10 @@ protected:
 
 class BlobStream : public IStream
 {
-	LibCC::Blob<BYTE> m_blob;
-	size_t m_cursor;
 public:
+	size_t m_cursor;
+	LibCC::Blob<BYTE> m_blob;
+
 	BlobStream() :
 		m_cursor(0)
 	{

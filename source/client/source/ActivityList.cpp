@@ -91,3 +91,66 @@ int ProgressImages::GetImageFromProgress(int pos, int total)
   return m_images[index];
 }
 
+void ActivityList::Attach(HWND h)
+{
+	m_ctl = h;
+	SubclassWindow(h);
+	if(NULL == GetProp(m_ctl, _T("InitialPopulation")))
+	{
+		// populate the initial thingy
+		std::vector<ScreenshotArchive::Screenshot> screenshots = m_archive.RetreiveScreenshots();
+		for(std::vector<ScreenshotArchive::Screenshot>::iterator it = screenshots.begin(); it != screenshots.end(); ++ it)
+		{
+			// REGISTER IT HERE.
+
+			std::vector<ScreenshotArchive::Event> events = it->RetreiveEvents();
+			for(std::vector<ScreenshotArchive::Event>::iterator itEvent = events.begin(); itEvent != events.end(); ++ itEvent)
+			{
+				// REGISTER IT HERE.
+			}
+		}
+		SetProp(m_ctl, _T("InitialPopulation"), (HANDLE)1);
+	}
+}
+
+// IArchiveNotifications events
+void ActivityList::OnPruneScreenshot(ScreenshotID screenshotID)// screenshotID is the archives's screenshotID
+{
+	// REGISTER IT HERE.
+}
+
+
+ScreenshotID ActivityList::RegisterScreenshot(Gdiplus::BitmapPtr image)
+{
+	return 0;
+}
+
+EventID ActivityList::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
+{
+	return 0;
+}
+
+void ActivityList::EventSetIcon(EventID eventID, EventIcon icon)
+{
+}
+
+void ActivityList::EventSetProgress(EventID eventID, int pos, int total)
+{
+}
+
+void ActivityList::EventSetText(EventID eventID, const std::wstring& msg)
+{
+}
+
+void ActivityList::EventSetURL(EventID eventID, const std::wstring& url)
+{
+}
+
+void ActivityList::DeleteEvent(EventID eventID)
+{
+}
+
+void ActivityList::DeleteScreenshot(ScreenshotID screenshotID)
+{
+}
+
