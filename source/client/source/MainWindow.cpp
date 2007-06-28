@@ -54,7 +54,8 @@ BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool register
 {
 	RECT windowRect = { 0 };
 	HWND hWndForeground = ::GetForegroundWindow();
-	if(forceCropDlg || m_screenshotOptions.ShowCropWindow())
+
+	if(forceCropDlg || (m_screenshotOptions.GetScreenshotAction() == SA_SHOWCROP))
 	{
 		// show cropping dialog
 		CCropDlg cropDialog(screenshot, m_screenshotOptions);
@@ -62,7 +63,6 @@ BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool register
 		if (cropDialog.DoModal(0) == IDOK)
 		{
 			// if there is a selection, make that our screenshot
-
 			util::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
 			if (cropDialog.GetCroppedScreenshot(croppedScreenshot))
 			{
@@ -76,10 +76,11 @@ BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool register
 			return FALSE;
 		}
 	}
-	else if(m_screenshotOptions.ConfirmOptions())
+	else if(m_screenshotOptions.GetScreenshotAction() == SA_SHOWDESTINATIONS)
 	{
-	  BOOL handledDummy = FALSE;
-    OnConfigure(_T("Next..."));
+		CDestinationDlg dialog(m_screenshotOptions, L"Finish");
+		if(TRUE != dialog.DoModal())
+			return FALSE;
 	}
 
 	if (m_screenshotOptions.ShowStatus())

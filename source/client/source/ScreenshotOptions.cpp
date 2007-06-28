@@ -146,10 +146,10 @@ bool ScreenshotOptions::LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY
 		}
 
 		options.IncludeCursor(MainKey[KEY_INCLUDECURSOR].GetDWORD() != 0);
-		options.ShowCropWindow(MainKey[KEY_SHOWCROPPINGWINDOW].GetDWORD() != 0);
-		options.ConfirmOptions(MainKey[KEY_CONFIRMOPTIONS].GetDWORD() != 0);
+//		options.ShowCropWindow(MainKey[KEY_SHOWCROPPINGWINDOW].GetDWORD() != 0);
+//		options.ConfirmOptions(MainKey[KEY_CONFIRMOPTIONS].GetDWORD() != 0);
 		options.ShowStatus(MainKey[KEY_SHOWSTATUS].GetDWORD() != 0);
-		options.ShowSplash(MainKey[KEY_SHOWSPLASH].GetDWORD() != 0);
+//		options.ShowSplash(MainKey[KEY_SHOWSPLASH].GetDWORD() != 0);
 
     float fTemp;
     if(MainKey[KEY_CROPPINGZOOMFACTOR].GetValue(&fTemp, sizeof(fTemp)))
@@ -184,10 +184,11 @@ void ScreenshotOptions::Serialize(Xml::Element parent) const
 	Xml::Serialize(parent, KEY_DESTINATIONS, m_destinations);
 
 	Xml::Serialize(parent, L"IncludeCursor", m_includeCursor);
-	Xml::Serialize(parent, L"ConfirmOptions", m_confirmOptions);
+//	Xml::Serialize(parent, L"ConfirmOptions", m_confirmOptions);
 	Xml::Serialize(parent, L"ShowStatus", m_showStatus);
-	Xml::Serialize(parent, L"ShowCropWindow", m_showCropWindow);
-	Xml::Serialize(parent, L"ShowSplash", m_showSplash);
+//	Xml::Serialize(parent, L"ShowCropWindow", m_showCropWindow);
+	Xml::Serialize(parent, L"ScreenshotAction", ScreenshotActionToString(m_screenshotAction));
+	//Xml::Serialize(parent, L"ShowSplash", m_showSplash);
 	Xml::Serialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
 	Xml::Serialize(parent, L"EnableArchive", m_enableArchive);
 	Xml::Serialize(parent, L"ArchiveLimit", m_archiveLimit);
@@ -226,10 +227,11 @@ void ScreenshotOptions::Deserialize(Xml::Element parent)
 	Xml::Deserialize(parent, KEY_DESTINATIONS, m_destinations);
 
 	Xml::Deserialize(parent, L"IncludeCursor", m_includeCursor);
-	Xml::Deserialize(parent, L"ConfirmOptions", m_confirmOptions);
 	Xml::Deserialize(parent, L"ShowStatus", m_showStatus);
-	Xml::Deserialize(parent, L"ShowCropWindow", m_showCropWindow);
-	Xml::Deserialize(parent, L"ShowSplash", m_showSplash);
+	std::wstring stemp;
+	Xml::Deserialize(parent, L"ScreenshotAction", stemp);
+	m_screenshotAction = StringToScreenshotAction(stemp);
+
 	Xml::Deserialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
 	Xml::Deserialize(parent, L"EnableArchive", m_enableArchive);
 	Xml::Deserialize(parent, L"ArchiveLimit", m_archiveLimit);

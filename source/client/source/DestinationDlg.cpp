@@ -146,22 +146,25 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	// put the destinations on the list
 	PopulateDestinationList();
 
+	// populate the screenshot action combobox
+	CComboBox action(GetDlgItem(IDC_SCREENSHOTACTION));
+	action.AddString(ScreenshotActionToString(SA_NONE).c_str());
+	action.AddString(ScreenshotActionToString(SA_SHOWDESTINATIONS).c_str());
+	action.AddString(ScreenshotActionToString(SA_SHOWCROP).c_str());
+	AutoSetComboBoxHeight(action);
+
+	action.SelectString(0, ScreenshotActionToString(m_optionsCopy.GetScreenshotAction()).c_str());
+
   // set that OK button text.
   SetDlgItemText(IDOK, m_OKbuttonText.c_str());
 
 	// if necessary, check the checkboxes
 	if (m_optionsCopy.IncludeCursor())
 		CheckDlgButton(IDC_INCLUDECURSOR, BST_CHECKED);
-	if (m_optionsCopy.ShowCropWindow())
-		CheckDlgButton(IDC_CROPPING, BST_CHECKED);
-	if (m_optionsCopy.ConfirmOptions())
-		CheckDlgButton(IDC_CONFIRM, BST_CHECKED);
 	if (m_optionsCopy.ShowStatus())
 		CheckDlgButton(IDC_SHOWSTATUS, BST_CHECKED);
   if (m_optionsCopy.AutoStartup())
 		CheckDlgButton(IDC_AUTOSTART, BST_CHECKED);
-  if (m_optionsCopy.ShowSplash())
-    CheckDlgButton(IDC_SHOWSPLASH, BST_CHECKED);
 	if (m_optionsCopy.EnableArchive())
     CheckDlgButton(IDC_ENABLEARCHIVE, BST_CHECKED);
 
@@ -310,17 +313,8 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
   case IDC_AUTOSTART:
     m_optionsCopy.AutoStartup(checked);
 		break;
-  case IDC_SHOWSPLASH:
-    m_optionsCopy.ShowSplash(checked);
-		break;
 	case IDC_SHOWSTATUS:
  		m_optionsCopy.ShowStatus(checked);
-		break;
-	case IDC_CONFIRM:
-		m_optionsCopy.ConfirmOptions(checked);
-		break;
-	case IDC_CROPPING:
-		m_optionsCopy.ShowCropWindow(checked);
 		break;
 	case IDC_INCLUDECURSOR:
 		m_optionsCopy.IncludeCursor(checked);
@@ -337,6 +331,7 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
 LRESULT CDestinationDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	m_optionsCopy.ArchiveLimit(1024 * 1024 * GetDlgItemInt(IDC_ARCHIVELIMIT));
+	m_optionsCopy.SetScreenshotAction(StringToScreenshotAction(GetComboSelectionString(GetDlgItem(IDC_SCREENSHOTACTION))));
 	CloseDialog(true);
 
 	return 0;

@@ -6,6 +6,42 @@
 #include "serialization.h"
 #include "libcc/winapi.h"
 
+enum ScreenshotAction
+{
+	SA_NONE,
+	SA_SHOWCROP,
+	SA_SHOWDESTINATIONS
+};
+#define SA_NONE_STR L"Do nothing."
+#define SA_SHOWCROP_STR L"Edit the image."
+#define SA_SHOWDESTINATIONS_STR L"Show the options dialog."
+
+// NOTE that these strings are used for both the GUI and the options XML.
+inline std::wstring ScreenshotActionToString(ScreenshotAction sa)
+{
+	switch(sa)
+	{
+	case SA_NONE:
+		return SA_NONE_STR;
+	case SA_SHOWDESTINATIONS:
+		return SA_SHOWDESTINATIONS_STR;
+	}
+	return SA_SHOWCROP_STR;
+}
+inline ScreenshotAction StringToScreenshotAction(const std::wstring& s)
+{
+	std::wstring l = LibCC::StringToLower(s);
+	if(l == LibCC::StringToLower(SA_NONE_STR))
+	{
+		return SA_NONE;
+	}
+	else if(l == LibCC::StringToLower(SA_SHOWDESTINATIONS_STR))
+	{
+		return SA_SHOWDESTINATIONS;
+	}
+	return SA_SHOWCROP;
+}
+
 class ScreenshotOptions
 {
 public:
@@ -17,11 +53,12 @@ public:
     m_haveConfigPlacement(false),
 	  m_includeCursor(true),
 	  m_showStatus(true),
-	  m_confirmOptions(false),
-	  m_showCropWindow(true),
+		m_screenshotAction(SA_SHOWCROP),
+	  //m_confirmOptions(false),
+	  //m_showCropWindow(true),
     m_croppingZoomFactor(2.0f),
     m_autoStartup(true),
-    m_showSplash(true),
+    //m_showSplash(true),
 		m_savedInAppDir(false),
 		m_enableArchive(false),
 		m_archiveLimit(100000000)
@@ -35,10 +72,11 @@ public:
     m_autoStartup = copy.m_autoStartup;
 		m_includeCursor = copy.m_includeCursor;
 		m_showStatus = copy.m_showStatus;
-		m_confirmOptions = copy.m_confirmOptions;
-		m_showCropWindow = copy.m_showCropWindow;
+//		m_confirmOptions = copy.m_confirmOptions;
+//		m_showCropWindow = copy.m_showCropWindow;
+		m_screenshotAction = copy.m_screenshotAction;
     m_croppingZoomFactor = copy.m_croppingZoomFactor;
-    m_showSplash = copy.m_showSplash;
+//    m_showSplash = copy.m_showSplash;
 		m_enableArchive = copy.m_enableArchive;
 		m_archiveLimit = copy.m_archiveLimit;
 
@@ -61,10 +99,11 @@ public:
     m_autoStartup = rightHand.m_autoStartup;
 		m_includeCursor = rightHand.m_includeCursor;
 		m_showStatus = rightHand.m_showStatus;
-		m_confirmOptions = rightHand.m_confirmOptions;
-		m_showCropWindow = rightHand.m_showCropWindow;
+		//m_confirmOptions = rightHand.m_confirmOptions;
+		//m_showCropWindow = rightHand.m_showCropWindow;
+		m_screenshotAction = rightHand.m_screenshotAction;
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
-    m_showSplash = rightHand.m_showSplash;
+    //m_showSplash = rightHand.m_showSplash;
 		m_enableArchive = rightHand.m_enableArchive;
 		m_archiveLimit = rightHand.m_archiveLimit;
 
@@ -135,17 +174,20 @@ public:
   bool AutoStartup() const { return m_autoStartup; }
   void AutoStartup(bool b) { m_autoStartup = b; }
 
-  bool ShowSplash() const { return m_showSplash; }
-  void ShowSplash(bool b) { m_showSplash = b; }
+  //bool ShowSplash() const { return m_showSplash; }
+  //void ShowSplash(bool b) { m_showSplash = b; }
 
 	bool ShowStatus() { return m_showStatus; }
 	void ShowStatus(bool newval) { m_showStatus = newval; }
 
-	bool ConfirmOptions() { return m_confirmOptions; }
-	void ConfirmOptions(bool newval) { m_confirmOptions = newval; }
+	ScreenshotAction GetScreenshotAction() const { return m_screenshotAction; }
+	void SetScreenshotAction(ScreenshotAction sa) { m_screenshotAction = sa; }
 
-	bool ShowCropWindow() { return m_showCropWindow; }
-	void ShowCropWindow(bool newval) { m_showCropWindow = newval; }
+	//bool ConfirmOptions() { return m_confirmOptions; }
+	//void ConfirmOptions(bool newval) { m_confirmOptions = newval; }
+
+	//bool ShowCropWindow() { return m_showCropWindow; }
+	//void ShowCropWindow(bool newval) { m_showCropWindow = newval; }
 
 	bool EnableArchive() const { return m_enableArchive; }
 	void EnableArchive(bool newval) { m_enableArchive = newval; }
@@ -263,9 +305,10 @@ private:
 	bool m_autoStartup;
 	bool m_includeCursor;
 	bool m_showStatus;
-	bool m_confirmOptions;
-	bool m_showCropWindow;
-  bool m_showSplash;
+	//bool m_confirmOptions;
+	//bool m_showCropWindow;
+  //bool m_showSplash;
+	ScreenshotAction m_screenshotAction;
 
 	bool m_enableArchive;
 	int m_archiveLimit;

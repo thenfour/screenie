@@ -84,10 +84,6 @@ CAPTION "Screenie Options"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     CONTROL         "",IDC_DESTINATIONS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,16,133,236,47
-    CONTROL         "Confirm destinations before saving screenshots",IDC_CONFIRM,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,20,174,12
-    CONTROL         "Show cropping window before saving screenshots",IDC_CROPPING,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,32,178,12
     CONTROL         "Include cursor in screenshots",IDC_INCLUDECURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,44,107,12
     CONTROL         "Show status window during processing",IDC_SHOWSTATUS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,56,135,12
@@ -105,6 +101,8 @@ BEGIN
     LTEXT           "megabytes",IDC_LIMITARCHIVESTATIC2,169,94,36,8
     CONTROL         "Archive screenshots",IDC_ENABLEARCHIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,82,81,10
     LTEXT           "Limit archive database to ",IDC_LIMITARCHIVESTATIC1,38,94,83,8
+    COMBOBOX        IDC_SCREENSHOTACTION,16,29,236,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "When a screenshot is taken,",IDC_STATIC,16,19,92,8
 END
 
 IDD_DESTPROP_GENERAL DIALOGEX 0, 0, 235, 262
@@ -260,6 +258,7 @@ BEGIN
         VERTGUIDE, 252
         TOPMARGIN, 7
         BOTTOMMARGIN, 231
+        HORZGUIDE, 27
         HORZGUIDE, 119
         HORZGUIDE, 186
         HORZGUIDE, 214

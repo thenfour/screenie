@@ -33,11 +33,6 @@ public:
     if(m_hIconSmall) DestroyIcon(m_hIconSmall);
 	}
 
-	//ScreenshotOptions GetOptions() const
-	//{
-	//	return m_optionsCopy;
-	//}
-
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 	BEGIN_MSG_MAP(CDestinationDlg)
@@ -67,8 +62,7 @@ public:
 
 	BEGIN_DLGRESIZE_MAP(CDestinationDlg)
     DLGRESIZE_CONTROL(IDC_GENERAL_GROUP, DLSZ_SIZE_X)
-		DLGRESIZE_CONTROL(IDC_CONFIRM, DLSZ_SIZE_X)
-		DLGRESIZE_CONTROL(IDC_CROPPING, DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_SCREENSHOTACTION, DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_INCLUDECURSOR, DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_SHOWSTATUS, DLSZ_SIZE_X)
 
