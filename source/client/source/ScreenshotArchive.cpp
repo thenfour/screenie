@@ -384,7 +384,7 @@ void ScreenshotArchive::EventSetIcon(EventID id, EventIcon icon)
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn)) return;
 
-		std::wstring sql = LibCC::Format("update Events set icon = %").i((int)icon).Str();
+		std::wstring sql = LibCC::Format("update Events set icon = % where id=%").i((int)icon).i((int)id).Str();
 
 		conn.executenonquery(sql);
 		conn.close();
@@ -404,7 +404,7 @@ void ScreenshotArchive::EventSetText(EventID id, const std::wstring& msg)
 	{
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn)) return;
-		std::wstring sql = LibCC::Format("update Events set eventText = '%'").s(QuoteSql(msg)).Str();
+		std::wstring sql = LibCC::Format("update Events set eventText = '%' where id=%").s(QuoteSql(msg)).i((int)id).Str();
 		conn.executenonquery(sql);
 		conn.close();
 	}
@@ -423,7 +423,7 @@ void ScreenshotArchive::EventSetURL(EventID id, const std::wstring& url)
 	{
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn)) return;
-		std::wstring sql = LibCC::Format("update Events set url = '%'").s(QuoteSql(url)).Str();
+		std::wstring sql = LibCC::Format("update Events set url = '%' where id=%").s(QuoteSql(url)).i((int)id).Str();
 		conn.executenonquery(sql);
 		conn.close();
 	}

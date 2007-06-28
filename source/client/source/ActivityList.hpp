@@ -200,11 +200,13 @@ private:
 
 	ItemSpec* GetFocusedItem() const;
 	std::vector<ItemSpec*> GetSelectedItems() const;
-	ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found. does not fill in listIndex.
-	ItemSpec* ScreenshotIDToItemSpec(ScreenshotID screenshotID);
+	//ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found. does not fill in listIndex.
+	//ItemSpec* ScreenshotIDToItemSpec(ScreenshotID screenshotID);
 	ItemSpec* EventIDToItemSpecWithListIndex(EventID id);
 	ItemSpec* GetFirstSelectedItem() const;
 	ItemSpec* GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const;
+
+	void RedrawItem(ItemSpec*);
 };
 
 #endif

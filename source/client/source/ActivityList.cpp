@@ -204,6 +204,16 @@ void ActivityList::DeleteScreenshot(ScreenshotID screenshotID)
 	InternalDeleteScreenshot(screenshotID);
 }
 
+// make sure the list index is correct.
+void ActivityList::RedrawItem(ItemSpec* i)
+{
+	// UMMM how the F do you tell the listbox to redraw a single item? i guess this is the only way
+	RECT rc;
+	if(LB_ERR == m_ctl.GetItemRect(i->listIndex, &rc))
+		return;
+	m_ctl.InvalidateRect(&rc, FALSE);
+}
+
 
 void ActivityList::InternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail)
 {
@@ -241,16 +251,18 @@ void ActivityList::InternalRegisterEvent(EventID archiveEventID, ScreenshotID sc
 
 void ActivityList::InternalEventSetIcon(EventID eventID, EventIcon icon)
 {
-	ItemSpec* item = EventIDToItemSpec(eventID);
+	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
 	item->icon = icon;
 	item->imageIndex = EventIconToIconIndex(icon);
+
+	RedrawItem(item);
 }
 
 void ActivityList::InternalEventSetProgress(EventID eventID, int pos, int total)
 {
-	ItemSpec* item = EventIDToItemSpec(eventID);
+	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
 	item->imageIndex = m_progress.GetImageFromProgress(pos, total);
@@ -259,19 +271,21 @@ void ActivityList::InternalEventSetProgress(EventID eventID, int pos, int total)
 		// 100% - use a special image.
 		item->imageIndex = EventIconToIconIndex(EI_CHECK);
 	}
+	RedrawItem(item);
 }
 
 void ActivityList::InternalEventSetText(EventID eventID, const std::wstring& msg)
 {
-	ItemSpec* item = EventIDToItemSpec(eventID);
+	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
 	item->msg = msg;
+	RedrawItem(item);
 }
 
 void ActivityList::InternalEventSetURL(EventID eventID, const std::wstring& url)
 {
-	ItemSpec* item = EventIDToItemSpec(eventID);
+	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
 	item->url = url;
@@ -282,7 +296,6 @@ void ActivityList::InternalDeleteEvent(EventID eventID)
 	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
-	// delete this item.
 	m_ctl.DeleteString(item->listIndex);
 }
 
@@ -294,33 +307,37 @@ void ActivityList::InternalDeleteScreenshot(ScreenshotID screenshotID)
 		m_ctl.DeleteString(item->listIndex);
 	}
 }
-
-ActivityList::ItemSpec* ActivityList::EventIDToItemSpec(EventID msgID)
-{
-	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
-	{
-		if(it->type == ItemSpec::Event && it->eventID == msgID)
-			return &(*it);
-	}
-	return 0;
-}
-
-ActivityList::ItemSpec* ActivityList::ScreenshotIDToItemSpec(ScreenshotID screenshotID)
-{
-	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
-	{
-		if(it->type == ItemSpec::Screenshot && it->screenshotID == screenshotID)
-			return &(*it);
-	}
-	return 0;
-}
+//
+//ActivityList::ItemSpec* ActivityList::EventIDToItemSpec(EventID msgID)
+//{
+//	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
+//	{
+//		if(it->type == ItemSpec::Event && it->eventID == msgID)
+//			return &(*it);
+//	}
+//	return 0;
+//}
+//
+//ActivityList::ItemSpec* ActivityList::ScreenshotIDToItemSpec(ScreenshotID screenshotID)
+//{
+//	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
+//	{
+//		if(it->type == ItemSpec::Screenshot && it->screenshotID == screenshotID)
+//			return &(*it);
+//	}
+//	return 0;
+//}
 
 LRESULT ActivityList::OnDrawItem(DRAWITEMSTRUCT& dis, BOOL& bHandled)
 {
 	bHandled = TRUE;
-	if(dis.itemID == -1) return 0;
+	if(dis.itemID == -1)
+	{
+		return 0;
+	}
 
 	ItemSpec& item = *((ItemSpec*)dis.itemData);
+	LibCC::g_pLog->Message(LibCC::Format("DrawItem i=%, msg=%")(dis.itemID).qs(item.msg));
 
 	SetBkMode(dis.hDC, TRANSPARENT);
 
@@ -347,8 +364,13 @@ LRESULT ActivityList::OnDrawItem(DRAWITEMSTRUCT& dis, BOOL& bHandled)
 		}
 		break;
 	case ItemSpec::Event:
-		DrawText(dis.hDC, item.msg.c_str(), item.msg.size(), &dis.rcItem, 0);
-		break;
+		{
+			CRect rc(dis.rcItem);
+			rc.left += 20;
+			DrawText(dis.hDC, item.msg.c_str(), item.msg.size(), &rc, 0);
+			m_imageList.Draw(dis.hDC, item.imageIndex, dis.rcItem.left, dis.rcItem.top, ILD_NORMAL);
+			break;
+		}
 	default:
 		// no man's land.
 		break;
@@ -613,6 +635,7 @@ std::vector<ActivityList::ItemSpec*> ActivityList::GetSelectedItems() const
 
 ActivityList::ItemSpec* ActivityList::EventIDToItemSpecWithListIndex(EventID id)
 {
+	// it would be nice if there was an easier way of doing this.
 	for(int i = 0; i < m_ctl.GetCount(); i ++)
 	{
 		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(i);
@@ -627,6 +650,7 @@ ActivityList::ItemSpec* ActivityList::EventIDToItemSpecWithListIndex(EventID id)
 
 ActivityList::ItemSpec* ActivityList::GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const
 {
+	// it would be nice if there was an easier way of doing this.
 	for(int i = 0; i < m_ctl.GetCount(); i ++)
 	{
 		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(i);
