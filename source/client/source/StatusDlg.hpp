@@ -35,7 +35,7 @@ public:
   CStatusDlg(ScreenshotOptions& options, ScreenshotArchive& archive) :
     m_options(options),
 		m_archive(archive),
-		m_activity(archive),
+		m_activity(archive, options),
     m_hIconSmall(0),
     m_hIcon(0)
   {

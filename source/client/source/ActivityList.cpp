@@ -5,6 +5,7 @@
 #include "geom.h"
 #include "image.hpp"
 #include "Clipboard.hpp"
+#include "MainWindow.hpp"
 
 
 void ProgressImages::DrawHLine(long x1, long x2, long y)
@@ -400,38 +401,41 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 		switch(spec->type)
 		{
 		case ItemSpec::Screenshot:
-			// nothing good here..
 				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Re-process..."), ID_REPROCESS));
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear"), ID_CLEAR));
 			break;
 		case ItemSpec::Event:
-			switch(spec->eventType)
 			{
-			default:
-			case ET_GENERAL:
-				break;
-			case ET_FTP:
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open URL..."), ID_OPENURL));
-				break;
-			case ET_FILE:
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy path"), ID_COPYURL));
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Explore..."), ID_EXPLORE));
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open file..."), ID_OPENFILE));
+				switch(spec->eventType)
+				{
+				default:
+				case ET_GENERAL:
+					break;
+				case ET_FTP:
+					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
+					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open URL..."), ID_OPENURL));
+					break;
+				case ET_FILE:
+					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy path"), ID_COPYURL));
+					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Explore..."), ID_EXPLORE));
+					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open file..."), ID_OPENFILE));
+					break;
+				}
+				// append global items
+				if(pos > 0)
+				{
+					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
+				}
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear"), ID_CLEAR));
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
 				break;
 			}
-			break;
 		default:
 			// no man's land.
 			break;
 		}
   }  
-  // append global items
-  if(pos > 0)
-  {
-    menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
-  }
-  menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
-  menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
 
 	POINT cursorPos = { 0 };
 	::GetCursorPos(&cursorPos);
@@ -526,9 +530,14 @@ LRESULT ActivityList::OnRemove(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/,
 	return 0;
 }
 
+extern CMainWindow* g_mainWindow;
+
 LRESULT ActivityList::OnReprocess(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	// TODO
+	ItemSpec* item = GetFocusedItem();
+	if(!item)
+		return 0;
+	::PostMessage(*g_mainWindow, CMainWindow::WM_REPROCESSSCREENSHOT, 0, (LPARAM)item->screenshotID);
 	return 0;
 }
 

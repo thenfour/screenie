@@ -55,7 +55,8 @@ public:
 	enum {
 		WM_NOTIFYICON = WM_APP + 1,
 		WM_SHOWSCREENIE = WM_APP + 2,
-		WM_TAKESCREENSHOT = WM_APP + 3
+		WM_TAKESCREENSHOT = WM_APP + 3,
+		WM_REPROCESSSCREENSHOT = WM_APP + 4
 	};
 
   CMainWindow(ScreenshotOptions& options, ScreenshotArchive& archive) :
@@ -77,6 +78,7 @@ public:
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_NOTIFYICON, OnNotifyIcon)
 		MESSAGE_HANDLER(WM_TAKESCREENSHOT, OnTakeScreenshot)
+		MESSAGE_HANDLER(WM_REPROCESSSCREENSHOT, OnReprocessScreenshot)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(m_uTaskbarCreatedMsg, OnTaskbarCreated)
 
@@ -89,6 +91,7 @@ public:
 	BOOL DisplayTrayMenu();
 
 	BOOL TakeScreenshot(const POINT& cursorPos, BOOL altDown);
+	BOOL ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool registerInArchive, bool forceCropDlg);
 
 	//
 	// message handlers
@@ -98,6 +101,7 @@ public:
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnNotifyIcon(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnReprocessScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnClose(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
   {

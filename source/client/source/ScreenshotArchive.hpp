@@ -102,6 +102,12 @@ public:
 	};
 
 	std::vector<Screenshot> RetreiveScreenshots();
+	Screenshot GetScreenshot(ScreenshotID id)
+	{
+		Screenshot ret(this);
+		ret.id = id;
+		return ret;
+	}
 
 	void DeleteAll();
 

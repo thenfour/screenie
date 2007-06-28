@@ -63,8 +63,9 @@ public:
   static const short ID_OPENURL = 4005;
   static const short ID_REPROCESS = 4006;
 
-	ActivityList(ScreenshotArchive& archive) :
+	ActivityList(ScreenshotArchive& archive, ScreenshotOptions& options) :
 		m_archive(archive),
+		m_options(options),
 		m_currentlyInsertingItem(0),
 		m_itemHeight(0)
 	{
@@ -164,6 +165,7 @@ private:
 	ItemSpec* m_currentlyInsertingItem;
 
 	ScreenshotArchive& m_archive;
+	ScreenshotOptions& m_options;
 
 	// rendering stuff
 	CBrush m_brushNormal;

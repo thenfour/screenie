@@ -38,78 +38,82 @@ BOOL CMainWindow::DisplayTrayMenu()
 	return TRUE;
 }
 
+
 BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 {
-	RECT windowRect = { 0 };
-	HWND hWndForeground = ::GetForegroundWindow();
-
 	CBitmap screenshotBitmap;
 	if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 	{
 		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
+		return ProcessScreenshot(screenshot, true, false);
+	}
+	return FALSE;
+}
 
-	  if (m_screenshotOptions.ConfirmOptions())
-	  {
-		  BOOL handledDummy = FALSE;
-      OnConfigure(_T("Next..."));
-	  }
+BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool registerInArchive, bool forceCropDlg)
+{
+	RECT windowRect = { 0 };
+	HWND hWndForeground = ::GetForegroundWindow();
+	if(forceCropDlg || m_screenshotOptions.ShowCropWindow())
+	{
+		// show cropping dialog
+		CCropDlg cropDialog(screenshot, m_screenshotOptions);
 
-		if (m_screenshotOptions.ShowCropWindow())
+		if (cropDialog.DoModal(0) == IDOK)
 		{
-			// show cropping dialog
-			CCropDlg cropDialog(screenshot, m_screenshotOptions);
+			// if there is a selection, make that our screenshot
 
-			if (cropDialog.DoModal(0) == IDOK)
+			util::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
+			if (cropDialog.GetCroppedScreenshot(croppedScreenshot))
 			{
-				// if there is a selection, make that our screenshot
-
-				util::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
-				if (cropDialog.GetCroppedScreenshot(croppedScreenshot))
-				{
-					// shared_ptr's value semantics take care of the destruction
-					// of the previous pointed-to bitmap data
-					screenshot = croppedScreenshot;
-				}
-			}
-			else
-			{
-				return FALSE;
+				// shared_ptr's value semantics take care of the destruction
+				// of the previous pointed-to bitmap data
+				screenshot = croppedScreenshot;
 			}
 		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	else if(m_screenshotOptions.ConfirmOptions())
+	{
+	  BOOL handledDummy = FALSE;
+    OnConfigure(_T("Next..."));
+	}
 
-		if (m_screenshotOptions.ShowStatus())
-    {
-      ShowStatusWindow();
-    }
+	if (m_screenshotOptions.ShowStatus())
+  {
+    ShowStatusWindow();
+  }
 
-		// create a thumbnail for the history window
-		util::shared_ptr<Gdiplus::Bitmap> thumbnail;
-		ResizeBitmap(thumbnail, *screenshot, 100);
-		ScreenshotID screenshotID = m_statusDialog.RegisterScreenshot(screenshot, thumbnail);
+	// create a thumbnail for the history window
+	util::shared_ptr<Gdiplus::Bitmap> thumbnail;
+	ResizeBitmap(thumbnail, *screenshot, 100);
+	ScreenshotID screenshotID = m_statusDialog.RegisterScreenshot(screenshot, thumbnail);
 
-    unsigned threadID;
-    ThreadParams params;
+  unsigned threadID;
+  ThreadParams params;
 
-    params.options = m_screenshotOptions;// creates a copy for thread safety
-    params.pThis = this;
-    params.screenshot = screenshot;
-		params.screenshotID = screenshotID;
+  params.options = m_screenshotOptions;// creates a copy for thread safety
+  params.pThis = this;
+  params.screenshot = screenshot;
+	params.screenshotID = screenshotID;
 	params.windowTitle = GetWindowString(hWndForeground);
 
-    HANDLE hThread = (HANDLE)_beginthreadex(0, 0, ProcessDestinationsThreadProc, &params, 0, &threadID);
-    while(WAIT_TIMEOUT == WaitForSingleObject(hThread, 0))
+  HANDLE hThread = (HANDLE)_beginthreadex(0, 0, ProcessDestinationsThreadProc, &params, 0, &threadID);
+  while(WAIT_TIMEOUT == WaitForSingleObject(hThread, 0))
+  {
+    Sleep(1);
+    // cycle the message loop.
+    MSG msg;
+    while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
     {
-      Sleep(1);
-      // cycle the message loop.
-      MSG msg;
-      while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-      {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-      }
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
     }
-    CloseHandle(hThread);
   }
+  CloseHandle(hThread);
 
 	return TRUE;
 }
@@ -207,6 +211,33 @@ LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BO
 	return 0;
 
 }
+
+LRESULT CMainWindow::OnReprocessScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+  ScopedGUIEntry ee;
+  if(ee.Enter())
+  {
+		Gdiplus::BitmapPtr screenshot = m_archive.GetScreenshot((ScreenshotID)lParam).RetrieveImage();
+		if(!screenshot)
+		{
+			// no reason to check options for archive enabled, because there are other runtime reasons for the archive
+			// to be disabled, like if there were errors in opening the database originally.
+			MessageBox(L"Unfortunately, Screenie is unable to reprocess this screenshot. The most likely cause is that archiving may be disabled.", L"Screenie", MB_OK | MB_ICONEXCLAMATION);
+		}
+		else
+		{
+			ProcessScreenshot(screenshot, false, true);
+		}
+  }
+	else
+	{
+		MessageBox(L"Screenie is already busy processing. Try again later.", L"Screenie", MB_OK | MB_ICONEXCLAMATION);
+	}
+	return 0;
+
+}
+
+
 LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
   if(m_statusDialog.IsWindow())// prevent assertions from wtl
