@@ -79,7 +79,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\..\bin-release"
+			OutputDirectory="obj-release"
 			IntermediateDirectory="obj-release"
 			ConfigurationType="4"
 			CharacterSet="1"

@@ -140,7 +140,6 @@ private:
 		type;
 
 		// for screenshots
-		ScreenshotID screenshotID;
 		Gdiplus::BitmapPtr thumb;
 
 		// for events
@@ -152,10 +151,12 @@ private:
 		std::wstring url;
 
 		// for all
+		ScreenshotID screenshotID;
 		std::wstring date;
 
 		// only valid sometimes...
 		int listIndex;
+		int imageIndex;
 	};
 	std::list<ItemSpec> m_items;
 
@@ -172,10 +173,38 @@ private:
 	CBrush m_brushSelected;
 	int m_itemHeight;
 
+	CImageList m_imageList;
+  ProgressImages m_progress;
+  int m_iconInfo;
+  int m_iconWarning;
+  int m_iconError;
+  int m_iconCheck;
+  int EventIconToIconIndex(const EventIcon& t)
+  {
+    switch(t)
+    {
+    case EI_INFO:
+      return m_iconInfo;
+    case EI_WARNING:
+      return m_iconWarning;
+    case EI_ERROR:
+      return m_iconError;
+    case EI_CHECK:
+      return m_iconCheck;
+    case EI_PROGRESS:
+      return m_progress.GetImageFromProgress(0,1);// just return 0%
+    }
+    return m_iconError;
+  }
+
+
 	ItemSpec* GetFocusedItem() const;
 	std::vector<ItemSpec*> GetSelectedItems() const;
-	ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found.
+	ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found. does not fill in listIndex.
 	ItemSpec* ScreenshotIDToItemSpec(ScreenshotID screenshotID);
+	ItemSpec* EventIDToItemSpecWithListIndex(EventID id);
+	ItemSpec* GetFirstSelectedItem() const;
+	ItemSpec* GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const;
 };
 
 #endif

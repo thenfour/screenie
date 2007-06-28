@@ -107,6 +107,25 @@ void ActivityList::Attach(HWND h)
 	delete gfx;
 	ReleaseDC(hdc);
 
+	// create and populate image list for message icons
+	if (m_imageList.Create(16, 16, ILC_COLOR32, 2, 0))
+	{
+		m_iconInfo = m_imageList.AddIcon(::LoadIcon(NULL, IDI_INFORMATION));
+    m_iconWarning = m_imageList.AddIcon(::LoadIcon(NULL, IDI_WARNING));
+		m_iconError = m_imageList.AddIcon(::LoadIcon(NULL, IDI_ERROR));
+
+    HICON hCheck = (HICON)::LoadImage(_Module.GetResourceInstance(),
+			MAKEINTRESOURCE(IDI_CHECK), IMAGE_ICON, 16, 16, 0);
+    m_iconCheck = m_imageList.AddIcon(hCheck);
+    DestroyIcon(hCheck);
+	}
+
+  m_progress.InitializeProgressImages(m_imageList,
+    COLORREFToRgbPixel32(GetSysColor(COLOR_WINDOWTEXT)),
+    MakeRgbPixel32(222,123,16),
+    MakeRgbPixel32(0,40,86));
+
+
 	if(NULL == GetProp(m_ctl, _T("InitialPopulation")))
 	{
 		// populate the initial thingy
@@ -205,12 +224,14 @@ void ActivityList::InternalRegisterEvent(EventID archiveEventID, ScreenshotID sc
 	m_items.push_back(ItemSpec());
 	ItemSpec& pnew = m_items.back();
 	pnew.type = ItemSpec::Event;
+	pnew.screenshotID = screenshotID;
 	pnew.eventType = type;
 	pnew.eventID = archiveEventID;
 	pnew.destination = destination;
 	pnew.icon = icon;
 	pnew.msg = message;
 	pnew.url = url;
+	pnew.imageIndex = EventIconToIconIndex(icon);
 
 	m_currentlyInsertingItem = &pnew;
 	int itemID = m_ctl.AddString(_T("."));
@@ -220,32 +241,58 @@ void ActivityList::InternalRegisterEvent(EventID archiveEventID, ScreenshotID sc
 
 void ActivityList::InternalEventSetIcon(EventID eventID, EventIcon icon)
 {
-	// TODO
+	ItemSpec* item = EventIDToItemSpec(eventID);
+	if(!item)
+		return;
+	item->icon = icon;
+	item->imageIndex = EventIconToIconIndex(icon);
 }
 
 void ActivityList::InternalEventSetProgress(EventID eventID, int pos, int total)
 {
-	// TODO
+	ItemSpec* item = EventIDToItemSpec(eventID);
+	if(!item)
+		return;
+	item->imageIndex = m_progress.GetImageFromProgress(pos, total);
+	if(pos >= total)
+	{
+		// 100% - use a special image.
+		item->imageIndex = EventIconToIconIndex(EI_CHECK);
+	}
 }
 
 void ActivityList::InternalEventSetText(EventID eventID, const std::wstring& msg)
 {
-	// TODO
+	ItemSpec* item = EventIDToItemSpec(eventID);
+	if(!item)
+		return;
+	item->msg = msg;
 }
 
 void ActivityList::InternalEventSetURL(EventID eventID, const std::wstring& url)
 {
-	// TODO
+	ItemSpec* item = EventIDToItemSpec(eventID);
+	if(!item)
+		return;
+	item->url = url;
 }
 
 void ActivityList::InternalDeleteEvent(EventID eventID)
 {
-	// TODO
+	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
+	if(!item)
+		return;
+	// delete this item.
+	m_ctl.DeleteString(item->listIndex);
 }
 
 void ActivityList::InternalDeleteScreenshot(ScreenshotID screenshotID)
 {
-	// TODO
+	ItemSpec* item;
+	while(item = GetFirstItemAssociatedWithScreenshot(screenshotID))
+	{
+		m_ctl.DeleteString(item->listIndex);
+	}
 }
 
 ActivityList::ItemSpec* ActivityList::EventIDToItemSpec(EventID msgID)
@@ -306,11 +353,6 @@ LRESULT ActivityList::OnDrawItem(DRAWITEMSTRUCT& dis, BOOL& bHandled)
 		// no man's land.
 		break;
 	}
-
-	//if((dis.itemState & ODS_FOCUS) == ODS_FOCUS)
-	//{
-	//	DrawFocusRect(dis.hDC, &dis.rcItem);
-	//}
 
 	return 0;
 }
@@ -402,7 +444,6 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 		{
 		case ItemSpec::Screenshot:
 				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Re-process..."), ID_REPROCESS));
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear"), ID_CLEAR));
 			break;
 		case ItemSpec::Event:
 			{
@@ -423,14 +464,6 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open file..."), ID_OPENFILE));
 					break;
 				}
-				// append global items
-				if(pos > 0)
-				{
-					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
-				}
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear"), ID_CLEAR));
-				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
 				break;
 			}
 		default:
@@ -438,6 +471,16 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 			break;
 		}
   }  
+
+	// append global items
+	if(pos > 0)
+	{
+		menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
+	}
+	if(spec->msg.size())
+		menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
+	menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Remove"), IDC_REMOVE));
+	menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
 
 	POINT cursorPos = { 0 };
 	::GetCursorPos(&cursorPos);
@@ -512,22 +555,21 @@ LRESULT ActivityList::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
   return 0;
 }
 
+// remove selected.
 LRESULT ActivityList::OnRemove(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	std::vector<ItemSpec*> items = GetSelectedItems();
-	for(std::vector<ItemSpec*>::iterator it = items.begin(); it != items.end(); ++ it)
+	while(ItemSpec* item = GetFirstSelectedItem())
 	{
-		ItemSpec* item = *it;
 		switch(item->type)
 		{
 		case ItemSpec::Screenshot:
-			m_archive.DeleteScreenshot(item->screenshotID);
+			DeleteScreenshot(item->screenshotID);
 			break;
 		case ItemSpec::Event:
-			m_archive.DeleteEvent(item->eventID);
+			DeleteEvent(item->eventID);
 			break;
 		}
-		m_ctl.DeleteString(item->listIndex);
 	}
 	return 0;
 }
@@ -568,3 +610,41 @@ std::vector<ActivityList::ItemSpec*> ActivityList::GetSelectedItems() const
 	}
 	return ret;
 }
+
+ActivityList::ItemSpec* ActivityList::EventIDToItemSpecWithListIndex(EventID id)
+{
+	for(int i = 0; i < m_ctl.GetCount(); i ++)
+	{
+		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(i);
+		if(p->type == ItemSpec::Event && p->eventID == id)
+		{
+			p->listIndex = i;
+			return p;
+		}
+	}
+	return 0;
+}
+
+ActivityList::ItemSpec* ActivityList::GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const
+{
+	for(int i = 0; i < m_ctl.GetCount(); i ++)
+	{
+		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(i);
+		if(p->screenshotID == screenshotID)
+		{
+			p->listIndex = i;
+			return p;
+		}
+	}
+	return 0;
+}
+
+ActivityList::ItemSpec* ActivityList::GetFirstSelectedItem() const
+{
+	if(m_ctl.GetSelCount() == 0)
+		return 0;
+	INT i[2];
+	m_ctl.GetSelItems(1, i);
+	return (ItemSpec*)m_ctl.GetItemDataPtr(i[0]);
+}
+
