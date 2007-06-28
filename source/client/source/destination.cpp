@@ -119,13 +119,13 @@ bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& 
       if(r.Succeeded())
       {
 				status.RegisterEvent(screenshotID, EI_INFO, ET_GENERAL, destination.general.name,
-          LibCC::Format("Copied URL to clipboard %").qs(url).Str());
+          LibCC::Format("Copied URL to clipboard %").qs(url).Str(), url);
         usedClipboard = true;
 			}
       else
 			{
 				status.RegisterEvent(screenshotID, EI_ERROR, ET_GENERAL, destination.general.name,
-          LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str());
+          LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), url);
 			}
 		}
 	}

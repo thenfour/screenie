@@ -410,6 +410,8 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 				{
 				default:
 				case ET_GENERAL:
+					if(spec->url.size())
+						menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
 					break;
 				case ET_FTP:
 					menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
