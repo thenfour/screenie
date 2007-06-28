@@ -28,7 +28,7 @@ std::wstring QuoteSql(const std::wstring& in)
 util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveImage()
 {
 	Gdiplus::Bitmap* p = 0;
-	if(!m_owner->m_options.EnableArchive())
+	if(!m_owner->ArchiveEnabled())
 		return util::shared_ptr<Gdiplus::Bitmap>(p);
 
 	try
@@ -37,37 +37,90 @@ util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveImage()
 		if(!m_owner->OpenDatabase(conn))
 			return util::shared_ptr<Gdiplus::Bitmap>(p);
 
-		sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [bitmapData] where [id] = %").i((int)id).Str());
-		sqlite3x::sqlite3_reader rdr = cmd.executereader();
-		if(rdr.read())
-		{
-			std::string data = rdr.getblob(0);
-			// now read that sucker into a gdiplus bitmap
-			BlobStream stream;
-			stream.m_blob.Alloc(data.size());
-			memcpy(stream.m_blob.GetBuffer(), data.c_str(), data.size());
-			p = new Gdiplus::Bitmap(&stream);
+		{// necessary for cmd to close
+			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [bitmapData] from Screenshots where [id] = %").i((int)id).Str());
+
+			sqlite3x::sqlite3_reader rdr = cmd.executereader();
+			if(rdr.read())
+			{
+				std::string data = rdr.getblob(0);
+				// now read that sucker into a gdiplus bitmap.
+				// for some reason, using BlobStream here does not work. it will cause some crazy crash when the Gdiplus object is freed.
+				// it's very strange, so for now i will just choose the path of least resistance and do something i know works.
+				HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, data.size());
+				void* pMem = GlobalLock(hmem);
+				memcpy(pMem, data.c_str(), data.size());
+				GlobalUnlock(hmem);
+
+				IStream* pStream = 0;
+				CreateStreamOnHGlobal(hmem, FALSE, &pStream);
+
+				p = Gdiplus::Bitmap::FromStream(pStream);
+
+				pStream->Release();
+				pStream = 0;
+				GlobalFree(hmem);
+
+			}
+			rdr.close();
 		}
 		
 		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
 	{
-		LibCC::g_pLog->Message(LibCC::Format("Database exception in EventSetIcon. %").qs(er.what()));
+		LibCC::g_pLog->Message(LibCC::Format("Database exception in ScreenshotArchive::Screenshot::RetrieveImage. %").qs(er.what()));
 	}
 	return util::shared_ptr<Gdiplus::Bitmap>(p);
 }
 
+
 util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveThumbnail()
 {
-	util::shared_ptr<Gdiplus::Bitmap> ret;
-	if(!ResizeBitmap(ret, *RetrieveImage(), 100))
+	Gdiplus::Bitmap* p = 0;
+	if(!m_owner->ArchiveEnabled())
+		return util::shared_ptr<Gdiplus::Bitmap>(p);
+
+	try
 	{
-		return util::shared_ptr<Gdiplus::Bitmap>((Gdiplus::Bitmap*)0);
+		sqlite3x::sqlite3_connection conn;
+		if(!m_owner->OpenDatabase(conn))
+			return util::shared_ptr<Gdiplus::Bitmap>(p);
+
+		{// necessary for cmd to close
+			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [thumbnailData] from Screenshots where [id] = %").i((int)id).Str());
+			sqlite3x::sqlite3_reader rdr = cmd.executereader();
+			if(rdr.read())
+			{
+				std::string data = rdr.getblob(0);
+				// now read that sucker into a gdiplus bitmap.
+				// for some reason, using BlobStream here does not work. it will cause some crazy crash when the Gdiplus object is freed.
+				// it's very strange, so for now i will just choose the path of least resistance and do something i know works.
+				HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, data.size());
+				void* pMem = GlobalLock(hmem);
+				memcpy(pMem, data.c_str(), data.size());
+				GlobalUnlock(hmem);
+
+				IStream* pStream = 0;
+				CreateStreamOnHGlobal(hmem, FALSE, &pStream);
+
+				p = Gdiplus::Bitmap::FromStream(pStream);
+
+				pStream->Release();
+				pStream = 0;
+				GlobalFree(hmem);
+			}
+			rdr.close();
+		}
+		
+		conn.close();
 	}
-	return ret;
+	catch(sqlite3x::database_error& er)
+	{
+		LibCC::g_pLog->Message(LibCC::Format("Database exception in ScreenshotArchive::Screenshot::RetrieveThumbnail. %").qs(er.what()));
+	}
+	return util::shared_ptr<Gdiplus::Bitmap>(p);
 }
-bool ResizeBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap& source, int dimensionLimit);
 
 
 ScreenshotArchive::Screenshot::Screenshot(ScreenshotArchive* owner) :
@@ -78,7 +131,7 @@ ScreenshotArchive::Screenshot::Screenshot(ScreenshotArchive* owner) :
 std::vector<ScreenshotArchive::Event> ScreenshotArchive::Screenshot::RetreiveEvents()
 {
 	std::vector<ScreenshotArchive::Event> ret;
-	if(!m_owner->m_options.EnableArchive())
+	if(!m_owner->ArchiveEnabled())
 		return ret;
 
 	try
@@ -87,19 +140,24 @@ std::vector<ScreenshotArchive::Event> ScreenshotArchive::Screenshot::RetreiveEve
 		if(!m_owner->OpenDatabase(conn))
 			return ret;
 
-		sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [id], screenshotID, icon, eventType, destinationName, eventText, url, [date] from Events where screenshotID = %").i((int)id).Str());
-		sqlite3x::sqlite3_reader rdr = cmd.executereader();
-		while(rdr.read())
-		{
-			ret.push_back(Event());
-			//fill ret.back();
-			ret.back().id = (EventID)rdr.getint(0);
-			ret.back().screenshotID = (ScreenshotID)rdr.getint(1);
-			ret.back().icon = (EventIcon)rdr.getint(2);
-			ret.back().destinationName = rdr.getstring16(3);
-			ret.back().messageText = rdr.getstring16(4);
-			ret.back().url = rdr.getstring16(5);
-			ret.back().date = rdr.getstring16(6);
+		{// necessary for cmd to close properly
+			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [id], screenshotID, icon, eventType, destinationName, eventText, url, [date] from Events where screenshotID = %").i((int)id).Str());
+			sqlite3x::sqlite3_reader rdr = cmd.executereader();
+			while(rdr.read())
+			{
+				ret.push_back(Event());
+				//fill ret.back();
+				Event& pnew = ret.back();
+				pnew.id = (EventID)rdr.getint(0);
+				pnew.screenshotID = (ScreenshotID)rdr.getint(1);
+				pnew.icon = (EventIcon)rdr.getint(2);
+				pnew.type = (EventType)rdr.getint(3);
+				pnew.destinationName = rdr.getstring16(4);
+				pnew.messageText = rdr.getstring16(5);
+				pnew.url = rdr.getstring16(6);
+				pnew.date = rdr.getstring16(7);
+			}
+			rdr.close();
 		}
 		
 		conn.close();
@@ -115,7 +173,8 @@ ScreenshotArchive::ScreenshotArchive(ScreenshotOptions& opt) :
 	m_options(opt),
 	m_nextScreenshotID(0),
 	m_nextEventID(0),
-	m_pNotify(0)
+	m_pNotify(0),
+	m_enableArchive(true)
 {
 }
 
@@ -126,7 +185,7 @@ ScreenshotArchive::~ScreenshotArchive()
 std::vector<ScreenshotArchive::Screenshot> ScreenshotArchive::RetreiveScreenshots()
 {
 	std::vector<ScreenshotArchive::Screenshot> ret;
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return ret;
 
 	try
@@ -134,15 +193,17 @@ std::vector<ScreenshotArchive::Screenshot> ScreenshotArchive::RetreiveScreenshot
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn))
 			return ret;
-		sqlite3x::sqlite3_command cmd(conn, "select [id] from Screenshots");
-		sqlite3x::sqlite3_reader rdr = cmd.executereader();
-		while(rdr.read())
-		{
-			ret.push_back(Screenshot(this));
-			//fill ret.back();
-			ret.back().id = (ScreenshotID)rdr.getint(0);
+		{// necessary for cmd to close before conn.close()
+			sqlite3x::sqlite3_command cmd(conn, "select [id] from Screenshots");
+			sqlite3x::sqlite3_reader rdr = cmd.executereader();
+			while(rdr.read())
+			{
+				ret.push_back(Screenshot(this));
+				//fill ret.back();
+				ret.back().id = (ScreenshotID)rdr.getint(0);
+			}
+			rdr.close();
 		}
-		
 		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
@@ -225,9 +286,9 @@ bool ScreenshotArchive::EnsureDatabaseHasSpace(size_t extra)
 }
 
 
-ScreenshotID ScreenshotArchive::RegisterScreenshot(util::shared_ptr<Gdiplus::Bitmap> bmp)
+ScreenshotID ScreenshotArchive::RegisterScreenshot(Gdiplus::BitmapPtr bmp, Gdiplus::BitmapPtr thumbnail)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 	{
 		m_nextScreenshotID ++;
 		return m_nextScreenshotID;
@@ -243,28 +304,31 @@ ScreenshotID ScreenshotArchive::RegisterScreenshot(util::shared_ptr<Gdiplus::Bit
 	if(status != Gdiplus::Ok)
 		return 0;
 
+	// do the same for thumbnail
+	BlobStream streamThumb;
+	status = thumbnail->Save(&streamThumb, &codecInfo->Clsid);
+	if(status != Gdiplus::Ok)
+		return 0;
+
 	try
 	{
 		// make sure there is space in the db file.
-		if(!EnsureDatabaseHasSpace(stream.GetLength()))
+		if(!EnsureDatabaseHasSpace(stream.GetLength() + streamThumb.GetLength()))
 			return 0;
 
 		// and save to the database.
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn))
 			return 0;
-		sqlite3x::sqlite3_command cmd(conn, "insert into Screenshots ([bitmapData], [date]) values (?, strftime('%Y-%m-%dT%H:%M:%f', 'now'))");
-		cmd.bind(1, stream.GetBuffer(), stream.GetLength());
 
-		//LARGE_INTEGER li;
-		//li.QuadPart = 0;
-		//stream.Seek(li, STREAM_SEEK_SET, 0);
-		//Gdiplus::Bitmap* x = new Gdiplus::Bitmap(&stream);
-		//DumpBitmap(*x);
-		//delete x;
+		{// necessary for cmd to close up properly
+			sqlite3x::sqlite3_command cmd(conn, "insert into Screenshots ([bitmapData], [thumbnailData], [date]) values (?, ?, strftime('%Y-%m-%dT%H:%M:%f', 'now'))");
+			cmd.bind(1, stream.GetBuffer(), stream.GetLength());
+			cmd.bind(2, streamThumb.GetBuffer(), streamThumb.GetLength());
 
-		cmd.executenonquery();
-		ret = (ScreenshotID)conn.insertid();
+			cmd.executenonquery();
+			ret = (ScreenshotID)conn.insertid();
+		}
 		conn.close();
 	}
 	catch(sqlite3x::database_error& er)
@@ -277,7 +341,7 @@ ScreenshotID ScreenshotArchive::RegisterScreenshot(util::shared_ptr<Gdiplus::Bit
 
 EventID ScreenshotArchive::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 	{
 		m_nextEventID ++;
 		return m_nextEventID;
@@ -312,7 +376,7 @@ EventID ScreenshotArchive::RegisterEvent(ScreenshotID screenshotID, EventIcon ic
 
 void ScreenshotArchive::EventSetIcon(EventID id, EventIcon icon)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return;
 
 	try
@@ -333,7 +397,7 @@ void ScreenshotArchive::EventSetIcon(EventID id, EventIcon icon)
 
 void ScreenshotArchive::EventSetText(EventID id, const std::wstring& msg)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return;
 
 	try
@@ -352,7 +416,7 @@ void ScreenshotArchive::EventSetText(EventID id, const std::wstring& msg)
 
 void ScreenshotArchive::EventSetURL(EventID id, const std::wstring& url)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return;
 
 	try
@@ -371,7 +435,7 @@ void ScreenshotArchive::EventSetURL(EventID id, const std::wstring& url)
 
 void ScreenshotArchive::DeleteEvent(EventID eventID)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return;
 
 	try
@@ -391,7 +455,7 @@ void ScreenshotArchive::DeleteEvent(EventID eventID)
 
 void ScreenshotArchive::DeleteScreenshot(ScreenshotID screenshotID)
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return;
 
 	try
@@ -411,7 +475,7 @@ void ScreenshotArchive::DeleteScreenshot(ScreenshotID screenshotID)
 
 void ScreenshotArchive::DeleteAll()
 {
-	if(!m_options.EnableArchive())
+	if(!ArchiveEnabled())
 		return;
 
 	try
@@ -432,17 +496,21 @@ void ScreenshotArchive::DeleteAll()
 bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 {
 	std::wstring path = GetDBFilename(); 
+	m_enableArchive = false;
 	bool openSuccessful = false;
-
-	std::wstring DatabaseVersion = L"1";
+	bool wrongVersion = false;
 
 	if(PathFileExists(path.c_str()))
 	{
 		try
 		{
 			out.open(path.c_str());
-			sqlite3x::sqlite3_command cmd(out, "select [stringValue] from Settings where [Name] like 'SchemaVersion'");
-			std::wstring cur = cmd.executestring16();
+			std::wstring cur;
+
+			{// necessary for cmd to cleanup properly
+				sqlite3x::sqlite3_command cmd(out, "select [stringValue] from Settings where [Name] like 'SchemaVersion'");
+				cur = cmd.executestring16();
+			}
 
 			if(cur == GetDatabaseSchemaVersion())
 			{
@@ -450,8 +518,9 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 			}
 			else
 			{
-				LibCC::g_pLog->Message(LibCC::Format("Database % is the wrong version (it's %, but I expected %)").qs(path)(cur)(DatabaseVersion));
+				LibCC::g_pLog->Message(LibCC::Format("Database % is the wrong version (it's %, but I expected %)").qs(path)(cur)(GetDatabaseSchemaVersion()));
 				out.close();
+				wrongVersion = true;
 			}
 		}
 		catch(sqlite3x::database_error& er)
@@ -466,7 +535,21 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 		try
 		{
 			out.close();
-			DeleteFile(path.c_str());
+			if(0 == DeleteFile(path.c_str()))
+			{
+				if(wrongVersion && (GetLastError() == ERROR_SHARING_VIOLATION))
+				{
+					while(true)
+					{
+						if(IDCANCEL == MessageBox(0, LibCC::Format("Screenie cannot delete the archive at % because it is in use by another program. Please close any program that is using the file and click Retry. Otherwise, click Cancel to continue without history support.")(path).CStr(),L"Screenie", MB_ICONERROR | MB_RETRYCANCEL))
+						{
+							return false;
+						}
+						if(0 != DeleteFile(path.c_str()))
+							break;// success.					
+					}
+				}
+			}
 			// create schema
 			std::wstring createScript = LoadTextFileResource(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_SCHEMA), L"TEXT");
 
@@ -497,6 +580,7 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 	}
 
 	sqlite3_enable_shared_cache(1);
+	m_enableArchive = true;
 	return true;
 }
 

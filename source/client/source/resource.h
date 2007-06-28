@@ -22,7 +22,6 @@
 #define IDD_PROMPT                      245
 #define IDB_BITMAP1                     246
 #define IDB_HEADER                      246
-#define IDR_TEXT1                       247
 #define IDR_SCHEMA                      247
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
@@ -115,10 +114,11 @@
 #define IDC_LIMITARCHIVESTATIC1         1068
 #define IDC_LIMITARCHIVESTATIC2         1069
 #define IDC_ACTIVITY                    1070
+#define IDC_CLEAR                       1072
+#define IDC_BUTTON2                     1073
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
-#define IDD_DESTPROP_EMAIL              30122
 #define IDB_WIZ97_HEADER                31000
 #define IDB_WIZ97_WATERMARK             31001
 #define IDC_WIZ97_EXTERIOR_TITLE        31004
@@ -185,7 +185,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         32788
-#define _APS_NEXT_CONTROL_VALUE         1071
+#define _APS_NEXT_CONTROL_VALUE         1074
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

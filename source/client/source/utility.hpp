@@ -430,6 +430,9 @@ inline std::wstring LoadTextFileResource(HINSTANCE hInstance, LPCTSTR szResName,
 } 
 
 
+CFont& UtilGetShellFont();
+
+
 #endif
 
 

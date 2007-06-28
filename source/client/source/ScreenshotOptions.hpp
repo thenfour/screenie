@@ -23,8 +23,8 @@ public:
     m_autoStartup(true),
     m_showSplash(true),
 		m_savedInAppDir(false),
-		m_enableArchive(true),
-		m_archiveLimit(100)
+		m_enableArchive(false),
+		m_archiveLimit(100000000)
   {
   }
 

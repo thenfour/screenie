@@ -82,7 +82,10 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
       ShowStatusWindow();
     }
 
-		ScreenshotID screenshotID = m_statusDialog.RegisterScreenshot(screenshot);
+		// create a thumbnail for the history window
+		util::shared_ptr<Gdiplus::Bitmap> thumbnail;
+		ResizeBitmap(thumbnail, *screenshot, 100);
+		ScreenshotID screenshotID = m_statusDialog.RegisterScreenshot(screenshot, thumbnail);
 
     unsigned threadID;
     ThreadParams params;

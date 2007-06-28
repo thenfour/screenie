@@ -425,3 +425,21 @@ LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& lo
 }
 
 
+CFont& UtilGetShellFont()
+{
+	static CFont s_shellfont;
+	if (s_shellfont.IsNull())
+	{
+		HFONT hGuiFont = static_cast<HFONT>(::GetStockObject(DEFAULT_GUI_FONT));
+
+		LOGFONT lfGuiFont = { 0 };
+		if (::GetObject(hGuiFont, sizeof(LOGFONT), &lfGuiFont) == sizeof(LOGFONT))
+		{
+			_tcsncpy(lfGuiFont.lfFaceName, _T("MS Shell Dlg 2"), sizeof(lfGuiFont.lfFaceName) / sizeof(TCHAR));
+			lfGuiFont.lfFaceName[(sizeof(lfGuiFont.lfFaceName) / sizeof(TCHAR)) - 1] = '\0';
+
+			s_shellfont.CreateFontIndirect(&lfGuiFont);
+		}
+	}
+	return s_shellfont;
+}

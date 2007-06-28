@@ -4,6 +4,7 @@
 #include "ActivityList.hpp"
 #include "geom.h"
 #include "image.hpp"
+#include "Clipboard.hpp"
 
 
 void ProgressImages::DrawHLine(long x1, long x2, long y)
@@ -94,63 +95,465 @@ int ProgressImages::GetImageFromProgress(int pos, int total)
 void ActivityList::Attach(HWND h)
 {
 	m_ctl = h;
-	SubclassWindow(h);
+
+	SubclassWindow(::GetParent(h));
+
+	HDC hdc = GetDC();
+	Gdiplus::Graphics* gfx = new Gdiplus::Graphics(hdc);
+	Gdiplus::Font* font = new Gdiplus::Font(hdc, UtilGetShellFont());
+	m_itemHeight = (int)font->GetHeight(gfx);
+	delete font;
+	delete gfx;
+	ReleaseDC(hdc);
+
 	if(NULL == GetProp(m_ctl, _T("InitialPopulation")))
 	{
 		// populate the initial thingy
 		std::vector<ScreenshotArchive::Screenshot> screenshots = m_archive.RetreiveScreenshots();
 		for(std::vector<ScreenshotArchive::Screenshot>::iterator it = screenshots.begin(); it != screenshots.end(); ++ it)
 		{
-			// REGISTER IT HERE.
+			InternalRegisterScreenshot(it->id, it->RetrieveThumbnail());
 
 			std::vector<ScreenshotArchive::Event> events = it->RetreiveEvents();
 			for(std::vector<ScreenshotArchive::Event>::iterator itEvent = events.begin(); itEvent != events.end(); ++ itEvent)
 			{
-				// REGISTER IT HERE.
+				InternalRegisterEvent(itEvent->id, itEvent->screenshotID, itEvent->icon, itEvent->type, itEvent->destinationName, itEvent->messageText, itEvent->url);
 			}
 		}
 		SetProp(m_ctl, _T("InitialPopulation"), (HANDLE)1);
 	}
+
+	m_brushSelected.CreateSysColorBrush(COLOR_HIGHLIGHT);
+	m_brushNormal.CreateSysColorBrush(COLOR_WINDOW);
 }
 
 // IArchiveNotifications events
 void ActivityList::OnPruneScreenshot(ScreenshotID screenshotID)// screenshotID is the archives's screenshotID
 {
-	// REGISTER IT HERE.
+	InternalDeleteScreenshot(screenshotID);
 }
 
 
-ScreenshotID ActivityList::RegisterScreenshot(Gdiplus::BitmapPtr image)
+ScreenshotID ActivityList::RegisterScreenshot(Gdiplus::BitmapPtr image, Gdiplus::BitmapPtr thumbnail)
 {
-	return 0;
+	ScreenshotID ret = m_archive.RegisterScreenshot(image, thumbnail);
+	InternalRegisterScreenshot(ret, thumbnail);
+	return ret;
 }
 
 EventID ActivityList::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
 {
-	return 0;
+	EventID ret = m_archive.RegisterEvent(screenshotID, icon, type, destination, message, url);
+	InternalRegisterEvent(ret, screenshotID, icon, type, destination, message, url);
+	return ret;
 }
 
 void ActivityList::EventSetIcon(EventID eventID, EventIcon icon)
 {
+	m_archive.EventSetIcon(eventID, icon);
+	InternalEventSetIcon(eventID, icon);
 }
 
 void ActivityList::EventSetProgress(EventID eventID, int pos, int total)
 {
+	m_archive.EventSetProgress(eventID, pos, total);
+	InternalEventSetProgress(eventID, pos, total);
 }
 
 void ActivityList::EventSetText(EventID eventID, const std::wstring& msg)
 {
+	m_archive.EventSetText(eventID, msg);
+	InternalEventSetText(eventID, msg);
 }
 
 void ActivityList::EventSetURL(EventID eventID, const std::wstring& url)
 {
+	m_archive.EventSetURL(eventID, url);
+	InternalEventSetURL(eventID, url);
 }
 
 void ActivityList::DeleteEvent(EventID eventID)
 {
+	m_archive.DeleteEvent(eventID);
+	InternalDeleteEvent(eventID);
 }
 
 void ActivityList::DeleteScreenshot(ScreenshotID screenshotID)
 {
+	m_archive.DeleteScreenshot(screenshotID);
+	InternalDeleteScreenshot(screenshotID);
 }
 
+
+void ActivityList::InternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail)
+{
+	m_items.push_back(ItemSpec());
+	ItemSpec& pnew = m_items.back();
+	pnew.type = ItemSpec::Screenshot;
+	pnew.screenshotID = archiveScreenshotID;
+	pnew.thumb = thumbnail;
+
+	m_currentlyInsertingItem = &pnew;
+	int itemID = m_ctl.AddString(_T("."));
+	m_currentlyInsertingItem = 0;
+	m_ctl.SetItemDataPtr(itemID, &pnew);
+}
+
+void ActivityList::InternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
+{
+	m_items.push_back(ItemSpec());
+	ItemSpec& pnew = m_items.back();
+	pnew.type = ItemSpec::Event;
+	pnew.eventType = type;
+	pnew.eventID = archiveEventID;
+	pnew.destination = destination;
+	pnew.icon = icon;
+	pnew.msg = message;
+	pnew.url = url;
+
+	m_currentlyInsertingItem = &pnew;
+	int itemID = m_ctl.AddString(_T("."));
+	m_currentlyInsertingItem = 0;
+	m_ctl.SetItemDataPtr(itemID, &pnew);
+}
+
+void ActivityList::InternalEventSetIcon(EventID eventID, EventIcon icon)
+{
+	// TODO
+}
+
+void ActivityList::InternalEventSetProgress(EventID eventID, int pos, int total)
+{
+	// TODO
+}
+
+void ActivityList::InternalEventSetText(EventID eventID, const std::wstring& msg)
+{
+	// TODO
+}
+
+void ActivityList::InternalEventSetURL(EventID eventID, const std::wstring& url)
+{
+	// TODO
+}
+
+void ActivityList::InternalDeleteEvent(EventID eventID)
+{
+	// TODO
+}
+
+void ActivityList::InternalDeleteScreenshot(ScreenshotID screenshotID)
+{
+	// TODO
+}
+
+ActivityList::ItemSpec* ActivityList::EventIDToItemSpec(EventID msgID)
+{
+	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
+	{
+		if(it->type == ItemSpec::Event && it->eventID == msgID)
+			return &(*it);
+	}
+	return 0;
+}
+
+ActivityList::ItemSpec* ActivityList::ScreenshotIDToItemSpec(ScreenshotID screenshotID)
+{
+	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
+	{
+		if(it->type == ItemSpec::Screenshot && it->screenshotID == screenshotID)
+			return &(*it);
+	}
+	return 0;
+}
+
+LRESULT ActivityList::OnDrawItem(DRAWITEMSTRUCT& dis, BOOL& bHandled)
+{
+	bHandled = TRUE;
+	if(dis.itemID == -1) return 0;
+
+	ItemSpec& item = *((ItemSpec*)dis.itemData);
+
+	SetBkMode(dis.hDC, TRANSPARENT);
+
+	if((dis.itemState & ODS_SELECTED) == ODS_SELECTED)
+	{
+		FillRect(dis.hDC, &dis.rcItem, m_brushSelected);
+		SetTextColor(dis.hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+	}
+	else
+	{
+		FillRect(dis.hDC, &dis.rcItem, m_brushNormal);
+		SetTextColor(dis.hDC, GetSysColor(COLOR_WINDOWTEXT));
+	}
+
+	SelectObject(dis.hDC, UtilGetShellFont());
+
+	switch(item.type)
+	{
+	case ItemSpec::Screenshot:
+		{
+			Gdiplus::Graphics* p = new Gdiplus::Graphics(dis.hDC);
+			p->DrawImage(item.thumb.get(), dis.rcItem.left, dis.rcItem.top);
+			delete p;
+		}
+		break;
+	case ItemSpec::Event:
+		DrawText(dis.hDC, item.msg.c_str(), item.msg.size(), &dis.rcItem, 0);
+		break;
+	default:
+		// no man's land.
+		break;
+	}
+
+	//if((dis.itemState & ODS_FOCUS) == ODS_FOCUS)
+	//{
+	//	DrawFocusRect(dis.hDC, &dis.rcItem);
+	//}
+
+	return 0;
+}
+
+LRESULT ActivityList::OnMeasureItem(MEASUREITEMSTRUCT& mis, BOOL& bHandled)
+{
+	bHandled = TRUE;
+
+	ItemSpec* item;
+	if(m_currentlyInsertingItem)
+		item = m_currentlyInsertingItem;
+	else
+		item = (ItemSpec*)m_ctl.GetItemDataPtr(mis.itemID);
+
+	switch(item->type)
+	{
+	case ItemSpec::Screenshot:
+		mis.itemHeight = item->thumb->GetHeight();
+		break;
+	case ItemSpec::Event:
+		mis.itemHeight = m_itemHeight;
+		break;
+	default:
+		// no-man's land.
+		mis.itemHeight = 100;
+		break;
+	}
+	return 0;
+}
+
+LRESULT ActivityList::OnDeleteItem(DELETEITEMSTRUCT& dis, BOOL& bHandled)
+{
+	bHandled = TRUE;
+	ItemSpec* item = (ItemSpec*)dis.itemData;
+	// just remove it from the list.
+	// so, first find it.
+	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
+	{
+		if(&(*it) == item)
+		{
+			m_items.erase(it);
+			break;
+		}
+	}
+	return 0;
+}
+
+LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if((HWND)wParam != m_ctl.m_hWnd)
+		return 0;
+
+	{
+		// list boxes do not recognize right-clicks the same way as a listview (where a rightclick will also select the item)
+		// so try and fake it.
+		BOOL outside = FALSE;
+		CPoint pt(LOWORD(lParam), HIWORD(lParam));
+		m_ctl.ScreenToClient(&pt);
+		UINT i = m_ctl.ItemFromPoint(pt, outside);
+		if(TRUE == outside)
+			return 0;
+
+		if(0 == m_ctl.GetSel(i))
+		{
+			if(0 == GetAsyncKeyState(VK_CONTROL))
+			{
+				// de-select everything else
+				std::vector<ItemSpec*> items = GetSelectedItems();
+				for(std::vector<ItemSpec*>::iterator it = items.begin(); it != items.end(); ++ it)
+				{
+					m_ctl.SetSel((*it)->listIndex, FALSE);
+				}
+			}
+			m_ctl.SetSel(i);
+		}
+	}
+
+	ItemSpec* spec = GetFocusedItem();
+  if(!spec)
+		return 0;
+
+	CMenu menu;
+  menu.CreatePopupMenu();
+  int pos = 0;
+
+  if(spec)
+  {
+		switch(spec->type)
+		{
+		case ItemSpec::Screenshot:
+			// nothing good here..
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Re-process..."), ID_REPROCESS));
+			break;
+		case ItemSpec::Event:
+			switch(spec->eventType)
+			{
+			default:
+			case ET_GENERAL:
+				break;
+			case ET_FTP:
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open URL..."), ID_OPENURL));
+				break;
+			case ET_FILE:
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy path"), ID_COPYURL));
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Explore..."), ID_EXPLORE));
+				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Open file..."), ID_OPENFILE));
+				break;
+			}
+			break;
+		default:
+			// no man's land.
+			break;
+		}
+  }  
+  // append global items
+  if(pos > 0)
+  {
+    menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
+  }
+  menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
+  menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
+
+	POINT cursorPos = { 0 };
+	::GetCursorPos(&cursorPos);
+	menu.TrackPopupMenu(0, cursorPos.x, cursorPos.y, m_hWnd);
+
+	return 0;
+}
+
+LRESULT ActivityList::OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	ItemSpec* item = GetFocusedItem();
+	if(!item)
+		return 0;
+  tstd::tstring cmdLine = LibCC::Format("explorer /select, %").qs(item->url).Str();
+
+  PROCESS_INFORMATION pi;
+  STARTUPINFO si;
+  GetStartupInfo(&si);
+  LibCC::Blob<TCHAR> stupidBullshit(cmdLine.size() + 1);
+  _tcscpy(stupidBullshit.GetBuffer(), cmdLine.c_str());
+  if(CreateProcess(0, stupidBullshit.GetBuffer(), 0, 0, FALSE, 0, 0, 0, &si, &pi))
+  {
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+  }
+
+  return 0;
+}
+
+LRESULT ActivityList::OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	ItemSpec* item = GetFocusedItem();
+	if(!item)
+		return 0;
+  ShellExecute(m_hWnd, _T("open"), item->url.c_str(), NULL, NULL, SW_SHOW);
+  return 0;
+}
+
+LRESULT ActivityList::OnOpenURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	ItemSpec* item = GetFocusedItem();
+	if(!item)
+		return 0;
+  ShellExecute(m_hWnd, _T("open"), item->url.c_str(), NULL, NULL, SW_SHOW);
+  return 0;
+}
+
+LRESULT ActivityList::OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	ItemSpec* item = GetFocusedItem();
+	if(!item)
+		return 0;
+
+	LibCC::Result r = Clipboard(m_hWnd).SetText(item->url);
+	return 0;
+}
+
+LRESULT ActivityList::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	ItemSpec* item = GetFocusedItem();
+	if(!item)
+		return 0;
+
+	LibCC::Result r = Clipboard(m_hWnd).SetText(item->msg);
+	return 0;
+}
+
+LRESULT ActivityList::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	m_archive.DeleteAll();
+	m_ctl.ResetContent();
+  return 0;
+}
+
+LRESULT ActivityList::OnRemove(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	std::vector<ItemSpec*> items = GetSelectedItems();
+	for(std::vector<ItemSpec*>::iterator it = items.begin(); it != items.end(); ++ it)
+	{
+		ItemSpec* item = *it;
+		switch(item->type)
+		{
+		case ItemSpec::Screenshot:
+			m_archive.DeleteScreenshot(item->screenshotID);
+			break;
+		case ItemSpec::Event:
+			m_archive.DeleteEvent(item->eventID);
+			break;
+		}
+		m_ctl.DeleteString(item->listIndex);
+	}
+	return 0;
+}
+
+LRESULT ActivityList::OnReprocess(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	// TODO
+	return 0;
+}
+
+ActivityList::ItemSpec* ActivityList::GetFocusedItem() const
+{
+	LibCC::Blob<INT> x(m_ctl.GetSelCount());
+	m_ctl.GetSelItems(x.Size(), x.GetBuffer());
+	for(size_t i = 0; i < x.Size(); ++ i)
+	{
+		if(0 != m_ctl.GetSel(x[i]))
+			return (ItemSpec*)m_ctl.GetItemDataPtr(x[i]);
+	}
+	return 0;
+}
+
+std::vector<ActivityList::ItemSpec*> ActivityList::GetSelectedItems() const
+{
+	LibCC::Blob<INT> x(m_ctl.GetSelCount());
+	m_ctl.GetSelItems(x.Size(), x.GetBuffer());
+	std::vector<ItemSpec*> ret;
+	for(size_t i = 0; i < x.Size(); ++ i)
+	{
+		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(x[i]);
+		p->listIndex = x[i];
+		ret.push_back(p);
+	}
+	return ret;
+}

@@ -34,7 +34,7 @@ typedef struct { } *ScreenshotID;
 
 struct IActivity
 {
-	virtual ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image) = 0;
+	virtual ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image, Gdiplus::BitmapPtr thumbnail) = 0;
   virtual EventID RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"") = 0;
   virtual void EventSetIcon(EventID eventID, EventIcon icon) = 0;
   virtual void EventSetProgress(EventID eventID, int pos, int total) = 0;
@@ -106,7 +106,7 @@ public:
 	void DeleteAll();
 
 	// IActivity events
-	ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image);
+	ScreenshotID RegisterScreenshot(Gdiplus::BitmapPtr image, Gdiplus::BitmapPtr thumbnail);
 	EventID RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"");
 	void EventSetIcon(EventID eventID, EventIcon icon);
 	void EventSetProgress(EventID eventID, int pos, int total) { }// not implemented; this is not stored in the archive.
@@ -129,5 +129,12 @@ private:
 	std::wstring GetDBFilename() const;
 	bool EnsureDatabaseHasSpace(size_t extra);
 	bool OpenDatabase(sqlite3x::sqlite3_connection&);
+
+	bool m_enableArchive;
+
+	bool ArchiveEnabled() const
+	{
+		return m_enableArchive && m_options.EnableArchive();
+	}
 };
 
