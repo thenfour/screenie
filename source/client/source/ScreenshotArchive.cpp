@@ -527,8 +527,12 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 			}
 			else
 			{
-				LibCC::g_pLog->Message(LibCC::Format("Database % is the wrong version (it's %, but I expected %)").qs(path)(cur)(GetDatabaseSchemaVersion()));
 				out.close();
+				if(IDCANCEL == MessageBox(0, L"The history database format has changed since the last time you ran Screenie. Click OK to delete the existing history database and start from scratch, or click Cancel to disable saving history for now.", L"Screenie", MB_ICONINFORMATION | MB_OKCANCEL))
+				{
+					return false;
+				}
+				LibCC::g_pLog->Message(LibCC::Format("Database % is the wrong version (it's %, but I expected %)").qs(path)(cur)(GetDatabaseSchemaVersion()));
 				wrongVersion = true;
 			}
 		}
