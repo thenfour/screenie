@@ -54,11 +54,15 @@ LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
-	bool logEnabled = false;
+	bool logFileEnabled = false;
+	bool logWindowEnabled = false;
+	bool logOutputEnabled = false;
 #ifdef _DEBUG
-	logEnabled = true;
+	logFileEnabled = true;
+	logWindowEnabled = true;
+	logOutputEnabled = true;
 #endif
-	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance(), logEnabled, logEnabled, logEnabled);
+	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance(), logOutputEnabled, logWindowEnabled, logFileEnabled);
 
 	CMessageLoop theLoop;
 	_Module.AddMessageLoop(&theLoop);

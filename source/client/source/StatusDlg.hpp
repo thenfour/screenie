@@ -14,21 +14,9 @@ class CStatusDlg :
 	public CDialogResize<CStatusDlg>
 {
 private:
-	//CImageList m_imageList;
-  //ProgressImages m_progress;
-	//CListViewCtrl m_listView;
 	ActivityList m_activity;
   ScreenshotOptions& m_options;
   ScreenshotArchive& m_archive;
-
-  //static const short ID_COPYURL = 4000;
-  //static const short ID_COPYMESSAGE = 4001;
-  //static const short ID_CLEAR = 4002;
-  //static const short ID_EXPLORE = 4003;
-  //static const short ID_OPENFILE = 4004;
-  //static const short ID_OPENURL = 4005;
-
-  //CriticalSection m_cs;
 public:
 	enum { IDD = IDD_STATUS };
 
@@ -58,26 +46,12 @@ public:
 		MESSAGE_HANDLER(WM_DRAWITEM, OnDrawItem)
 		MESSAGE_HANDLER(WM_MEASUREITEM, OnMeasureItem)
 		MESSAGE_HANDLER(WM_DELETEITEM, OnDeleteItem)
-		
-		//MESSAGE_HANDLER(WM_CHAR, OnChar)
-		//NOTIFY_HANDLER(IDC_MESSAGES, NM_RCLICK, OnRightClick)
-
-  //  NOTIFY_HANDLER(IDC_MESSAGES, LVN_DELETEALLITEMS, OnDeleteAllItems)
-  //  NOTIFY_HANDLER(IDC_MESSAGES, LVN_DELETEITEM, OnDeleteItem)
-
-  //  COMMAND_ID_HANDLER(ID_COPYURL, OnCopyURL)
-  //  COMMAND_ID_HANDLER(ID_COPYMESSAGE, OnCopyMessage)
-  //  COMMAND_ID_HANDLER(ID_CLEAR, OnClear)
-  //  COMMAND_ID_HANDLER(ID_EXPLORE, OnExplore)
-  //  COMMAND_ID_HANDLER(ID_OPENFILE, OnOpenFile)
-  //  COMMAND_ID_HANDLER(ID_OPENURL, OnOpenURL)
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		CHAIN_MSG_MAP(CDialogResize<CStatusDlg>)
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CStatusDlg)
-		//DLGRESIZE_CONTROL(IDC_MESSAGES, DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_ACTIVITY, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDC_CLEAR, DLSZ_MOVE_Y | DLSZ_MOVE_X)
@@ -124,53 +98,6 @@ public:
 
   HICON m_hIcon;
   HICON m_hIconSmall;
-
-private:
-  //int m_iconInfo;
-  //int m_iconWarning;
-  //int m_iconError;
-  //int m_iconCheck;
-
-  /*
-    Stuff for dealing with the LPARAM for each item.
-  */
-  //struct ItemSpec
-  //{
-		//ScreenshotID screenshotID;
-  //  EventType type;
-  //  tstd::tstring url;
-		//EventID archiveID;
-		//EventID activityListID;
-  //};
-
-  //int EventIDToItemID(EventID msgID);
-  //ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found.
-  //ItemSpec* ItemToItemSpec(int id);// returns 0 if not found.
-  //ItemSpec* GetSelectedItemSpec();// returns 0 if not found.
-
-  //int EventIconToIconIndex(const EventIcon& t)
-  //{
-  //  switch(t)
-  //  {
-  //  case EI_INFO:
-  //    return m_iconInfo;
-  //  case EI_WARNING:
-  //    return m_iconWarning;
-  //  case EI_ERROR:
-  //    return m_iconError;
-  //  case EI_CHECK:
-  //    return m_iconCheck;
-  //  case EI_PROGRESS:
-  //    return m_progress.GetImageFromProgress(0,1);// just return 0%
-  //  }
-  //  return m_iconError;
-  //}
-
-	// for THIS class's return ScreenshotID, well just use the Archive's returned ID.
-	// but i need a way to map that to activity's ScreenshotIDs.
-	//typedef std::map<ScreenshotID, ScreenshotID> ScreenshotIDMap;// maps archive's IDs to activity list's
-	//ScreenshotIDMap m_screenshotIDMap;
-	// NOTE that THIS class's returned EventIDs are pointers to ItemSpec, not any sequential ID.
 };
 
 #endif

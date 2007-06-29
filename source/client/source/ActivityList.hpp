@@ -1,53 +1,31 @@
-/*
-Where do messages go?
-
-(destination.cpp) -> statusdlg -> activitylist -> archive
-
-It's simplest to forward messages like this. the ONLY time that the reverse flow needs to happen
-is when the archive self-cleans, and needs to tell the activitylist to remove something. No problem,
-that's what IArchiveNotifications is for.
-
-*/
 
 #ifndef SCREENIE_ACTIVITYLIST_HPP
 #define SCREENIE_ACTIVITYLIST_HPP
 
 #include "animbitmap.h"
 #include "resource.h"
-#include "polarlut.h"
 #include "ScreenshotArchive.hpp"
+#include "ActivityListItem.hpp"
 #include <list>
 
-class ProgressImages
+struct IRS_Data
 {
-public:
-  void InitializeProgressImages(CImageList& img, RgbPixel32 background, RgbPixel32 filled, RgbPixel32 unfilled);
-  int GetImageFromProgress(int pos, int total);
-private:
-  /*
-    this will hold linear from 0-perimiter.
-    assume that the image list indices will not change.
-  */
-  std::vector<int> m_images;
-  AngleLut<float> m_angles;
-
-  void DrawHLine(long x1, long x2, long y);
-  void DrawAlphaPixel(long cx, long cy, long x, long y, long f, long fmax);
-  RgbPixel32 PositionToColor(long x, long y);
-
-  // stuff that we persist between drawing calls
-  AnimBitmap<32>* m_bmp;
-  int m_i;
-
-  float m_pieBlurringSize;
-  int m_perimeter;
-  int m_diameter;
-  int m_radius;
-  RgbPixel32 m_background;
-  RgbPixel32 m_unfilled;
-  RgbPixel32 m_filled;
+	ScreenshotID archiveScreenshotID;
+	Gdiplus::BitmapPtr thumbnail;
+	int screenshotWidth;
+	int screenshotHeight;
 };
 
+struct IRE_Data
+{
+	EventID archiveEventID; 
+	ScreenshotID screenshotID;
+	EventIcon icon;
+	EventType type;
+	std::wstring destination;
+	std::wstring message;
+	std::wstring url;
+};
 
 class ActivityList :
   public CWindowImpl<ActivityList>,
@@ -62,12 +40,13 @@ public:
   static const short ID_OPENFILE = 4004;
   static const short ID_OPENURL = 4005;
   static const short ID_REPROCESS = 4006;
+  static const UINT WM_INTERNALREGISTERSCREENSHOT = WM_APP + 700;
+  static const UINT WM_INTERNALREGISTEREVENT = WM_APP + 701;
 
 	ActivityList(ScreenshotArchive& archive, ScreenshotOptions& options) :
 		m_archive(archive),
 		m_options(options),
-		m_currentlyInsertingItem(0),
-		m_itemHeight(0)
+		m_currentlyInsertingItem(0)
 	{
 	}
 
@@ -75,6 +54,9 @@ public:
     COMMAND_ID_HANDLER(IDC_CLEAR, OnClear)
     COMMAND_ID_HANDLER(IDC_REMOVE, OnRemove)
 		MESSAGE_HANDLER(WM_CONTEXTMENU, OnContextMenu)
+
+		MESSAGE_HANDLER(WM_INTERNALREGISTERSCREENSHOT, OnInternalRegisterScreenshot)
+		MESSAGE_HANDLER(WM_INTERNALREGISTEREVENT, OnInternalRegisterEvent)
 
     COMMAND_ID_HANDLER(ID_REPROCESS, OnReprocess)
     COMMAND_ID_HANDLER(ID_COPYURL, OnCopyURL)
@@ -110,6 +92,8 @@ public:
 	LRESULT OnDeleteItem(DELETEITEMSTRUCT& mis, BOOL& bHandled);
 
 	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnInternalRegisterScreenshot(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnInternalRegisterEvent(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 	LRESULT OnReprocess(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -121,8 +105,11 @@ public:
   LRESULT OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 private:
-	void InternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail);
-	void InternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"");
+	void CallInternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail, int screenshotWidth, int screenshotHeight);
+	void CallInternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"");
+
+	void _InternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail, int screenshotWidth, int screenshotHeight);
+	void _InternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url = L"");
 	void InternalEventSetIcon(EventID eventID, EventIcon icon);
 	void InternalEventSetProgress(EventID eventID, int pos, int total);
 	void InternalEventSetText(EventID eventID, const std::wstring& msg);
@@ -130,83 +117,24 @@ private:
 	void InternalDeleteEvent(EventID eventID);
 	void InternalDeleteScreenshot(ScreenshotID screenshotID);
 
-	struct ItemSpec// attached to each item of a listview
-	{
-		enum
-		{
-			Screenshot,
-			Event
-		}
-		type;
+	std::list<ActivityListItemSpec> m_items;
 
-		// for screenshots
-		Gdiplus::BitmapPtr thumb;
-
-		// for events
-		EventID eventID;
-    EventType eventType;
-		EventIcon icon;
-		std::wstring destination;
-		std::wstring msg;
-		std::wstring url;
-
-		// for all
-		ScreenshotID screenshotID;
-		std::wstring date;
-
-		// only valid sometimes...
-		int listIndex;
-		int imageIndex;
-	};
-	std::list<ItemSpec> m_items;
-
-
-	//CListViewCtrl m_ctl;
 	CListBox m_ctl;
-	ItemSpec* m_currentlyInsertingItem;
+	ActivityListItemSpec* m_currentlyInsertingItem;
 
 	ScreenshotArchive& m_archive;
 	ScreenshotOptions& m_options;
 
 	// rendering stuff
-	CBrush m_brushNormal;
-	CBrush m_brushSelected;
-	int m_itemHeight;
+	ActivityListItemSpec::RenderingInfo m_renderingInfo;
 
-	CImageList m_imageList;
-  ProgressImages m_progress;
-  int m_iconInfo;
-  int m_iconWarning;
-  int m_iconError;
-  int m_iconCheck;
-  int EventIconToIconIndex(const EventIcon& t)
-  {
-    switch(t)
-    {
-    case EI_INFO:
-      return m_iconInfo;
-    case EI_WARNING:
-      return m_iconWarning;
-    case EI_ERROR:
-      return m_iconError;
-    case EI_CHECK:
-      return m_iconCheck;
-    case EI_PROGRESS:
-      return m_progress.GetImageFromProgress(0,1);// just return 0%
-    }
-    return m_iconError;
-  }
+	ActivityListItemSpec* GetFocusedItem() const;
+	std::vector<ActivityListItemSpec*> GetSelectedItems() const;
+	ActivityListItemSpec* EventIDToItemSpecWithListIndex(EventID id);
+	ActivityListItemSpec* GetFirstSelectedItem() const;
+	ActivityListItemSpec* GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const;
 
-
-	ItemSpec* GetFocusedItem() const;
-	std::vector<ItemSpec*> GetSelectedItems() const;
-	//ItemSpec* EventIDToItemSpec(EventID msgID);// returns 0 if not found. does not fill in listIndex.
-	//ItemSpec* ScreenshotIDToItemSpec(ScreenshotID screenshotID);
-	ItemSpec* EventIDToItemSpecWithListIndex(EventID id);
-	ItemSpec* GetFirstSelectedItem() const;
-	ItemSpec* GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const;
-
-	void RedrawItem(ItemSpec*);
+	void RedrawItem(ActivityListItemSpec*);
 };
 
 #endif

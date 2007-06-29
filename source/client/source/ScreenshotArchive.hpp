@@ -85,29 +85,32 @@ public:
 		Screenshot(ScreenshotArchive* owner);
 		Screenshot(const Screenshot& rhs) :
 			id(rhs.id),
-			m_owner(rhs.m_owner)
+			m_owner(rhs.m_owner),
+			width(rhs.width),
+			height(rhs.height)
 		{
 		}
 		Screenshot& operator =(const Screenshot& rhs)
 		{
 			id = rhs.id;
 			m_owner = rhs.m_owner;
+			width = rhs.width;
+			height = rhs.height;
 			return *this;
 		}
 
 		ScreenshotID id;
+		int width;
+		int height;
+
 		util::shared_ptr<Gdiplus::Bitmap> RetrieveImage();
 		util::shared_ptr<Gdiplus::Bitmap> RetrieveThumbnail();
 		std::vector<Event> RetreiveEvents();// returns a list of events
 	};
 
 	std::vector<Screenshot> RetreiveScreenshots();
-	Screenshot GetScreenshot(ScreenshotID id)
-	{
-		Screenshot ret(this);
-		ret.id = id;
-		return ret;
-	}
+	
+	util::shared_ptr<Gdiplus::Bitmap> RetrieveImage(ScreenshotID id);
 
 	void DeleteAll();
 

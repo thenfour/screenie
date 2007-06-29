@@ -21,6 +21,8 @@ bool ResizeBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitma
 
 bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const tstd::tstring& filename);
 
+bool GdiplusBitmapToAnimBitmap(Gdiplus::BitmapPtr src, AnimBitmap<32>& dest);
+
 void DumpBitmap(Gdiplus::Bitmap& image, int x = 0, int y = 0);
 void DumpBitmap(HBITMAP img, int x = 0, int y = 0);
 void DumpIcon(HICON img, int x = 0, int y = 0);

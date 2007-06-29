@@ -2,129 +2,50 @@
 
 #include "stdafx.hpp"
 #include "ActivityList.hpp"
-#include "geom.h"
 #include "image.hpp"
 #include "Clipboard.hpp"
 #include "MainWindow.hpp"
-
-
-void ProgressImages::DrawHLine(long x1, long x2, long y)
-{
-  // draw horizontal line.
-  long xleft = min(x1, x2);
-  long xright = max(x1, x2) + 1;
-  while(xleft != xright)
-  {
-    m_bmp->SetPixel(xleft, y, PositionToColor(xleft, y));
-    xleft ++;
-  }
-}
-
-void ProgressImages::DrawAlphaPixel(long cx, long cy, long x, long y, long f, long fmax)
-{
-  m_bmp->SetPixel(cx+x, cy+y, MixColorsInt(f, fmax, PositionToColor(cx+x, cy+y), m_background));
-  m_bmp->SetPixel(cx+x, cy-y-1, MixColorsInt(f, fmax, PositionToColor(cx+x, cy-y-1), m_background));
-  m_bmp->SetPixel(cx-x-1, cy+y, MixColorsInt(f, fmax, PositionToColor(cx-x-1, cy+y), m_background));
-  m_bmp->SetPixel(cx-x-1, cy-y-1, MixColorsInt(f, fmax, PositionToColor(cx-x-1, cy-y-1), m_background));
-}
-
-// x and y are relative to the 
-RgbPixel32 ProgressImages::PositionToColor(long x, long y)
-{
-  if(m_i == m_perimeter) return m_filled;// 100% one is all filled.
-  float a = m_angles.GetAngle(x - m_radius, y - m_radius);// GetAngle() needs coords relative to the center of the circle
-
-  // rotate it 90 degrees counter-clockwise.
-  a += static_cast<float>(m_perimeter) / 4;
-  if(a < 0) a += m_perimeter;
-  if(a > m_perimeter) a -= m_perimeter;
-
-  /* to fake anti-aliasing inside the pie, just calculate using a narrow gradient.
-   --filled---k====a====l----unfilled------
-              |---------| = blur size.
-    the gradient is from k to l.  i may be anywhere in this diagram.
-  */
-  // get the distance from i to the center of the blurring window.
-  float aa = a + (m_pieBlurringSize / 2) - static_cast<float>(m_i);
-  if(aa <= 0) return m_filled;
-  if(aa > m_pieBlurringSize) return m_unfilled;
-  // multiply by 100 because we are casting to integer
-  return MixColorsInt(static_cast<long>(aa * 100.0f), static_cast<long>(m_pieBlurringSize * 100.0f), m_unfilled, m_filled);
-}
-
-void ProgressImages::InitializeProgressImages(CImageList& img, RgbPixel32 background, RgbPixel32 filled, RgbPixel32 unfilled)
-{
-  m_background = background;
-  m_unfilled = unfilled;
-  m_filled = filled;
-  m_diameter = 14;
-  m_radius = 7;
-  m_pieBlurringSize = 2;
-  m_perimeter = static_cast<int>(GetPI() * m_diameter);
-  m_background = background;
-  m_images.clear();
-  m_images.reserve(m_perimeter+1);
-
-  // add 1 for complete coverage, to be on the safe side.
-  m_angles.Resize(m_radius + 1, static_cast<float>(m_perimeter), 0);// the values returned from m_angles will be in the range 0-perimeter, or in other words, 0-m_images.size().
-
-  for(m_i = 0; m_i < m_perimeter; m_i ++)
-  {
-    m_bmp = new AnimBitmap<32>();
-    m_bmp->SetSize(16, 16);
-    m_bmp->Fill(m_background);
-	FilledCircleAAG(8, 8, m_radius, this, &ProgressImages::DrawHLine, this, &ProgressImages::DrawAlphaPixel);
-    // add it to the imagelist.
-    HBITMAP hbm = m_bmp->DetachHandle();
-    m_images.push_back(img.Add(hbm));
-    DeleteObject(hbm);
-    delete m_bmp;
-    m_bmp = 0;
-  }
-}
-
-int ProgressImages::GetImageFromProgress(int pos, int total)
-{
-  // pos / total = index / m_images.size();
-  int index = (int)(0.05f + (float)pos * (float)m_images.size() / (float)total);
-  // bounds checking.
-  if(index < 0) index = 0;
-  if(index >= (int)m_images.size()) index = m_images.size() - 1;
-  return m_images[index];
-}
+#include "libcc\timer.h"
 
 void ActivityList::Attach(HWND h)
 {
 	m_ctl = h;
-
 	SubclassWindow(::GetParent(h));
 
+	// set up rendering info struct
 	HDC hdc = GetDC();
 	Gdiplus::Graphics* gfx = new Gdiplus::Graphics(hdc);
 	Gdiplus::Font* font = new Gdiplus::Font(hdc, UtilGetShellFont());
-	m_itemHeight = (int)font->GetHeight(gfx);
+	m_renderingInfo.m_lineHeight = (int)font->GetHeight(gfx);
 	delete font;
 	delete gfx;
 	ReleaseDC(hdc);
 
+	m_renderingInfo.m_hwnd = h;
+
 	// create and populate image list for message icons
-	if (m_imageList.Create(16, 16, ILC_COLOR32, 2, 0))
+	m_renderingInfo.m_iconHeight = 16;
+	m_renderingInfo.m_iconWidth = 16;
+
+	if (m_renderingInfo.m_imageList.Create(m_renderingInfo.m_iconWidth, m_renderingInfo.m_iconHeight, ILC_COLOR32, 2, 0))
 	{
-		m_iconInfo = m_imageList.AddIcon(::LoadIcon(NULL, IDI_INFORMATION));
-    m_iconWarning = m_imageList.AddIcon(::LoadIcon(NULL, IDI_WARNING));
-		m_iconError = m_imageList.AddIcon(::LoadIcon(NULL, IDI_ERROR));
+		m_renderingInfo.m_iconInfo = m_renderingInfo.m_imageList.AddIcon(::LoadIcon(NULL, IDI_INFORMATION));
+    m_renderingInfo.m_iconWarning = m_renderingInfo.m_imageList.AddIcon(::LoadIcon(NULL, IDI_WARNING));
+		m_renderingInfo.m_iconError = m_renderingInfo.m_imageList.AddIcon(::LoadIcon(NULL, IDI_ERROR));
 
     HICON hCheck = (HICON)::LoadImage(_Module.GetResourceInstance(),
 			MAKEINTRESOURCE(IDI_CHECK), IMAGE_ICON, 16, 16, 0);
-    m_iconCheck = m_imageList.AddIcon(hCheck);
+    m_renderingInfo.m_iconCheck = m_renderingInfo.m_imageList.AddIcon(hCheck);
     DestroyIcon(hCheck);
 	}
 
-  m_progress.InitializeProgressImages(m_imageList,
-    COLORREFToRgbPixel32(GetSysColor(COLOR_WINDOWTEXT)),
+  m_renderingInfo.m_progress.InitializeProgressImages(m_renderingInfo.m_imageList,
+    COLORREFToRgbPixel32(GetSysColor(COLOR_WINDOW)),
     MakeRgbPixel32(222,123,16),
     MakeRgbPixel32(0,40,86));
 
+	LibCC::Timer t;
+	t.Tick();
 
 	if(NULL == GetProp(m_ctl, _T("InitialPopulation")))
 	{
@@ -132,19 +53,19 @@ void ActivityList::Attach(HWND h)
 		std::vector<ScreenshotArchive::Screenshot> screenshots = m_archive.RetreiveScreenshots();
 		for(std::vector<ScreenshotArchive::Screenshot>::iterator it = screenshots.begin(); it != screenshots.end(); ++ it)
 		{
-			InternalRegisterScreenshot(it->id, it->RetrieveThumbnail());
+			CallInternalRegisterScreenshot(it->id, it->RetrieveThumbnail(), it->width, it->height);
 
 			std::vector<ScreenshotArchive::Event> events = it->RetreiveEvents();
 			for(std::vector<ScreenshotArchive::Event>::iterator itEvent = events.begin(); itEvent != events.end(); ++ itEvent)
 			{
-				InternalRegisterEvent(itEvent->id, itEvent->screenshotID, itEvent->icon, itEvent->type, itEvent->destinationName, itEvent->messageText, itEvent->url);
+				CallInternalRegisterEvent(itEvent->id, itEvent->screenshotID, itEvent->icon, itEvent->type, itEvent->destinationName, itEvent->messageText, itEvent->url);
 			}
 		}
 		SetProp(m_ctl, _T("InitialPopulation"), (HANDLE)1);
 	}
 
-	m_brushSelected.CreateSysColorBrush(COLOR_HIGHLIGHT);
-	m_brushNormal.CreateSysColorBrush(COLOR_WINDOW);
+	t.Tick();
+	LibCC::g_pLog->Message(LibCC::Format("Initial history population performed in % seconds")(t.GetLastDelta()));
 }
 
 // IArchiveNotifications events
@@ -157,14 +78,14 @@ void ActivityList::OnPruneScreenshot(ScreenshotID screenshotID)// screenshotID i
 ScreenshotID ActivityList::RegisterScreenshot(Gdiplus::BitmapPtr image, Gdiplus::BitmapPtr thumbnail)
 {
 	ScreenshotID ret = m_archive.RegisterScreenshot(image, thumbnail);
-	InternalRegisterScreenshot(ret, thumbnail);
+	CallInternalRegisterScreenshot(ret, thumbnail, image->GetWidth(), image->GetHeight());
 	return ret;
 }
 
 EventID ActivityList::RegisterEvent(ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
 {
 	EventID ret = m_archive.RegisterEvent(screenshotID, icon, type, destination, message, url);
-	InternalRegisterEvent(ret, screenshotID, icon, type, destination, message, url);
+	CallInternalRegisterEvent(ret, screenshotID, icon, type, destination, message, url);
 	return ret;
 }
 
@@ -205,213 +126,188 @@ void ActivityList::DeleteScreenshot(ScreenshotID screenshotID)
 }
 
 // make sure the list index is correct.
-void ActivityList::RedrawItem(ItemSpec* i)
+void ActivityList::RedrawItem(ActivityListItemSpec* i)
 {
 	// UMMM how the F do you tell the listbox to redraw a single item? i guess this is the only way
 	RECT rc;
-	if(LB_ERR == m_ctl.GetItemRect(i->listIndex, &rc))
+	if(LB_ERR == m_ctl.GetItemRect(i->GetListIndex(), &rc))
 		return;
 	m_ctl.InvalidateRect(&rc, FALSE);
 }
 
-
-void ActivityList::InternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail)
+LRESULT ActivityList::OnInternalRegisterScreenshot(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_items.push_back(ItemSpec());
-	ItemSpec& pnew = m_items.back();
-	pnew.type = ItemSpec::Screenshot;
-	pnew.screenshotID = archiveScreenshotID;
-	pnew.thumb = thumbnail;
-
-	m_currentlyInsertingItem = &pnew;
-	int itemID = m_ctl.AddString(_T("."));
-	m_currentlyInsertingItem = 0;
-	m_ctl.SetItemDataPtr(itemID, &pnew);
+	IRS_Data* p = (IRS_Data*)lParam;
+	_InternalRegisterScreenshot(p->archiveScreenshotID, p->thumbnail, p->screenshotWidth, p->screenshotHeight);
+	delete p;
+	return 0;
 }
 
-void ActivityList::InternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
+LRESULT ActivityList::OnInternalRegisterEvent(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_items.push_back(ItemSpec());
-	ItemSpec& pnew = m_items.back();
-	pnew.type = ItemSpec::Event;
-	pnew.screenshotID = screenshotID;
-	pnew.eventType = type;
-	pnew.eventID = archiveEventID;
-	pnew.destination = destination;
-	pnew.icon = icon;
-	pnew.msg = message;
-	pnew.url = url;
-	pnew.imageIndex = EventIconToIconIndex(icon);
+	IRE_Data* p = (IRE_Data*)lParam;
+	_InternalRegisterEvent(p->archiveEventID, p->screenshotID, p->icon, p->type, p->destination, p->message, p->url);
+	delete p;
+	return 0;
+}
+
+void ActivityList::CallInternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail, int screenshotWidth, int screenshotHeight)
+{
+	if(this->GetWindowThreadID() == GetCurrentThreadId())
+	{
+		_InternalRegisterScreenshot(archiveScreenshotID, thumbnail, screenshotWidth, screenshotHeight);
+		return;
+	}
+	IRS_Data* p = new IRS_Data;
+	p->archiveScreenshotID = archiveScreenshotID;
+	p->screenshotHeight = screenshotHeight;
+	p->screenshotWidth = screenshotWidth;
+	p->thumbnail = Gdiplus::BitmapPtr(thumbnail->Clone(0, 0, thumbnail->GetWidth(), thumbnail->GetHeight(), thumbnail->GetPixelFormat()));
+	SendMessage(WM_INTERNALREGISTERSCREENSHOT, 0, (LPARAM)p);
+}
+
+void ActivityList::CallInternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
+{
+	if(this->GetWindowThreadID() == GetCurrentThreadId())
+	{
+		_InternalRegisterEvent(archiveEventID, screenshotID, icon, type, destination, message, url);
+		return;
+	}
+	IRE_Data* p = new IRE_Data;
+	p->archiveEventID = archiveEventID;
+	p->destination = destination;
+	p->icon = icon;
+	p->message = message;
+	p->screenshotID = screenshotID;
+	p->type = type;
+	p->url = url;
+	SendMessage(WM_INTERNALREGISTEREVENT, 0, (LPARAM)p);
+}
+
+// this must run in the GUI thread.
+void ActivityList::_InternalRegisterScreenshot(ScreenshotID archiveScreenshotID, Gdiplus::BitmapPtr thumbnail, int screenshotWidth, int screenshotHeight)
+{
+	ATLASSERT(m_currentlyInsertingItem == 0);
+	ATLASSERT(GetWindowThreadID() == GetCurrentThreadId());
+
+	m_items.push_back(ActivityListItemSpec());
+	ActivityListItemSpec& pnew = m_items.back();
+	pnew.Init(&m_renderingInfo);
+	pnew.SetType(ActivityListItemSpec::Screenshot);
+	pnew.SetScreenshotID(archiveScreenshotID);
+	pnew.SetThumbnail(thumbnail);
+	pnew.SetScreenshotWidth(screenshotWidth);
+	pnew.SetScreenshotHeight(screenshotHeight);
 
 	m_currentlyInsertingItem = &pnew;
-	int itemID = m_ctl.AddString(_T("."));
-	m_currentlyInsertingItem = 0;
-	m_ctl.SetItemDataPtr(itemID, &pnew);
+	{
+		LibCC::LogScopeMessage lsm(LibCC::Format(L"Inserting item %").p(&pnew).Str());
+		int itemID = m_ctl.AddString(_T("."));
+		LibCC::g_pLog->Message(LibCC::Format("... index %").i(itemID));
+		m_currentlyInsertingItem = 0;
+		m_ctl.SetItemDataPtr(itemID, &pnew);
+		m_ctl.SetTopIndex(itemID);
+	}
+}
+
+// this must run in the GUI thread.
+void ActivityList::_InternalRegisterEvent(EventID archiveEventID, ScreenshotID screenshotID, EventIcon icon, EventType type, const std::wstring& destination, const std::wstring& message, const std::wstring& url)
+{
+	ATLASSERT(m_currentlyInsertingItem == 0);
+	ATLASSERT(GetWindowThreadID() == GetCurrentThreadId());
+
+	m_items.push_back(ActivityListItemSpec());
+	ActivityListItemSpec& pnew = m_items.back();
+	pnew.Init(&m_renderingInfo);
+	pnew.SetType(ActivityListItemSpec::Event);
+	pnew.SetScreenshotID(screenshotID);
+	pnew.SetEventType(type);
+	pnew.SetEventID(archiveEventID);
+	pnew.SetEventDestination(destination);
+	pnew.SetEventIcon(icon);
+	pnew.SetEventMessage(message);
+	pnew.SetEventURL(url);
+	pnew.SetEventImageIndex(m_renderingInfo.EventIconToIconIndex(icon));
+
+	m_currentlyInsertingItem = &pnew;
+	{
+		LibCC::LogScopeMessage lsm(LibCC::Format(L"Inserting item %").p(&pnew).Str());
+		int itemID = m_ctl.AddString(_T("."));
+		LibCC::g_pLog->Message(LibCC::Format("... index %").i(itemID));
+		m_currentlyInsertingItem = 0;
+		m_ctl.SetItemDataPtr(itemID, &pnew);
+		m_ctl.SetTopIndex(itemID);
+	}
 }
 
 void ActivityList::InternalEventSetIcon(EventID eventID, EventIcon icon)
 {
-	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
+	ActivityListItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
-	item->icon = icon;
-	item->imageIndex = EventIconToIconIndex(icon);
+	item->SetEventIcon(icon);
+	item->SetEventImageIndex(m_renderingInfo.EventIconToIconIndex(icon));
 
 	RedrawItem(item);
 }
 
 void ActivityList::InternalEventSetProgress(EventID eventID, int pos, int total)
 {
-	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
+	ActivityListItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
-	item->imageIndex = m_progress.GetImageFromProgress(pos, total);
+	item->SetEventImageIndex(m_renderingInfo.m_progress.GetImageFromProgress(pos, total));
 	if(pos >= total)
 	{
 		// 100% - use a special image.
-		item->imageIndex = EventIconToIconIndex(EI_CHECK);
+		item->SetEventImageIndex(m_renderingInfo.EventIconToIconIndex(EI_CHECK));
 	}
 	RedrawItem(item);
 }
 
 void ActivityList::InternalEventSetText(EventID eventID, const std::wstring& msg)
 {
-	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
+	ActivityListItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
-	item->msg = msg;
+	item->SetEventMessage(msg);
 	RedrawItem(item);
 }
 
 void ActivityList::InternalEventSetURL(EventID eventID, const std::wstring& url)
 {
-	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
+	ActivityListItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
-	item->url = url;
+	item->SetEventURL(url);
+	RedrawItem(item);
 }
 
 void ActivityList::InternalDeleteEvent(EventID eventID)
 {
-	ItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
+	ActivityListItemSpec* item = EventIDToItemSpecWithListIndex(eventID);
 	if(!item)
 		return;
-	m_ctl.DeleteString(item->listIndex);
+	m_ctl.DeleteString(item->GetListIndex());
 }
 
 void ActivityList::InternalDeleteScreenshot(ScreenshotID screenshotID)
 {
-	ItemSpec* item;
+	ActivityListItemSpec* item;
 	while(item = GetFirstItemAssociatedWithScreenshot(screenshotID))
 	{
-		m_ctl.DeleteString(item->listIndex);
+		m_ctl.DeleteString(item->GetListIndex());
 	}
 }
-//
-//ActivityList::ItemSpec* ActivityList::EventIDToItemSpec(EventID msgID)
-//{
-//	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
-//	{
-//		if(it->type == ItemSpec::Event && it->eventID == msgID)
-//			return &(*it);
-//	}
-//	return 0;
-//}
-//
-//ActivityList::ItemSpec* ActivityList::ScreenshotIDToItemSpec(ScreenshotID screenshotID)
-//{
-//	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
-//	{
-//		if(it->type == ItemSpec::Screenshot && it->screenshotID == screenshotID)
-//			return &(*it);
-//	}
-//	return 0;
-//}
 
-LRESULT ActivityList::OnDrawItem(DRAWITEMSTRUCT& dis, BOOL& bHandled)
-{
-	bHandled = TRUE;
-	if(dis.itemID == -1)
-	{
-		return 0;
-	}
-
-	ItemSpec& item = *((ItemSpec*)dis.itemData);
-	LibCC::g_pLog->Message(LibCC::Format("DrawItem i=%, msg=%")(dis.itemID).qs(item.msg));
-
-	SetBkMode(dis.hDC, TRANSPARENT);
-
-	if((dis.itemState & ODS_SELECTED) == ODS_SELECTED)
-	{
-		FillRect(dis.hDC, &dis.rcItem, m_brushSelected);
-		SetTextColor(dis.hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-	}
-	else
-	{
-		FillRect(dis.hDC, &dis.rcItem, m_brushNormal);
-		SetTextColor(dis.hDC, GetSysColor(COLOR_WINDOWTEXT));
-	}
-
-	SelectObject(dis.hDC, UtilGetShellFont());
-
-	switch(item.type)
-	{
-	case ItemSpec::Screenshot:
-		{
-			Gdiplus::Graphics* p = new Gdiplus::Graphics(dis.hDC);
-			p->DrawImage(item.thumb.get(), dis.rcItem.left, dis.rcItem.top);
-			delete p;
-		}
-		break;
-	case ItemSpec::Event:
-		{
-			CRect rc(dis.rcItem);
-			rc.left += 20;
-			DrawText(dis.hDC, item.msg.c_str(), item.msg.size(), &rc, 0);
-			m_imageList.Draw(dis.hDC, item.imageIndex, dis.rcItem.left, dis.rcItem.top, ILD_NORMAL);
-			break;
-		}
-	default:
-		// no man's land.
-		break;
-	}
-
-	return 0;
-}
-
-LRESULT ActivityList::OnMeasureItem(MEASUREITEMSTRUCT& mis, BOOL& bHandled)
-{
-	bHandled = TRUE;
-
-	ItemSpec* item;
-	if(m_currentlyInsertingItem)
-		item = m_currentlyInsertingItem;
-	else
-		item = (ItemSpec*)m_ctl.GetItemDataPtr(mis.itemID);
-
-	switch(item->type)
-	{
-	case ItemSpec::Screenshot:
-		mis.itemHeight = item->thumb->GetHeight();
-		break;
-	case ItemSpec::Event:
-		mis.itemHeight = m_itemHeight;
-		break;
-	default:
-		// no-man's land.
-		mis.itemHeight = 100;
-		break;
-	}
-	return 0;
-}
 
 LRESULT ActivityList::OnDeleteItem(DELETEITEMSTRUCT& dis, BOOL& bHandled)
 {
 	bHandled = TRUE;
-	ItemSpec* item = (ItemSpec*)dis.itemData;
+	ActivityListItemSpec* item = (ActivityListItemSpec*)dis.itemData;
 	// just remove it from the list.
 	// so, first find it.
-	for(std::list<ItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
+	for(std::list<ActivityListItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
 	{
 		if(&(*it) == item)
 		{
@@ -442,17 +338,17 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 			if(0 == GetAsyncKeyState(VK_CONTROL))
 			{
 				// de-select everything else
-				std::vector<ItemSpec*> items = GetSelectedItems();
-				for(std::vector<ItemSpec*>::iterator it = items.begin(); it != items.end(); ++ it)
+				std::vector<ActivityListItemSpec*> items = GetSelectedItems();
+				for(std::vector<ActivityListItemSpec*>::iterator it = items.begin(); it != items.end(); ++ it)
 				{
-					m_ctl.SetSel((*it)->listIndex, FALSE);
+					m_ctl.SetSel((*it)->GetListIndex(), FALSE);
 				}
 			}
 			m_ctl.SetSel(i);
 		}
 	}
 
-	ItemSpec* spec = GetFocusedItem();
+	ActivityListItemSpec* spec = GetFocusedItem();
   if(!spec)
 		return 0;
 
@@ -462,18 +358,18 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 
   if(spec)
   {
-		switch(spec->type)
+		switch(spec->GetType())
 		{
-		case ItemSpec::Screenshot:
+		case ActivityListItemSpec::Screenshot:
 				menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Re-process..."), ID_REPROCESS));
 			break;
-		case ItemSpec::Event:
+		case ActivityListItemSpec::Event:
 			{
-				switch(spec->eventType)
+				switch(spec->GetEventType())
 				{
 				default:
 				case ET_GENERAL:
-					if(spec->url.size())
+					if(spec->GetEventURL().size())
 						menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy URL"), ID_COPYURL));
 					break;
 				case ET_FTP:
@@ -499,7 +395,7 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 	{
 		menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateSeparator());
 	}
-	if(spec->msg.size())
+	if(spec->GetEventMessage().size())
 		menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Copy message text"), ID_COPYMESSAGE));
 	menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Remove"), IDC_REMOVE));
 	menu.InsertMenuItem(pos ++, TRUE, MenuItemInfo::CreateText(_T("Clear all"), ID_CLEAR));
@@ -513,10 +409,10 @@ LRESULT ActivityList::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 
 LRESULT ActivityList::OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	ItemSpec* item = GetFocusedItem();
+	ActivityListItemSpec* item = GetFocusedItem();
 	if(!item)
 		return 0;
-  tstd::tstring cmdLine = LibCC::Format("explorer /select, %").qs(item->url).Str();
+  tstd::tstring cmdLine = LibCC::Format("explorer /select, %").qs(item->GetEventURL()).Str();
 
   PROCESS_INFORMATION pi;
   STARTUPINFO si;
@@ -534,39 +430,39 @@ LRESULT ActivityList::OnExplore(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/
 
 LRESULT ActivityList::OnOpenFile(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	ItemSpec* item = GetFocusedItem();
+	ActivityListItemSpec* item = GetFocusedItem();
 	if(!item)
 		return 0;
-  ShellExecute(m_hWnd, _T("open"), item->url.c_str(), NULL, NULL, SW_SHOW);
+  ShellExecute(m_hWnd, _T("open"), item->GetEventURL().c_str(), NULL, NULL, SW_SHOW);
   return 0;
 }
 
 LRESULT ActivityList::OnOpenURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	ItemSpec* item = GetFocusedItem();
+	ActivityListItemSpec* item = GetFocusedItem();
 	if(!item)
 		return 0;
-  ShellExecute(m_hWnd, _T("open"), item->url.c_str(), NULL, NULL, SW_SHOW);
+  ShellExecute(m_hWnd, _T("open"), item->GetEventURL().c_str(), NULL, NULL, SW_SHOW);
   return 0;
 }
 
 LRESULT ActivityList::OnCopyURL(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	ItemSpec* item = GetFocusedItem();
+	ActivityListItemSpec* item = GetFocusedItem();
 	if(!item)
 		return 0;
 
-	LibCC::Result r = Clipboard(m_hWnd).SetText(item->url);
+	LibCC::Result r = Clipboard(m_hWnd).SetText(item->GetEventURL());
 	return 0;
 }
 
 LRESULT ActivityList::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	ItemSpec* item = GetFocusedItem();
+	ActivityListItemSpec* item = GetFocusedItem();
 	if(!item)
 		return 0;
 
-	LibCC::Result r = Clipboard(m_hWnd).SetText(item->msg);
+	LibCC::Result r = Clipboard(m_hWnd).SetText(item->GetEventMessage());
 	return 0;
 }
 
@@ -580,16 +476,16 @@ LRESULT ActivityList::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 // remove selected.
 LRESULT ActivityList::OnRemove(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	std::vector<ItemSpec*> items = GetSelectedItems();
-	while(ItemSpec* item = GetFirstSelectedItem())
+	std::vector<ActivityListItemSpec*> items = GetSelectedItems();
+	while(ActivityListItemSpec* item = GetFirstSelectedItem())
 	{
-		switch(item->type)
+		switch(item->GetType())
 		{
-		case ItemSpec::Screenshot:
-			DeleteScreenshot(item->screenshotID);
+		case ActivityListItemSpec::Screenshot:
+			DeleteScreenshot(item->GetScreenshotID());
 			break;
-		case ItemSpec::Event:
-			DeleteEvent(item->eventID);
+		case ActivityListItemSpec::Event:
+			DeleteEvent(item->GetEventID());
 			break;
 		}
 	}
@@ -600,75 +496,104 @@ extern CMainWindow* g_mainWindow;
 
 LRESULT ActivityList::OnReprocess(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	ItemSpec* item = GetFocusedItem();
+	ActivityListItemSpec* item = GetFocusedItem();
 	if(!item)
 		return 0;
-	::PostMessage(*g_mainWindow, CMainWindow::WM_REPROCESSSCREENSHOT, 0, (LPARAM)item->screenshotID);
+	::PostMessage(*g_mainWindow, CMainWindow::WM_REPROCESSSCREENSHOT, 0, (LPARAM)item->GetScreenshotID());
 	return 0;
 }
 
-ActivityList::ItemSpec* ActivityList::GetFocusedItem() const
+ActivityListItemSpec* ActivityList::GetFocusedItem() const
 {
 	LibCC::Blob<INT> x(m_ctl.GetSelCount());
 	m_ctl.GetSelItems(x.Size(), x.GetBuffer());
 	for(size_t i = 0; i < x.Size(); ++ i)
 	{
 		if(0 != m_ctl.GetSel(x[i]))
-			return (ItemSpec*)m_ctl.GetItemDataPtr(x[i]);
+			return (ActivityListItemSpec*)m_ctl.GetItemDataPtr(x[i]);
 	}
 	return 0;
 }
 
-std::vector<ActivityList::ItemSpec*> ActivityList::GetSelectedItems() const
+std::vector<ActivityListItemSpec*> ActivityList::GetSelectedItems() const
 {
 	LibCC::Blob<INT> x(m_ctl.GetSelCount());
 	m_ctl.GetSelItems(x.Size(), x.GetBuffer());
-	std::vector<ItemSpec*> ret;
+	std::vector<ActivityListItemSpec*> ret;
 	for(size_t i = 0; i < x.Size(); ++ i)
 	{
-		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(x[i]);
-		p->listIndex = x[i];
+		ActivityListItemSpec* p = (ActivityListItemSpec*)m_ctl.GetItemDataPtr(x[i]);
+		p->SetListIndex(x[i]);
 		ret.push_back(p);
 	}
 	return ret;
 }
 
-ActivityList::ItemSpec* ActivityList::EventIDToItemSpecWithListIndex(EventID id)
+ActivityListItemSpec* ActivityList::EventIDToItemSpecWithListIndex(EventID id)
 {
 	// it would be nice if there was an easier way of doing this.
 	for(int i = 0; i < m_ctl.GetCount(); i ++)
 	{
-		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(i);
-		if(p->type == ItemSpec::Event && p->eventID == id)
+		ActivityListItemSpec* p = (ActivityListItemSpec*)m_ctl.GetItemDataPtr(i);
+		if(p->GetType() == ActivityListItemSpec::Event && p->GetEventID() == id)
 		{
-			p->listIndex = i;
+			p->SetListIndex(i);
 			return p;
 		}
 	}
 	return 0;
 }
 
-ActivityList::ItemSpec* ActivityList::GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const
+ActivityListItemSpec* ActivityList::GetFirstItemAssociatedWithScreenshot(ScreenshotID screenshotID) const
 {
 	// it would be nice if there was an easier way of doing this.
 	for(int i = 0; i < m_ctl.GetCount(); i ++)
 	{
-		ItemSpec* p = (ItemSpec*)m_ctl.GetItemDataPtr(i);
-		if(p->screenshotID == screenshotID)
+		ActivityListItemSpec* p = (ActivityListItemSpec*)m_ctl.GetItemDataPtr(i);
+		if(p->GetScreenshotID() == screenshotID)
 		{
-			p->listIndex = i;
+			p->SetListIndex(i);
 			return p;
 		}
 	}
 	return 0;
 }
 
-ActivityList::ItemSpec* ActivityList::GetFirstSelectedItem() const
+ActivityListItemSpec* ActivityList::GetFirstSelectedItem() const
 {
 	if(m_ctl.GetSelCount() == 0)
 		return 0;
 	INT i[2];
 	m_ctl.GetSelItems(1, i);
-	return (ItemSpec*)m_ctl.GetItemDataPtr(i[0]);
+	return (ActivityListItemSpec*)m_ctl.GetItemDataPtr(i[0]);
 }
 
+
+LRESULT ActivityList::OnDrawItem(DRAWITEMSTRUCT& dis, BOOL& bHandled)
+{
+	bHandled = TRUE;
+	if(dis.itemID == -1)
+	{
+		return 0;
+	}
+
+	ActivityListItemSpec* item = (ActivityListItemSpec*)dis.itemData;
+	//LibCC::g_pLog->Message(LibCC::Format("OnDrawItem. Index=% p=%").i(dis.itemID).p(item));
+	item->RenderTo(dis.hDC, dis.rcItem, (dis.itemState & ODS_SELECTED) == ODS_SELECTED);
+	return 0;
+}
+
+LRESULT ActivityList::OnMeasureItem(MEASUREITEMSTRUCT& mis, BOOL& bHandled)
+{
+	bHandled = TRUE;
+
+	ActivityListItemSpec* item;
+	if(m_currentlyInsertingItem)
+		item = m_currentlyInsertingItem;
+	else
+		item = (ActivityListItemSpec*)m_ctl.GetItemDataPtr(mis.itemID);
+
+	mis.itemHeight = item->GetItemHeight();
+
+	return 0;
+}

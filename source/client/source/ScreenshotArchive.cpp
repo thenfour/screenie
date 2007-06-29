@@ -27,51 +27,7 @@ std::wstring QuoteSql(const std::wstring& in)
 
 util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveImage()
 {
-	Gdiplus::Bitmap* p = 0;
-	if(!m_owner->ArchiveEnabled())
-		return util::shared_ptr<Gdiplus::Bitmap>(p);
-
-	try
-	{
-		sqlite3x::sqlite3_connection conn;
-		if(!m_owner->OpenDatabase(conn))
-			return util::shared_ptr<Gdiplus::Bitmap>(p);
-
-		{// necessary for cmd to close
-			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [bitmapData] from Screenshots where [id] = %").i((int)id).Str());
-
-			sqlite3x::sqlite3_reader rdr = cmd.executereader();
-			if(rdr.read())
-			{
-				std::string data = rdr.getblob(0);
-				// now read that sucker into a gdiplus bitmap.
-				// for some reason, using BlobStream here does not work. it will cause some crazy crash when the Gdiplus object is freed.
-				// it's very strange, so for now i will just choose the path of least resistance and do something i know works.
-				HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, data.size());
-				void* pMem = GlobalLock(hmem);
-				memcpy(pMem, data.c_str(), data.size());
-				GlobalUnlock(hmem);
-
-				IStream* pStream = 0;
-				CreateStreamOnHGlobal(hmem, FALSE, &pStream);
-
-				p = Gdiplus::Bitmap::FromStream(pStream);
-
-				pStream->Release();
-				pStream = 0;
-				GlobalFree(hmem);
-
-			}
-			rdr.close();
-		}
-		
-		conn.close();
-	}
-	catch(sqlite3x::database_error& er)
-	{
-		LibCC::g_pLog->Message(LibCC::Format("Database exception in ScreenshotArchive::Screenshot::RetrieveImage. %").qs(er.what()));
-	}
-	return util::shared_ptr<Gdiplus::Bitmap>(p);
+	return m_owner->RetrieveImage(id);
 }
 
 
@@ -194,13 +150,15 @@ std::vector<ScreenshotArchive::Screenshot> ScreenshotArchive::RetreiveScreenshot
 		if(!OpenDatabase(conn))
 			return ret;
 		{// necessary for cmd to close before conn.close()
-			sqlite3x::sqlite3_command cmd(conn, "select [id] from Screenshots");
+			sqlite3x::sqlite3_command cmd(conn, "select [id], [width], [height] from Screenshots");
 			sqlite3x::sqlite3_reader rdr = cmd.executereader();
 			while(rdr.read())
 			{
 				ret.push_back(Screenshot(this));
 				//fill ret.back();
 				ret.back().id = (ScreenshotID)rdr.getint(0);
+				ret.back().width = rdr.getint(1);
+				ret.back().height = rdr.getint(2);
 			}
 			rdr.close();
 		}
@@ -212,6 +170,56 @@ std::vector<ScreenshotArchive::Screenshot> ScreenshotArchive::RetreiveScreenshot
 	}
 	return ret;
 }
+
+util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::RetrieveImage(ScreenshotID id)
+{
+	Gdiplus::Bitmap* p = 0;
+	if(!ArchiveEnabled())
+		return util::shared_ptr<Gdiplus::Bitmap>(p);
+
+	try
+	{
+		sqlite3x::sqlite3_connection conn;
+		if(!OpenDatabase(conn))
+			return util::shared_ptr<Gdiplus::Bitmap>(p);
+
+		{// necessary for cmd to close
+			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [bitmapData] from Screenshots where [id] = %").i((int)id).Str());
+
+			sqlite3x::sqlite3_reader rdr = cmd.executereader();
+			if(rdr.read())
+			{
+				std::string data = rdr.getblob(0);
+				// now read that sucker into a gdiplus bitmap.
+				// for some reason, using BlobStream here does not work. it will cause some crazy crash when the Gdiplus object is freed.
+				// it's very strange, so for now i will just choose the path of least resistance and do something i know works.
+				HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, data.size());
+				void* pMem = GlobalLock(hmem);
+				memcpy(pMem, data.c_str(), data.size());
+				GlobalUnlock(hmem);
+
+				IStream* pStream = 0;
+				CreateStreamOnHGlobal(hmem, FALSE, &pStream);
+
+				p = Gdiplus::Bitmap::FromStream(pStream);
+
+				pStream->Release();
+				pStream = 0;
+				GlobalFree(hmem);
+
+			}
+			rdr.close();
+		}
+		
+		conn.close();
+	}
+	catch(sqlite3x::database_error& er)
+	{
+		LibCC::g_pLog->Message(LibCC::Format("Database exception in ScreenshotArchive::Screenshot::RetrieveImage. %").qs(er.what()));
+	}
+	return util::shared_ptr<Gdiplus::Bitmap>(p);
+}
+
 
 std::wstring ScreenshotArchive::GetDBFilename() const
 {
@@ -322,7 +330,8 @@ ScreenshotID ScreenshotArchive::RegisterScreenshot(Gdiplus::BitmapPtr bmp, Gdipl
 			return 0;
 
 		{// necessary for cmd to close up properly
-			sqlite3x::sqlite3_command cmd(conn, "insert into Screenshots ([bitmapData], [thumbnailData], [date]) values (?, ?, strftime('%Y-%m-%dT%H:%M:%f', 'now'))");
+			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("insert into Screenshots ([bitmapData], [thumbnailData], [width], [height], [date]) "
+				"values (?, ?, %, %, strftime('^%Y-^%m-^%dT^%H:^%M:^%f', 'now'))").i(bmp->GetWidth()).i(bmp->GetHeight()).CStr());
 			cmd.bind(1, stream.GetBuffer(), stream.GetLength());
 			cmd.bind(2, streamThumb.GetBuffer(), streamThumb.GetLength());
 

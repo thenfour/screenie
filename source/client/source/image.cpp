@@ -244,7 +244,9 @@ bool ScaleBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap
 		return false;
 
 	int width = int(source.GetWidth() * scale);
+	if(width == 0) width = 1;
 	int height = int(source.GetHeight() * scale);
+	if(height == 0) height = 1;
 
 	util::shared_ptr<Gdiplus::Bitmap> bitmap(new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB));
 
@@ -342,4 +344,34 @@ void DumpIcon(HICON img, int x, int y)
   ::ReleaseDC(0,dc);
 }
 
+
+bool GdiplusBitmapToAnimBitmap(Gdiplus::BitmapPtr src, AnimBitmap<32>& dest)
+{
+	ATLASSERT(!"I can't figure out how to get this to work.");
+	//if(!dest.SetSize(src->GetWidth(), src->GetHeight()))
+	//	return false;
+
+	//// the easy / fast way. BUT it doesn't fucking work. I think Gdiplus::Graphics() doesn't like the DC i pass in
+	////Gdiplus::Graphics* gfx = new Gdiplus::Graphics(dest.GetDC());
+	////Gdiplus::Status s = gfx->GetLastStatus();
+	////s = gfx->DrawImage(src.get(), 0, 0);
+	////delete gfx;
+
+ // HBITMAP himg;
+ // src->GetHBITMAP(0, &himg);
+
+	//HDC dcDesktop = GetDC(0);
+	//HDC dcc = CreateCompatibleDC(dcDesktop);
+	//ReleaseDC(0, dcDesktop);
+
+	//HBITMAP hOld = (HBITMAP)SelectObject(dcc, himg);
+
+	//dest.BlitFrom(dcc, 0, 0, src->GetWidth(), src->GetHeight());
+
+	//SelectObject(dcc, hOld);
+ // DeleteDC(dcc);
+ // DeleteObject(himg);
+
+	return true;
+}
 

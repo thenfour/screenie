@@ -488,6 +488,22 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\ActivityListItem.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\ActivityListItem.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\ProgressImages.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\ProgressImages.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\ScreenshotArchive.cpp"
 				>
 			</File>

@@ -218,7 +218,7 @@ LRESULT CMainWindow::OnReprocessScreenshot(UINT msg, WPARAM wParam, LPARAM lPara
   ScopedGUIEntry ee;
   if(ee.Enter())
   {
-		Gdiplus::BitmapPtr screenshot = m_archive.GetScreenshot((ScreenshotID)lParam).RetrieveImage();
+		Gdiplus::BitmapPtr screenshot = m_archive.RetrieveImage((ScreenshotID)lParam);
 		if(!screenshot)
 		{
 			// no reason to check options for archive enabled, because there are other runtime reasons for the archive

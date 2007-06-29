@@ -219,6 +219,9 @@ public:
 private:
 	void InvalidateAll()
 	{
+		if(!hwnd)
+			return;
+
 		RECT rc;
 		GetClientRect(hwnd, &rc);
 		InvalidateRect(hwnd, &rc, FALSE);
