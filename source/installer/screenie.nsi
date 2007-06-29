@@ -1,3 +1,5 @@
+; This will run from the distro\out directory, so make the paths relative to there.
+
 !ifndef outfile
 !define outfile "..\..\bin-release\ScreenieSetup.exe"
 !endif
@@ -20,13 +22,13 @@ Name "${installname}"
 InstallDir "$PROGRAMFILES\Screenie"
 OutFile "${outfile}"
 
-VIProductVersion 1.$WCREV$.$WCMODS?1:0.0
+VIProductVersion 1.$WCREV$.$WCMODS?1:0$.0
 VIAddVersionKey "ProductName" "${installname}"
 VIAddVersionKey "CompanyName" "Carl Corcoran & Roger Clark"
-VIAddVersionKey "LegalCopyright" "© 2006 Carl Corcoran & Roger Clark.  All Rights Reserved."
+VIAddVersionKey "LegalCopyright" "© 2007 Carl Corcoran & Roger Clark.  All Rights Reserved."
 VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net"
-VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0.0
-VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0.0
+VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0$.0
+VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0$.0
 
 ;Interface Settings
 !define MUI_HEADERIMAGE
@@ -42,7 +44,7 @@ VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0.0
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "License.txt"
+!insertmacro MUI_PAGE_LICENSE "..\License.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -95,9 +97,9 @@ lbl_VersionOK:
   SetOutPath "$INSTDIR"
   Delete "$INSTDIR\screenie.exe"
   File ${infile}
-  File "msvcp71.dll"
-  File "msvcr71.dll"
-  File "gdiplus.dll"
+  File "..\msvcp71.dll"
+  File "..\msvcr71.dll"
+  File "..\gdiplus.dll"
 
   WriteUninstaller $INSTDIR\Uninst.exe
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Screenie" "$INSTDIR\screenie.exe"
