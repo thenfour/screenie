@@ -17,6 +17,10 @@
 #include "DestinationDlg.hpp"
 #include "ScreenshotArchive.hpp"
 
+// UNCOMMENT THIS TO RUN TESTMAIN() INSTEAD OF THE NORMAL WINMAIN
+//#define TESTMODE
+
+
 extern void TestMain();
 
 CMainWindow* g_mainWindow;
@@ -100,9 +104,12 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 {
-	//TestMain();
-	//return 0;
-
+#ifdef TESTMODE
+	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance());
+	TestMain();
+	delete LibCC::g_pLog;
+	return 0;
+#endif
 	// try to create a global mutex object. if it already exists, it means there's
 	// another instance of this program already running, and we shouldn't run another.
 

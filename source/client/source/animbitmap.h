@@ -112,7 +112,8 @@ public:
     m_bmp(0),
     m_pbuf(0),
 		m_checkerPattern(0),
-		m_checkerPatternGrayA(0)
+		m_checkerPatternGrayA(0),
+		m_smallCheckerPattern(0)
   {
     // store our offscreen hdc
     HDC hscreen = ::GetDC(0);
@@ -131,6 +132,10 @@ public:
 		{
 			DeleteObject(m_checkerPattern);
 			DeleteObject(m_checkerPatternGrayA);
+		}
+		if(m_smallCheckerPattern)
+		{
+			DeleteObject(m_smallCheckerPattern);
 		}
     DeleteDC(m_offscreen);
   }
@@ -288,6 +293,89 @@ public:
     }
   }
 
+	// renders a rect from a 1px white/black checker
+	void RectSmallCheckerSafe(long destLeft, long destTop, long destWidth, long destHeight)
+	{
+		if(0 == m_smallCheckerPattern)
+		{
+			RgbPixel32 color1 = MakeRgbPixel32(80, 80, 80);
+			RgbPixel32 color2 = MakeRgbPixel32(192, 192, 240);
+			HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, 2, 2);
+			HDC dc = CreateCompatibleDC(m_offscreen);
+			HGDIOBJ hOld = SelectObject(dc, hbm);
+
+			::SetPixel(dc, 0, 0, RgbPixel32ToCOLORREF(color1));
+			::SetPixel(dc, 1, 0, RgbPixel32ToCOLORREF(color2));
+			::SetPixel(dc, 0, 1, RgbPixel32ToCOLORREF(color2));
+			::SetPixel(dc, 1, 1, RgbPixel32ToCOLORREF(color1));
+
+			m_smallCheckerPattern = _CreatePatternBrush(hbm, 2, 2, 100, 100);
+
+			SelectObject(dc, hOld);
+			DeleteDC(dc);
+			DeleteObject(hbm);
+		}
+		HGDIOBJ hold = SelectObject(m_offscreen, m_smallCheckerPattern);
+		::PatBlt(m_offscreen, destLeft, destTop, destWidth, destHeight, PATCOPY);
+		SelectObject(m_offscreen, hold);
+	}
+
+	// inverseSrc is the place to grab pixels FROM for inversion
+	struct RectInverseSafeParams
+	{
+		AnimBitmap<32>* src;
+		long srcOffsetX;
+		long srcOffsetY;
+	};
+
+	bool IsInBounds(long x, long y)
+	{
+		if(x < 0 || y < 0) return false;
+		if(x >= m_x) return false;
+		if(y >= m_y) return false;
+		return true;
+	}
+
+	// renders a rect by inverting pixels from another source. Intended for selection rect handles so it doesn't contain the speckled grayed-out pixels.
+	void RectInverseSafeRemote(long destLeft, long destTop, long destWidth, long destHeight, RectInverseSafeParams& params)
+  {
+		CRect rcDest(destLeft, destTop, destLeft + destWidth, destTop + destHeight);
+		clamp(rcDest.left, 0, m_x);
+		clamp(rcDest.right, 0, m_x);
+		clamp(rcDest.top, 0, m_y);
+		clamp(rcDest.bottom, 0, m_y);
+		if(rcDest.Width() == 0 || rcDest.Height() == 0)
+			return;
+
+		RgbPixel* pdest = &m_pbuf[(rcDest.top * m_x) + rcDest.left];
+		RgbPixel* psrc = &(params.src->m_pbuf[(params.src->m_x * (rcDest.top + params.srcOffsetY)) + rcDest.left + params.srcOffsetX]);
+    // fill downwards
+		long srcY = rcDest.top + params.srcOffsetY;
+		for(long destY = rcDest.top; destY < rcDest.bottom; destY ++)
+    {
+      // draw a horizontal line
+			long srcX = rcDest.left + params.srcOffsetX;
+			for(long destX = rcDest.left; destX < rcDest.right; destX ++)
+      {
+				if(params.src->IsInBounds(srcX, srcY))
+				{
+					*pdest = InvertColorForSelection(*psrc,200);
+				}
+				else
+				{
+					*pdest = MakeRgbPixel32(70,160,160);
+				}
+				pdest ++;
+				psrc ++;
+				srcX ++;
+      }
+
+			pdest += m_x - rcDest.Width();
+			psrc += params.src->m_x - rcDest.Width();
+			srcY ++;
+    }
+  }
+
   // b and r are not drawn
   void Rect(long l, long t, long r, long b, RgbPixel c)
   {
@@ -297,7 +385,7 @@ public:
     while(t != b)
     {
       // draw a horizontal line
-      for(long i = 0; i < h; i ++)
+      for(long i = 0; i < h; i ++)//  <-- i think this is a bug. h should be w.
       {
         pbuf[i] = c;
       }
@@ -381,15 +469,18 @@ public:
 	{
 		if(m_checkerPattern == 0)
 		{
-			HBITMAP normal = 0;
-			HBITMAP grayA = 0;
-			HBITMAP grayB = 0;
 			const int size = 8;
 			const int cacheSize = 256;// size of the cached pattern.
+			const RgbPixel32 color1 = MakeRgbPixel32(204, 204, 204);// photoshop's colors.
+			const RgbPixel32 color2 = MakeRgbPixel32(255, 255, 255);// photoshop's colors.
+			const RgbPixel32 grayed1 = GrayPixel1(color1);
+			const RgbPixel32 grayed1a = GrayPixel1(color1);
+			const RgbPixel32 grayed2 = GrayPixel1(color2);
+			const RgbPixel32 grayed2a = GrayPixel2(color2);
 
 			{
-				HBRUSH h1 = CreateSolidBrush(RGB(204, 204, 204));
-				HBRUSH h2 = CreateSolidBrush(RGB(255, 255, 255));
+				HBRUSH h1 = CreateSolidBrush(RgbPixel32ToCOLORREF(color1));
+				HBRUSH h2 = CreateSolidBrush(RgbPixel32ToCOLORREF(color2));
 
 				HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
 				HDC dc = CreateCompatibleDC(m_offscreen);
@@ -412,8 +503,8 @@ public:
 				DeleteObject(h1);
 			}
 			{
-				HBRUSH h1 = CreateSolidBrush(RGB(153, 153, 153));
-				HBRUSH h2 = CreateSolidBrush(RGB(191, 191, 191));
+				HBRUSH h1 = CreateSolidBrush(RgbPixel32ToCOLORREF(grayed1));
+				HBRUSH h2 = CreateSolidBrush(RgbPixel32ToCOLORREF(grayed2));
 
 				HBITMAP hbm = CreateCompatibleBitmap(m_offscreen, size * 2, size * 2);
 				HDC dc = CreateCompatibleDC(m_offscreen);
@@ -553,10 +644,20 @@ public:
   };
 
 	template<int factor>
-	inline static RgbPixel GrayPixel(RgbPixel c)
+	inline static RgbPixel _GrayPixel(RgbPixel c)
 	{
 		DWORD x = (R(c) + G(c) + B(c)) >> factor;// grays it & dims it at the same time.
 		return MakeRgbPixel32(x,x,x);
+	}
+
+	inline static RgbPixel GrayPixel1(RgbPixel c)
+	{
+		return _GrayPixel<3>(c);
+	}
+
+	inline static RgbPixel GrayPixel2(RgbPixel c)
+	{
+		return _GrayPixel<4>(c);
 	}
 
 	void GrayOut()
@@ -569,12 +670,12 @@ public:
 		{
 			if(y & (x & 1))
 			{
-				*i = GrayPixel<2>(*i);
+				*i = GrayPixel1(*i);
 				//*i = InvertColorForSelection(*i, 32);
 			}
 			else
 			{
-				*i = GrayPixel<4>(*i);
+				*i = GrayPixel2(*i);
 				//*i = InvertColorForSelection(*i, -32);
 			}
 			x ++;
@@ -606,12 +707,12 @@ public:
       {
 				if(y & (x & 1))
 				{
-					pbuf[tx] = GrayPixel<4>(pbuf[tx]);
+					pbuf[tx] = GrayPixel1(pbuf[tx]);
 					//pbuf[tx] = InvertColorForSelection(pbuf[tx], 32);
 				}
 				else
 				{
-					pbuf[tx] = GrayPixel<2>(pbuf[tx]);
+					pbuf[tx] = GrayPixel2(pbuf[tx]);
 					//pbuf[tx] = InvertColorForSelection(pbuf[tx], -32);
 				}
 				x ++;
@@ -827,6 +928,8 @@ private:
 
 	HBRUSH m_checkerPattern;
 	HBRUSH m_checkerPatternGrayA;
+
+	HBRUSH m_smallCheckerPattern;
 
   template<typename T, typename Tmin, typename Tmax>
   inline bool clamp(T& l, const Tmin& minval, const Tmax& maxval)

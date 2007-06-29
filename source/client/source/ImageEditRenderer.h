@@ -404,6 +404,104 @@ private:
 		// draw checkers
 		m_offscreen.FillCheckerPatternExclusion(newRP.zoomedVisibleScreenCoords, m_queued.hasSelection);
 
+		// draw selection handles
+		if(m_queued.hasSelection)
+		{
+			//AnimBitmap<32>::RectInverseSafeParams params;
+			//params.src = &m_zoomed;
+			//params.srcOffsetX = -newRP.zoomedVisibleScreenCoords.left;
+			//params.srcOffsetY = -newRP.zoomedVisibleScreenCoords.top;
+
+			int SelectionHandleWidth = 3;// only for the corners
+			//int SelectionHandleWidthBorder = 6;// only for the border handles (left/top/right/bottom)
+			int SelectionHandleLegX = min(9, newRP.selectionScreenCoords.Width());
+			int SelectionHandleLegY = min(9, newRP.selectionScreenCoords.Height());
+
+			// Upper-left
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.left - SelectionHandleWidth,
+				newRP.selectionScreenCoords.top - SelectionHandleWidth,
+				SelectionHandleLegX + SelectionHandleWidth,
+				SelectionHandleWidth);// top leg
+
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.left - SelectionHandleWidth,
+				newRP.selectionScreenCoords.top,
+				SelectionHandleWidth,
+				SelectionHandleLegY);// left leg
+
+			// Lower-left
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.left - SelectionHandleWidth,
+				newRP.selectionScreenCoords.bottom,
+				SelectionHandleLegX + SelectionHandleWidth,
+				SelectionHandleWidth);// bottom leg
+
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.left - SelectionHandleWidth,
+				newRP.selectionScreenCoords.bottom - SelectionHandleLegY,
+				SelectionHandleWidth,
+				SelectionHandleLegY);// left leg
+
+			// Lower-right
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.right - SelectionHandleLegX,
+				newRP.selectionScreenCoords.bottom,
+				SelectionHandleLegX + SelectionHandleWidth,
+				SelectionHandleWidth);// bottom leg
+
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.right,
+				newRP.selectionScreenCoords.bottom - SelectionHandleLegY,
+				SelectionHandleWidth,
+				SelectionHandleLegY);// right leg
+
+			// Upper-right
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.right - SelectionHandleLegX,
+				newRP.selectionScreenCoords.top - SelectionHandleWidth,
+				SelectionHandleLegX + SelectionHandleWidth,
+				SelectionHandleWidth);// top leg
+
+			m_offscreen.RectSmallCheckerSafe(
+				newRP.selectionScreenCoords.right,
+				newRP.selectionScreenCoords.top,
+				SelectionHandleWidth,
+				SelectionHandleLegY);// right leg
+
+			// top
+			//CPoint middles = newRP.selectionScreenCoords.CenterPoint();
+			//middles.x -= SelectionHandleLegX / 2;
+			//middles.y -= SelectionHandleLegY / 2;
+
+			//m_offscreen.RectSmallCheckerSafe(
+			//	middles.x,
+			//	newRP.selectionScreenCoords.top - SelectionHandleWidthBorder,
+			//	SelectionHandleLegX,
+			//	SelectionHandleWidthBorder);
+
+			//// right
+			//m_offscreen.RectSmallCheckerSafe(
+			//	newRP.selectionScreenCoords.right,
+			//	middles.y,
+			//	SelectionHandleWidthBorder,
+			//	SelectionHandleLegY);
+
+			//// bottom
+			//m_offscreen.RectSmallCheckerSafe(
+			//	middles.x,
+			//	newRP.selectionScreenCoords.bottom,
+			//	SelectionHandleLegX,
+			//	SelectionHandleWidthBorder);
+
+			//// left
+			//m_offscreen.RectSmallCheckerSafe(
+			//	newRP.selectionScreenCoords.left - SelectionHandleWidthBorder,
+			//	middles.y,
+			//	SelectionHandleWidthBorder,
+			//	SelectionHandleLegY);
+		}
+
 		oldRP = newRP;
 	}
 

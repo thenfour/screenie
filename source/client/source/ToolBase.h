@@ -28,6 +28,9 @@ public:
 	virtual void SetSelection(const RECT& rc) = 0;
 	virtual bool HasSelection() const = 0;
 	virtual CRect GetSelection() const = 0;
+	virtual void SetCursorPosition(const PointF& img) = 0;
+	virtual void PushCursor(PCWSTR newcursor) = 0;// technically, the idea of a stack of cursors might not work, because cursor changes don't necessarily happen in a stack-like behavior.... but for now it works fine.
+	virtual void PopCursor(bool set) = 0;
 };
 
 

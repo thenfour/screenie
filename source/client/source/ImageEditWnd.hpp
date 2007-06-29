@@ -30,6 +30,7 @@
 #include "SelectionTool.h"
 #include "ImageEditRenderer.h"
 #include <map>
+#include <stack>
 
 
 class IImageEditWindowEvents
@@ -92,6 +93,7 @@ public:
   UINT_PTR CreateTimer(UINT elapse, ToolTimerProc, void* userData);
   void DeleteTimer(UINT_PTR cookie);
 	const Viewport& GetViewport() const { return m_display.GetViewport(); }
+	void SetCursorPosition(const PointF& img);
 	void ClearSelection()
 	{
 		m_display.ClearSelection();
@@ -104,6 +106,8 @@ public:
 	}
 	bool HasSelection() const { return m_display.HasSelection(); }
 	CRect GetSelection() const { return m_display.GetSelection(); }
+	void PushCursor(PCWSTR newcursor);
+	void PopCursor(bool set);
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
@@ -135,6 +139,7 @@ protected:
 		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 		MESSAGE_HANDLER(WM_RBUTTONUP, OnRButtonUp)
     MESSAGE_HANDLER(WM_CAPTURECHANGED, OnLoseCapture)
+    MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
   END_MSG_MAP()
 
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
@@ -147,6 +152,7 @@ protected:
   LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnTimer(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+  LRESULT OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
   enum CursorMoveType
   {
@@ -215,7 +221,7 @@ protected:
 
   // panning.
   bool m_bIsPanning;// true during right-mouse button dragging
-  HCURSOR m_hPreviousCursor;
+  //HCURSOR m_hPreviousCursor;
 
 	// Capture
 	void AddCapture();
@@ -235,6 +241,8 @@ protected:
     CImageEditWindow* pThis = reinterpret_cast<CImageEditWindow*>(pUser);
     pThis->Pan(pThis->m_panningSpec);
   }
+
+	std::stack<HCURSOR> m_cursorStack;
 };
 
 #endif

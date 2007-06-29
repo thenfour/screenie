@@ -163,12 +163,13 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 	CPoint cursorPos(psTemp.x, psTemp.y);
   PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
+	m_isLeftClickDragging = true;
+
   // fire tool events.
 	if(m_currentTool != 0 && m_enableTools)
 	  m_currentTool->OnLeftButtonDown(pt);
 
 	AddCapture();
-	m_isLeftClickDragging = true;
 
 	if(m_currentTool != 0 && m_enableTools)
 	  m_currentTool->OnStartDragging();
@@ -203,7 +204,7 @@ LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 
 	AddCapture();
 
-  m_hPreviousCursor = SetCursor(LoadCursor(0, IDC_HAND));
+  PushCursor(IDC_HAND);
   return MouseLeave();
 }
 
@@ -214,7 +215,7 @@ LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
   if(m_bIsPanning)
   {
     ReleaseCapture();
-    SetCursor(m_hPreviousCursor);
+		PopCursor(true);
 		m_bIsPanning = false;
   }
   return MouseLeave();
@@ -292,6 +293,13 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 	EndPaint(&paintStruct);
 	return 0;
+}
+
+void CImageEditWindow::SetCursorPosition(const PointF& img)
+{
+	CPoint ptClient = m_display.GetViewport().ImageToView(img).Round();
+	ClientToScreen(&ptClient);
+	SetCursorPos(ptClient.x, ptClient.y);
 }
 
 PanningSpec CImageEditWindow::GetPanningSpec()
@@ -487,4 +495,46 @@ void CImageEditWindow::ReleaseCapture()
 		::ReleaseCapture();
 		m_isLeftClickDragging = false;
 	}
+}
+  
+LRESULT CImageEditWindow::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	bHandled = TRUE;
+	if(m_cursorStack.size())
+	{
+		SetCursor(m_cursorStack.top());
+	}
+	else
+	{
+		SetCursor(LoadCursor(0, IDC_CROSS));
+	}
+	return TRUE;
+}
+
+void CImageEditWindow::PushCursor(PCWSTR newcursor)
+{
+	m_cursorStack.push(LoadCursor(0, newcursor));
+	SetCursor(m_cursorStack.top());
+	//LibCC::g_pLog->Message(LibCC::Format("PushCursor(%); size now = %").p(newcursor).i(m_cursorStack.size()));
+}
+
+void CImageEditWindow::PopCursor(bool set)
+{
+	if(m_cursorStack.size())
+	{
+		m_cursorStack.pop();
+	}
+
+	if(set)
+	{
+		if(m_cursorStack.size())
+		{
+			SetCursor(m_cursorStack.top());
+		}
+		else
+		{
+			SetCursor(LoadCursor(0, IDC_CROSS));
+		}
+	}
+	//LibCC::g_pLog->Message(LibCC::Format("PopCursor; size now = %").i(m_cursorStack.size()));
 }
