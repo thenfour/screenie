@@ -102,7 +102,9 @@ void TestMain()
 		HBITMAP hbm;
 		GetScreenshotBitmap(hbm, FALSE, FALSE);
 		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
-		CCropDlg cropDialog(screenshot, ScreenshotOptions());
+		ScreenshotOptions options;
+		options.LoadSettings();
+		CCropDlg cropDialog(screenshot, options);
 		cropDialog.DoModal();
 	}
 	Gdiplus::GdiplusShutdown(gdiplusToken);

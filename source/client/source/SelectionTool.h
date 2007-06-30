@@ -81,12 +81,7 @@ public:
 			return false;
 
 		m_gripper = lowest->second;
-		if(m_hasCursor)
-		{
-			m_ops->PopCursor(false);
-		}
-		m_ops->PushCursor(GetCursorForGripperType(m_gripper));
-		m_hasCursor = true;
+		SetCursorIcon(GetCursorForGripperType(m_gripper));
 		return true;
 	}
 
@@ -118,7 +113,7 @@ public:
 			if(m_ops->HasSelection())
 			{
 				CRect sel = m_ops->GetSelection();
-				static const int ToleranceRadiusScreen = 17;// in screen pixels
+				static const int ToleranceRadiusScreen = 14;// in screen pixels
 				int toleranceRadius = Round(m_ops->GetViewport().ViewToImageSize(PointF(ToleranceRadiusScreen, ToleranceRadiusScreen)).x);// convert to image coords
 				CRect outersel = sel;
 				outersel.InflateRect(CSize(toleranceRadius, toleranceRadius));
@@ -129,12 +124,7 @@ public:
 					if(TRUE == innersel.PtInRect(cursor))
 					{
 						m_gripper = Moving;
-						if(m_hasCursor)
-						{
-							m_ops->PopCursor(false);
-						}
-						m_ops->PushCursor(GetCursorForGripperType(m_gripper));
-						m_hasCursor = true;
+						SetCursorIcon(GetCursorForGripperType(m_gripper));
 					}
 					else
 					{
@@ -176,11 +166,7 @@ public:
 			}
 			if(m_gripper == None)
 			{
-				if(m_hasCursor)
-				{
-					m_ops->PopCursor(true);
-					m_hasCursor = false;
-				}
+				ReleaseCursor();
 			}
 		}
   }
@@ -286,7 +272,7 @@ public:
 
 private:
 	// returns selection in image coordinates.
-  CRect GetSelectionWhileDragging() const
+  CRect GetSelectionWhileDragging()
   {
 		if(m_gripper == Moving)
 		{
@@ -318,6 +304,38 @@ private:
 		ret.bottom = max(m_selection.top, m_selection.bottom);
 		m_ops->ClampToImage(ret.ul);
 		m_ops->ClampToImage(ret.br);
+		// correct the cursor if necessary, because "flipping" the selection rect might cause a NWSE cursor to need to change to a 
+		switch(m_gripper)
+		{
+		case None:
+		case TopLeft:
+		case TopRight:
+		case BottomLeft:
+		case BottomRight:
+			PointF movable(*m_movableX, *m_movableY);
+			m_ops->ClampToImage(movable);
+			if(movable.x == ret.right && movable.y == ret.top)
+			{
+				m_gripper = TopRight;
+				SetCursorIcon(IDC_SIZENESW);
+			}
+			if(movable.x == ret.left && movable.y == ret.top)
+			{
+				m_gripper = TopLeft;
+				SetCursorIcon(IDC_SIZENWSE);
+			}
+			if(movable.x == ret.right && movable.y == ret.bottom)
+			{
+				m_gripper = BottomRight;
+				SetCursorIcon(IDC_SIZENWSE);
+			}
+			if(movable.x == ret.left && movable.y == ret.bottom)
+			{
+				m_gripper = BottomLeft;
+				SetCursorIcon(IDC_SIZENESW);
+			}
+			break;
+		}
 		return ret.Round();
   }
 
@@ -333,4 +351,21 @@ private:
 	bool m_hasCursor;
 
 	GripperType m_gripper;
+
+	void SetCursorIcon(PCWSTR x)
+	{
+		if(m_hasCursor)
+		{
+			m_ops->PopCursor(false);
+		}
+		m_ops->PushCursor(x);
+		m_hasCursor = true;
+	}
+	void ReleaseCursor()
+	{
+		if(m_hasCursor)
+		{
+			m_ops->PopCursor(true);
+		}
+	}
 };
