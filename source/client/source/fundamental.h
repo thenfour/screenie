@@ -204,6 +204,15 @@ public:
 		return ret.Round();
 	}
 
+	bool HitTest(const PointF& p) const
+	{
+		if(p.x < left) return false;
+		if(p.x > right) return false;
+		if(p.y < top) return false;
+		if(p.y > bottom) return false;
+		return true;
+	}
+
 	RectF Intersection(const This_T& rhs) const
 	{
 		// returns the rectangle that both rhs & this cover.

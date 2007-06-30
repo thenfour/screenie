@@ -57,20 +57,20 @@ public:
   void OnSelectTool(){}
   void OnDeselectTool(){}
 
-	static inline int Calculate2DDistanceCheap(int x1, int y1, int x2, int y2)
+	static inline PointF::T Calculate2DDistanceCheap(PointF::T x1, PointF::T y1, PointF::T x2, PointF::T y2)
 	{
-		int dx = x1 - x2;
-		int dy = y1 - y2;
+		PointF::T dx = x1 - x2;
+		PointF::T dy = y1 - y2;
 		return (dx * dx) + (dy * dy);
 	}
 
 	// helper function. takes [distance between the cursor and an on-screen element] and uses the lowest one to set
 	// the cursor icon and m_gripper state. returns false if none are within the tolerance.
-	bool AttemptToSetGripperStatus(const std::vector<std::pair<int, GripperType> >& items, int tolerance, bool checkTolerance)
+	bool AttemptToSetGripperStatus(const std::vector<std::pair<PointF::T, GripperType> >& items, PointF::T tolerance, bool checkTolerance)
 	{
-		const std::pair<int, GripperType>* lowest = 0;
+		const std::pair<PointF::T, GripperType>* lowest = 0;
 		// find the lowest
-		for(std::vector<std::pair<int, GripperType> >::const_iterator it = items.begin(); it != items.end(); ++ it)
+		for(std::vector<std::pair<PointF::T, GripperType> >::const_iterator it = items.begin(); it != items.end(); ++ it)
 		{
 			if(lowest == 0 || it->first < lowest->first)
 				lowest = &(*it);
@@ -85,21 +85,20 @@ public:
 		return true;
 	}
 
-  void OnCursorMove(PointF p, bool dragging)
+  void OnCursorMove(PointF cursor, bool dragging)
   {
-		CPoint cursor = p.Round();
     if(dragging)
     {
 			if(m_gripper == Moving)
 			{
-				m_movingLastCursor = p;
+				m_movingLastCursor = cursor;
 			}
 			else
 			{
 				if(m_movableX)
-					*m_movableX = p.x;
+					*m_movableX = Round(cursor.x);
 				if(m_movableY)
-					*m_movableY = p.y;
+					*m_movableY = Round(cursor.y);
 			}
 			m_ops->SetSelection(GetSelectionWhileDragging());
     }
@@ -112,16 +111,16 @@ public:
 			// rect is really small, it would ONLY be possible to drag the top-left handle, even if the cursor is over another handle.
 			if(m_ops->HasSelection())
 			{
-				CRect sel = m_ops->GetSelection();
-				static const int ToleranceRadiusScreen = 14;// in screen pixels
-				int toleranceRadius = Round(m_ops->GetViewport().ViewToImageSize(PointF(ToleranceRadiusScreen, ToleranceRadiusScreen)).x);// convert to image coords
-				CRect outersel = sel;
-				outersel.InflateRect(CSize(toleranceRadius, toleranceRadius));
-				if(TRUE == outersel.PtInRect(cursor))
+				RectF sel = RectF(m_ops->GetSelection());
+				static const PointF::T ToleranceRadiusScreen = 14.0;// in screen pixels
+				PointF::T toleranceRadius = m_ops->GetViewport().ViewToImageSize(PointF(ToleranceRadiusScreen, ToleranceRadiusScreen)).x;// convert to image coords
+				RectF outersel = sel;
+				outersel.Inflate(toleranceRadius);
+				if(outersel.HitTest(cursor))
 				{
-					CRect innersel = sel;// the inside
-					innersel.InflateRect(CSize(-toleranceRadius, -toleranceRadius));
-					if(TRUE == innersel.PtInRect(cursor))
+					RectF innersel = sel;// the inside
+					innersel.Inflate(-toleranceRadius);
+					if(innersel.HitTest(cursor))
 					{
 						m_gripper = Moving;
 						SetCursorIcon(GetCursorForGripperType(m_gripper));
@@ -129,33 +128,33 @@ public:
 					else
 					{
 						// do the TOP / RIGHT / BOTTOM / LEFT hittest
-						std::vector<std::pair<int, GripperType> > distances;
+						std::vector<std::pair<PointF::T, GripperType> > distances;
 						bool withinX = (cursor.x >= innersel.left) && (cursor.x <= innersel.right);
 						bool withinY = (cursor.y >= innersel.top) && (cursor.y <= innersel.bottom);
 						if(withinX)
 						{
-							distances.push_back(std::pair<int, GripperType>(abs(cursor.y - sel.top), Top));
-							distances.push_back(std::pair<int, GripperType>(abs(cursor.y - sel.bottom), Bottom));
+							distances.push_back(std::pair<PointF::T, GripperType>(abs(cursor.y - sel.top), Top));
+							distances.push_back(std::pair<PointF::T, GripperType>(abs(cursor.y - sel.bottom), Bottom));
 						}
 						if(withinY)
 						{
-							distances.push_back(std::pair<int, GripperType>(abs(cursor.x - sel.left), Left));
-							distances.push_back(std::pair<int, GripperType>(abs(cursor.x - sel.right), Right));
+							distances.push_back(std::pair<PointF::T, GripperType>(abs(cursor.x - sel.left), Left));
+							distances.push_back(std::pair<PointF::T, GripperType>(abs(cursor.x - sel.right), Right));
 						}
 
 						if(!AttemptToSetGripperStatus(distances, toleranceRadius, true))
 						{
 							// determine which corner is closest. first rule out by the X dimension.
-							std::vector<std::pair<int, GripperType> > distances;
-							distances.push_back(std::pair<int, GripperType>(Calculate2DDistanceCheap(sel.left, sel.top, cursor.x, cursor.y), TopLeft));
-							distances.push_back(std::pair<int, GripperType>(Calculate2DDistanceCheap(sel.left, sel.bottom, cursor.x, cursor.y), BottomLeft));
-							distances.push_back(std::pair<int, GripperType>(Calculate2DDistanceCheap(sel.right, sel.top, cursor.x, cursor.y), TopRight));
-							distances.push_back(std::pair<int, GripperType>(Calculate2DDistanceCheap(sel.right, sel.bottom, cursor.x, cursor.y), BottomRight));
+							std::vector<std::pair<PointF::T, GripperType> > distances;
+							distances.push_back(std::pair<PointF::T, GripperType>(Calculate2DDistanceCheap(sel.left, sel.top, cursor.x, cursor.y), TopLeft));
+							distances.push_back(std::pair<PointF::T, GripperType>(Calculate2DDistanceCheap(sel.left, sel.bottom, cursor.x, cursor.y), BottomLeft));
+							distances.push_back(std::pair<PointF::T, GripperType>(Calculate2DDistanceCheap(sel.right, sel.top, cursor.x, cursor.y), TopRight));
+							distances.push_back(std::pair<PointF::T, GripperType>(Calculate2DDistanceCheap(sel.right, sel.bottom, cursor.x, cursor.y), BottomRight));
 
 							// if it's inside the rect, don't even check the tolerance distance. this prevents ANY "holes" inside the image where we
 							// might not pass any hit tests. Because we're doing an actual distance on the corners, the hit test is an actual rounded
 							// corner, which, when compared with the rectangular other hit tests, could result in funky holes.
-							if(!AttemptToSetGripperStatus(distances, toleranceRadius * toleranceRadius, !sel.PtInRect(cursor)))
+							if(!AttemptToSetGripperStatus(distances, toleranceRadius * toleranceRadius, !sel.HitTest(cursor)))
 							{
 								// this will only happen outside of the rounded corners.
 								// no problem; just do nothing.
