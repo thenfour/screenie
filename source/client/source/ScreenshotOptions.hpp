@@ -54,11 +54,8 @@ public:
 	  m_includeCursor(true),
 	  m_showStatus(true),
 		m_screenshotAction(SA_SHOWCROP),
-	  //m_confirmOptions(false),
-	  //m_showCropWindow(true),
     m_croppingZoomFactor(2.0f),
     m_autoStartup(true),
-    //m_showSplash(true),
 		m_savedInAppDir(false),
 		m_enableArchive(false),
 		m_archiveLimit(100000000)
@@ -72,11 +69,8 @@ public:
     m_autoStartup = copy.m_autoStartup;
 		m_includeCursor = copy.m_includeCursor;
 		m_showStatus = copy.m_showStatus;
-//		m_confirmOptions = copy.m_confirmOptions;
-//		m_showCropWindow = copy.m_showCropWindow;
 		m_screenshotAction = copy.m_screenshotAction;
     m_croppingZoomFactor = copy.m_croppingZoomFactor;
-//    m_showSplash = copy.m_showSplash;
 		m_enableArchive = copy.m_enableArchive;
 		m_archiveLimit = copy.m_archiveLimit;
 
@@ -99,11 +93,8 @@ public:
     m_autoStartup = rightHand.m_autoStartup;
 		m_includeCursor = rightHand.m_includeCursor;
 		m_showStatus = rightHand.m_showStatus;
-		//m_confirmOptions = rightHand.m_confirmOptions;
-		//m_showCropWindow = rightHand.m_showCropWindow;
 		m_screenshotAction = rightHand.m_screenshotAction;
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
-    //m_showSplash = rightHand.m_showSplash;
 		m_enableArchive = rightHand.m_enableArchive;
 		m_archiveLimit = rightHand.m_archiveLimit;
 
@@ -174,20 +165,11 @@ public:
   bool AutoStartup() const { return m_autoStartup; }
   void AutoStartup(bool b) { m_autoStartup = b; }
 
-  //bool ShowSplash() const { return m_showSplash; }
-  //void ShowSplash(bool b) { m_showSplash = b; }
-
 	bool ShowStatus() { return m_showStatus; }
 	void ShowStatus(bool newval) { m_showStatus = newval; }
 
 	ScreenshotAction GetScreenshotAction() const { return m_screenshotAction; }
 	void SetScreenshotAction(ScreenshotAction sa) { m_screenshotAction = sa; }
-
-	//bool ConfirmOptions() { return m_confirmOptions; }
-	//void ConfirmOptions(bool newval) { m_confirmOptions = newval; }
-
-	//bool ShowCropWindow() { return m_showCropWindow; }
-	//void ShowCropWindow(bool newval) { m_showCropWindow = newval; }
 
 	bool EnableArchive() const { return m_enableArchive; }
 	void EnableArchive(bool newval) { m_enableArchive = newval; }
@@ -305,9 +287,6 @@ private:
 	bool m_autoStartup;
 	bool m_includeCursor;
 	bool m_showStatus;
-	//bool m_confirmOptions;
-	//bool m_showCropWindow;
-  //bool m_showSplash;
 	ScreenshotAction m_screenshotAction;
 
 	bool m_enableArchive;

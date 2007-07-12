@@ -10,6 +10,7 @@
 #include "ImageEditWnd.hpp"
 #include "destinationDlg.hpp"
 #include "image.hpp"
+#include "codec.hpp"
 
 #include "ScreenshotOptions.hpp"
 
@@ -50,7 +51,7 @@ public:
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
 		COMMAND_ID_HANDLER(IDOK, OnOK)
-    COMMAND_ID_HANDLER(IDC_SELECTALL, OnSelectAll)
+    COMMAND_ID_HANDLER(IDC_EDITINPAINT, OnEditExternally)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_CONFIGURE, OnConfigure)    
 
@@ -68,7 +69,7 @@ public:
 
     DLGRESIZE_CONTROL(IDC_ZOOM_CAPTION, DLSZ_MOVE_X)
 
-    DLGRESIZE_CONTROL(IDC_SELECTALL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+    DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
     DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
     DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
@@ -244,9 +245,49 @@ public:
 		return 0;
 	}
 
-  LRESULT OnSelectAll(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+  LRESULT OnEditExternally(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
-    m_editWnd.ClearSelection();
+		// save m_bitmap
+		tstd::tstring tempFileName = GetUniqueTemporaryFilename();
+		// save a lossless PNG file to a memory stream
+		ImageCodecsEnum codecs;
+		Gdiplus::ImageCodecInfo* codecInfo = codecs.GetCodecByMimeType(_T("image/png"));
+		Gdiplus::Status status = m_bitmap->Save(tempFileName.c_str(), &codecInfo->Clsid);
+		if(status != Gdiplus::Ok)
+		{
+			MessageBox(L"There was an error saving the temp file.");
+			return 0;
+		}
+
+		// launch mspaint
+		tstd::tstring appname;
+		GetSpecialFolderPath(appname, CSIDL_SYSTEM);
+		LibCC::PathAppendX(appname, L"mspaint.exe");
+		std::wstring cmdLine = LibCC::Format(L"% %").qs(appname).qs(tempFileName).Str();
+
+		LibCC::Blob<wchar_t> blobCommandLine(cmdLine.size());
+		wcscpy(blobCommandLine.GetBuffer(), cmdLine.c_str());
+		STARTUPINFO si = {0};
+		GetStartupInfo(&si);
+		PROCESS_INFORMATION pi = {0};
+		if(FALSE == CreateProcess(appname.c_str(), blobCommandLine.GetBuffer(), 0, 0, FALSE, 0, 0, 0, &si, &pi))
+		{
+			DeleteFile(tempFileName.c_str());
+			MessageBox(L"There was an error launching mspaint.exe.");
+			return 0;
+		}
+
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+
+		if(IDOK == MessageBox(L"Please click OK when you are done editing the image.", L"Screenie", MB_OKCANCEL | MB_ICONINFORMATION))
+		{
+			// reload m_bitmap
+			m_bitmap = util::shared_ptr<Gdiplus::Bitmap>(Gdiplus::Bitmap::FromFile(tempFileName.c_str(), FALSE));
+			m_zoomWnd.SetBitmap(m_bitmap);
+			m_editWnd.SetBitmap(m_bitmap);
+		}
+		DeleteFile(tempFileName.c_str());
 		return 0;
 	}
 

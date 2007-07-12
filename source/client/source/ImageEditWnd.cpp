@@ -538,3 +538,15 @@ void CImageEditWindow::PopCursor(bool set)
 	}
 	//LibCC::g_pLog->Message(LibCC::Format("PopCursor; size now = %").i(m_cursorStack.size()));
 }
+
+
+void CImageEditWindow::SetBitmap(util::shared_ptr<Gdiplus::Bitmap> n)
+{
+	m_bitmap = n;
+  CopyImage(m_dibOriginal, *n);
+	m_display.SetOriginalImage(m_dibOriginal);
+	m_display.ClearSelection();
+  m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2), "ImageEditWnd()");
+}
+
+

@@ -92,6 +92,7 @@ public:
 			if(m_gripper == Moving)
 			{
 				m_movingLastCursor = cursor;
+				m_bMoved = true;
 			}
 			else
 			{
@@ -171,7 +172,15 @@ public:
   }
 
   void OnLeftButtonDown(PointF p){}
-  void OnLeftButtonUp(PointF p){}
+  void OnLeftButtonUp(PointF p)
+	{
+		if(m_gripper == Moving && !m_bMoved)
+		{
+			m_gripper = None;
+			m_ops->ClearSelection();
+			ReleaseCursor();
+		}
+	}
 
 	// only left/right/none or top/bottom/none are options in the params.
 	void SetupDragHelper(GripperType movableX, GripperType movableY)
@@ -251,6 +260,7 @@ public:
 			m_selection.br = m_selection.ul;
 			break;
 		case Moving:
+			m_bMoved = false;
 			// Moves are done completely separately from other operations.
 			// start by saving the selection rect and the place in it where the cursor currently is.
 			m_movingOrgCursor = m_ops->GetCursorPosition();
@@ -345,6 +355,7 @@ private:
 	RectF m_movingOrgSelection;// the original selection when a moving operation began
 	PointF m_movingOrgCursor;// image position of the cursor when a moving operation began
 	PointF m_movingLastCursor;// image position of the most recent cursor
+	bool m_bMoved;// becomes true when the user moves the selection rect. i need this so when you just single click in the middle of the selection, it clears the selection rect.
 
   IToolOperations* m_ops;
 	bool m_hasCursor;

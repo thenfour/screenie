@@ -126,6 +126,8 @@ public:
   // gets the specified section of the original image.
 	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
 
+	void SetBitmap(util::shared_ptr<Gdiplus::Bitmap> n);
+
 protected:
 
 	BEGIN_MSG_MAP(CImageEditWindow)

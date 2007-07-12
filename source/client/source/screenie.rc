@@ -194,13 +194,13 @@ BEGIN
     LTEXT           "Static",IDC_IMAGE,109,17,221,150,0,WS_EX_CLIENTEDGE
     PUSHBUTTON      "Options...",IDC_CONFIGURE,281,171,50,14
     RTEXT           "Zoom: 15%",IDC_ZOOM_CAPTION,276,7,55,8
-    PUSHBUTTON      "Select All",IDC_SELECTALL,226,171,50,14
     LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
     LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,167,8
     LTEXT           "To Pan: Click and drag with the RIGHT mouse button",IDC_CONTROLS3,7,179,173,8
     LTEXT           "To Zoom: Use the mouse wheel",IDC_CONTROLS2,7,187,173,8
     LTEXT           "To Select: Click and drag with the LEFT mouse button",IDC_CONTROLS4,7,171,173,8
     LTEXT           "Hold SHIFT for precision. Hold SHIFT+CONTROL for extra precision",IDC_CONTROLS1,7,195,215,8
+    PUSHBUTTON      "Edit image...",IDC_EDITINPAINT,226,171,50,14
 END
 
 IDD_NEW_DESTINATION DIALOGEX 0, 0, 207, 73
