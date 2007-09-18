@@ -227,6 +227,16 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,231,40,50,14
 END
 
+IDD_DESTPROP_IMAGESHACK DIALOGEX 0, 0, 236, 263
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "ImageShack"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Options",IDC_STATIC,7,7,222,38
+    CONTROL         "Copy image URL to clipboard after uploading",IDC_IMAGESHACK_COPYURL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,22,198,12
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -339,6 +349,19 @@ BEGIN
         RIGHTMARGIN, 281
         TOPMARGIN, 7
         BOTTOMMARGIN, 54
+    END
+
+    IDD_DESTPROP_IMAGESHACK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 229
+        VERTGUIDE, 18
+        VERTGUIDE, 78
+        VERTGUIDE, 216
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 256
+        HORZGUIDE, 122
+        HORZGUIDE, 148
     END
 END
 #endif    // APSTUDIO_INVOKED

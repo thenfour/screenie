@@ -18,6 +18,8 @@ bool ProcessDestination(HWND hwnd, IActivity& status,
 
 bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& destination,
 	util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard, ScreenshotID screenshotID);
+bool ProcessImageShackDestination(HWND hwnd, IActivity& status, ScreenshotDestination& destination,
+	util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard, ScreenshotID screenshotID);
 bool ProcessFileDestination(HWND hwnd, IActivity& status, ScreenshotDestination& destination,
 	util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard, ScreenshotID screenshotID);
 bool ProcessClipboardDestination(HWND hwnd, IActivity& status, ScreenshotDestination& destination,

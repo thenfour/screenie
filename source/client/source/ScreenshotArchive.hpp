@@ -22,6 +22,7 @@ enum EventType
 {
   ET_GENERAL,
   ET_FTP,
+  ET_IMAGESHACK,
   ET_FILE
 };
 

@@ -53,6 +53,8 @@
 #define IDC_URL_COPY                    1013
 #define IDC_FTP_COPYURL                 1013
 #define IDC_FILENAME_LOCAL              1013
+#define IDC_IMAGESHACKCOPYURL           1013
+#define IDC_IMAGESHACK_COPYURL          1013
 #define IDC_FTP_PORT                    1014
 #define IDC_SHOWSTATUS2                 1014
 #define IDC_AUTOSTART                   1014
@@ -121,6 +123,7 @@
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
+#define IDD_DESTPROP_IMAGESHACK         30122
 #define IDB_WIZ97_HEADER                31000
 #define IDB_WIZ97_WATERMARK             31001
 #define IDC_WIZ97_EXTERIOR_TITLE        31004

@@ -126,6 +126,7 @@ LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPA
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_FILE).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_FTP).c_str());
 	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_CLIPBOARD).c_str());
+	destinationType.AddString(ScreenshotDestination::TypeToString(ScreenshotDestination::TYPE_IMAGESHACK).c_str());
 	AutoSetComboBoxHeight(destinationType);
 
 	PopulateFormatList();
@@ -252,7 +253,7 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER), FALSE);
 	}
 	
-  if (type == ScreenshotDestination::TYPE_CLIPBOARD)
+	if ((type == ScreenshotDestination::TYPE_CLIPBOARD) || (type == ScreenshotDestination::TYPE_IMAGESHACK))
 	{
 		// the clipboard doesn't have 'files.' the filename formatting and related
 		// settings are pretty irrelevant when that's the destination type.

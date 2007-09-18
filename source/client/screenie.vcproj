@@ -308,6 +308,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\curlutil.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\curlutil.h"
+				>
+			</File>
+			<File
 				RelativePath=".\source\exception.hpp"
 				>
 			</File>
@@ -418,6 +426,14 @@
 			</File>
 			<File
 				RelativePath=".\source\DestinationPropertiesImage.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesImageShack.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\DestinationPropertiesImageShack.hpp"
 				>
 			</File>
 			<File

@@ -17,7 +17,8 @@ struct ScreenshotDestination
 		TYPE_NONE = 0,
 		TYPE_FILE = 1,
 		TYPE_FTP = 2,
-		TYPE_CLIPBOARD = 4
+		TYPE_CLIPBOARD = 4,
+		TYPE_IMAGESHACK = 5
 	};
 
 	enum ScaleType
@@ -62,19 +63,6 @@ struct ScreenshotDestination
 
 	struct Image
 	{
-		Image() { }
-		Image(const Image& copy) { operator=(copy); }
-		~Image() { }
-
-		Image& operator=(const Image& rightHand)
-		{
-			scaleType = rightHand.scaleType;
-			scalePercent = rightHand.scalePercent;
-			maxDimension = rightHand.maxDimension;
-
-			return (*this);
-		}
-
 		ScaleType scaleType;
 		int scalePercent;
 		int maxDimension;
@@ -216,31 +204,12 @@ struct ScreenshotDestination
     LibCC::Blob<BYTE> m_passwordEncrypted;
 	};
 
-	struct Email
+	struct ImageShack
 	{
-		Email() { }
-		Email(const Email& copy) { operator=(copy); }
-		~Email() { }
+		ImageShack() : copyURL(true) { }
 
-		Email& operator=(const Email& rightHand)
-		{
-			return (*this);
-		}
+		bool copyURL;
 	};
-
-	ScreenshotDestination() { }
-	ScreenshotDestination(const ScreenshotDestination& copy) { operator=(copy); }
-	~ScreenshotDestination() { }
-
-	ScreenshotDestination& operator=(const ScreenshotDestination& rightHand)
-	{
-		enabled = rightHand.enabled;
-		general = rightHand.general;
-		image = rightHand.image;
-		ftp = rightHand.ftp;
-
-		return (*this);
-	}
 
 	// xml serialization
 	void Serialize(Xml::Element parent) const
@@ -290,6 +259,9 @@ struct ScreenshotDestination
 		default:
 			break;
 		}
+
+		// imageshack settings
+		Xml::Serialize(parent, L"ImageShackCopyURL", imageshack.copyURL);
 
 		// screenie.net settings
 		//Xml::Serialize(parent, L"ScreenieNetURL", screenie.url);
@@ -357,9 +329,13 @@ struct ScreenshotDestination
 			ftp.SetPassword(L"");
 			break;
 		}
+
 		//LibCC::Blob<BYTE> binaryTemp;
 		//Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
 		//ftp.DeserializePassword(binaryTemp);
+
+		// imageshack settings
+		Xml::Deserialize(parent, L"ImageShackCopyURL", imageshack.copyURL);
 
 		// screenie.net settings
 		//Xml::Deserialize(parent, L"ScreenieNetURL", screenie.url);
@@ -372,7 +348,7 @@ struct ScreenshotDestination
 	General general;
 	Image image;
 	Ftp ftp;
-	Email email;
+	ImageShack imageshack;
 //	Screenienet screenie;
 
   void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
@@ -397,6 +373,8 @@ struct ScreenshotDestination
 				return tstd::tstring(_T("Upload via FTP"));
 			case TYPE_CLIPBOARD:
 				return tstd::tstring(_T("Copy to Clipboard"));
+			case TYPE_IMAGESHACK:
+				return tstd::tstring(_T("ImageShack"));
 		}
 
 		return tstd::tstring(_T("Unknown"));
@@ -410,6 +388,8 @@ struct ScreenshotDestination
 			return TYPE_FTP;
 		if (description == tstd::tstring(_T("Copy to Clipboard")))
 			return TYPE_CLIPBOARD;
+		if (description == tstd::tstring(_T("ImageShack")))
+			return TYPE_IMAGESHACK;
 
 		return TYPE_NONE;
 	}

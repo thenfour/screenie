@@ -228,6 +228,8 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.ftp.resultURL = TEXT("http://mysite.com/~username/");
 	destination.ftp.copyURL = false;
 
+	destination.imageshack.copyURL = true;
+
 	GetSpecialFolderPath(destination.general.path, CSIDL_MYPICTURES);
 
 	CDestinationProperties properties(destination, m_optionsCopy, TEXT("Create New Destination"));
