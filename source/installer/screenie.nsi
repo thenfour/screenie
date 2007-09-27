@@ -63,6 +63,10 @@ VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0$.0
 
 ; The stuff to install
 Section "Program Files (required)" program_files
+  ; Make the details view always visible
+  SetDetailsPrint both
+  SetDetailsView show
+
   ;-------------------------
   ; Check for already-installed
   ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Screenie" "DisplayName"
@@ -90,15 +94,23 @@ lbl_VersionError:
   Abort "This application requires Windows 2000 or later."
 
 lbl_VersionOK:
+
+  SetOutPath "$INSTDIR"
+
+  ; Run the Microsoft VC++ runtime redistributable.
+  DetailPrint "Installing Microsoft Runtime Libraries; please be patient..."
+  File "..\vcredis1.cab"
+  File "..\vcredist.msi"
+  ExecWait 'msiexec /i "$INSTDIR\vcredist.msi" /qn'
+  Delete "$INSTDIR\vcredis1.cab"
+  Delete "$INSTDIR\vcredist.msi"
+
   ; close it just in case it's open.
   FindWindow $0 "ScreenieMainWnd"
   SendMessage $0 16 0 0
   
-  SetOutPath "$INSTDIR"
   Delete "$INSTDIR\screenie.exe"
   File ${infile}
-  File "..\msvcp71.dll"
-  File "..\msvcr71.dll"
   File "..\gdiplus.dll"
 
   WriteUninstaller $INSTDIR\Uninst.exe
