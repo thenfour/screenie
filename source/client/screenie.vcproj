@@ -154,7 +154,7 @@
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="StdAfx.hpp"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -171,8 +171,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib ..\libcurl\output\libcurl.lib ws2_32.lib winmm.lib"
+				ShowProgress="1"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				IgnoreDefaultLibraryNames="msvcrtd.lib;libcd.lib"
+				GenerateDebugInformation="false"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
