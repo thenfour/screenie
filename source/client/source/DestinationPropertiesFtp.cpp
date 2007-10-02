@@ -77,8 +77,15 @@ void CDestinationPropertiesFTP::GetSettings(ScreenshotDestination& destination)
 		m_settings.port = GetDlgItemInt(IDC_FTP_PORT, NULL, FALSE);
 		m_settings.username = GetWindowString(GetDlgItem(IDC_FTP_USERNAME));
     m_settings.SetPassword(GetWindowString(GetDlgItem(IDC_FTP_PASSWORD)));
+
 		m_settings.remotePath = GetWindowString(GetDlgItem(IDC_FTP_REMOTEPATH));
+		if (m_settings.remotePath[m_settings.remotePath.length() - 1] != _T('/'))
+			m_settings.remotePath += _T('/');
+
 		m_settings.resultURL = GetWindowString(GetDlgItem(IDC_FTP_HTTPURL));
+		if (m_settings.resultURL[m_settings.resultURL.length() - 1] != _T('/'))
+			m_settings.resultURL += _T('/');
+
 		m_settings.copyURL = (IsDlgButtonChecked(IDC_FTP_COPYURL) == TRUE);
 		CComboBox passwordOptions(GetDlgItem(IDC_PASSWORDOPTIONS));
 		m_settings.passwordOptions = (ScreenshotDestination::Ftp::PasswordOptions)passwordOptions.GetCurSel();
