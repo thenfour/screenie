@@ -339,7 +339,7 @@ tstd::tstring tstring_tolower(const tstd::tstring& input)
 
 	return output;
 }
-
+ 
 tstd::tstring tstring_toupper(const tstd::tstring& input)
 {
 	tstd::tstring output;
