@@ -171,7 +171,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wininet.lib gdiplus.lib Crypt32.lib version.lib ..\libcurl\output\libcurl.lib ws2_32.lib winmm.lib"
-				ShowProgress="1"
+				ShowProgress="0"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames="msvcrtd.lib;libcd.lib"
 				GenerateDebugInformation="false"
