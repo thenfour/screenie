@@ -28,12 +28,13 @@ BOOL CDestinationProperties::InitializePages()
 {
 	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesGeneral()));
 	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesImage()));
-	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesFTP()));
 	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesImageShack()));
+	m_propertyPages.push_back(util::shared_ptr<DestinationPropertyPage>(new CDestinationPropertiesFTP()));
 
 	for (size_t i = 0; i < m_propertyPages.size(); ++i)
 	{
 		AddPage(m_propertyPages[i]->CreatePropertyPage());
+
 		m_propertyPages[i]->SetParentSheet(dynamic_cast<DestinationPropertySheet*>(this));
 		m_propertyPages[i]->SetSettings(m_screenshotDestination);
 	}
