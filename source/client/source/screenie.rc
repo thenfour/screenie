@@ -62,19 +62,20 @@ IDI_CHECK               ICON                    "resources\\check.ico"
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 271, 127
+IDD_ABOUTBOX DIALOGEX 0, 0, 272, 156
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "About"
+CAPTION "About Screenie"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,203,107,50,14
-    GROUPBOX        "",IDC_STATIC,7,7,257,96
+    DEFPUSHBUTTON   "OK",IDOK,215,135,50,14
+    GROUPBOX        "",IDC_STATIC,7,7,258,121
     CONTROL         246,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,WS_EX_STATICEDGE
     LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
-    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",IDC_COPYRIGHT,60,30,108,18
+    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",IDC_COPYRIGHT,60,30,193,18
     LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,60,52,85,12
-    EDITTEXT        IDC_CONFIGPATH,60,81,193,14,ES_AUTOHSCROLL | ES_READONLY
-    LTEXT           "Configuration saved at:",IDC_STATIC,60,71,77,8
+    EDITTEXT        IDC_CONFIGPATH,60,103,193,14,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Configuration saved at:",IDC_STATIC,60,93,77,8
+    LTEXT           "Thanks to: Brook Miles and Gareth Lewin",IDC_STATIC,60,69,193,23
 END
 
 IDD_MAINDLG DIALOGEX 0, 0, 269, 238
@@ -249,15 +250,14 @@ BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 264
+        RIGHTMARGIN, 265
         VERTGUIDE, 18
         VERTGUIDE, 60
         VERTGUIDE, 253
         TOPMARGIN, 7
-        BOTTOMMARGIN, 120
+        BOTTOMMARGIN, 149
         HORZGUIDE, 64
-        HORZGUIDE, 79
-        HORZGUIDE, 103
+        HORZGUIDE, 86
     END
 
     IDD_MAINDLG, DIALOG
@@ -446,7 +446,7 @@ IDR_SCHEMA              TEXT                    "ArchiveSchema.sql"
 
 STRINGTABLE 
 BEGIN
-    IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)\r\n%t = prompt for user text\r\n%w = window title"
+    IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)\r\n%t = prompt for user text\r\n%w = window title\r\n%u = unix time\r\n%g = 128-bit GUID"
 END
 
 #endif    // English (U.S.) resources
