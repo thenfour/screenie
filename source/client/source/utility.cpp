@@ -300,7 +300,14 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 					{
 						Guid g;
 						g.CreateNew();
-						outputStream << g.ToString();
+
+						std::wstring str = g.ToString();
+						outputStream << str.substr(1, str.length() - 2);
+					}
+					break;
+				case TEXT('u'):
+					{
+						outputStream << time(NULL);
 					}
 					break;
 				default:
