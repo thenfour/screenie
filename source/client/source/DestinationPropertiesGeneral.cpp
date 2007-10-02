@@ -263,7 +263,7 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER_BROWSE), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER), enableControls);
-		::EnableWindow(GetDlgItem(IDC_GENERAL_FORMAT), enableControls);
+		::EnableWindow(GetDlgItem(IDC_GENERAL_FORMAT), type == ScreenshotDestination::TYPE_IMAGESHACK);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMAT), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATDESC), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATPREVIEW), enableControls);
