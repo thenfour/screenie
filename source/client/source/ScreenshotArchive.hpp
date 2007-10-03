@@ -125,6 +125,8 @@ public:
 	void DeleteEvent(EventID eventID);
 	void DeleteScreenshot(ScreenshotID screenshotID);
 
+	std::wstring GetDBFilename() const;
+	bool GetDBFileSize(DWORD& out) const;
 private:
 	IArchiveNotifications* m_pNotify;
 
@@ -136,7 +138,6 @@ private:
 	std::wstring m_schemaVersion;
 	std::wstring GetDatabaseSchemaVersion();
 
-	std::wstring GetDBFilename() const;
 	bool EnsureDatabaseHasSpace(size_t extra);
 	bool OpenDatabase(sqlite3x::sqlite3_connection&);
 

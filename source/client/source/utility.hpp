@@ -57,6 +57,35 @@ inline tstd::tstring GetModuleFileNameX()
   return sz;
 }
 
+
+inline std::wstring GetNumberFormatX(std::wstring input)
+{
+	LibCC::Blob<wchar_t> retBlob;
+	GetNumberFormat(LOCALE_USER_DEFAULT, 0, input.c_str(), 0, retBlob.GetBuffer(100), 99);
+	return retBlob.GetBuffer();
+}
+
+inline std::wstring FormatSize(DWORD dwFileSize)
+{
+  static const DWORD dwKB = 1024;
+  static const DWORD dwMB = 1024 * dwKB;
+  static const DWORD dwGB = 1024 * dwMB;
+
+  if (dwFileSize < dwKB)
+  {
+		return LibCC::Format("% b")(GetNumberFormatX(LibCC::Format().f<2,2>((float)dwFileSize).Str())).Str();
+  }
+  if (dwFileSize < dwMB)
+  {
+		return LibCC::Format("% kb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwKB).Str())).Str();
+  }
+  if (dwFileSize < dwGB)
+  {
+		return LibCC::Format("% mb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwMB).Str())).Str();
+  }
+	return LibCC::Format("% gb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwGB).Str())).Str();
+}
+
 class Guid
 {
 public:

@@ -94,6 +94,27 @@ void TestMain()
 	//f = v.ViewToImage(PointF(1,1));
 	//f = v.ImageToView(f);
 
+	//// FormatSize()
+	//std::wstring s;
+	//s = FormatSize(0);
+	//s = FormatSize(1);
+	//s = FormatSize(10);
+	//s = FormatSize(99);
+	//s = FormatSize(100);
+	//s = FormatSize(999);
+	//s = FormatSize(1000);
+	//s = FormatSize(1023);
+	//s = FormatSize(1024);
+	//s = FormatSize(1025);
+	//s = FormatSize(0xffffffff);
+	//s = FormatSize(0x400);
+	//s = FormatSize(0x800);
+	//s = FormatSize(0x801);
+	//s = FormatSize(0x4000);
+	//s = FormatSize(0x40000);
+	//s = FormatSize(0x400000);
+	//s = FormatSize(0x4000000);
+
 	// just startup with the cropping dialog.
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
@@ -108,5 +129,6 @@ void TestMain()
 		cropDialog.DoModal();
 	}
 	Gdiplus::GdiplusShutdown(gdiplusToken);
+
 }
 

@@ -10,17 +10,20 @@
 #include "xversion.h"
 #include "utility.hpp"
 #include "ScreenshotOptions.hpp"
+#include "ScreenshotArchive.hpp"
 
 class CAboutDlg : public CDialogImpl<CAboutDlg>
 {
 public:
 	enum { IDD = IDD_ABOUTBOX };
 	const ScreenshotOptions& m_options;
+	const ScreenshotArchive& m_archive;
 
-	CAboutDlg(const ScreenshotOptions& opt) :
+	CAboutDlg(const ScreenshotOptions& opt, const ScreenshotArchive& archive) :
     m_hIconSmall(0),
     m_hIcon(0),
-		m_options(opt)
+		m_options(opt),
+		m_archive(archive)
   {
   }
 
@@ -56,7 +59,24 @@ public:
     SetDlgItemText(IDC_REGISTRANT, v.GetRegistrant().c_str());
 
 		// other stuff
-		SetDlgItemText(IDC_CONFIGPATH, m_options.GetConfigPath().c_str());
+		std::wstring archiveSize = L"[error]";
+		DWORD s;
+		if(m_archive.GetDBFileSize(s))
+		{
+			archiveSize = FormatSize(s);
+		}
+		LibCC::Format infoText = LibCC::Format(
+			"Application:|  %|"
+			"Configuration:|  %|"
+			"Archive:|  %|"
+			"Archive size:|  %|"
+			)
+			(GetModuleFileNameX())
+			(m_options.GetConfigPath())
+			(m_archive.GetDBFilename())
+			(archiveSize);
+
+		SetDlgItemText(IDC_INFO, infoText.CStr());
 
     CenterWindow(GetParent());
 		m_link.SubclassWindow(GetDlgItem(IDC_HYPERLINK));

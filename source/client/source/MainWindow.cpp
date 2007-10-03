@@ -253,7 +253,7 @@ LRESULT CMainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& han
 
 LRESULT CMainWindow::OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
-	CAboutDlg dlg(this->m_screenshotOptions);
+	CAboutDlg dlg(this->m_screenshotOptions, this->m_archive);
 	dlg.DoModal();
 
 	return 0;

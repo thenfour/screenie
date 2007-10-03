@@ -230,6 +230,19 @@ std::wstring ScreenshotArchive::GetDBFilename() const
 	return path;
 }
 
+
+bool ScreenshotArchive::GetDBFileSize(DWORD& out) const
+{
+		std::wstring filename = GetDBFilename();
+		HANDLE hFile = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
+		if(LibCC::IsBadHandle(hFile))
+			return false;
+		out = GetFileSize(hFile, 0);
+		CloseHandle(hFile);
+		return true;
+}
+
+
 // TODO: Optimize this.
 // Idea #1: Use transactions to optimize 1 pass
 // Idea #2: Group passes into 1 (remove multiple screenshots at the same time)
@@ -237,20 +250,16 @@ std::wstring ScreenshotArchive::GetDBFilename() const
 // Idea #4: ???
 bool ScreenshotArchive::EnsureDatabaseHasSpace(size_t extra)
 {
-	size_t extraMB = extra;
-	std::wstring filename = GetDBFilename();
-	
-	if(extraMB > (size_t)m_options.ArchiveLimit())
+	if(extra > (size_t)m_options.ArchiveLimit())
 		return false;// there's no possible way you could store this amount of data.
 
 	do
 	{
-		HANDLE hFile = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
-		if(LibCC::IsBadHandle(hFile))
-			return true;// probably just not found.
-		DWORD sizeMB = GetFileSize(hFile, 0);
-		CloseHandle(hFile);
-		if((sizeMB + extraMB) < (size_t)m_options.ArchiveLimit())
+		DWORD size;
+		if(!GetDBFileSize(size))
+			return true;// no big deal.
+
+		if((size + extra) < (size_t)m_options.ArchiveLimit())
 		{
 			return true;
 		}

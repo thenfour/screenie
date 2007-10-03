@@ -128,6 +128,16 @@ public:
 
 	void SetBitmap(util::shared_ptr<Gdiplus::Bitmap> n);
 
+	RgbPixel32 GetPixel_(CPoint p)
+	{
+		RgbPixel32 ret;
+		if(!m_dibOriginal.GetPixelSafe(ret, p.x, p.y))
+		{
+			return 0;
+		}
+		return ret;
+	}
+
 protected:
 
 	BEGIN_MSG_MAP(CImageEditWindow)

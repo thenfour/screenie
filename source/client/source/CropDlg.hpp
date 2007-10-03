@@ -62,12 +62,13 @@ public:
 		DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 
+		DLGRESIZE_CONTROL(IDC_INFOBOX, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_CONTROLS1, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS2, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS3, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS4, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 
-    DLGRESIZE_CONTROL(IDC_ZOOM_CAPTION, DLSZ_MOVE_X)
+    //DLGRESIZE_CONTROL(IDC_ZOOM_CAPTION, DLSZ_MOVE_X)
 
     DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
     DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
@@ -85,8 +86,11 @@ public:
   }
   void OnCursorPositionChanged(const PointF& pf)// image coords
   {
-		CPoint p = pf.Round();
-    SetWindowText(LibCC::Format("Crop Screenshot (%,%)").i(p.x).i(p.y).CStr());
+		PointF pf2 = pf;
+		m_editWnd.ClampToImage(pf2);
+		m_infoCursorPos = pf2.Floor();
+		UpdateInfoBox();
+
 		m_zoomWnd.CenterOnImage(pf);
     SyncZoomWindowSelection();
   }
@@ -117,7 +121,8 @@ public:
     m_editWnd.SetZoomFactor(factor);
     m_options.CroppingZoomFactor(factor);
 
-    SetDlgItemText(IDC_ZOOM_CAPTION, LibCC::Format("Zoom: %^%").f<0>(factor*100).CStr());
+		m_infoZoomFactor = factor;
+		UpdateInfoBox();
   }
 
   void SetZoomFactor(float ideal, bool updateTrackbar)
@@ -222,16 +227,8 @@ public:
 		if(m_editWnd.HasSelection())
 		{
 	    CRect rc = m_editWnd.GetSelection();
-      SetDlgItemText(IDC_SELECTIONSTATIC,
-        LibCC::Format("(%,%)-(%,%); % x %")
-          .i(rc.left)
-          .i(rc.top)
-          .i(rc.right)
-          .i(rc.bottom)
-          .i(rc.Width())
-          .i(rc.Height())
-          .CStr()
-        );
+			m_infoSelection = rc;
+			UpdateInfoBox();
 			m_zoomWnd.SetSelection(rc);
     }
     else
@@ -346,6 +343,44 @@ private:
 
   HICON m_hIcon;
   HICON m_hIconSmall;
+
+	// info stuff
+	CPoint m_infoCursorPos;
+	float m_infoZoomFactor;
+	CRect m_infoSelection;
+	std::wstring m_infoText;
+
+	void UpdateInfoBox()
+	{
+		RgbPixel32 pixel = m_editWnd.GetPixel_(m_infoCursorPos);
+
+		LibCC::Format info = LibCC::Format(
+			"Zoom: %^%|"
+			"Pos: (%,%)|"
+			"Sel: (%,%)-(%,%)|"
+			"Sel: % x %|"
+			"RGB: #%%%"
+			)
+			.f<0>(m_infoZoomFactor*100)
+			.i(m_infoCursorPos.x)
+			.i(m_infoCursorPos.y)
+      .i(m_infoSelection.left)
+      .i(m_infoSelection.top)
+      .i(m_infoSelection.right)
+      .i(m_infoSelection.bottom)
+      .i(m_infoSelection.Width())
+      .i(m_infoSelection.Height())
+			.i<16,2>(R(pixel))
+			.i<16,2>(G(pixel))
+			.i<16,2>(B(pixel))
+			;
+		if(m_infoText != info.CStr())
+		{
+			m_infoText = info.CStr();
+			SetDlgItemText(IDC_INFOBOX, m_infoText.c_str());
+		}
+	}
+
 public:
   LRESULT OnStnClickedZoomCaption(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

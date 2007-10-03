@@ -305,6 +305,7 @@ LRESULT ActivityList::OnDeleteItem(DELETEITEMSTRUCT& dis, BOOL& bHandled)
 {
 	bHandled = TRUE;
 	ActivityListItemSpec* item = (ActivityListItemSpec*)dis.itemData;
+
 	// just remove it from the list.
 	// so, first find it.
 	for(std::list<ActivityListItemSpec>::iterator it = m_items.begin(); it != m_items.end(); ++ it)
@@ -468,6 +469,9 @@ LRESULT ActivityList::OnCopyMessage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndC
 
 LRESULT ActivityList::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+	if(IDYES != MessageBox(L"Are you sure you want to delete all items from your history?", L"Screenie", MB_YESNO | MB_ICONQUESTION))
+		return 0;
+
 	m_archive.DeleteAll();
 	m_ctl.ResetContent();
   return 0;
@@ -477,6 +481,15 @@ LRESULT ActivityList::OnClear(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 LRESULT ActivityList::OnRemove(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	std::vector<ActivityListItemSpec*> items = GetSelectedItems();
+
+	std::wstring caption = L"Are you sure you want to delete these items from your history?";
+	if(items.size() == 1)
+	{
+		caption = L"Are you sure you want to delete this item from your history?";
+	}
+	if(IDYES != MessageBox(caption.c_str(), L"Screenie", MB_YESNO | MB_ICONQUESTION))
+		return 0;
+
 	while(ActivityListItemSpec* item = GetFirstSelectedItem())
 	{
 		switch(item->GetType())
