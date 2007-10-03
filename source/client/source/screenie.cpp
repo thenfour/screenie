@@ -73,8 +73,20 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 	int retval = 0;
 
-  ScreenshotOptions options;
-	options.LoadSettings();
+	ScreenshotOptions options;
+	if (!options.LoadSettings())
+	{
+		// add an imageshack destination by default
+		ScreenshotDestination dest;
+
+		dest.enabled = true;
+		dest.general.type = ScreenshotDestination::TYPE_IMAGESHACK;
+		dest.general.imageFormat = _T("image/png");
+		dest.general.name = _T("ImageShack4");
+		dest.imageshack.copyURL = true;
+
+		options.AddDestination(dest);
+	}
 
 	ScreenshotArchive archive(options);
 

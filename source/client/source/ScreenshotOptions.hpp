@@ -51,8 +51,8 @@ public:
     m_haveStatusPlacement(false),
     m_haveCroppingPlacement(false),
     m_haveConfigPlacement(false),
-	  m_includeCursor(true),
-	  m_showStatus(true),
+	  m_includeCursor(false),
+	  m_showStatus(false),
 		m_screenshotAction(SA_SHOWCROP),
     m_croppingZoomFactor(2.0f),
     m_autoStartup(true),
@@ -110,7 +110,7 @@ public:
 
 	bool m_savedInAppDir;// this is true if the configuration was loaded from the application directory (as opposed to Application Data directory)
 
-	void LoadSettings()
+	bool LoadSettings()
 	{
 		// try to load from XML first
 		m_savedInAppDir = false;// default
@@ -120,7 +120,7 @@ public:
 		{
 			m_savedInAppDir = true;
 			Xml::Deserialize(*this, fileName);
-			return;
+			return true;
 		}
 		else
 		{
@@ -128,12 +128,17 @@ public:
 			if(TRUE == PathFileExists(fileName.c_str()))
 			{
 				Xml::Deserialize(*this, fileName);
-				return;
+				return true;
 			}
 		}
 
 		// no xml file. try from registry.
-		LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2"));
+		if (LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2")))
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	std::wstring GetConfigPath() const
