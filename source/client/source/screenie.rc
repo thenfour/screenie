@@ -183,25 +183,26 @@ BEGIN
     LTEXT           "pixels",IDC_RESIZE_LIMIT_LABEL,186,62,30,12
 END
 
-IDD_CROPDLG DIALOGEX 0, 0, 338, 209
+IDD_CROPDLG DIALOGEX 0, 0, 338, 220
 STYLE DS_SETFONT | DS_SETFOREGROUND | DS_FIXEDSYS | WS_MAXIMIZEBOX | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Crop Screenshot"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,226,189,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,281,189,50,14
+    DEFPUSHBUTTON   "OK",IDOK,228,198,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,281,198,50,14
     LTEXT           "Static",IDC_ZOOM,7,17,98,150,0,WS_EX_CLIENTEDGE
     LTEXT           "Static",IDC_IMAGE,109,17,221,150,0,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Options...",IDC_CONFIGURE,281,171,50,14
+    PUSHBUTTON      "Options...",IDC_CONFIGURE,281,173,50,14
     RTEXT           "Zoom: 15%",IDC_ZOOM_CAPTION,276,7,55,8
     LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
     LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,167,8
-    LTEXT           "To Pan: Click and drag with the RIGHT mouse button",IDC_CONTROLS3,7,179,173,8
-    LTEXT           "To Zoom: Use the mouse wheel",IDC_CONTROLS2,7,187,173,8
-    LTEXT           "To Select: Click and drag with the LEFT mouse button",IDC_CONTROLS4,7,171,173,8
-    LTEXT           "Hold SHIFT for precision. Hold SHIFT+CONTROL for extra precision",IDC_CONTROLS1,7,195,215,8
-    PUSHBUTTON      "Edit image...",IDC_EDITINPAINT,226,171,50,14
+    LTEXT           "To Pan: Click and drag with the RIGHT mouse button.",IDC_CONTROLS3,7,183,173,8
+    LTEXT           "To Zoom: Use the mouse wheel.",IDC_CONTROLS2,7,192,173,8
+    LTEXT           "To Select: Click and drag with the LEFT mouse button.",IDC_CONTROLS4,7,174,173,8
+    LTEXT           "Hold SHIFT for precision. Hold SHIFT+CONTROL for extra precision.",IDC_CONTROLS1,7,201,219,8
+    PUSHBUTTON      "Edit image...",IDC_EDITINPAINT,228,173,50,14
+    CONTROL         "",IDC_ETCHEDLINE,"Static",SS_WHITEFRAME,226,192,105,1,WS_EX_STATICEDGE
 END
 
 IDD_NEW_DESTINATION DIALOGEX 0, 0, 207, 73
@@ -330,7 +331,7 @@ BEGIN
         VERTGUIDE, 226
         VERTGUIDE, 276
         TOPMARGIN, 7
-        BOTTOMMARGIN, 202
+        BOTTOMMARGIN, 213
         HORZGUIDE, 167
         HORZGUIDE, 203
     END

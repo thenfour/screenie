@@ -72,6 +72,8 @@ public:
     DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
     DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
     DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+	DLGRESIZE_CONTROL(IDC_ETCHEDLINE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
@@ -171,14 +173,14 @@ public:
     ::GetWindowRect(GetDlgItem(IDC_IMAGE), &rcImage);
     ScreenToClient(&rcImage);
     ::DestroyWindow(GetDlgItem(IDC_IMAGE));
-    m_editWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_IMAGE);
+    m_editWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, WS_EX_CLIENTEDGE, IDC_IMAGE);
 
     // create zoom window
     rcImage;
     ::GetWindowRect(GetDlgItem(IDC_ZOOM), &rcImage);
     ScreenToClient(&rcImage);
     ::DestroyWindow(GetDlgItem(IDC_ZOOM));
-    m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, 0, IDC_ZOOM);
+    m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, WS_EX_CLIENTEDGE, IDC_ZOOM);
 		m_zoomWnd.SetZoomFactor(1.0f);
 		m_zoomWnd.SetShowCursor(true);
 		m_zoomWnd.SetEnablePanning(false);
@@ -191,6 +193,11 @@ public:
     {
       SetWindowPlacement(&m_options.GetCroppingPlacement());
     }
+	else
+	{
+		SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE);
+		CenterWindow(NULL);
+	}
 
     // set up image edit window
     BOOL temp;
