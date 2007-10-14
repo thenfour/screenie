@@ -104,7 +104,8 @@ public:
 	{
 		if(!m_didCropping)
     {
-			return false;
+			croppedScreenshot = m_bitmap;
+			return true;
     }
 		croppedScreenshot = m_croppedBitmap;
 		return true;
