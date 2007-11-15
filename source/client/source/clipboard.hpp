@@ -142,14 +142,21 @@ public:
       }
       else
       {
-		    if (::SetClipboardData(CF_BITMAP, (HANDLE)bitmap) == NULL)
+        if(!EmptyClipboard())
         {
-          r.Fail(LibCC::Format("Error setting clipboard data (BITMAP). System error: %").gle(GetLastError()).Str());
+          r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
         }
         else
         {
-          r.Succeed();
-        }
+					if (::SetClipboardData(CF_BITMAP, (HANDLE)bitmap) == NULL)
+					{
+						r.Fail(LibCC::Format("Error setting clipboard data (BITMAP). System error: %").gle(GetLastError()).Str());
+					}
+					else
+					{
+						r.Succeed();
+					}
+				}
         ::CloseClipboard();
       }
     }
