@@ -100,7 +100,7 @@ int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-    MessageBox(0, _T("Screenie is already running."), _T("Screenie"), MB_OK | MB_ICONINFORMATION);
+//    MessageBox(0, _T("Screenie is already running."), _T("Screenie"), MB_OK | MB_ICONINFORMATION);
 
 		HWND screenieWindow = ::FindWindow(TEXT("ScreenieMainWnd"), TEXT("ScreenieWnd"));
 
