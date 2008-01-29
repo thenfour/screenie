@@ -101,6 +101,10 @@ public:
   void OnZoomFactorChanged()
   {
   }
+  void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n)
+	{
+		m_zoomWnd.SetBitmap(n);
+	}
 
   // other crap
 

@@ -128,6 +128,56 @@ public:
     return r;
 	}
 
+	static bool ContainsBitmap()
+	{
+		return TRUE == IsClipboardFormatAvailable(CF_BITMAP);
+	}
+
+	LibCC::Result GetBitmap(util::shared_ptr<Gdiplus::Bitmap>& out)
+	{
+    LibCC::Result r;
+	  if (!::OpenClipboard(m_hOwner))
+    {
+      r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
+    }
+    else
+    {
+			HBITMAP h = (HBITMAP)GetClipboardData(CF_BITMAP);
+			if(!h)
+			{
+				r.Fail(LibCC::Format("Error retreiving clipboard data. Maybe there is no bitmap in the clipboard. System error: %").gle(GetLastError()).Str());
+			}
+			else
+			{
+				out.reset(Gdiplus::Bitmap::FromHBITMAP(h, 0));
+				r.Succeed();
+			}
+      ::CloseClipboard();
+    }
+		return r;
+	}
+
+	LibCC::Result SetBitmap(Gdiplus::Bitmap* p)
+	{
+	  LibCC::Result r;
+    r.Fail();// initialize
+
+		HBITMAP hbm = 0;
+		Gdiplus::Status s = p->GetHBITMAP(0, &hbm);
+		if(s != Gdiplus::Ok)
+		{
+			r.Fail(LibCC::Format("Error getting the HBITMAP from the Gdiplus object.").Str());
+		}
+		else
+		{
+			HBITMAP bitmapCopy = DuplicateBitmap(hbm);
+			DeleteObject(hbm);
+			r = SetBitmap(bitmapCopy);
+		}
+
+    return r;
+	}
+
 	LibCC::Result SetBitmap(HBITMAP bitmap)
 	{
     LibCC::Result r;
@@ -166,6 +216,34 @@ public:
 
 private:
   HWND m_hOwner;
+
+	static HBITMAP DuplicateBitmap(HBITMAP sourceBitmap)
+	{
+		HDC desktopDC = ::GetDC(NULL);
+
+		BITMAP bmp = { 0 };
+		if (!::GetObject(sourceBitmap, sizeof(bmp), &bmp))
+			return NULL;
+
+		HDC destDC = ::CreateCompatibleDC(desktopDC);
+		HBITMAP destBitmap = ::CreateCompatibleBitmap(desktopDC, bmp.bmWidth, bmp.bmHeight);
+		HGDIOBJ destOldObj = ::SelectObject(destDC, destBitmap);
+
+		HDC sourceDC = ::CreateCompatibleDC(desktopDC);
+		HGDIOBJ sourceOldObj = ::SelectObject(sourceDC, sourceBitmap);
+
+		::BitBlt(destDC, 0, 0, bmp.bmWidth, bmp.bmHeight, sourceDC, 0, 0, SRCCOPY);
+
+		::SelectObject(sourceDC, sourceOldObj);
+		::DeleteDC(sourceDC);
+
+		::SelectObject(destDC, destOldObj);
+		::DeleteDC(destDC);
+
+		::ReleaseDC(NULL, desktopDC);
+
+		return destBitmap;
+	}
 };
 
 #endif

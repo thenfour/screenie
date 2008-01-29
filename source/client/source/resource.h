@@ -124,7 +124,6 @@
 #define IDC_EDITINPAINT                 1075
 #define IDC_MOVEUP                      1075
 #define IDC_ETCHEDLINE                  1076
-#define IDC_MOVEUP2                     1076
 #define IDC_MOVEDOWN                    1076
 #define IDC_INFO                        1077
 #define IDC_INFOBOX                     1078
@@ -192,13 +191,14 @@
 #define ID_TRAYCONTEXTMENU_BUY          32783
 #define ID_SHOWSTATUSWINDOW             32785
 #define ID_EDIT_SELECTALL               32786
+#define ID_EDIT_PASTE32788              32788
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
-#define _APS_NEXT_COMMAND_VALUE         32788
+#define _APS_NEXT_COMMAND_VALUE         32789
 #define _APS_NEXT_CONTROL_VALUE         1080
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

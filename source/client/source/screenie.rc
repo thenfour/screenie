@@ -433,8 +433,8 @@ IDR_CROPMENU MENU
 BEGIN
     POPUP "Edit"
     BEGIN
-        MENUITEM "Select &All",                 ID_EDIT_SELECTALL
         MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste (and replace)",        ID_EDIT_PASTE
     END
 END
 

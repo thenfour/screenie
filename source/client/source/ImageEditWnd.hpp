@@ -31,6 +31,7 @@
 #include "ImageEditRenderer.h"
 #include <map>
 #include <stack>
+#include "resource.h"
 
 
 class IImageEditWindowEvents
@@ -39,6 +40,7 @@ public:
   virtual void OnSelectionChanged() = 0;
   virtual void OnCursorPositionChanged(const PointF&) = 0;
   virtual void OnZoomFactorChanged() = 0;
+  virtual void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n) = 0;
 };
 
 
@@ -81,8 +83,9 @@ public:
 
   // IImageEditWindowEvents methods
   void OnCursorPositionChanged(const PointF&) { }
-  void OnSelectionChanged() { };
-  void OnZoomFactorChanged() { };
+  void OnSelectionChanged() { }
+  void OnZoomFactorChanged() { }
+	void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n) { }
 
   // IToolOperations methods
   void Pan(int x, int y);
@@ -152,8 +155,18 @@ protected:
 		MESSAGE_HANDLER(WM_RBUTTONUP, OnRButtonUp)
     MESSAGE_HANDLER(WM_CAPTURECHANGED, OnLoseCapture)
     MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
+    MESSAGE_HANDLER(WM_CONTEXTMENU, OnContextMenu)
+
+		COMMAND_HANDLER(ID_EDIT_COPY, 0, OnCopy)
+		COMMAND_HANDLER(ID_EDIT_PASTE, 0, OnPaste)
   END_MSG_MAP()
 
+	LRESULT OnCommand(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+	{
+		LibCC::LogScopeMessage l(LibCC::Format(L"OnCommand (loword:%, hiword:%)")(LOWORD(wParam))(HIWORD(wParam)).Str());
+		return 0;
+	}
+	LRESULT OnContextMenu(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
@@ -165,6 +178,9 @@ protected:
   LRESULT OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnTimer(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
   LRESULT OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+
+	LRESULT OnPaste(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnCopy(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
   enum CursorMoveType
   {
@@ -233,7 +249,7 @@ protected:
 
   // panning.
   bool m_bIsPanning;// true during right-mouse button dragging
-  //HCURSOR m_hPreviousCursor;
+	bool m_actuallyDidPanning;
 
 	// Capture
 	void AddCapture();

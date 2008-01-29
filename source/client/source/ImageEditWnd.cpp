@@ -2,6 +2,7 @@
 #include "stdafx.hpp"
 #include "ImageEditWnd.hpp"
 #include "image.hpp"
+#include "clipboard.hpp"
 
 
 ATL::CWndClassInfo& CImageEditWindow::GetWndClassInfo()
@@ -19,6 +20,7 @@ ATL::CWndClassInfo& CImageEditWindow::GetWndClassInfo()
 
 CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify) :
   m_bitmap(bitmap),
+	m_actuallyDidPanning(false),
   m_notify(this),
   m_mouseEntrancy(false),
   m_bIsPanning(false),
@@ -69,12 +71,11 @@ ViewPortSubPixel GetDeltaMin(ViewPortSubPixel val, bool bSuperDooper)
 LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
   bHandled = TRUE;
-  if(!MouseEnter())
-	{
-		return 0;
-	}
+  if(!MouseEnter()) return 0;
 
   POINTS& psTemp = MAKEPOINTS(lParam);
+
+	LibCC::LogScopeMessage l(LibCC::Format(L"OnMouseMove (%,%)")(psTemp.x)(psTemp.y).Str());
 
 	// this is necessary to prevent an endless loop when calling SetCursorPos().
 	CPoint lastCursorRounded = m_lastCursor.Round();
@@ -110,6 +111,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 	// handle panning movement.
   if(m_bIsPanning)
   {
+		m_actuallyDidPanning = true;
 		m_display.SetViewOrigin(cursorPos);
 
 		PointF imgOrg = m_lastCursorImage;
@@ -117,21 +119,6 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 		m_display.SetImageOrigin(imgOrg, "");
 		
 		cursorPosImage = m_lastCursorImage;// during panning you can't change the position here. (but you can on the panning timer)
-
-  //  m_panningSpec = GetPanningSpec();
-  //  if(m_panningSpec.IsNotNull())
-  //  {
-  //    // start the panning timer.
-  //    if(!m_panningTimer)
-  //    {
-  //      m_panningTimer = CreateTimer(30, CImageEditWindow::PanningTimerProc, this);
-		//		//OutputDebugString(LibCC::Format("CreateTimer (id %)\r\n")(m_panningTimer).CStr());
-  //    }
-  //  }
-  //  else
-  //  {
-		//	KillPanningTimer();
-		//}
 	}
 
   // fire tool events.
@@ -157,11 +144,20 @@ void CImageEditWindow::KillPanningTimer()
 
 LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled)
 {
+	/*
+		sometimes LButtonDown messages are not followed by a mousemove message. this fixes that.
+	*/
+	BOOL t;
+	OnMouseMove(0, 0, lParam, t);
+
   if(!MouseEnter()) return 0;
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
-  PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
+
+	LibCC::LogScopeMessage l(LibCC::Format(L"OnLButtonDown (%,%)")(psTemp.x)(psTemp.y).Str());
+
+	PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
 	m_isLeftClickDragging = true;
 
@@ -182,6 +178,7 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
   if(!MouseEnter()) return 0;
 
   POINTS& psTemp = MAKEPOINTS(lParam);
+	LibCC::LogScopeMessage l(LibCC::Format(L"OnLButtonUp (%,%)")(psTemp.x)(psTemp.y).Str());
 	CPoint cursorPos(psTemp.x, psTemp.y);
   PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
@@ -197,10 +194,19 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 
 LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
+	/*
+		sometimes RButtonDown messages are not followed by a mousemove message. this fixes that.
+	*/
+	BOOL t;
+	OnMouseMove(0, 0, lParam, t);
+
 	if(!m_enablePanning) return 0;
   if(!MouseEnter()) return 0;
+  POINTS& psTemp = MAKEPOINTS(lParam);
+	LibCC::LogScopeMessage l(LibCC::Format(L"OnRButtonDown (%,%)")(psTemp.x)(psTemp.y).Str());
 
   m_bIsPanning = true;
+	m_actuallyDidPanning = false;
 
 	AddCapture();
 
@@ -208,27 +214,56 @@ LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   return MouseLeave();
 }
 
-LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled)
 {
+	bHandled = FALSE;// necessary to send WM_CONTEXTMENU
 	if(!m_enablePanning) return 0;
   if(!MouseEnter()) return 0;
-  if(m_bIsPanning)
+  POINTS& psTemp = MAKEPOINTS(lParam);
+	LibCC::LogScopeMessage l(LibCC::Format(L"OnRButtonUp (%,%)")(psTemp.x)(psTemp.y).Str());
+
+	if(m_bIsPanning)
   {
+		if(m_actuallyDidPanning)
+			bHandled = TRUE;
+
     ReleaseCapture();
 		PopCursor(true);
 		m_bIsPanning = false;
+		m_actuallyDidPanning = false;
   }
+
   return MouseLeave();
 }
 
+LRESULT CImageEditWindow::OnContextMenu(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+  if(!MouseEnter()) return 0;
+  POINTS& psTemp = MAKEPOINTS(lParam);
+	CPoint cursorPos(psTemp.x, psTemp.y);
+
+	LibCC::LogScopeMessage l(LibCC::Format(L"OnContextMenu (%,%)")(psTemp.x)(psTemp.y).Str());
+
+	CMenu contextMenu(AtlLoadMenu(IDR_CROPMENU));
+	CMenuHandle trayMenu = contextMenu.GetSubMenu(0);
+
+	if(!Clipboard::ContainsBitmap())
+		trayMenu.EnableMenuItem(ID_EDIT_PASTE, MF_BYCOMMAND | MF_GRAYED);
+
+	BOOL r = trayMenu.TrackPopupMenu(TPM_RIGHTALIGN, cursorPos.x, cursorPos.y, m_hWnd);
+
+  return MouseLeave();
+}
+
+
 LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	//OutputDebugString("OnLoseCapture\r\n");
 	m_captureRefs = 0;
 	KillPanningTimer();
   if(m_bIsPanning)
   {
     m_bIsPanning = false;
+		m_actuallyDidPanning = false;
   }
 
 	m_isLeftClickDragging = false;
@@ -433,6 +468,40 @@ LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL&
 	  m_currentTool->OnInitTool();
 	m_display.SetHWND(this->m_hWnd);
   return 0;
+}
+
+LRESULT CImageEditWindow::OnPaste(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	util::shared_ptr<Gdiplus::Bitmap> n;
+	Clipboard x(*this);
+	LibCC::Result r = x.GetBitmap(n);
+	if(r.Failed())
+	{
+		MessageBox(LibCC::Format(L"There was a problem pasting.|%")(r.str()).CStr(), L"Screenie", MB_ICONERROR | MB_OK);
+	}
+	else
+	{
+		SetBitmap(n);
+		m_notify->OnPaste(n);
+	}
+	return 0;
+}
+
+LRESULT CImageEditWindow::OnCopy(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	util::shared_ptr<Gdiplus::Bitmap> n(m_bitmap);
+	if(HasSelection())
+	{
+		CRect selectionRect = GetSelection();
+		n = GetBitmapRect(selectionRect);
+	}
+	Clipboard c(*this);
+	LibCC::Result r = c.SetBitmap(n.get());
+	if(r.Failed())
+	{
+		MessageBox(LibCC::Format(L"There was a problem copying.|%")(r.str()).CStr(), L"Screenie", MB_ICONERROR | MB_OK);
+	}
+	return 0;
 }
 
 void CImageEditWindow::SetZoomFactor(float n)

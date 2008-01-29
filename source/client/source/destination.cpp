@@ -398,34 +398,6 @@ bool ProcessFileDestination(HWND hwnd, IActivity& status, ScreenshotDestination&
 	return success;
 }
 
-HBITMAP DuplicateScreenshotBitmap(HBITMAP sourceBitmap)
-{
-	HDC desktopDC = ::GetDC(NULL);
-
-	BITMAP bmp = { 0 };
-	if (!::GetObject(sourceBitmap, sizeof(bmp), &bmp))
-		return NULL;
-
-	HDC destDC = ::CreateCompatibleDC(desktopDC);
-	HBITMAP destBitmap = ::CreateCompatibleBitmap(desktopDC, bmp.bmWidth, bmp.bmHeight);
-	HGDIOBJ destOldObj = ::SelectObject(destDC, destBitmap);
-
-	HDC sourceDC = ::CreateCompatibleDC(desktopDC);
-	HGDIOBJ sourceOldObj = ::SelectObject(sourceDC, sourceBitmap);
-
-	::BitBlt(destDC, 0, 0, bmp.bmWidth, bmp.bmHeight, sourceDC, 0, 0, SRCCOPY);
-
-	::SelectObject(sourceDC, sourceOldObj);
-	::DeleteDC(sourceDC);
-
-	::SelectObject(destDC, destOldObj);
-	::DeleteDC(destDC);
-
-	::ReleaseDC(NULL, desktopDC);
-
-	return destBitmap;
-}
-
 bool ProcessClipboardDestination(HWND hwnd, IActivity& status, ScreenshotDestination& destination,
 								 util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard, ScreenshotID screenshotID)
 {
@@ -443,26 +415,35 @@ bool ProcessClipboardDestination(HWND hwnd, IActivity& status, ScreenshotDestina
   }
   else
 	{
-		HBITMAP clipboardBitmap = NULL;
-		if (Gdiplus::Ok != transformedScreenshot->GetHBITMAP(Gdiplus::Color(0,0,0), &clipboardBitmap))
-    {
-			r.Fail(TEXT("Clipboard: Can't get clipboard-friendly image data"));
-    }
-    else
+		r = Clipboard(hwnd).SetBitmap(transformedScreenshot.get());
+		if(r.Succeeded())
 		{
-			HBITMAP bitmapCopy = DuplicateScreenshotBitmap(clipboardBitmap);
-			DeleteObject(clipboardBitmap);
-
-      LibCC::Result r = Clipboard(hwnd).SetBitmap(bitmapCopy);
-			DeleteObject(bitmapCopy);
-      if(r.Succeeded())
-      {
-				status.RegisterEvent(screenshotID, EI_CHECK, ET_GENERAL, destination.general.name,
-          _T("Copied image to clipboard"));
-        usedClipboard = true;
-        r.Succeed();
-			}
+			status.RegisterEvent(screenshotID, EI_CHECK, ET_GENERAL, destination.general.name,
+				_T("Copied image to clipboard"));
+			usedClipboard = true;
+			r.Succeed();
 		}
+
+		//HBITMAP clipboardBitmap = NULL;
+		//if (Gdiplus::Ok != transformedScreenshot->GetHBITMAP(Gdiplus::Color(0,0,0), &clipboardBitmap))
+  //  {
+		//	r.Fail(TEXT("Clipboard: Can't get clipboard-friendly image data"));
+  //  }
+  //  else
+		//{
+		//	HBITMAP bitmapCopy = DuplicateScreenshotBitmap(clipboardBitmap);
+		//	DeleteObject(clipboardBitmap);
+
+  //    LibCC::Result r = Clipboard(hwnd).SetBitmap(bitmapCopy);
+		//	DeleteObject(bitmapCopy);
+  //    if(r.Succeeded())
+  //    {
+		//		status.RegisterEvent(screenshotID, EI_CHECK, ET_GENERAL, destination.general.name,
+  //        _T("Copied image to clipboard"));
+  //      usedClipboard = true;
+  //      r.Succeed();
+		//	}
+		//}
 	}
 
   if(!r)
