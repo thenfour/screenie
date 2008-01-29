@@ -31,6 +31,7 @@ public:
 
 	BEGIN_MSG_MAP(CDestinationPropertiesGeneral)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+		MESSAGE_HANDLER(WM_HSCROLL, OnHScroll)
 		COMMAND_HANDLER(IDC_FILE_FOLDER_BROWSE, BN_CLICKED, OnFolderBrowse)
 		COMMAND_HANDLER(IDC_GENERAL_TYPE, CBN_SELCHANGE, OnTypeChanged)
 		COMMAND_HANDLER(IDC_GENERAL_FORMAT, CBN_SELCHANGE, OnImageFormatChanged)
@@ -40,6 +41,7 @@ public:
 	END_MSG_MAP()
 
 	LRESULT OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 
 	LRESULT OnFolderBrowse(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/);
 	LRESULT OnTypeChanged(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/);
@@ -60,6 +62,8 @@ public:
 private:
 	DestinationPropertySheet* m_parentSheet;
 	ScreenshotDestination::General m_settings;
+
+	void UpdateQualityLabel();
 };
 
 #endif

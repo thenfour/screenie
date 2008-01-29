@@ -280,7 +280,7 @@ bool ResizeBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitma
 	return ScaleBitmap(destination, source, scaleFactor);
 }
 
-bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const tstd::tstring& filename)
+bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const tstd::tstring& filename, ULONG quality)
 {
 	ImageCodecsEnum imageCodecs;
 	Gdiplus::ImageCodecInfo* codecInfo = imageCodecs.GetCodecByMimeType(mimeType.c_str());
@@ -289,7 +289,14 @@ bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const
 	{
 		std::wstring wideFilename = LibCC::ToUnicode(filename);
 
-		if (image.Save(wideFilename.c_str(), &codecInfo->Clsid, NULL) == Gdiplus::Ok)
+		Gdiplus::EncoderParameters encoderParameters;
+		encoderParameters.Count = 1;
+		encoderParameters.Parameter[0].Guid = Gdiplus::EncoderQuality;
+		encoderParameters.Parameter[0].Type = Gdiplus::EncoderParameterValueTypeLong;
+		encoderParameters.Parameter[0].NumberOfValues = 1;
+		encoderParameters.Parameter[0].Value = &quality;
+
+		if (image.Save(wideFilename.c_str(), &codecInfo->Clsid, &encoderParameters) == Gdiplus::Ok)
 			return true;
 	}
 

@@ -87,3 +87,28 @@ Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByExtension(PCTSTR extension) 
 
 	return NULL;
 }
+
+bool ImageCodecsEnum::SupportsQualitySetting(const std::wstring& description)
+{
+	ImageCodecsEnum x;
+	Gdiplus::ImageCodecInfo* p = x.GetCodecByDescription(description.c_str());
+	return SupportsQualitySetting(p);
+}
+
+bool ImageCodecsEnum::SupportsQualitySetting(Gdiplus::ImageCodecInfo* p)
+{
+	std::wstring desc = LibCC::StringToLower(p->FormatDescription);
+	// only support it for jpeg
+	if((std::string::npos != desc.find(L"jpg")) || (std::string::npos != desc.find(L"jpeg")))
+	{
+		return true;
+	}
+	return false;
+}
+
+bool ImageCodecsEnum::SupportsQualitySettingByMimeType(const std::wstring& m)
+{
+	ImageCodecsEnum x;
+	Gdiplus::ImageCodecInfo* p = x.GetCodecByMimeType(m.c_str());
+	return SupportsQualitySetting(p);
+}

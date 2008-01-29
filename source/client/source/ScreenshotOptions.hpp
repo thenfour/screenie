@@ -48,6 +48,7 @@ public:
 	typedef std::vector<ScreenshotDestination> DestinationCollection;
 
   ScreenshotOptions() :
+		// DEFAULTS
     m_haveStatusPlacement(false),
     m_haveCroppingPlacement(false),
     m_haveConfigPlacement(false),
@@ -58,7 +59,8 @@ public:
     m_autoStartup(true),
 		m_savedInAppDir(false),
 		m_enableArchive(false),
-		m_archiveLimit(100000000)
+		m_archiveLimit(100000000),
+		CroppingSplitterPosition(150)
   {
   }
 
@@ -71,6 +73,7 @@ public:
 		m_showStatus = copy.m_showStatus;
 		m_screenshotAction = copy.m_screenshotAction;
     m_croppingZoomFactor = copy.m_croppingZoomFactor;
+		CroppingSplitterPosition = copy.CroppingSplitterPosition;
 		m_enableArchive = copy.m_enableArchive;
 		m_archiveLimit = copy.m_archiveLimit;
 
@@ -95,6 +98,7 @@ public:
 		m_showStatus = rightHand.m_showStatus;
 		m_screenshotAction = rightHand.m_screenshotAction;
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
+		CroppingSplitterPosition = rightHand.CroppingSplitterPosition;
 		m_enableArchive = rightHand.m_enableArchive;
 		m_archiveLimit = rightHand.m_archiveLimit;
 
@@ -166,6 +170,8 @@ public:
 
   float CroppingZoomFactor() const { return m_croppingZoomFactor; }
   void CroppingZoomFactor(float n) { m_croppingZoomFactor = n; }
+
+	int CroppingSplitterPosition;// because getters/setters are just unnecessary for this.
 
   bool AutoStartup() const { return m_autoStartup; }
   void AutoStartup(bool b) { m_autoStartup = b; }
@@ -252,6 +258,9 @@ public:
 	{
 		m_destinations.clear();
 	}
+
+	DestinationCollection m_destinations;// making this public because, at the moment, there is no value in adding wrappers around everything here.
+
 private:
 	static bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
 	static bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
@@ -278,7 +287,6 @@ private:
 		return GetPathRelativeToApp(_T("screenieConfig.xml"));
 	}
 
-	DestinationCollection m_destinations;
 
   bool m_haveStatusPlacement;
   WINDOWPLACEMENT m_statusPlacement;

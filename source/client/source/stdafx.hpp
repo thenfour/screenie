@@ -29,6 +29,7 @@ extern CAppModule _Module;
 #include "..\wtl\atlscrl.h"
 #include "..\wtl\atlmisc.h"
 #include "..\wtl\atluser.h"
+#include "..\wtl\atlsplit.h"
 
 #include <gdiplus.h>
 

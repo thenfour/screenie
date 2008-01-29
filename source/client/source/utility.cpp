@@ -351,7 +351,7 @@ tstd::tstring tstring_toupper(const tstd::tstring& input)
 }
 
 
-LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFileName, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser)
+LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFileName, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser, OUT DWORD* size)
 {
   // open / login
 	WinInetHandle internet = ::InternetOpen(_T("Screenie v1.0"), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -383,13 +383,15 @@ LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& lo
 
   // open the local file.
   Win32Handle hFile = CreateFile(localFile.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-  if(!IsValidHandle(hFile.val))
+	if(!LibCC::IsValidHandle(hFile.val))
   {
     return LibCC::Result(E_FAIL, LibCC::Format("Unable to open the temp file for reading.  Technical info: [CreateFile] [gle: %]").gle().Str());
   }
 
   LibCC::Blob<BYTE> buffer(bufferSize);
   DWORD total = GetFileSize(hFile.val, 0);
+	if(size)
+		*size = total;
   DWORD progress = 0;
   for(;;)
   {

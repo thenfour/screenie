@@ -103,6 +103,34 @@ void CDestinationPropertiesGeneral::PopulateFormatList()
 	AutoSetComboBoxHeight(fileFormats);
 }
 
+void CDestinationPropertiesGeneral::UpdateQualityLabel()
+{
+	std::wstring desc;
+	int quality = CTrackBarCtrl(GetDlgItem(IDC_QUALITY)).GetPos();
+	if(quality < 25)
+	{
+		desc = L"Very low";
+	}
+	if(quality < 50)
+	{
+		desc = L"Low";
+	}
+	else if(quality < 75)
+	{
+		desc = L"Medium";
+	}
+	else if(quality < 90)
+	{
+		desc = L"High";
+	}
+	else
+	{
+		desc = L"Highest";
+	}
+	CStatic l(GetDlgItem(IDC_QUALITYLABEL));
+	l.SetWindowTextW(LibCC::Format(L"%^% (%)").i(quality).s(desc).CStr());
+}
+
 void CDestinationPropertiesGeneral::ShowSettings()
 {
 	SetDlgItemText(IDC_FILE_FOLDER, m_settings.path.c_str());
@@ -114,9 +142,24 @@ void CDestinationPropertiesGeneral::ShowSettings()
 	SetDlgItemText(IDC_GENERAL_NAME, m_settings.name.c_str());
 	SetImageFormat(m_settings.imageFormat);
 
+	// enable / disable quality settings
+	CTrackBarCtrl quality(GetDlgItem(IDC_QUALITY));
+	quality.SetRange(0, 100, FALSE);
+	quality.SetPos(m_settings.imageQuality);
+	UpdateQualityLabel();
+
 	SetDlgItemText(IDC_FILENAME_FORMAT, m_settings.filenameFormat.c_str());
 
   CheckDlgButton(m_settings.localTime ? IDC_FILENAME_LOCAL : IDC_FILENAME_UTC, BST_CHECKED);
+}
+
+LRESULT CDestinationPropertiesGeneral::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+	if((HWND)lParam != GetDlgItem(IDC_QUALITY))
+		return 0;
+	handled = TRUE;
+	UpdateQualityLabel();
+	return 0;
 }
 
 LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -189,6 +232,8 @@ LRESULT CDestinationPropertiesGeneral::OnImageFormatChanged(WORD /*wNotifyCode*/
 
 	SetDlgItemText(IDC_FILENAME_FORMAT, LibCC::Format(TEXT("%.%")).s(pathFilenameFormat.filename).s(extension).CStr());
 
+	SetDestinationType(GetType());
+
 	return 0;
 }
 
@@ -236,6 +281,7 @@ void CDestinationPropertiesGeneral::GetSettings(ScreenshotDestination& destinati
 		destination.general.type = GetType();
 		destination.general.name = GetWindowString(GetDlgItem(IDC_GENERAL_NAME));
 		destination.general.imageFormat = GetImageFormat();
+		destination.general.imageQuality = CTrackBarCtrl(GetDlgItem(IDC_QUALITY)).GetPos();
 		destination.general.filenameFormat = GetWindowString(GetDlgItem(IDC_GENERAL_FILENAME));
 		destination.general.path = GetWindowString(GetDlgItem(IDC_FILE_FOLDER));
 
@@ -247,6 +293,12 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 {
 	// enable all windows to ensure a predefined state
 	EnableChildWindows(m_hWnd, TRUE);
+
+	// only let quality settings be enabled if the format is JPEG
+	std::wstring formatDescription = LibCC::StringToLower(GetComboSelectionString(GetDlgItem(IDC_GENERAL_FORMAT)));
+	bool enableQuality = ImageCodecsEnum::SupportsQualitySetting(formatDescription);
+
+	::EnableWindow(GetDlgItem(IDC_QUALITY), enableQuality);
 
 	if (type != ScreenshotDestination::TYPE_FILE)
 	{
@@ -264,6 +316,7 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER_BROWSE), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER), enableControls);
 		::EnableWindow(GetDlgItem(IDC_GENERAL_FORMAT), type == ScreenshotDestination::TYPE_IMAGESHACK);
+		::EnableWindow(GetDlgItem(IDC_QUALITY), type == ScreenshotDestination::TYPE_IMAGESHACK && enableQuality);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMAT), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATDESC), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATPREVIEW), enableControls);

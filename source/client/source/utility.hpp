@@ -193,7 +193,7 @@ struct Win32Handle
 // return false to cancel uploading
 // return true to continue
 typedef bool (*UploadFTPFileProgressProc_T)(DWORD completed, DWORD total, void* pUser);
-LibCC::Result UploadFTPFile(struct ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFile, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser);
+LibCC::Result UploadFTPFile(struct ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFile, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser, OUT DWORD* size);
 
 #ifdef UNICODE
 typedef tagMENUITEMINFOW tagMENUITEMINFO; 

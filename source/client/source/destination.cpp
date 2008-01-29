@@ -60,6 +60,7 @@ bool ProcessFtpDestination_ProgressProc(DWORD completed, DWORD total, void* pUse
 {
   ProcessFtpDestination_Info& info(*((ProcessFtpDestination_Info*)pUser));
 	info.status->EventSetProgress(info.msgid, static_cast<int>(completed), static_cast<int>(total));
+	info.status->EventSetText(info.msgid, LibCC::Format(L"Uploading % of % bytes").ul(completed).ul(total).Str());
   return true;
 }
 
@@ -79,7 +80,7 @@ bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& 
 
 	// before we can upload the image, we need to save it to a temporary file.
 	tstd::tstring temporaryFilename = GetUniqueTemporaryFilename();
-	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename))
+	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename, destination.general.imageQuality))
 	{
 		status.EventSetText(msgid, L"FTP: Can't save image to temporary file.");
 		status.EventSetIcon(msgid, EI_ERROR);
@@ -96,7 +97,8 @@ bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& 
   ProcessFtpDestination_Info info;
   info.msgid = msgid;
   info.status = &status;
-  if(!(r = UploadFTPFile(destination, temporaryFilename, remoteFileName, 4000, ProcessFtpDestination_ProgressProc, &info)))
+	DWORD size = 0;
+  if(!(r = UploadFTPFile(destination, temporaryFilename, remoteFileName, 4000, ProcessFtpDestination_ProgressProc, &info, &size)))
   {
     status.EventSetIcon(msgid, EI_ERROR);
     status.EventSetText(msgid, r.str());
@@ -112,7 +114,7 @@ bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& 
 	if (!destination.ftp.resultURL.empty())
 	{
     tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
-    status.EventSetText(msgid, LibCC::Format("Uploaded to: %").s(url).Str());
+    status.EventSetText(msgid, LibCC::Format("Uploaded % bytes to: %").ui(size).s(url).Str());
 		status.EventSetURL(msgid, url);
 
 		if (destination.ftp.copyURL)
@@ -213,7 +215,7 @@ bool ProcessImageShackDestination(HWND hwnd, IActivity& status, ScreenshotDestin
 
 	// before we can upload the image, we need to save it to a temporary file.
 	tstd::tstring temporaryFilename = GetUniqueTemporaryFilename();
-	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename))
+	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename, destination.general.imageQuality))
 	{
 		status.EventSetText(msgid, L"ImageShack: Can't save image to temporary file.");
 		status.EventSetIcon(msgid, EI_ERROR);
@@ -370,10 +372,20 @@ bool ProcessFileDestination(HWND hwnd, IActivity& status, ScreenshotDestination&
 	tstd::tstring fullPath = LibCC::Format(TEXT("%\\%")).s(destination.general.path).s(filename).Str();
 
 	// do the deed
-	if (SaveImageToFile(*transformedScreenshot, destination.general.imageFormat, fullPath))
+	if (SaveImageToFile(*transformedScreenshot, destination.general.imageFormat, fullPath, destination.general.imageQuality))
 	{
-    status.RegisterEvent(screenshotID, EI_CHECK, ET_FILE, destination.general.name,
-			LibCC::Format(TEXT("File: saved image to %")).qs(fullPath).Str(), fullPath);
+		// get the file size.
+		Win32Handle f = CreateFile(fullPath.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0); 
+		if(LibCC::IsValidHandle(f.val))
+		{
+			status.RegisterEvent(screenshotID, EI_CHECK, ET_FILE, destination.general.name,
+				LibCC::Format(L"File (% bytes) saved to %").ul(GetFileSize(f.val, 0)).qs(fullPath).Str(), fullPath);
+		}
+		else
+		{
+			status.RegisterEvent(screenshotID, EI_CHECK, ET_FILE, destination.general.name,
+				LibCC::Format(TEXT("File: saved image to %")).qs(fullPath).Str(), fullPath);
+		}
 	}
 	else
 	{

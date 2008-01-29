@@ -33,29 +33,6 @@ namespace LibCC
 	Log* g_pLog = 0;
 }
 
-LRESULT CALLBACK PrintScreenProc(int code, WPARAM wParam, LPARAM lParam)
-{
-	KBDLLHOOKSTRUCT* ks = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
-	LRESULT result = ::CallNextHookEx(g_keyboardHook, code, wParam, lParam);
-
-	if (code == HC_ACTION)
-	{
-		if ((ks->vkCode == VK_SNAPSHOT) &&
-			((wParam == WM_KEYDOWN) || (wParam == WM_SYSKEYDOWN)))
-		{
-			POINT cursorPos = { 0 };
-			::GetCursorPos(&cursorPos);
-
-			BOOL altDown = (ks->flags & LLKHF_ALTDOWN);
-
-			::PostMessage(*g_mainWindow, CMainWindow::WM_TAKESCREENSHOT,
-				MAKELONG(cursorPos.x, cursorPos.y), altDown);
-		}
-	}
-
-	return result;
-}
-
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
 	bool logFileEnabled = false;
@@ -95,13 +72,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	RECT display = { 0 };
 	if (g_mainWindow->Create(NULL, display, TEXT("ScreenieWnd"), WS_POPUP))
 	{
-		g_keyboardHook = ::SetWindowsHookEx(WH_KEYBOARD_LL, PrintScreenProc,
-			_Module.GetModuleInstance(), 0);
-
-		if (g_keyboardHook != NULL)
-		{
-			retval = theLoop.Run();
-		}
+		retval = theLoop.Run();
 	}
 
 	options.SaveSettings();

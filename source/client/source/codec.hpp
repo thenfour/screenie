@@ -27,6 +27,11 @@ public:
 	Gdiplus::ImageCodecInfo* GetCodecByExtension(PCTSTR extension) const;
 
 	UINT GetNumCodecs() const { return m_numCodecs; }
+
+	static bool SupportsQualitySetting(Gdiplus::ImageCodecInfo* p);
+	static bool SupportsQualitySetting(const std::wstring& description);
+	static bool SupportsQualitySettingByMimeType(const std::wstring& m);
+
 private:
 	UINT m_numCodecs;
 	Gdiplus::ImageCodecInfo* m_imageCodecs;

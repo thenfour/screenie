@@ -56,7 +56,7 @@ public:
 		WM_NOTIFYICON = WM_APP + 1,
 		WM_SHOWSCREENIE = WM_APP + 2,
 		WM_TAKESCREENSHOT = WM_APP + 3,
-		WM_REPROCESSSCREENSHOT = WM_APP + 4
+		WM_REPROCESSSCREENSHOT = WM_APP + 4,
 	};
 
   CMainWindow(ScreenshotOptions& options, ScreenshotArchive& archive) :
@@ -75,6 +75,7 @@ public:
 
 	BEGIN_MSG_MAP(CMainWindow)
 		MESSAGE_HANDLER(WM_CREATE, OnCreate)
+		MESSAGE_HANDLER(WM_HOTKEY, OnHotKey)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_NOTIFYICON, OnNotifyIcon)
 		MESSAGE_HANDLER(WM_TAKESCREENSHOT, OnTakeScreenshot)
@@ -103,6 +104,7 @@ public:
 	LRESULT OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnReprocessScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnHotKey(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnClose(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
   {
     handled = TRUE;

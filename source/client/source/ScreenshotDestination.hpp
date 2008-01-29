@@ -9,6 +9,9 @@
 
 #include "utility.hpp"
 #include "serialization.h"
+#include "libcc\winapi.h"
+#include "codec.hpp"
+
 
 struct ScreenshotDestination
 {
@@ -31,7 +34,9 @@ struct ScreenshotDestination
 	struct General
 	{
     General() :
-      localTime(true)
+			// defaults
+      localTime(true),
+			imageQuality(80)
     {
       id.CreateNew();
     }
@@ -47,6 +52,7 @@ struct ScreenshotDestination
 			filenameFormat = rightHand.filenameFormat;
 			path = rightHand.path;
       localTime = rightHand.localTime;
+			imageQuality = rightHand.imageQuality;
 
 			return (*this);
 		}
@@ -59,6 +65,7 @@ struct ScreenshotDestination
     bool localTime;
 		tstd::tstring filenameFormat;
 		tstd::tstring path;
+		int imageQuality;
 	};
 
 	struct Image
@@ -211,6 +218,61 @@ struct ScreenshotDestination
 		bool copyURL;
 	};
 
+	std::wstring GetFormatInfo() const
+	{
+		ImageCodecsEnum codecs;
+		Gdiplus::ImageCodecInfo* p = codecs.GetCodecByMimeType(general.imageFormat.c_str());
+		bool qualityCounts = ImageCodecsEnum::SupportsQualitySetting(p);
+
+		if(qualityCounts)
+		{
+			return LibCC::Format(L"% (%^%)")(p->FormatDescription)(general.imageQuality).Str();
+		}
+
+		return p->FormatDescription;
+	}
+
+	std::wstring GetGeneralInfo() const
+	{
+		switch(general.type)
+		{
+		case TYPE_CLIPBOARD:
+			return L"Clipboard";
+		case TYPE_FILE:
+			return LibCC::Format(L"% - %")
+				(GetFormatInfo())
+				(LibCC::PathAppendX(general.path, general.filenameFormat)).Str();
+			break;
+		case TYPE_FTP:
+			if(!ftp.resultURL.empty())
+			{
+				return LibCC::Format(L"% - %")
+					(GetFormatInfo())
+					(LibCC::PathAppendX(ftp.resultURL, general.filenameFormat))
+					.Str();
+			}
+			if(ftp.port != 80)
+			{
+				return LibCC::Format(L"% - %:%/%")
+					(GetFormatInfo())
+					(ftp.hostname)
+					(ftp.port)
+					(LibCC::PathAppendX(ftp.remotePath, general.filenameFormat))
+					.Str();
+			}
+			return LibCC::Format(L"% - %/%")
+				(GetFormatInfo())
+				(ftp.hostname)
+				(LibCC::PathAppendX(ftp.remotePath, general.filenameFormat))
+				.Str();
+			break;
+		case TYPE_IMAGESHACK:
+			return GetFormatInfo();
+			break;
+		}
+		return L"Unknown";
+	}
+
 	// xml serialization
 	void Serialize(Xml::Element parent) const
 	{
@@ -219,6 +281,7 @@ struct ScreenshotDestination
 		Xml::Serialize(parent, L"GeneralName", general.name);
 		Xml::Serialize(parent, L"GeneralType", (int)general.type);
 		Xml::Serialize(parent, L"GeneralImageFormat", general.imageFormat);
+		Xml::Serialize(parent, L"GeneralImageQuality", general.imageQuality);
 		Xml::Serialize(parent, L"GeneralFilenameFormat", general.filenameFormat);
 		Xml::Serialize(parent, L"GeneralPath", general.path);
 		Xml::Serialize(parent, L"GeneralLocalTime", general.localTime);
@@ -281,6 +344,7 @@ struct ScreenshotDestination
 		Xml::Deserialize(parent, L"GeneralType", (int&)general.type);
 
 		Xml::Deserialize(parent, L"GeneralImageFormat", general.imageFormat);
+		Xml::Deserialize(parent, L"GeneralImageQuality", general.imageQuality);
 		Xml::Deserialize(parent, L"GeneralFilenameFormat", general.filenameFormat);
 		Xml::Deserialize(parent, L"GeneralPath", general.path);
 		Xml::Deserialize(parent, L"GeneralLocalTime", general.localTime);

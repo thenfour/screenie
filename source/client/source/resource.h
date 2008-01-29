@@ -100,6 +100,7 @@
 #define IDC_HYPERLINK                   1047
 #define IDC_SLIDER1                     1048
 #define IDC_ZOOMFACTOR                  1048
+#define IDC_QUALITY                     1048
 #define IDC_ZOOM_CAPTION                1049
 #define IDC_SELECTIONSTATIC             1050
 #define IDC_PRODUCTVERSION              1051
@@ -108,6 +109,7 @@
 #define IDC_CONTROLS3                   1053
 #define IDC_CONTROLS2                   1054
 #define IDC_CONTROLS4                   1055
+#define IDC_SPLITTER                    1056
 #define IDC_PROMPT_TEXT                 1062
 #define IDC_PROMPT_LABEL                1063
 #define IDC_CONFIGPATH                  1064
@@ -120,9 +122,13 @@
 #define IDC_SCREENSHOTACTION            1074
 #define IDC_BUTTON1                     1075
 #define IDC_EDITINPAINT                 1075
+#define IDC_MOVEUP                      1075
 #define IDC_ETCHEDLINE                  1076
+#define IDC_MOVEUP2                     1076
+#define IDC_MOVEDOWN                    1076
 #define IDC_INFO                        1077
 #define IDC_INFOBOX                     1078
+#define IDC_QUALITYLABEL                1079
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -193,7 +199,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         32788
-#define _APS_NEXT_CONTROL_VALUE         1079
+#define _APS_NEXT_CONTROL_VALUE         1080
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -57,6 +57,8 @@ public:
 		COMMAND_ID_HANDLER(IDC_REMOVE, OnRemoveDestination)
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 
+		COMMAND_HANDLER(IDC_MOVEUP, BN_CLICKED, OnBnClickedMoveup)
+		COMMAND_HANDLER(IDC_MOVEDOWN, BN_CLICKED, OnBnClickedMovedown)
 		CHAIN_MSG_MAP(CDialogResize<CDestinationDlg>)
 	END_MSG_MAP()
 
@@ -65,6 +67,9 @@ public:
 		DLGRESIZE_CONTROL(IDC_SCREENSHOTACTION, DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_INCLUDECURSOR, DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_SHOWSTATUS, DLSZ_SIZE_X)
+
+		DLGRESIZE_CONTROL(IDC_MOVEUP, DLSZ_MOVE_X)
+    DLGRESIZE_CONTROL(IDC_MOVEDOWN, DLSZ_MOVE_X)
 
     DLGRESIZE_CONTROL(IDC_DESTINATIONS_GROUP, DLSZ_SIZE_Y | DLSZ_SIZE_X)
     DLGRESIZE_CONTROL(IDC_DESTINATIONS, DLSZ_SIZE_X | DLSZ_SIZE_Y)
@@ -80,7 +85,8 @@ public:
 	void DisplayListContextMenu();
 
 	int GetSelectedDestination();
-	void PopulateDestinationList();
+	void PopulateDestinationList(Guid idSelection, bool select);
+	void PopulateDestinationList() { PopulateDestinationList(Guid(), false); }
 	void SetEnabledButtons();
 
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -105,12 +111,21 @@ private:
 	CButton m_editButton;
 	CButton m_duplicateButton;
 	CButton m_removeButton;
+	CButton m_moveUp;
+	CButton m_moveDown;
 	ScreenshotOptions m_optionsCopy;
 	ScreenshotOptions& m_optionsFinal;// this is the external ref that we copy to when the user hits OK
   tstd::tstring m_OKbuttonText;
 
   HICON m_hIcon;
   HICON m_hIconSmall;
+
+	void MoveSelectedDestination(int direction);
+
+public:
+	LRESULT OnBnClickedButton1(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnBnClickedMoveup(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnBnClickedMovedown(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
 bool IsDestinationsDialogVisible();

@@ -439,6 +439,15 @@ namespace LibCC
   }
 
   template<typename Char>
+	inline std::basic_string<Char> PathAppendX(IN const std::basic_string<Char>& lhs, const std::basic_string<Char>& rhs)
+  {
+		// there's a better way to do this.
+		std::basic_string<Char> ret = lhs;
+		PathAppendX(ret, rhs);
+		return ret;
+  }
+
+  template<typename Char>
   inline bool PathFileExistsX(const Char* path)
   {
     BlobTypes<Char>::PathBlob t;

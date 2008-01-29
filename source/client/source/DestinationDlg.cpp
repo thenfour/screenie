@@ -58,6 +58,8 @@ void CDestinationDlg::SetEnabledButtons()
 	m_editButton.EnableWindow(enableButtons);
 	m_removeButton.EnableWindow(enableButtons);
 	m_duplicateButton.EnableWindow(enableButtons);
+	m_moveUp.EnableWindow(enableButtons && (GetSelectedDestination() != 0));
+	m_moveDown.EnableWindow(enableButtons && (GetSelectedDestination() != (m_optionsCopy.GetNumDestinations() - 1)));
 
 	bool checked = (BST_CHECKED == IsDlgButtonChecked(IDC_ENABLEARCHIVE));
 	GetDlgItem(IDC_LIMITARCHIVESTATIC1).EnableWindow(checked);
@@ -65,7 +67,7 @@ void CDestinationDlg::SetEnabledButtons()
 	GetDlgItem(IDC_ARCHIVELIMIT).EnableWindow(checked);
 }
 
-void CDestinationDlg::PopulateDestinationList()
+void CDestinationDlg::PopulateDestinationList(Guid idSelection, bool bSelect)
 {
 	m_listView.DeleteAllItems();
 
@@ -92,8 +94,17 @@ void CDestinationDlg::PopulateDestinationList()
 			// now, let's set the info for the second column (the type description)
 			int itemIndex = m_listView.InsertItem(&item);
 
+			if((destination.general.id == idSelection) && bSelect)
+			{
+				m_listView.SetItem(itemIndex, 0, LVIF_STATE, 0, 0, LVIS_SELECTED, LVIS_SELECTED, 0);
+			}
+
 			m_listView.SetItem(itemIndex, 1, LVIF_TEXT,
 				ScreenshotDestination::TypeToString(destination.general.type).c_str(), 0, 0, 0, 0);
+
+			m_listView.SetItem(itemIndex, 2, LVIF_TEXT,
+				destination.GetGeneralInfo().c_str(), 0, 0, 0, 0);
+
 			m_listView.SetCheckState(itemIndex, destination.enabled);
 		}
 	}
@@ -101,8 +112,9 @@ void CDestinationDlg::PopulateDestinationList()
   // auto size those columns
   m_listView.SetColumnWidth(0, LVSCW_AUTOSIZE);
   m_listView.SetColumnWidth(1, LVSCW_AUTOSIZE);
+  m_listView.SetColumnWidth(2, LVSCW_AUTOSIZE);
 
-  SetEnabledButtons();
+	SetEnabledButtons();
 }
 
 LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -131,6 +143,8 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	m_editButton = GetDlgItem(IDC_EDIT);
 	m_removeButton = GetDlgItem(IDC_REMOVE);
 	m_duplicateButton = GetDlgItem(IDC_DUPLICATE);
+	m_moveUp = GetDlgItem(IDC_MOVEUP);
+	m_moveDown = GetDlgItem(IDC_MOVEDOWN);
 
 	// set up the list view columns
 	m_listView = GetDlgItem(IDC_DESTINATIONS);
@@ -142,6 +156,9 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 
 	m_listView.AddColumn(TEXT("Type"), 1);
 	m_listView.SetColumnWidth(1, 100);
+
+	m_listView.AddColumn(TEXT("Info"), 2);
+	m_listView.SetColumnWidth(2, 100);
 
 	// put the destinations on the list
 	PopulateDestinationList();
@@ -157,6 +174,9 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 
   // set that OK button text.
   SetDlgItemText(IDOK, m_OKbuttonText.c_str());
+
+	SetDlgItemText(IDC_MOVEUP, L"\u2191");
+	SetDlgItemText(IDC_MOVEDOWN, L"\u2193");
 
 	// if necessary, check the checkboxes
 	if (m_optionsCopy.IncludeCursor())
@@ -361,3 +381,37 @@ void CDestinationDlg::CloseDialog(bool bSaveOptions)
 
   EndDialog(bSaveOptions ? TRUE : FALSE);
 }
+
+LRESULT CDestinationDlg::OnBnClickedMoveup(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	MoveSelectedDestination(-1);
+	return 0;
+}
+
+LRESULT CDestinationDlg::OnBnClickedMovedown(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	MoveSelectedDestination(+1);
+	return 0;
+}
+
+void CDestinationDlg::MoveSelectedDestination(int direction)
+{
+	int selectedIndex = GetSelectedDestination();
+	int rhsindex = selectedIndex + direction;
+
+	// bounds checking
+	if(selectedIndex == -1) return;
+	if(rhsindex < 0 || rhsindex >= m_optionsCopy.GetNumDestinations()) return;
+
+	// retain the selection
+	Guid idOriginal;
+	ScreenshotDestination& lhs = m_optionsCopy.GetDestination(selectedIndex);
+	idOriginal = lhs.general.id;
+	// swap
+	ScreenshotDestination& rhs = m_optionsCopy.GetDestination(rhsindex);
+	std::swap(lhs, rhs);
+	// update
+	PopulateDestinationList(idOriginal, true);
+	m_listView.SetFocus();
+}
+

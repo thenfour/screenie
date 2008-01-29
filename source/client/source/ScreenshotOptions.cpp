@@ -179,6 +179,7 @@ bool ScreenshotOptions::LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY
   return true;
 }
 
+
 void ScreenshotOptions::Serialize(Xml::Element parent) const
 {
 	Xml::Serialize(parent, KEY_DESTINATIONS, m_destinations);
@@ -201,6 +202,7 @@ void ScreenshotOptions::Serialize(Xml::Element parent) const
 	{
 		Xml::Serialize(parent, L"CroppingWindowPlacement", Xml::BinaryData(&m_croppingPlacement));
 	}
+	Xml::Serialize(parent, L"CroppingSplitterPosition", CroppingSplitterPosition);
 	if(m_haveStatusPlacement)
 	{
 		Xml::Serialize(parent, L"StatusWindowPlacement", Xml::BinaryData(&m_statusPlacement));
@@ -233,6 +235,7 @@ void ScreenshotOptions::Deserialize(Xml::Element parent)
 	m_screenshotAction = StringToScreenshotAction(stemp);
 
 	Xml::Deserialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
+	Xml::Deserialize(parent, L"CroppingSplitterPosition", CroppingSplitterPosition);
 	Xml::Deserialize(parent, L"EnableArchive", m_enableArchive);
 	Xml::Deserialize(parent, L"ArchiveLimit", m_archiveLimit);
 

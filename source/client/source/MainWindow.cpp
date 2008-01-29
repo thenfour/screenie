@@ -157,6 +157,33 @@ LRESULT CMainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hand
 		m_statusDialog.ShowWindow(SW_HIDE);
   }
 
+	RegisterHotKey(*this, 1000, 0, VK_SNAPSHOT);
+	RegisterHotKey(*this, 1001, MOD_ALT, VK_SNAPSHOT);
+	RegisterHotKey(*this, 1002, MOD_ALT | MOD_CONTROL, VK_SNAPSHOT);// for international keyboards
+	return 0;
+}
+
+LRESULT CMainWindow::OnHotKey(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+	handled = TRUE;
+	BOOL altDown = FALSE;
+	switch(wParam)
+	{
+	case 1000:
+		break;
+	case 1001:
+	case 1002:
+		altDown = TRUE;
+		break;
+	default:
+		return 0;
+	}
+
+	POINT cursorPos = { 0 };
+	::GetCursorPos(&cursorPos);
+
+	PostMessage(CMainWindow::WM_TAKESCREENSHOT, MAKELONG(cursorPos.x, cursorPos.y), altDown);
+
 	return 0;
 }
 

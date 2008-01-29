@@ -21,7 +21,9 @@ class CCropDlg :
   public IImageEditWindowEvents
 {
 public:
-	enum { IDD = IDD_CROPDLG };
+	enum {
+		IDD = IDD_CROPDLG
+	};
 
 	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
@@ -47,6 +49,7 @@ public:
 
 	BEGIN_MSG_MAP(CCropDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+		MESSAGE_HANDLER(WM_DROPFILES, OnDropFiles)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
@@ -59,8 +62,9 @@ public:
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CCropDlg)
-		DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
-		DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
+		//DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
+		//DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
+		DLGRESIZE_CONTROL(IDC_SPLITTER, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 
 		DLGRESIZE_CONTROL(IDC_INFOBOX, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_CONTROLS1, DLSZ_MOVE_Y | DLSZ_SIZE_X)
@@ -146,9 +150,34 @@ public:
     AttemptNewFactorIndex(newFactorIndex, true);
     return 0;
   }
-  
+
+	LRESULT OnDropFiles(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	{
+		//if(IDYES != MessageBox(L"This will replace the image with the one loaded from disk. Are you sure you want to do this?", L"Screenie", MB_YESNO | MB_ICONWARNING))
+		//	return 0;
+		HDROP hDrop = (HDROP)wParam;
+		//UINT n = DragQueryFile(hDrop, 0xffffffff, NULL, 0);
+		//if(n != 1)
+		//{
+		//	MessageBox(L"You can only drag one file.", L"Screenie", MB_ICONERROR);
+		//	return 0;
+		//}
+		wchar_t buf[1001] = {0};
+		DragQueryFile(hDrop, 0, buf, 1000);
+
+		if(!ReplaceImageWithFile(buf))
+		{
+			MessageBox(L"The file could not be loaded.", L"Screenie", MB_OK);
+		}
+
+		return 0;
+	}
+
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
+		RECT rcSplitter;
+		DragAcceptFiles();
+
     // populate the list of zoom factors.
     bool bHitOne = false;
     m_zoomFactors.push_back(0.1f);
@@ -178,13 +207,14 @@ public:
     RECT rcImage;
     ::GetWindowRect(GetDlgItem(IDC_IMAGE), &rcImage);
     ScreenToClient(&rcImage);
+		rcSplitter = rcImage;
     ::DestroyWindow(GetDlgItem(IDC_IMAGE));
     m_editWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, WS_EX_CLIENTEDGE, IDC_IMAGE);
 
     // create zoom window
-    rcImage;
     ::GetWindowRect(GetDlgItem(IDC_ZOOM), &rcImage);
     ScreenToClient(&rcImage);
+		rcSplitter.left = rcImage.left;
     ::DestroyWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, WS_EX_CLIENTEDGE, IDC_ZOOM);
 		m_zoomWnd.SetZoomFactor(1.0f);
@@ -192,18 +222,26 @@ public:
 		m_zoomWnd.SetEnablePanning(false);
 		m_zoomWnd.SetEnableTools(false);
 
+		::DestroyWindow(GetDlgItem(IDC_SPLITTER));
+		m_splitter.Create(*this, rcSplitter, L"", WS_CHILD | WS_VISIBLE, /*exstyle*/0, IDC_SPLITTER, /*lparam*/0);
+		m_splitter.SetSplitterExtendedStyle(0);
+		m_zoomWnd.SetParent(m_splitter);
+		m_editWnd.SetParent(m_splitter);
+		m_splitter.SetSplitterPanes(m_zoomWnd, m_editWnd, false);
+
     DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
     // Load window placement settings.
     if(m_options.HaveCroppingPlacement())
     {
       SetWindowPlacement(&m_options.GetCroppingPlacement());
+			m_splitter.SetSplitterPos(m_options.CroppingSplitterPosition, true);
     }
-	else
-	{
-		SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE);
-		CenterWindow(NULL);
-	}
+		else
+		{
+			SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE);
+			CenterWindow(NULL);
+		}
 
     // set up image edit window
     BOOL temp;
@@ -220,6 +258,7 @@ public:
     m_editWnd.CenterImage();
 
     SyncZoomWindowSelection();
+
 		return 0;
 	}
 
@@ -248,6 +287,21 @@ public:
 	{
 		CloseDialog(IDOK);
 		return 0;
+	}
+
+	bool ReplaceImageWithFile(const std::wstring& fileName)
+	{
+			Gdiplus::Bitmap* p = Gdiplus::Bitmap::FromFile(fileName.c_str(), FALSE);
+			if(!p)
+				return false;
+			Gdiplus::Status s = p->GetLastStatus();
+			if(s != Gdiplus::Ok)
+				return false;
+
+			m_bitmap = util::shared_ptr<Gdiplus::Bitmap>(p);
+			m_zoomWnd.SetBitmap(m_bitmap);
+			m_editWnd.SetBitmap(m_bitmap);
+			return true;
 	}
 
   LRESULT OnEditExternally(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -287,10 +341,7 @@ public:
 
 		if(IDOK == MessageBox(L"Please click OK when you are done editing the image.", L"Screenie", MB_OKCANCEL | MB_ICONINFORMATION))
 		{
-			// reload m_bitmap
-			m_bitmap = util::shared_ptr<Gdiplus::Bitmap>(Gdiplus::Bitmap::FromFile(tempFileName.c_str(), FALSE));
-			m_zoomWnd.SetBitmap(m_bitmap);
-			m_editWnd.SetBitmap(m_bitmap);
+			ReplaceImageWithFile(tempFileName);
 		}
 		DeleteFile(tempFileName.c_str());
 		return 0;
@@ -325,6 +376,7 @@ public:
     WINDOWPLACEMENT wp;
     GetWindowPlacement(&wp);
     m_options.SetCroppingPlacement(wp);
+		m_options.CroppingSplitterPosition = m_splitter.GetSplitterPos();
 
 		m_options.SaveSettings();
 
@@ -337,6 +389,8 @@ private:
 	CImageEditWindow m_zoomWnd;
 	CImageEditWindow m_editWnd;
   ScreenshotOptions& m_options;
+
+	CSplitterWindow m_splitter;
 
   // zoom stuff
   int m_zoomFactorIndex;
