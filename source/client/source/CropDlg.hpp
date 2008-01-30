@@ -305,6 +305,9 @@ public:
 			m_bitmap = util::shared_ptr<Gdiplus::Bitmap>(p);
 			m_zoomWnd.SetBitmap(m_bitmap);
 			m_editWnd.SetBitmap(m_bitmap);
+
+      SetZoomFactor(1.0f, true);
+
 			return true;
 	}
 
