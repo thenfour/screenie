@@ -2,6 +2,7 @@
   <StringFileInfo
     FileVersion = "1, $WCREV$, $WCMODS?1:0$, 0"
     ProductVersion = "1, $WCREV$, $WCMODS?1:0$, 0"
+		FileDescription = "Built on $WCNOW$"
   />
   <FixedFileInfo
     dwFileVersionMS = "{0001 $WCREV$}"
