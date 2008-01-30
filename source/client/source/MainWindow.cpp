@@ -18,6 +18,7 @@
 #include "image.hpp"
 #include "utility.hpp"
 #include "destination.hpp"
+#include "clipboard.hpp"
 
 LONG g_GUIEntrancyRefs;
 
@@ -181,6 +182,16 @@ LRESULT CMainWindow::OnHotKey(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hand
 
 	POINT cursorPos = { 0 };
 	::GetCursorPos(&cursorPos);
+
+	// simulate default windows screenshot processing. this lets you take screenshots of screenie itself for example.
+	{
+		CBitmap screenshotBitmap;
+		if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
+		{
+			Clipboard c(*this);
+			c.SetBitmap(screenshotBitmap.m_hBitmap);
+		}
+	}
 
 	PostMessage(CMainWindow::WM_TAKESCREENSHOT, MAKELONG(cursorPos.x, cursorPos.y), altDown);
 
