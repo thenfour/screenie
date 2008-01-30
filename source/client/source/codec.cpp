@@ -71,7 +71,7 @@ Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByDescription(PCTSTR descripti
 			return &m_imageCodecs[i];
 	}
 
-	return NULL;
+	return NULL; 
 }
 
 
