@@ -63,11 +63,11 @@ Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByMimeType(PCTSTR mimeType) co
 
 Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByDescription(PCTSTR description) const
 {
-	std::wstring wideDescription = LibCC::ToUnicode(tstd::tstring(description));
+	std::wstring wideDescription = LibCC::StringToLower(LibCC::ToUnicode(tstd::tstring(description)));
 
 	for (UINT i = 0; i < GetNumCodecs(); ++i)
 	{
-		if (wideDescription == m_imageCodecs[i].FormatDescription)
+		if (wideDescription == LibCC::StringToLower(m_imageCodecs[i].FormatDescription))
 			return &m_imageCodecs[i];
 	}
 
