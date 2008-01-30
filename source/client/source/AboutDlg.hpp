@@ -70,11 +70,13 @@ public:
 			"Configuration:|  %|"
 			"Archive:|  %|"
 			"Archive size:|  %|"
+			"%"
 			)
 			(GetModuleFileNameX())
 			(m_options.GetConfigPath())
 			(m_archive.GetDBFilename())
-			(archiveSize);
+			(archiveSize)
+			(v.GetFileDescription());
 
 		SetDlgItemText(IDC_INFO, infoText.CStr());
 

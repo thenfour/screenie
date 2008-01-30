@@ -71,11 +71,11 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,7,7,258,176
     CONTROL         246,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,WS_EX_STATICEDGE
     LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
-    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",IDC_COPYRIGHT,60,30,193,18
+    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",IDC_COPYRIGHT,60,30,124,18
     LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,60,52,85,12
     LTEXT           "Technical information:",IDC_STATIC,60,93,71,8
     LTEXT           "Thanks to: Brook Miles and Gareth Lewin",IDC_STATIC,60,69,193,23
-    EDITTEXT        IDC_INFO,60,105,193,70,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_INFO,60,105,193,70,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
 END
 
 IDD_MAINDLG DIALOGEX 0, 0, 269, 238

@@ -108,6 +108,7 @@
 #define IDC_COPYRIGHT                   1052
 #define IDC_CONTROLS3                   1053
 #define IDC_CONTROLS2                   1054
+#define IDC_FILEDESCRIPTION             1054
 #define IDC_CONTROLS4                   1055
 #define IDC_SPLITTER                    1056
 #define IDC_PROMPT_TEXT                 1062

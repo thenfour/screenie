@@ -401,7 +401,7 @@ void CDestinationDlg::MoveSelectedDestination(int direction)
 
 	// bounds checking
 	if(selectedIndex == -1) return;
-	if(rhsindex < 0 || rhsindex >= m_optionsCopy.GetNumDestinations()) return;
+	if(rhsindex < 0 || (int)rhsindex >= m_optionsCopy.GetNumDestinations()) return;
 
 	// retain the selection
 	Guid idOriginal;

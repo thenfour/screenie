@@ -41,6 +41,10 @@ public:
     // copyright
     if(!VerQueryValue(data.GetBuffer(), _T("\\StringFileInfo\\040904b0\\LegalCopyright"), (void**)&pStr, &ffilen)) return;
     m_copyright = (PCTSTR)pStr;
+
+    // file description
+    if(!VerQueryValue(data.GetBuffer(), _T("\\StringFileInfo\\040904b0\\FileDescription"), (void**)&pStr, &ffilen)) return;
+    m_fileDescription = (PCTSTR)pStr;
   }
 
   WORD GetA() const { return m_a; }
@@ -49,10 +53,12 @@ public:
   WORD GetD() const { return m_d; }
 	tstd::tstring GetRegistrant() const { return m_registrant; }
   tstd::tstring GetCopyright() const { return m_copyright; }
+	std::wstring GetFileDescription() const { return m_fileDescription; }
 
 private:
   tstd::tstring m_registrant;
   tstd::tstring m_copyright;
+	std::wstring m_fileDescription;
 
   WORD m_a;
   WORD m_b;
