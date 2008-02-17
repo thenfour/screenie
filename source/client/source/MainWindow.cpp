@@ -23,6 +23,9 @@
 LONG g_GUIEntrancyRefs;
 
 
+std::set<CCropDlg*> CCropDlg::g_instances;
+
+
 BOOL CMainWindow::DisplayTrayMenu()
 {
 	CMenu contextMenu(AtlLoadMenu(IDM_CONTEXTMENU));
@@ -189,7 +192,10 @@ LRESULT CMainWindow::OnHotKey(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hand
 		if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 		{
 			Clipboard c(*this);
-			c.SetBitmap(screenshotBitmap.m_hBitmap);
+			//c.SetBitmap(screenshotBitmap.m_hBitmap);
+			Gdiplus::Bitmap* bmpTemp = Gdiplus::Bitmap::FromHBITMAP(screenshotBitmap.m_hBitmap, 0);
+			c.SetBitmap(bmpTemp);
+			delete bmpTemp;
 		}
 	}
 

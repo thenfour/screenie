@@ -1,7 +1,9 @@
+
 #ifndef SCREENIE_CLIPBOARD_HPP
 #define SCREENIE_CLIPBOARD_HPP
 
 #include "exception.hpp"
+#include "codec.hpp"
 
 /*
   RetryEngine re(3, 500);
@@ -159,91 +161,89 @@ public:
 
 	LibCC::Result SetBitmap(Gdiplus::Bitmap* p)
 	{
-	  LibCC::Result r;
-    r.Fail();// initialize
+		LibCC::Result r = LibCC::Result::Failure();
 
+		// below code mostly stolen from:
+		// http://groups.google.be/group/borland.public.cppbuilder.graphics/browse_thread/thread/80375248929e810a/17daa3b660488594?hl=en&lnk=st&q=GetDIBits+cf_dib+setclipboarddata+BITMAPINFO#17daa3b660488594
 		HBITMAP hbm = 0;
-		Gdiplus::Status s = p->GetHBITMAP(0, &hbm);
-		if(s != Gdiplus::Ok)
+		if(Gdiplus::Ok != p->GetHBITMAP(0, &hbm))
 		{
-			r.Fail(LibCC::Format("Error getting the HBITMAP from the Gdiplus object.").Str());
+			r.Fail(L"Error getting access to the original bitmap.");
 		}
 		else
 		{
-			HBITMAP bitmapCopy = DuplicateBitmap(hbm);
+			HANDLE HMem;
+			BITMAP bm = {0};
+			if(0 == GetObject(hbm, sizeof(bm), &bm))
+			{
+				r.Fail(LibCC::Format(L"Error getting info about the image. ").gle().Str());
+			}
+			else
+			{
+				LPBITMAPINFO lpBitmapInfo;
+				lpBitmapInfo  = (BITMAPINFO*)GlobalAlloc(GMEM_FIXED, sizeof(BITMAPINFO));
+				ZeroMemory(lpBitmapInfo, sizeof(BITMAPINFO));
+				lpBitmapInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+				lpBitmapInfo->bmiHeader.biWidth = bm.bmWidth;
+				lpBitmapInfo->bmiHeader.biHeight = bm.bmHeight;
+				lpBitmapInfo->bmiHeader.biPlanes = 1;
+				lpBitmapInfo->bmiHeader.biBitCount = bm.bmBitsPixel;
+				lpBitmapInfo->bmiHeader.biCompression = BI_RGB;
+
+				HDC ScreenDC = GetDC(NULL);
+
+				GetDIBits(ScreenDC, hbm, 0, lpBitmapInfo->bmiHeader.biHeight, NULL, lpBitmapInfo, DIB_RGB_COLORS);
+				if (lpBitmapInfo->bmiHeader.biSizeImage == 0)
+				{
+					lpBitmapInfo->bmiHeader.biSizeImage = ((((bm.bmWidth * bm.bmBitsPixel) + 31) & ~31) / 8) * bm.bmHeight;
+				}
+
+				SIZE_T s = lpBitmapInfo->bmiHeader.biSizeImage + lpBitmapInfo->bmiHeader.biSize;
+				HANDLE HDib = GlobalReAlloc(lpBitmapInfo, s, GMEM_MOVEABLE | GMEM_DDESHARE);
+
+				if(!HDib)
+				{
+					r.Fail(LibCC::Format(L"Error allocating image memory (% bytes). ").i(s).gle().Str());
+				}
+				else
+				{
+					HMem = GlobalLock(HDib);
+
+					LPBITMAPINFO lpbih = (LPBITMAPINFO)HMem;
+
+					int num_scanlines = GetDIBits(ScreenDC, hbm, 0, lpbih->bmiHeader.biHeight, (LPBYTE)lpbih + lpbih->bmiHeader.biSize, lpbih, DIB_RGB_COLORS);
+					GlobalUnlock(HDib);
+
+					if (num_scanlines == 0)
+					{
+						r.Fail(LibCC::Format(L"Error getting bitmap image data. ").gle().Str());
+					}
+					else
+					{
+						OpenClipboard(m_hOwner);
+						EmptyClipboard();
+						SetClipboardData(CF_DIB, HDib);
+						CloseClipboard();
+						r.Succeed();
+					}
+					ReleaseDC(NULL, ScreenDC);
+				}
+			}
+
 			DeleteObject(hbm);
-			r = SetBitmap(bitmapCopy);
 		}
 
-    return r;
+		return r;
 	}
 
 	LibCC::Result SetBitmap(HBITMAP bitmap)
 	{
-    LibCC::Result r;
-    r.Fail();// initialize
-    RetryEngine re(4, 500);
-
-    for(re.Begin(); !re.End(r.Succeeded()); re.Next(r.Succeeded()))
-    {
-		  if (!::OpenClipboard(m_hOwner))
-      {
-        r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
-      }
-      else
-      {
-        if(!EmptyClipboard())
-        {
-          r.Fail(LibCC::Format("Error getting access to the clipboard. System error: %").gle(GetLastError()).Str());
-        }
-        else
-        {
-					if (::SetClipboardData(CF_BITMAP, (HANDLE)bitmap) == NULL)
-					{
-						r.Fail(LibCC::Format("Error setting clipboard data (BITMAP). System error: %").gle(GetLastError()).Str());
-					}
-					else
-					{
-						r.Succeed();
-					}
-				}
-        ::CloseClipboard();
-      }
-    }
-
-    return r;
+		Gdiplus::Bitmap bmTemp(bitmap, 0);
+		return SetBitmap(&bmTemp);
 	}
 
 private:
   HWND m_hOwner;
-
-	static HBITMAP DuplicateBitmap(HBITMAP sourceBitmap)
-	{
-		HDC desktopDC = ::GetDC(NULL);
-
-		BITMAP bmp = { 0 };
-		if (!::GetObject(sourceBitmap, sizeof(bmp), &bmp))
-			return NULL;
-
-		HDC destDC = ::CreateCompatibleDC(desktopDC);
-		HBITMAP destBitmap = ::CreateCompatibleBitmap(desktopDC, bmp.bmWidth, bmp.bmHeight);
-		HGDIOBJ destOldObj = ::SelectObject(destDC, destBitmap);
-
-		HDC sourceDC = ::CreateCompatibleDC(desktopDC);
-		HGDIOBJ sourceOldObj = ::SelectObject(sourceDC, sourceBitmap);
-
-		::BitBlt(destDC, 0, 0, bmp.bmWidth, bmp.bmHeight, sourceDC, 0, 0, SRCCOPY);
-
-		::SelectObject(sourceDC, sourceOldObj);
-		::DeleteDC(sourceDC);
-
-		::SelectObject(destDC, destOldObj);
-		::DeleteDC(destDC);
-
-		::ReleaseDC(NULL, desktopDC);
-
-		return destBitmap;
-	}
 };
 
 #endif

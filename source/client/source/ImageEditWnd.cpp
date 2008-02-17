@@ -470,7 +470,7 @@ LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL&
   return 0;
 }
 
-LRESULT CImageEditWindow::OnPaste(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT CImageEditWindow::OnPaste(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	util::shared_ptr<Gdiplus::Bitmap> n;
 	Clipboard x(*this);
@@ -487,7 +487,7 @@ LRESULT CImageEditWindow::OnPaste(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl
 	return 0;
 }
 
-LRESULT CImageEditWindow::OnCopy(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT CImageEditWindow::OnCopy(WORD /*wNotifyCode*/, WORD /* wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	util::shared_ptr<Gdiplus::Bitmap> n(m_bitmap);
 	if(HasSelection())

@@ -274,173 +274,69 @@ protected:
 
 
 
-class BlobStream : public IStream
+class MemStream
 {
 public:
-	size_t m_cursor;
-	LibCC::Blob<BYTE> m_blob;
+	IStream* m_pStream;
 
-	BlobStream() :
-		m_cursor(0)
+	void GetBlob(LibCC::Blob<BYTE>& out)
 	{
-	}
+		out.Alloc(GetLength());
 
-	void* GetBuffer() const 
-	{
-		return (void*)m_blob.GetBuffer();
-	}
-	int GetLength() const
-	{
-		return m_blob.Size();
+		LARGE_INTEGER li;
+		ULARGE_INTEGER uli;
+		li.QuadPart = 0;
+		m_pStream->Seek(li, STREAM_SEEK_SET, &uli);
+		ULONG ulr;
+		m_pStream->Read(out.GetBuffer(), out.Size(), &ulr);
 	}
 
-	// IUnknown
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	size_t GetLength()
 	{
-		if(riid == IID_IUnknown)
-		{
-			*ppvObject = (IUnknown*)this; 
-			return S_OK;
-		}
-		if(riid == IID_IStream)
-		{
-			*ppvObject = (IStream*)this; 
-			return S_OK;
-		}
-		return E_NOINTERFACE;
-	}
-  ULONG STDMETHODCALLTYPE AddRef( void)
-	{
-		return 1;
-	}
-  ULONG STDMETHODCALLTYPE Release( void)
-	{
-		return 1;
+		STATSTG stg = {0};
+		m_pStream->Stat(&stg, STATFLAG_NONAME);
+		return (size_t)stg.cbSize.QuadPart;
 	}
 
-	// IStream
-  HRESULT STDMETHODCALLTYPE Read(void *pv, ULONG cb, ULONG *pcbRead)
+	MemStream()
 	{
-		if(m_cursor >= m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		size_t sizeLeft = m_blob.Size() - m_cursor;
-		size_t toRead = min(cb, sizeLeft);
-		memcpy(pv, m_blob.GetBuffer() + m_cursor, toRead);
-		m_cursor += toRead;
-		if(pcbRead)
-			*pcbRead = toRead;
-		return toRead == cb ? S_OK : S_FALSE;
+		CreateStreamOnHGlobal(0, TRUE, &m_pStream);
+		LARGE_INTEGER li;
+		ULARGE_INTEGER uli;
+		li.QuadPart = 0;
+		m_pStream->Seek(li, STREAM_SEEK_SET, &uli);
 	}
-	  
-	HRESULT STDMETHODCALLTYPE Write(const void *pv, ULONG cb, ULONG *pcbWritten)
-	{
-		if(m_cursor > m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		size_t cursorAfter = m_cursor + cb;
-		if(cursorAfter > m_blob.Size())
-		{
-			m_blob.Alloc(cursorAfter);
-		}
-		memcpy(m_blob.GetBuffer() + m_cursor, pv, cb);
-		*pcbWritten = cb;
-		m_cursor = cursorAfter;
-		return S_OK;
-	}
-	HRESULT STDMETHODCALLTYPE Seek( LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
-	{
-		if(dlibMove.HighPart > 0)
-		{
-			return STG_E_INVALIDPOINTER;
-		}
 
-		switch(dwOrigin)
-		{
-		case STREAM_SEEK_CUR:
-			m_cursor += (int)dlibMove.LowPart;
-			break;
-		case STREAM_SEEK_END:
-			m_cursor = m_blob.Size() + (int)dlibMove.LowPart;
-			break;
-		case STREAM_SEEK_SET:
-			m_cursor = dlibMove.LowPart;
-			break;
-		default:
-			return STG_E_INVALIDFUNCTION;
-		}
-		if(m_cursor > m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		
-		if(plibNewPosition)
-			plibNewPosition->QuadPart = 0;
+	MemStream(BYTE* data, size_t size)
+	{
+		CreateStreamOnHGlobal(0, TRUE, &m_pStream);
+		LARGE_INTEGER li;
+		ULARGE_INTEGER uli;
+		li.QuadPart = 0;
+		m_pStream->Seek(li, STREAM_SEEK_SET, &uli);
+		m_pStream->Write(data, (ULONG)size, 0);
+		m_pStream->Seek(li, STREAM_SEEK_SET, &uli);
+	}
 
-		return S_OK;
-	}
-  
-  HRESULT STDMETHODCALLTYPE SetSize( ULARGE_INTEGER libNewSize)
+	MemStream(HINSTANCE hInstance, LPCTSTR res, PCTSTR type)
 	{
-		if(libNewSize.HighPart > 0) return STG_E_MEDIUMFULL;
-		m_blob.Alloc(libNewSize.LowPart);
-		return S_OK;
-	}
-  
-  HRESULT STDMETHODCALLTYPE CopyTo(  IStream *pstm, ULARGE_INTEGER cb,ULARGE_INTEGER *pcbRead,ULARGE_INTEGER *pcbWritten)
-	{
-		if(m_cursor > m_blob.Size())
-		{
-			return STG_E_INVALIDPOINTER;
-		}
-		if(cb.HighPart > 0) return STG_E_MEDIUMFULL;
+		CreateStreamOnHGlobal(0, TRUE, &m_pStream);
+		LARGE_INTEGER li;
+		ULARGE_INTEGER uli;
+		li.QuadPart = 0;
+		m_pStream->Seek(li, STREAM_SEEK_SET, &uli);
 
-		ULONG bw = 0;
-		HRESULT hr = pstm->Write(m_blob.GetBuffer() + m_cursor, cb.LowPart, &bw);
-		if(pcbWritten)
-		{
-			pcbWritten->HighPart = 0;
-			pcbWritten->LowPart = bw;
-		}
-		return hr;
+		HRSRC hrsrc=FindResource(hInstance, res, type);
+		HGLOBAL hg1 = LoadResource(hInstance, hrsrc);
+		DWORD sz = SizeofResource(hInstance, hrsrc);
+		void* ptr1 = LockResource(hg1);
+
+		m_pStream->Write(ptr1, sz, 0);
+		m_pStream->Seek(li, STREAM_SEEK_SET, &uli);
 	}
-  
-  HRESULT STDMETHODCALLTYPE Commit( DWORD grfCommitFlags)
+	~MemStream()
 	{
-		return S_OK;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Revert( void)
-	{
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
-	{
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
-	{
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Stat(  STATSTG *pstatstg,DWORD grfStatFlag)
-	{
-		if(grfStatFlag & STATFLAG_NONAME)
-		{
-			// uh i should really set more stuff here, but i don't need to at the moment.
-			pstatstg->cbSize.QuadPart = m_blob.Size();
-			return S_OK;
-		}
-		return E_NOTIMPL;
-	}
-  
-  HRESULT STDMETHODCALLTYPE Clone( IStream **ppstm)
-	{
-		return E_NOTIMPL;
+		m_pStream->Release();
 	}
 };
 

@@ -314,16 +314,16 @@ ScreenshotID ScreenshotArchive::RegisterScreenshot(Gdiplus::BitmapPtr bmp, Gdipl
 	ScreenshotID ret = 0;
 
 	// save a lossless PNG file to a memory stream
-	BlobStream stream;
+	MemStream stream;
 	ImageCodecsEnum codecs;
 	Gdiplus::ImageCodecInfo* codecInfo = codecs.GetCodecByMimeType(_T("image/png"));
-	Gdiplus::Status status = bmp->Save(&stream, &codecInfo->Clsid);
+	Gdiplus::Status status = bmp->Save(stream.m_pStream, &codecInfo->Clsid);
 	if(status != Gdiplus::Ok)
 		return 0;
 
 	// do the same for thumbnail
-	BlobStream streamThumb;
-	status = thumbnail->Save(&streamThumb, &codecInfo->Clsid);
+	MemStream streamThumb;
+	status = thumbnail->Save(streamThumb.m_pStream, &codecInfo->Clsid);
 	if(status != Gdiplus::Ok)
 		return 0;
 
@@ -341,8 +341,15 @@ ScreenshotID ScreenshotArchive::RegisterScreenshot(Gdiplus::BitmapPtr bmp, Gdipl
 		{// necessary for cmd to close up properly
 			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("insert into Screenshots ([bitmapData], [thumbnailData], [width], [height], [date]) "
 				"values (?, ?, %, %, strftime('^%Y-^%m-^%dT^%H:^%M:^%f', 'now'))").i(bmp->GetWidth()).i(bmp->GetHeight()).CStr());
-			cmd.bind(1, stream.GetBuffer(), stream.GetLength());
-			cmd.bind(2, streamThumb.GetBuffer(), streamThumb.GetLength());
+			
+			LibCC::Blob<BYTE> streamBlob;
+			stream.GetBlob(streamBlob);
+
+			LibCC::Blob<BYTE> streamThumbBlob;
+			streamThumb.GetBlob(streamThumbBlob);
+
+			cmd.bind(1, streamBlob.GetBuffer(), streamBlob.Size());
+			cmd.bind(2, streamThumbBlob.GetBuffer(), streamThumbBlob.Size());
 
 			cmd.executenonquery();
 			ret = (ScreenshotID)conn.insertid();

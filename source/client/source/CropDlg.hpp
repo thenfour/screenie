@@ -11,6 +11,7 @@
 #include "destinationDlg.hpp"
 #include "image.hpp"
 #include "codec.hpp"
+#include <set>
 
 #include "ScreenshotOptions.hpp"
 
@@ -20,6 +21,9 @@ class CCropDlg :
 	public CDialogResize<CCropDlg>,
   public IImageEditWindowEvents
 {
+	static std::set<CCropDlg*> g_instances;// this is kinda crappy but simple. it's for the hook proc to know where to deal with stuff. Instantiated in MainWindow.cpp
+	HACCEL m_hAccelerators;
+
 public:
 	enum {
 		IDD = IDD_CROPDLG
@@ -32,27 +36,29 @@ public:
     m_options(options),
     m_hIconSmall(0),
     m_hIcon(0),
-		m_didCropping(false)
+		m_didCropping(false),
+		m_hHook(0),
+		m_hAccelerators(0)
   {
+		g_instances.insert(this);
   }
 
 	~CCropDlg()
   {
     if(m_hIcon) DestroyIcon(m_hIcon);
     if(m_hIconSmall) DestroyIcon(m_hIconSmall);
+		g_instances.erase(this);
   }
-
-	virtual BOOL PreTranslateMessage(MSG* pMsg)
-	{
-		return CWindow::IsDialogMessage(pMsg);
-	}
 
 	BEGIN_MSG_MAP(CCropDlg)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_DROPFILES, OnDropFiles)
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnMouseWheel)
 
+		COMMAND_ID_HANDLER(ID_EDIT_COPY, OnCopy)
+		COMMAND_ID_HANDLER(ID_EDIT_PASTE, OnPaste)
 		COMMAND_ID_HANDLER(IDOK, OnOK)
     COMMAND_ID_HANDLER(IDC_EDITINPAINT, OnEditExternally)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
@@ -62,8 +68,6 @@ public:
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CCropDlg)
-		//DLGRESIZE_CONTROL(IDC_ZOOM, DLSZ_SIZE_Y)
-		//DLGRESIZE_CONTROL(IDC_IMAGE, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 		DLGRESIZE_CONTROL(IDC_SPLITTER, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 
 		DLGRESIZE_CONTROL(IDC_INFOBOX, DLSZ_MOVE_Y)
@@ -71,8 +75,6 @@ public:
 		DLGRESIZE_CONTROL(IDC_CONTROLS2, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS3, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS4, DLSZ_MOVE_Y | DLSZ_SIZE_X)
-
-    //DLGRESIZE_CONTROL(IDC_ZOOM_CAPTION, DLSZ_MOVE_X)
 
     DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
     DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
@@ -147,6 +149,16 @@ public:
     AttemptNewFactorIndex(newid, updateTrackbar);
   }
 
+	LRESULT OnCopy(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& handled)
+	{
+		return m_editWnd.OnCopy(0, 0, 0, handled);
+	}
+
+	LRESULT OnPaste(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& handled)
+	{
+		return m_editWnd.OnPaste(0, 0, 0, handled);
+	}
+
 	LRESULT OnMouseWheel(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
   {
     handled = TRUE;
@@ -157,15 +169,7 @@ public:
 
 	LRESULT OnDropFiles(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
-		//if(IDYES != MessageBox(L"This will replace the image with the one loaded from disk. Are you sure you want to do this?", L"Screenie", MB_YESNO | MB_ICONWARNING))
-		//	return 0;
 		HDROP hDrop = (HDROP)wParam;
-		//UINT n = DragQueryFile(hDrop, 0xffffffff, NULL, 0);
-		//if(n != 1)
-		//{
-		//	MessageBox(L"You can only drag one file.", L"Screenie", MB_ICONERROR);
-		//	return 0;
-		//}
 		wchar_t buf[1001] = {0};
 		DragQueryFile(hDrop, 0, buf, 1000);
 
@@ -177,10 +181,77 @@ public:
 		return 0;
 	}
 
+	static LRESULT CALLBACK GetMsgProc(int code, WPARAM wParam, LPARAM lParam)
+	{
+		MSG* p = (MSG*)lParam;
+		bool noremove = code < 0;
+		bool notranslate = false;
+		for(std::set<CCropDlg*>::iterator i = g_instances.begin(); i != g_instances.end(); ++ i)
+		{
+			if((*i)->MsgProc2(p))
+			{
+				notranslate = true;
+			}
+		}
+
+		if(noremove && notranslate)
+		{
+			// huge problem. TranslateAccelerator told us not to continue processing the message, but the hook proc is telling us to not remove the message from the queue.
+			// i think it's best to leave it in the queue.
+			MulDiv(1,1,1);
+		}
+
+		return CallNextHookEx(0, code, wParam, lParam);
+	}
+	// returns true if the message should be removed from queue.
+	bool MsgProc2(MSG* msg)
+	{
+		return 0 != TranslateAccelerator(m_hWnd, m_hAccelerators, msg);// When TranslateAccelerator returns a nonzero value and the message is translated, the application should not use the TranslateMessage function to process the message again. 
+	}
+
+	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+	{
+		DestroyAcceleratorTable(m_hAccelerators);
+		m_hAccelerators = 0;
+		UnhookWindowsHookEx(m_hHook);
+		return 0;
+	}
+
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
 		RECT rcSplitter;
 		DragAcceptFiles();
+
+		{
+			ACCEL accel[6] = {0};
+			accel[0].fVirt = FCONTROL | FVIRTKEY;
+			accel[0].key = 'C';
+			accel[0].cmd = ID_EDIT_COPY;
+
+			accel[1].fVirt = FCONTROL | FVIRTKEY;
+			accel[1].key = VK_INSERT;
+			accel[1].cmd = ID_EDIT_COPY;
+
+			accel[2].fVirt = FCONTROL | FVIRTKEY;
+			accel[2].key = 'X';
+			accel[2].cmd = ID_EDIT_COPY;
+
+			accel[3].fVirt = FSHIFT | FVIRTKEY;
+			accel[3].key = VK_DELETE;
+			accel[3].cmd = ID_EDIT_COPY;
+
+			accel[4].fVirt = FCONTROL | FVIRTKEY;
+			accel[4].key = 'V';
+			accel[4].cmd = ID_EDIT_PASTE;
+
+			accel[5].fVirt = FSHIFT | FVIRTKEY;
+			accel[5].key = VK_INSERT;
+			accel[5].cmd = ID_EDIT_PASTE;
+
+			m_hAccelerators = CreateAcceleratorTable(accel, 6);
+			// because there is no PreTranslateMessage with WTL's implementation of DoModal, i need a way to handle accelerators manually.
+			m_hHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgProc, _Module.GetResourceInstance(), GetCurrentThreadId());
+		}
 
     // populate the list of zoom factors.
     bool bHitOne = false;
@@ -397,6 +468,8 @@ private:
 	CImageEditWindow m_editWnd;
   ScreenshotOptions& m_options;
 
+	HHOOK m_hHook;
+
 	CSplitterWindow m_splitter;
 
   // zoom stuff
@@ -421,7 +494,7 @@ private:
 			"Pos: (%,%)|"
 			"Sel: (%,%)-(%,%)|"
 			"Sel: % x %|"
-			"RGB: #%%%"
+			"RGB: #%%% (%, %, %)"
 			)
 			.f<0>(m_infoZoomFactor*100)
 			.i(m_infoCursorPos.x)
@@ -435,6 +508,9 @@ private:
 			.i<16,2>(R(pixel))
 			.i<16,2>(G(pixel))
 			.i<16,2>(B(pixel))
+			.i(R(pixel))
+			.i(G(pixel))
+			.i(B(pixel))
 			;
 		if(m_infoText != info.CStr())
 		{
