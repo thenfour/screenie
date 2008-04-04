@@ -46,6 +46,7 @@
 #define IDC_CONFIRM                     1008
 #define IDC_INCLUDECURSOR               1009
 #define IDC_CROPPING                    1011
+#define IDC_CROPWITHALT                 1011
 #define IDC_MESSAGES                    1012
 #define IDC_CHECK1                      1013
 #define IDC_SHOWSTATUS                  1013
@@ -193,13 +194,14 @@
 #define ID_SHOWSTATUSWINDOW             32785
 #define ID_EDIT_SELECTALL               32786
 #define ID_EDIT_PASTE32788              32788
+#define ID_TRAYCONTEXTMENU_TAKESCREENSHOT 32789
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
-#define _APS_NEXT_COMMAND_VALUE         32789
+#define _APS_NEXT_COMMAND_VALUE         32790
 #define _APS_NEXT_CONTROL_VALUE         1080
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

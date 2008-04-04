@@ -22,9 +22,9 @@
 
 LONG g_GUIEntrancyRefs;
 
+const UINT TIMER_ID_TIMEDSCREENSHOT = 0x333;
 
 std::set<CCropDlg*> CCropDlg::g_instances;
-
 
 BOOL CMainWindow::DisplayTrayMenu()
 {
@@ -49,35 +49,38 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 	if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 	{
 		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
-		return ProcessScreenshot(screenshot, true, false);
+		return ProcessScreenshot(screenshot, true, false, altDown != 0);
 	}
 	return FALSE;
 }
 
-BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool registerInArchive, bool forceCropDlg)
+BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool registerInArchive, bool forceCropDlg, bool altDown)
 {
 	RECT windowRect = { 0 };
 	HWND hWndForeground = ::GetForegroundWindow();
 
 	if(forceCropDlg || (m_screenshotOptions.GetScreenshotAction() == SA_SHOWCROP))
 	{
-		// show cropping dialog
-		CCropDlg cropDialog(screenshot, m_screenshotOptions);
+		if (!altDown || (altDown && m_screenshotOptions.ShowCropWithAlt()))
+		{
+			// show cropping dialog
+			CCropDlg cropDialog(screenshot, m_screenshotOptions);
 
-		if (cropDialog.DoModal(0) == IDOK)
-		{
-			// if there is a selection, make that our screenshot
-			util::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
-			if (cropDialog.GetCroppedScreenshot(croppedScreenshot))
+			if (cropDialog.DoModal(0) == IDOK)
 			{
-				// shared_ptr's value semantics take care of the destruction
-				// of the previous pointed-to bitmap data
-				screenshot = croppedScreenshot;
+				// if there is a selection, make that our screenshot
+				util::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
+				if (cropDialog.GetCroppedScreenshot(croppedScreenshot))
+				{
+					// shared_ptr's value semantics take care of the destruction
+					// of the previous pointed-to bitmap data
+					screenshot = croppedScreenshot;
+				}
 			}
-		}
-		else
-		{
-			return FALSE;
+			else
+			{
+				return FALSE;
+			}
 		}
 	}
 	else if(m_screenshotOptions.GetScreenshotAction() == SA_SHOWDESTINATIONS)
@@ -148,8 +151,19 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
 
 LRESULT CMainWindow::OnTaskbarCreated(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
-  CreateTrayIcon();
-  return 0;
+	CreateTrayIcon();
+	return 0;
+}
+
+LRESULT CMainWindow::OnTimer(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
+{
+	if (wParam == TIMER_ID_TIMEDSCREENSHOT)
+	{
+		KillTimer(TIMER_ID_TIMEDSCREENSHOT);
+		PostMessage(WM_TAKESCREENSHOT, MAKELONG(0, 0), 0);
+	}
+
+	return 0;
 }
 
 LRESULT CMainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -236,6 +250,14 @@ void CMainWindow::ShowStatusWindow()
   m_statusDialog.SetWindowPos(HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 }
 
+LRESULT CMainWindow::OnTrayTakeScreenshot(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
+{
+	// 300ms after the user clicks on the menu item it should be safe to take a screen
+	SetTimer(TIMER_ID_TIMEDSCREENSHOT, 250);
+
+	return 0;
+}
+
 LRESULT CMainWindow::OnShowStatusWindow(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
 {
   ShowStatusWindow();
@@ -271,7 +293,7 @@ LRESULT CMainWindow::OnReprocessScreenshot(UINT msg, WPARAM wParam, LPARAM lPara
 		}
 		else
 		{
-			ProcessScreenshot(screenshot, false, true);
+			ProcessScreenshot(screenshot, false, true, false);
 		}
   }
 	else

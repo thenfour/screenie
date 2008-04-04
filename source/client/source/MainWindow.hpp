@@ -18,7 +18,6 @@
 
 // for StatusWindow, CStatusDialog
 #include "StatusDlg.hpp"
-
 #include "ScreenshotArchive.hpp"
 
 
@@ -82,8 +81,10 @@ public:
 		MESSAGE_HANDLER(WM_REPROCESSSCREENSHOT, OnReprocessScreenshot)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(m_uTaskbarCreatedMsg, OnTaskbarCreated)
+		MESSAGE_HANDLER(WM_TIMER, OnTimer)
 
 		COMMAND_ID_HANDLER(ID_SHOWSTATUSWINDOW, OnShowStatusWindow)
+		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_TAKESCREENSHOT, OnTrayTakeScreenshot)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_ABOUT, OnAbout)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_CONFIGURE, OnConfigure)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_EXIT, OnExit)
@@ -92,7 +93,7 @@ public:
 	BOOL DisplayTrayMenu();
 
 	BOOL TakeScreenshot(const POINT& cursorPos, BOOL altDown);
-	BOOL ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool registerInArchive, bool forceCropDlg);
+	BOOL ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool registerInArchive, bool forceCropDlg, bool altDown);
 
 	//
 	// message handlers
@@ -104,6 +105,7 @@ public:
 	LRESULT OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnReprocessScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnTimer(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnHotKey(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnClose(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
   {
@@ -116,6 +118,7 @@ public:
 	LRESULT OnAbout(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
+	LRESULT OnTrayTakeScreenshot(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
   LRESULT OnShowStatusWindow(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
   void ShowStatusWindow();
 

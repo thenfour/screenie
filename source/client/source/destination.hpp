@@ -13,6 +13,9 @@
 // for ScreenshotDestination
 #include "ScreenshotDestination.hpp"
 
+bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
+							  util::shared_ptr<Gdiplus::Bitmap> screenshot, util::shared_ptr<Gdiplus::Bitmap>& transformed);
+
 bool ProcessDestination(HWND hwnd, IActivity& status,
 	ScreenshotDestination& destination, util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle,  bool& usedClipboard, ScreenshotID screenshotID);
 

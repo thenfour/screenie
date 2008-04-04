@@ -185,6 +185,7 @@ void ScreenshotOptions::Serialize(Xml::Element parent) const
 	Xml::Serialize(parent, KEY_DESTINATIONS, m_destinations);
 
 	Xml::Serialize(parent, L"IncludeCursor", m_includeCursor);
+	Xml::Serialize(parent, L"ShowCropWithAlt", m_showCropWithAlt);
 //	Xml::Serialize(parent, L"ConfirmOptions", m_confirmOptions);
 	Xml::Serialize(parent, L"ShowStatus", m_showStatus);
 //	Xml::Serialize(parent, L"ShowCropWindow", m_showCropWindow);
@@ -229,6 +230,7 @@ void ScreenshotOptions::Deserialize(Xml::Element parent)
 	Xml::Deserialize(parent, KEY_DESTINATIONS, m_destinations);
 
 	Xml::Deserialize(parent, L"IncludeCursor", m_includeCursor);
+	Xml::Deserialize(parent, L"ShowCropWithAlt", m_showCropWithAlt);
 	Xml::Deserialize(parent, L"ShowStatus", m_showStatus);
 	std::wstring stemp;
 	Xml::Deserialize(parent, L"ScreenshotAction", stemp);

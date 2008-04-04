@@ -181,6 +181,8 @@ LRESULT CDestinationDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /
 	// if necessary, check the checkboxes
 	if (m_optionsCopy.IncludeCursor())
 		CheckDlgButton(IDC_INCLUDECURSOR, BST_CHECKED);
+	if (m_optionsCopy.ShowCropWithAlt())
+		CheckDlgButton(IDC_CROPWITHALT, BST_CHECKED);
 	if (m_optionsCopy.ShowStatus())
 		CheckDlgButton(IDC_SHOWSTATUS, BST_CHECKED);
   if (m_optionsCopy.AutoStartup())
@@ -335,6 +337,8 @@ LRESULT CDestinationDlg::OnCheckboxClicked(WORD /*wNotifyCode*/, WORD wID, HWND 
   case IDC_AUTOSTART:
     m_optionsCopy.AutoStartup(checked);
 		break;
+  case IDC_CROPWITHALT:
+	  m_optionsCopy.ShowCropWithAlt(checked);
 	case IDC_SHOWSTATUS:
  		m_optionsCopy.ShowStatus(checked);
 		break;

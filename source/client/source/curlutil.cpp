@@ -12,3 +12,8 @@ struct CurlInit
 	}
 };
 static CurlInit g_curlinit;
+
+namespace Curl
+{
+
+}

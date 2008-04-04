@@ -53,6 +53,7 @@ public:
     m_haveCroppingPlacement(false),
     m_haveConfigPlacement(false),
 	  m_includeCursor(false),
+	  m_showCropWithAlt(true),
 	  m_showStatus(false),
 		m_screenshotAction(SA_SHOWCROP),
     m_croppingZoomFactor(2.0f),
@@ -70,6 +71,7 @@ public:
 
     m_autoStartup = copy.m_autoStartup;
 		m_includeCursor = copy.m_includeCursor;
+		m_showCropWithAlt = copy.m_showCropWithAlt;
 		m_showStatus = copy.m_showStatus;
 		m_screenshotAction = copy.m_screenshotAction;
     m_croppingZoomFactor = copy.m_croppingZoomFactor;
@@ -95,6 +97,7 @@ public:
 
     m_autoStartup = rightHand.m_autoStartup;
 		m_includeCursor = rightHand.m_includeCursor;
+		m_showCropWithAlt = rightHand.m_showCropWithAlt;
 		m_showStatus = rightHand.m_showStatus;
 		m_screenshotAction = rightHand.m_screenshotAction;
     m_croppingZoomFactor = rightHand.m_croppingZoomFactor;
@@ -167,6 +170,9 @@ public:
 
 	bool IncludeCursor() { return m_includeCursor; }
 	void IncludeCursor(bool newval) { m_includeCursor = newval; }
+
+	bool ShowCropWithAlt() { return m_showCropWithAlt; }
+	void ShowCropWithAlt(bool newval) { m_showCropWithAlt = newval; }
 
   float CroppingZoomFactor() const { return m_croppingZoomFactor; }
   void CroppingZoomFactor(float n) { m_croppingZoomFactor = n; }
@@ -299,6 +305,7 @@ private:
 
 	bool m_autoStartup;
 	bool m_includeCursor;
+	bool m_showCropWithAlt;
 	bool m_showStatus;
 	ScreenshotAction m_screenshotAction;
 
