@@ -97,14 +97,6 @@ lbl_VersionOK:
 
   SetOutPath "$INSTDIR"
 
-  ; Run the Microsoft VC++ runtime redistributable.
-  DetailPrint "Installing Microsoft Runtime Libraries; please be patient..."
-  File "..\vcredis1.cab"
-  File "..\vcredist.msi"
-  ExecWait 'msiexec /i "$INSTDIR\vcredist.msi" /qn'
-  Delete "$INSTDIR\vcredis1.cab"
-  Delete "$INSTDIR\vcredist.msi"
-
   ; close it just in case it's open.
   FindWindow $0 "ScreenieMainWnd"
   SendMessage $0 16 0 0

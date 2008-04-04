@@ -75,13 +75,9 @@ bool ProcessImageShackDestination(HWND hwnd, IActivity& status, ScreenshotDestin
 		return false;
 	}
 
-	SYSTEMTIME systemTime = { 0 };
-	destination.GetNowBasedOnTimeSettings(systemTime);
-	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat, windowTitle);
-
 	ScreenieHttpRequest request(&status, msgid);
 
-	request.AddFile("fileupload", LibCC::ToUTF8(temporaryFilename), LibCC::ToUTF8(destination.general.imageFormat), LibCC::ToUTF8(remoteFileName));
+	request.AddFile("fileupload", LibCC::ToUTF8(temporaryFilename), LibCC::ToUTF8(destination.general.imageFormat));
 	request.AddPostArgument("xml", "yes");
 	request.AddHeader("Expect: ");
 
@@ -97,47 +93,50 @@ bool ProcessImageShackDestination(HWND hwnd, IActivity& status, ScreenshotDestin
 		{
 			if(VARIANT_TRUE == doc->loadXML(xml.c_str()))
 			{
-				Element root = doc->selectSingleNode(L"links");
+				Element root = doc->selectSingleNode(L"imginfo");
 				if(root != 0)
 				{
-					if (Element imagelink = root->selectSingleNode(L"image_link"))
+					if (Element links = root->selectSingleNode(L"links"))
 					{
-						BSTR bstrURL = { 0 };
-						imagelink->get_text(&bstrURL);
-
-						status.EventSetText(msgid, TEXT("Upload complete."));
-						status.EventSetIcon(msgid, EI_CHECK);
-
-						status.EventSetText(msgid, LibCC::Format("Uploaded to: %").s(bstrURL).Str());
-						status.EventSetURL(msgid, bstrURL);
-
-						if (destination.imageshack.copyURL)
+						if (Element imagelink = links->selectSingleNode(L"image_link"))
 						{
-							if (usedClipboard)
+							BSTR bstrURL = { 0 };
+							imagelink->get_text(&bstrURL);
+
+							status.EventSetText(msgid, TEXT("Upload complete."));
+							status.EventSetIcon(msgid, EI_CHECK);
+
+							status.EventSetText(msgid, LibCC::Format("Uploaded to: %").s(bstrURL).Str());
+							status.EventSetURL(msgid, bstrURL);
+
+							if (destination.imageshack.copyURL)
 							{
-								status.RegisterEvent(screenshotID, EI_WARNING, ET_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+								if (usedClipboard)
+								{
+									status.RegisterEvent(screenshotID, EI_WARNING, ET_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+								}
+
+								LibCC::Result r = Clipboard(hwnd).SetText(bstrURL);
+								if(r.Succeeded())
+								{
+									status.RegisterEvent(screenshotID, EI_INFO, ET_GENERAL, destination.general.name,
+										LibCC::Format("Copied URL to clipboard %").qs(bstrURL).Str(), bstrURL);
+									usedClipboard = true;
+								}
+								else
+								{
+									status.RegisterEvent(screenshotID, EI_ERROR, ET_GENERAL, destination.general.name,
+										LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), bstrURL);
+								}
 							}
 
-							LibCC::Result r = Clipboard(hwnd).SetText(bstrURL);
-							if(r.Succeeded())
-							{
-								status.RegisterEvent(screenshotID, EI_INFO, ET_GENERAL, destination.general.name,
-									LibCC::Format("Copied URL to clipboard %").qs(bstrURL).Str(), bstrURL);
-								usedClipboard = true;
-							}
-							else
-							{
-								status.RegisterEvent(screenshotID, EI_ERROR, ET_GENERAL, destination.general.name,
-									LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), bstrURL);
-							}
+							::SysFreeString(bstrURL);
 						}
-
-						::SysFreeString(bstrURL);
-					}
-					else
-					{
-						status.EventSetText(msgid, L"ImageShack: Malformed server response");
-						status.EventSetIcon(msgid, EI_ERROR);
+						else
+						{
+							status.EventSetText(msgid, L"ImageShack: Malformed server response");
+							status.EventSetIcon(msgid, EI_ERROR);
+						}
 					}
 				}
 				else
