@@ -12,9 +12,14 @@ enum ScreenshotAction
 	SA_SHOWCROP,
 	SA_SHOWDESTINATIONS
 };
-#define SA_NONE_STR L"Do nothing."
-#define SA_SHOWCROP_STR L"Edit the image."
-#define SA_SHOWDESTINATIONS_STR L"Show the options dialog."
+
+#define SA_NONE_STR_OLD L"Do nothing."
+#define SA_SHOWCROP_STR_OLD L"Edit the image."
+#define SA_SHOWDESTINATIONS_STR_OLD L"Show the options dialog."
+
+#define SA_NONE_STR L"Do nothing"
+#define SA_SHOWCROP_STR L"Show cropping window"
+#define SA_SHOWDESTINATIONS_STR L"Show options dialog"
 
 // NOTE that these strings are used for both the GUI and the options XML.
 inline std::wstring ScreenshotActionToString(ScreenshotAction sa)
@@ -28,14 +33,16 @@ inline std::wstring ScreenshotActionToString(ScreenshotAction sa)
 	}
 	return SA_SHOWCROP_STR;
 }
+
+
 inline ScreenshotAction StringToScreenshotAction(const std::wstring& s)
 {
 	std::wstring l = LibCC::StringToLower(s);
-	if(l == LibCC::StringToLower(SA_NONE_STR))
+	if(l == LibCC::StringToLower(SA_NONE_STR) || l == LibCC::StringToLower(SA_NONE_STR_OLD))
 	{
 		return SA_NONE;
 	}
-	else if(l == LibCC::StringToLower(SA_SHOWDESTINATIONS_STR))
+	else if(l == LibCC::StringToLower(SA_SHOWDESTINATIONS_STR) || l == LibCC::StringToLower(SA_SHOWDESTINATIONS_STR_OLD))
 	{
 		return SA_SHOWDESTINATIONS;
 	}

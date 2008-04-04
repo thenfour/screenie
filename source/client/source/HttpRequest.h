@@ -18,7 +18,8 @@ namespace Curl
 
 		HttpRequest(RequestMethod method);
 
-		void AddFilename(const std::string& name, const std::string& filename);
+		void AddFile(const std::string& name, const std::string& localfilename,
+			const std::string& contenttype = "application/octet-stream", const std::string& filename = "");
 		void AddPostArgument(const std::string& name, const std::string& value);
 		void AddHeader(const std::string& headertext);
 	protected:

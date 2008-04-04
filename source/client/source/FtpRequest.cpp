@@ -17,7 +17,11 @@ namespace Curl
 
 			curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
 			curl_easy_setopt(curl, CURLOPT_INFILESIZE, size);
+
+			EnableRead(curl);
 		}
+		else
+			EnableWrite(curl);
 
 		return m_file != 0;
 	}

@@ -38,7 +38,7 @@ private:
 	bool OnProgress(double dltotal, double dlnow, double ultotal, double ulnow, bool canceled)
 	{
 		m_status->EventSetProgress(m_msgid, static_cast<int>(ulnow), static_cast<int>(ultotal));
-		m_status->EventSetText(m_msgid, LibCC::Format(L"Uploading % of % bytes").ul(ulnow).ul(ultotal).Str());
+		m_status->EventSetText(m_msgid, LibCC::Format(L"Uploading % of % bytes").ul((unsigned long)ulnow).ul((unsigned long)ultotal).Str());
 
 		return false;
 	}

@@ -75,14 +75,17 @@ bool ProcessImageShackDestination(HWND hwnd, IActivity& status, ScreenshotDestin
 		return false;
 	}
 
+	SYSTEMTIME systemTime = { 0 };
+	destination.GetNowBasedOnTimeSettings(systemTime);
+	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat, windowTitle);
+
 	ScreenieHttpRequest request(&status, msgid);
 
-//	request.AddFilename("fileupload", LibCC::ToUTF8(temporaryFilename));
+	request.AddFile("fileupload", LibCC::ToUTF8(temporaryFilename), LibCC::ToUTF8(destination.general.imageFormat), LibCC::ToUTF8(remoteFileName));
 	request.AddPostArgument("xml", "yes");
-	request.AddPostArgument("url", "http://drano.org/images/donald.gif");
 	request.AddHeader("Expect: ");
 
-	request.SetURL("http://www.imageshack.us/transload.php");
+	request.SetURL("http://www.imageshack.us/upload_api.php");
 
 	if (request.Perform())
 	{

@@ -9,6 +9,24 @@ namespace Curl
 
 	}
 
+	void CurlRequest::EnableProgress(CURL* curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, ProgressCallback);
+		curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, static_cast<void*>(this));
+	}
+
+	void CurlRequest::EnableWrite(CURL* curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<void*>(this));
+	}
+
+	void CurlRequest::EnableRead(CURL* curl)
+	{
+		curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
+		curl_easy_setopt(curl, CURLOPT_READDATA, static_cast<void*>(this));
+	}
+
 	bool CurlRequest::Perform()
 	{
 		CURL* curl = curl_easy_init();
@@ -33,12 +51,6 @@ namespace Curl
 
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuf);
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
-		curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, ProgressCallback);
-		curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, static_cast<void*>(this));
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<void*>(this));
-		curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadCallback);
-		curl_easy_setopt(curl, CURLOPT_READDATA, static_cast<void*>(this));
 
 		std::string userpwd = m_username;
 		if (!userpwd.empty())

@@ -55,7 +55,7 @@
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;_DEBUG;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="StdAfx.hpp"
@@ -145,11 +145,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
 				AdditionalIncludeDirectories="..\libcurl\include;..\wtl80"
 				PreprocessorDefinitions="WIN32;_WINDOWS;STRICT;NDEBUG"
 				MinimalRebuild="false"
 				ExceptionHandling="1"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="StdAfx.hpp"
@@ -621,6 +622,34 @@
 		</Filter>
 		<File
 			RelativePath=".\source\ArchiveSchema.sql"
+			>
+		</File>
+		<File
+			RelativePath=".\source\CurlRequest.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\source\CurlRequest.h"
+			>
+		</File>
+		<File
+			RelativePath=".\source\DestinationFtp.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\source\FtpRequest.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\source\FtpRequest.h"
+			>
+		</File>
+		<File
+			RelativePath=".\source\HttpRequest.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\source\HttpRequest.h"
 			>
 		</File>
 	</Files>

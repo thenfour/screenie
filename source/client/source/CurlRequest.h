@@ -56,6 +56,10 @@ namespace Curl
 			PerformStateFailed          // the request failed
 		};
 
+		void EnableProgress(CURL*);
+		void EnableWrite(CURL*);
+		void EnableRead(CURL*);
+
 		virtual bool OnPrePerform(CURL* curl) { return true; }
 		virtual void OnPostPerform(CURL* curl, bool success) { }
 

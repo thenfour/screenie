@@ -10,10 +10,14 @@ namespace Curl
 
 	}
 
-	void HttpRequest::AddFilename(const std::string& name, const std::string& filename)
+	void HttpRequest::AddFile(const std::string& name, const std::string& localfilename,
+		const std::string& contenttype, const std::string& filename)
 	{
-		curl_formadd(&m_postargs, &m_postargslast, CURLFORM_COPYNAME, name.c_str(),
-			CURLFORM_FILE, filename.c_str(), CURLFORM_END);
+		curl_formadd(&m_postargs, &m_postargslast,
+			CURLFORM_COPYNAME, name.c_str(),
+			CURLFORM_FILE, localfilename.c_str(),
+			CURLFORM_CONTENTTYPE, contenttype.c_str(),
+			CURLFORM_END);
 
 		m_upload = true;
 	}
@@ -31,8 +35,8 @@ namespace Curl
 
 	bool HttpRequest::OnPrePerform(CURL* curl)
 	{
-		if (m_upload)
-			curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
+//		if (m_upload)
+//			curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
 
 		if (m_method == MethodPOST)
 		{
@@ -44,6 +48,8 @@ namespace Curl
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, m_headers);
 
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+
+		EnableWrite(curl);
 
 		return true;
 	}

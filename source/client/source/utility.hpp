@@ -16,7 +16,7 @@
 bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTime, 
 	const tstd::tstring& mimeType, const tstd::tstring& formatString);
 
-tstd::tstring GetUniqueTemporaryFilename();
+tstd::tstring GetUniqueTemporaryFilename(const tstd::tstring& extension = _T("tmp"));
 tstd::tstring GetWinInetErrorString();
 
 void AutoSetComboBoxHeight(CComboBox& c);
