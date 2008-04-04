@@ -311,14 +311,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\source\curlutil.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\curlutil.h"
-				>
-			</File>
-			<File
 				RelativePath=".\source\exception.hpp"
 				>
 			</File>
@@ -620,36 +612,48 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Network"
+			>
+			<File
+				RelativePath=".\source\CurlRequest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\CurlRequest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\source\curlutil.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\curlutil.h"
+				>
+			</File>
+			<File
+				RelativePath=".\source\DestinationFtp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\FtpRequest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\FtpRequest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\source\HttpRequest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\HttpRequest.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\source\ArchiveSchema.sql"
-			>
-		</File>
-		<File
-			RelativePath=".\source\CurlRequest.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\source\CurlRequest.h"
-			>
-		</File>
-		<File
-			RelativePath=".\source\DestinationFtp.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\source\FtpRequest.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\source\FtpRequest.h"
-			>
-		</File>
-		<File
-			RelativePath=".\source\HttpRequest.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\source\HttpRequest.h"
 			>
 		</File>
 	</Files>
