@@ -34,15 +34,12 @@ void AutoSetComboBoxHeight(CComboBox& c)
 }
 
 
-tstd::tstring GetUniqueTemporaryFilename()
+tstd::tstring GetUniqueTemporaryFilename(const tstd::tstring& extension)
 {
 	TCHAR pathBuffer[MAX_PATH] = { 0 };
 	::GetTempPath(MAX_PATH, pathBuffer);
 
-	TCHAR filenameBuffer[MAX_PATH] = { 0 };
-	::GetTempFileName(pathBuffer, TEXT("SCR"), 0, filenameBuffer);
-
-	return tstd::tstring(filenameBuffer);
+	return LibCC::FormatW("%SCR%.%").s(pathBuffer).ui(time(NULL)).s(extension).Str();
 }
 
 tstd::tstring GetWinInetErrorString()
