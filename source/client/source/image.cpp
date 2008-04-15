@@ -122,7 +122,7 @@ bool GetDesktopWindowCaptureAsBitmap(HBITMAP& bitmap)
       rcScreen.Width(),
       rcScreen.Height(),
       dcSource,
-      0, 0, SRCCOPY);
+      0, 0, SRCCOPY | CAPTUREBLT);
 
     DeleteDC(dcSource);
     i++;
