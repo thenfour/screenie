@@ -44,7 +44,8 @@ extern CAppModule _Module;
 
 // this header contains Graham Batty's implementation of the C++
 // Technical Report 1 smart pointers (shared_ptr and weak_ptr).
-#include "tr1/memory"
+//
+// #include "tr1/memory" -- now use VC2008's =[
 
 // These classes are used from the 'util' namespace so that if the backing
 // implementation changes, the codebase can always use this interface.
