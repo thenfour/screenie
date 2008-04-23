@@ -6,6 +6,19 @@ namespace Snarl
 
 	typedef long MessageID;
 
+	enum : int
+	{
+		SNARL_LAUNCHED = 1,
+		SNARL_QUIT = 2
+	};
+
+	enum : int
+	{
+		SNARL_NOTIFICATION_CLICKED = 32,
+		SNARL_NOTIFICATION_TIMED_OUT = 33,
+		SNARL_NOTIFICATION_ACK = 34
+	};
+
 	//
 	// ShowMessage()
 	// Show a notification message.

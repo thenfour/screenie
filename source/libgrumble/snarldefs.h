@@ -6,13 +6,6 @@ namespace Snarl
 
 	static const int SNARL_STRING_LENGTH = 1024;
 
-	static const int SNARL_LAUNCHED = 1;
-	static const int SNARL_QUIT = 2;
-
-	static const int SNARL_NOTIFICATION_CLICKED = 32;
-	static const int SNARL_NOTIFICATION_TIMED_OUT = 33;
-	static const int SNARL_NOTIFICATION_ACK = 34;
-
 	enum SNARL_COMMANDS
 	{
 		SNARL_SHOW = 1,
