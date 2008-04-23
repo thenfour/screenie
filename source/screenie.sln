@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcurl", "libcurl\libcurl.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite", "sqlite\sqlite.vcproj", "{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgrumble", "libgrumble\libgrumble.vcproj", "{1AE5F22A-5A31-4440-89B2-659C13228CF3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -28,6 +30,10 @@ Global
 		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Debug|Win32.Build.0 = Debug|Win32
 		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Release|Win32.ActiveCfg = Release|Win32
 		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}.Release|Win32.Build.0 = Release|Win32
+		{1AE5F22A-5A31-4440-89B2-659C13228CF3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1AE5F22A-5A31-4440-89B2-659C13228CF3}.Debug|Win32.Build.0 = Debug|Win32
+		{1AE5F22A-5A31-4440-89B2-659C13228CF3}.Release|Win32.ActiveCfg = Release|Win32
+		{1AE5F22A-5A31-4440-89B2-659C13228CF3}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

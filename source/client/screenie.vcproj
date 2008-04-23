@@ -342,6 +342,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\SnarlInterface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\SnarlInterface.h"
+				>
+			</File>
+			<File
 				RelativePath=".\source\utility.cpp"
 				>
 			</File>
