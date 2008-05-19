@@ -2,5 +2,6 @@
 #define LIBGRUMBLE_H
 
 #include "snarl.h"
+#include "snarlevent.h"
 
 #endif
