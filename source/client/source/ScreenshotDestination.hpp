@@ -417,14 +417,16 @@ struct ScreenshotDestination
 
   void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
   {
-    if(general.localTime)
-    {
-	    ::GetLocalTime(&st);
-    }
-    else
-    {
-	    ::GetSystemTime(&st);
-    }
+	  // now the time is already local, so just do nothing
+	  // unless local time is turned off
+
+	  if (!general.localTime)
+	  {
+		  SYSTEMTIME out;
+		  ::TzSpecificLocalTimeToSystemTime(NULL, &st, &out);
+
+		  st = out;
+	  }
   }
 
 	static tstd::tstring TypeToString(Type type)

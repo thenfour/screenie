@@ -133,19 +133,22 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
   CMainWindow* pThis(params.pThis);
 
   int enabledDestinations = 0;
-  bool bUsedClipboard = false;// used to display warnings about copying things multiply to the clipboard
-	for (size_t i = 0; i < options.GetNumDestinations(); ++i)
-	{
-		ScreenshotDestination destination;
-		if (options.GetDestination(destination, i))
-		{
-			if (destination.enabled)
-      {
-				ProcessDestination(pThis->m_hWnd, pThis->m_statusDialog, destination, params.screenshot, params.windowTitle, bUsedClipboard, params.screenshotID);
-        enabledDestinations ++;
-      }
-		}
-	}
+  DestinationArgs args(pThis->m_hWnd, pThis->m_statusDialog, params.screenshot, params.windowTitle, false, params.screenshotID);
+
+  ::GetLocalTime(&args.localTime);
+
+  for (size_t i = 0; i < options.GetNumDestinations(); ++i)
+  {
+	  if (options.GetDestination(args.dest, i))
+	  {
+		  if (args.dest.enabled)
+		  {
+			  ProcessDestination(args);
+			  enabledDestinations ++;
+		  }
+	  }
+  }
+
   return 0;
 }
 

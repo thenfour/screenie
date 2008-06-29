@@ -8,6 +8,7 @@
 #include "resource.h"
 
 #include "libcc/winapi.h"
+#include "../libgrumble/snarl.h"
 
 // ui
 #include "ScreenshotDestination.hpp"
@@ -22,57 +23,58 @@
 #include "path.hpp"
 #include "utility.hpp"
 
+#include "GrumbleSupport.h"
 #include "curlutil.h"
 
-bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& destination,
-						   util::shared_ptr<Gdiplus::Bitmap> image, const tstd::tstring& windowTitle, bool& usedClipboard, ScreenshotID screenshotID)
+bool ProcessFtpDestination(DestinationArgs& args)
 {
-	EventID msgid = status.RegisterEvent(screenshotID, EI_PROGRESS, ET_FTP, destination.general.name, _T("Initiating FTP transfer"));
-	status.EventSetProgress(msgid, 0, 1);// set it to 0%
+	EventID msgid = args.statusDlg.RegisterEvent(args.screenshotID, EI_PROGRESS, ET_FTP, args.dest.general.name, _T("Initiating FTP transfer"));
+	args.statusDlg.EventSetProgress(msgid, 0, 1);// set it to 0%
 
 	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
-	if (!GetTransformedScreenshot(destination.image, image, transformedImage))
+	if (!GetTransformedScreenshot(args.dest.image, args.image, transformedImage))
 	{
-		status.EventSetText(msgid, L"FTP: Can't resize screenshot");
-		status.EventSetIcon(msgid, EI_ERROR);
+		args.statusDlg.EventSetText(msgid, L"FTP: Can't resize screenshot");
+		args.statusDlg.EventSetIcon(msgid, EI_ERROR);
 		return false;
 	}
 
 	// before we can upload the image, we need to save it to a temporary file.
 	tstd::tstring temporaryFilename = GetUniqueTemporaryFilename();
-	if (!SaveImageToFile(*transformedImage, destination.general.imageFormat, temporaryFilename, destination.general.imageQuality))
+	if (!SaveImageToFile(*transformedImage, args.dest.general.imageFormat, temporaryFilename, args.dest.general.imageQuality))
 	{
-		status.EventSetText(msgid, L"FTP: Can't save image to temporary file.");
-		status.EventSetIcon(msgid, EI_ERROR);
+		args.statusDlg.EventSetText(msgid, L"FTP: Can't save image to temporary file.");
+		args.statusDlg.EventSetIcon(msgid, EI_ERROR);
 		return false;
 	}
 
 	// format the destination filename based on the current time
-	SYSTEMTIME systemTime = { 0 };
-	destination.GetNowBasedOnTimeSettings(systemTime);
-	tstd::tstring remoteFileName = FormatFilename(systemTime, destination.general.filenameFormat, windowTitle);
+	SYSTEMTIME systemTime = args.localTime;
+	args.dest.GetNowBasedOnTimeSettings(systemTime);
+
+	tstd::tstring remoteFileName = FormatFilename(systemTime, args.dest.general.filenameFormat, args.windowTitle);
 
 	LibCC::Result r;
 	DWORD size = 0;
 
-	ScreenieFtpRequest request(&status, msgid);
+	ScreenieFtpRequest request(&args.statusDlg, msgid);
 
 	tstd::tstring url = LibCC::Format("ftp://%:%/%%")
-		.s(destination.ftp.hostname)
-		.ul(destination.ftp.port)
-		.s(destination.ftp.remotePath)
+		.s(args.dest.ftp.hostname)
+		.ul(args.dest.ftp.port)
+		.s(args.dest.ftp.remotePath)
 		.s(remoteFileName)
 		.Str();
 
 	request.SetFilename(LibCC::ToUTF8(temporaryFilename));
 	request.SetURL(LibCC::ToUTF8(url));
-	request.SetUsername(LibCC::ToUTF8(destination.ftp.username));
-	request.SetPassword(LibCC::ToUTF8(destination.ftp.DecryptPassword()));
+	request.SetUsername(LibCC::ToUTF8(args.dest.ftp.username));
+	request.SetPassword(LibCC::ToUTF8(args.dest.ftp.DecryptPassword()));
 
 	if (!request.Perform())
 	{
-		status.EventSetIcon(msgid, EI_ERROR);
-		status.EventSetText(msgid, LibCC::ToUnicode(request.GetErrorText()));
+		args.statusDlg.EventSetIcon(msgid, EI_ERROR);
+		args.statusDlg.EventSetText(msgid, LibCC::ToUnicode(request.GetErrorText()));
 
 		return false;
 	}
@@ -80,33 +82,35 @@ bool ProcessFtpDestination(HWND hwnd, IActivity& status, ScreenshotDestination& 
 	// delete the temp file
 	DeleteFile(temporaryFilename.c_str());
 
-	status.EventSetText(msgid, TEXT("Upload complete."));
-	status.EventSetIcon(msgid, EI_CHECK);
+	args.statusDlg.EventSetText(msgid, TEXT("Upload complete."));
+	args.statusDlg.EventSetIcon(msgid, EI_CHECK);
 
-	if (!destination.ftp.resultURL.empty())
+	if (!args.dest.ftp.resultURL.empty())
 	{
-		tstd::tstring url = LibCC::Format(TEXT("%%")).s(destination.ftp.resultURL).s(remoteFileName).Str();
+		tstd::tstring url = LibCC::Format(TEXT("%%")).s(args.dest.ftp.resultURL).s(remoteFileName).Str();
 
-		status.EventSetText(msgid, LibCC::Format("Uploaded % bytes (% KB/s) to %").ui(request.GetUploadSize()).d(request.GetUploadSpeed(), 3).s(url).Str());
-		status.EventSetURL(msgid, url);
+		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");
 
-		if (destination.ftp.copyURL)
+		args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % bytes (% KB/s) to %").ui(request.GetUploadSize()).d(request.GetUploadSpeed(), 3).s(url).Str());
+		args.statusDlg.EventSetURL(msgid, url);
+
+		if (args.dest.ftp.copyURL)
 		{
-			if(usedClipboard)
+			if(args.bUsedClipboard)
 			{
-				status.RegisterEvent(screenshotID, EI_WARNING, ET_GENERAL, destination.general.name, _T("Warning: Overwriting clipboard contents"));
+				args.statusDlg.RegisterEvent(args.screenshotID, EI_WARNING, ET_GENERAL, args.dest.general.name, _T("Warning: Overwriting clipboard contents"));
 			}
 
-			LibCC::Result r = Clipboard(hwnd).SetText(url);
+			LibCC::Result r = Clipboard(args.hwnd).SetText(url);
 			if(r.Succeeded())
 			{
-				status.RegisterEvent(screenshotID, EI_INFO, ET_GENERAL, destination.general.name,
+				args.statusDlg.RegisterEvent(args.screenshotID, EI_INFO, ET_GENERAL, args.dest.general.name,
 					LibCC::Format("Copied URL to clipboard %").qs(url).Str(), url);
-				usedClipboard = true;
+				args.bUsedClipboard = true;
 			}
 			else
 			{
-				status.RegisterEvent(screenshotID, EI_ERROR, ET_GENERAL, destination.general.name,
+				args.statusDlg.RegisterEvent(args.screenshotID, EI_ERROR, ET_GENERAL, args.dest.general.name,
 					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), url);
 			}
 		}

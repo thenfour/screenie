@@ -234,6 +234,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\GrumbleSupport.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\GrumbleSupport.h"
+				>
+			</File>
+			<File
 				RelativePath=".\source\image.cpp"
 				>
 			</File>
@@ -339,14 +347,6 @@
 			</File>
 			<File
 				RelativePath=".\source\serialization.h"
-				>
-			</File>
-			<File
-				RelativePath=".\source\SnarlInterface.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\source\SnarlInterface.h"
 				>
 			</File>
 			<File
