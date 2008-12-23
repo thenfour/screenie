@@ -15,8 +15,8 @@ class CTextPromptDlg : public CDialogImpl<CTextPromptDlg>
 public:
 	enum { IDD = IDD_PROMPT };
 
-	CTextPromptDlg(const tstd::tstring& title, const tstd::tstring& label, const tstd::tstring& text)
-		: m_title(title), m_label(label), m_text(text)
+	CTextPromptDlg(const tstd::tstring& title, const tstd::tstring& label, const tstd::tstring& text, bool bNumber = false)
+		: m_title(title), m_label(label), m_text(text), m_bNumber(bNumber)
 	{
 	}
 
@@ -43,7 +43,13 @@ private:
 		SetDlgItemText(IDC_PROMPT_TEXT, m_text.c_str());
 		SendDlgItemMessage(IDC_PROMPT_TEXT, EM_SETSEL, 0, m_text.length());
 
+		if (m_bNumber)
+		{
+			GetDlgItem(IDC_PROMPT_TEXT).ModifyStyle(0, ES_NUMBER, 0);
+		}
+
 		SendMessage(m_hWnd, WM_NEXTDLGCTL, (WPARAM)(HWND)GetDlgItem(IDC_PROMPT_TEXT), TRUE);
+
 
 		return TRUE;
 	}
@@ -58,6 +64,7 @@ private:
 		return 0;
 	}
 
+	bool m_bNumber;
 	tstd::tstring m_title;
 	tstd::tstring m_label;
 	tstd::tstring m_text;

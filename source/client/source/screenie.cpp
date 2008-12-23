@@ -17,6 +17,11 @@
 #include "DestinationDlg.hpp"
 #include "ScreenshotArchive.hpp"
 
+#include "libcc/registry.h"
+
+#include "version.h"
+#include "..\libcrashman\libcrashman.h"
+
 // UNCOMMENT THIS TO RUN TESTMAIN() INSTEAD OF THE NORMAL WINMAIN
 //#define TESTMODE
 
@@ -59,7 +64,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 		dest.enabled = true;
 		dest.general.type = ScreenshotDestination::TYPE_IMAGESHACK;
 		dest.general.imageFormat = _T("image/png");
-		dest.general.name = _T("ImageShack4");
+		dest.general.name = _T("ImageShack Upload");
 		dest.imageshack.copyURL = true;
 
 		options.AddDestination(dest);
@@ -85,28 +90,129 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	return retval;
 }
 
+void PopulateSystemInfo(CrashMan::StringMap& strings)
+{
+	// windows version
+	{
+		OSVERSIONINFO ex;
+		ex.dwOSVersionInfoSize = sizeof(ex);
+		::GetVersionEx(&ex);
+
+		strings[L"osversion"] = LibCC::FormatW(L"Windows NT %.%.% %")
+			.i(ex.dwMajorVersion)
+			.i(ex.dwMinorVersion)
+			.i(ex.dwBuildNumber)
+			.s(ex.szCSDVersion).Str();
+	}
+
+	// internet explorer version
+	{
+		LibCC::RegistryKey key(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Internet Explorer");
+		std::wstring iever;
+		key.GetValue(L"Version", iever);
+		strings[L"ieversion"] = iever;
+	}
+
+	// number of processors
+	{
+		SYSTEM_INFO si = { 0 };
+		::GetNativeSystemInfo(&si);
+
+		strings[L"cpus"] = LibCC::FormatW(L"%").i(si.dwNumberOfProcessors).Str();
+	}
+
+	// processor
+	{
+		LibCC::RegistryKey key(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0");
+		std::wstring cpuname;
+		key.GetValue(L"ProcessorNameString", cpuname);
+		strings[L"cpuname"] = cpuname;
+	}
+
+	// memory
+	{
+		MEMORYSTATUSEX statex = { 0 };
+		statex.dwLength = sizeof(statex);
+		GlobalMemoryStatusEx(&statex);
+
+		strings[L"physmem"] = LibCC::FormatW(L"% MB").ul(statex.ullTotalPhys / 1024 / 1024).Str();
+	}
+}
+
+bool ScreenieCrashHandler(const wchar_t* dumpfile, EXCEPTION_POINTERS* pExInfo, void* pContext)
+{
+	std::wstring exepath = LibCC::PathRemoveFilename(GetModuleFileNameX());
+	LibCC::PathAppendX(exepath, L"crashman.exe");
+
+	std::wstring inipath = LibCC::PathRemoveFilename(GetModuleFileNameX());
+	LibCC::PathAppendX(inipath, L"crashman.ini");
+
+	if (LibCC::PathFileExistsX(dumpfile) &&
+		LibCC::PathFileExistsX(exepath.c_str()) &&
+		LibCC::PathFileExistsX(inipath.c_str()))
+	{
+		CrashMan::StringMap params;
+		PopulateSystemInfo(params);
+		params[L"svnrevision"] = LibCC::FormatW(L"%").i(TSVN_VERMINOR).Str();
+
+		CrashMan::StringMap strings;
+		strings[L"url"] = L"http://screenie.net/debug/dump.php";
+
+		if (CrashMan::Execute(exepath.c_str(), dumpfile, params, strings,
+			GetModuleFileNameX().c_str(), L"/restart", inipath.c_str()))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+struct AutoCrashMan
+{
+	AutoCrashMan(CrashMan::CrashHandler handler)
+	{
+		CrashMan::Initialize(handler);
+	}
+
+	~AutoCrashMan()
+	{
+		CrashMan::Uninitialize();
+	}
+};
+
 int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 {
+	AutoCrashMan crash(ScreenieCrashHandler);
+
 #ifdef TESTMODE
 	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance());
 	TestMain();
 	delete LibCC::g_pLog;
 	return 0;
 #endif
+
+	// is this the second process started during a restart?
+	bool bRestarting = false;
+	for (int i = 0; i < __argc; i++)
+	{
+		if (wcscmp(__wargv[i], L"/restart") == 0)
+			bRestarting = true;
+	}
+
 	// try to create a global mutex object. if it already exists, it means there's
 	// another instance of this program already running, and we shouldn't run another.
-
 	HANDLE instanceMutex = ::CreateMutex(NULL, TRUE, TEXT("ScreenieInstMutex"));
 
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-//    MessageBox(0, _T("Screenie is already running."), _T("Screenie"), MB_OK | MB_ICONINFORMATION);
-
 		HWND screenieWindow = ::FindWindow(TEXT("ScreenieMainWnd"), TEXT("ScreenieWnd"));
 
 		if (::IsWindow(screenieWindow))
 		{
 			::SendMessage(screenieWindow, CMainWindow::WM_SHOWSCREENIE, 0, 0);
+			::CloseHandle(instanceMutex);
 
 			// if there's another instance, it won't hurt us to return without closing
 			// the mutex handle. the previous instance would be responsible for releasing it.
@@ -114,6 +220,40 @@ int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 			return 0;
 		}
 	}
+
+	// wait for 5 seconds. if we're the restarted process, this should have been more than enough time
+	// for the original process to clean up and shut down. complain to the user, because it's probably hanging
+	DWORD dwWaitResult = ::WaitForSingleObject(instanceMutex, 5000);
+	switch (dwWaitResult)
+	{
+	case WAIT_TIMEOUT:
+		{
+			if (bRestarting)
+			{
+				// keep asking the user if he wants to try again, if he's so inclined
+				bool bRetryWorked = false;
+				while (!bRetryWorked &&
+					::MessageBox(NULL, L"Screenie attempted to restart itself, but the original process is taking a long time to exit.\r\n"
+					L"You may want to manually kill Screenie using Task Manager.", L"Screenie Error", MB_RETRYCANCEL | MB_ICONINFORMATION) == IDRETRY)
+				{
+					// well, let's try one more time, then
+					dwWaitResult = ::WaitForSingleObject(instanceMutex, 5000);
+					if (dwWaitResult != WAIT_TIMEOUT)
+						bRetryWorked = true; // guess it worked
+				}
+
+				if (!bRetryWorked)
+				{
+					::CloseHandle(instanceMutex);
+					return 0;
+				}
+			}
+			break;
+		}
+	}
+
+	// okay, now that we're done with that crap, actually run the app
+	//////////////////////////////////////////////////////////////////////////
 
 	HRESULT hRes = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hRes));

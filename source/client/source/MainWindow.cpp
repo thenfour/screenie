@@ -13,6 +13,7 @@
 #include "DestinationDlg.hpp"
 #include "MainWindow.hpp"
 #include "StatusDlg.hpp"
+#include "TextPromptDlg.h"
 
 #include "codec.hpp"
 #include "image.hpp"
@@ -278,6 +279,22 @@ LRESULT CMainWindow::OnTakeScreenshot(UINT msg, WPARAM wParam, LPARAM lParam, BO
 
   	TakeScreenshot(cursorPos, altDown);
   }
+	return 0;
+
+}
+
+LRESULT CMainWindow::OnTraySetTimer(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled)
+{
+	CTextPromptDlg dlg(TEXT("Set screenshot timer"), TEXT("Set the number of seconds until the screen capture is triggered"), L"5");
+
+	if (dlg.DoModal())
+	{
+		int nSeconds = _wtoi(dlg.GetText().c_str());
+		
+		// 300ms after the user clicks on the menu item it should be safe to take a screen
+		SetTimer(TIMER_ID_TIMEDSCREENSHOT, nSeconds * 1000);
+	}
+
 	return 0;
 
 }

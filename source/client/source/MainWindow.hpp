@@ -85,6 +85,7 @@ public:
 
 		COMMAND_ID_HANDLER(ID_SHOWSTATUSWINDOW, OnShowStatusWindow)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_TAKESCREENSHOT, OnTrayTakeScreenshot)
+		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_SETTIMER, OnTraySetTimer)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_ABOUT, OnAbout)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_CONFIGURE, OnConfigure)
 		COMMAND_ID_HANDLER(ID_TRAYCONTEXTMENU_EXIT, OnExit)
@@ -119,6 +120,7 @@ public:
 	LRESULT OnConfigure(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnExit(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
 	LRESULT OnTrayTakeScreenshot(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
+	LRESULT OnTraySetTimer(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
   LRESULT OnShowStatusWindow(WORD notifyCode, WORD id, HWND hWndCtl, BOOL& handled);
   void ShowStatusWindow();
 

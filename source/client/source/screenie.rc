@@ -414,6 +414,7 @@ BEGIN
     POPUP "Tray Context Menu"
     BEGIN
         MENUITEM "Take Screenshot",             ID_TRAYCONTEXTMENU_TAKESCREENSHOT
+        MENUITEM "Set Timer...",                ID_TRAYCONTEXTMENU_SETTIMER
         MENUITEM SEPARATOR
         MENUITEM "&Configure...",               ID_TRAYCONTEXTMENU_CONFIGURE
         MENUITEM "Show Status Window...",       ID_SHOWSTATUSWINDOW
