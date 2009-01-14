@@ -11,7 +11,7 @@
 #include <vector>
 
 // for tstd::tstring
-#include "libcc/stringutil.h"
+#include "libcc/stringutil.hpp"
 
 bool MakeDestinationFilename(tstd::tstring& filename, const SYSTEMTIME& systemTime, 
 	const tstd::tstring& mimeType, const tstd::tstring& formatString);
@@ -106,7 +106,7 @@ public:
   bool operator !=(const Guid& x) const  { return !Equals(x); }
   Guid& Assign(const tstd::tstring& x)
   {
-		std::wstring W = LibCC::ToUnicode(x);
+		std::wstring W = LibCC::ToUTF16(x);
     LibCC::Blob<OLECHAR> crap;
     crap.Alloc(W.size()+1);
     wcscpy(crap.GetBuffer(), W.c_str());
@@ -136,7 +136,7 @@ public:
     LPOLESTR p;
     StringFromCLSID(val, &p);
     tstd::tstring ret;
-		LibCC::ConvertString(p, ret);
+		LibCC::StringConvert(p, ret);
     CoTaskMemFree(p);
     return ret;
   }
@@ -351,11 +351,32 @@ inline std::wstring LoadTextFileResource(HINSTANCE hInstance, LPCTSTR szResName,
 
 		// assume the encoding is ASCII.
 		std::string a((const char*)ptr1, sz);
-		return LibCC::ToUnicode(a);
+		return LibCC::ToUTF16(a);
 } 
 
 
 CFont& UtilGetShellFont();
+
+
+// converts strins to tstd::tstring
+inline tstd::tstring ToTstring(const std::basic_string<wchar_t>& in)
+{
+#ifdef _UNICODE
+	return in;
+#else
+	return LibCC::ToANSI(in);
+#endif
+}
+
+inline tstd::tstring ToTstring(const std::basic_string<char>& in)
+{
+#ifdef _UNICODE
+	return LibCC::ToUTF16(in);
+#else
+	return in;
+#endif
+}
+
 
 
 #endif

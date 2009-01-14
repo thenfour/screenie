@@ -9,7 +9,7 @@
 
 #include "utility.hpp"
 #include "serialization.h"
-#include "libcc\winapi.h"
+#include "libcc\winapi.hpp"
 #include "codec.hpp"
 
 

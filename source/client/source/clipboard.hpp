@@ -90,7 +90,7 @@ public:
           else
           {
             hMemLoc = GlobalLock(hMem);
-						std::wstring W = LibCC::ToUnicode(text);
+						std::wstring W = LibCC::ToUTF16(text);
 						wcscpy((WCHAR*)hMemLoc, W.c_str());
             GlobalUnlock(hMem);
             if(NULL == SetClipboardData(CF_UNICODETEXT, hMem))
@@ -108,7 +108,7 @@ public:
               else
               {
                 hMemLoc = GlobalLock(hMem);
-								std::string A = LibCC::ToMBCS(text.c_str());
+								std::string A = LibCC::ToANSI(text.c_str());
 								strcpy((char*)hMemLoc, A.c_str());
                 GlobalUnlock(hMem);
                 if(NULL == SetClipboardData(CF_TEXT, hMem))

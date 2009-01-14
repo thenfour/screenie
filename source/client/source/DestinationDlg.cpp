@@ -16,7 +16,7 @@
 #include "DestinationProperties.hpp"
 
 #include "codec.hpp"
-#include "libcc/registry.h"
+#include "libcc/registry.hpp"
 
 
 BOOL CDestinationDlg::PreTranslateMessage(MSG* pMsg)

@@ -583,7 +583,7 @@ bool ScreenshotArchive::OpenDatabase(sqlite3x::sqlite3_connection& out)
 			std::wstring createScript = LoadTextFileResource(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_SCHEMA), L"TEXT");
 
 			std::vector<std::wstring> commands;
-			LibCC::StringSplit(createScript, L";", std::back_inserter(commands));
+			LibCC::StringSplitByString(createScript, L";", std::back_inserter(commands));
 
 			out.open(path.c_str());
 			for(std::vector<std::wstring>::iterator it = commands.begin(); it != commands.end(); ++ it)
@@ -625,12 +625,12 @@ std::wstring ScreenshotArchive::GetDatabaseSchemaVersion()
 	// the database knows to re-create.
 	unsigned char md5a[17] = {0};
 	std::wstring schemaTextW = LoadTextFileResource(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_SCHEMA), L"TEXT");
-	std::string schemaTextA = LibCC::ToMBCS(schemaTextW);
+	std::string schemaTextA = LibCC::ToANSI(schemaTextW);
 	Curl_md5it(md5a, (const unsigned char*)schemaTextA.c_str());
 	char* encodedA;
 	Curl_base64_encode((const char*)md5a, 16, &encodedA);
 	std::string ret = encodedA;
 	free(encodedA);
-	m_schemaVersion = LibCC::ToUnicode(ret);
+	m_schemaVersion = LibCC::ToUTF16(ret);
 	return m_schemaVersion;
 }

@@ -7,7 +7,7 @@
 #include "stdafx.hpp"
 #include "resource.h"
 
-#include "libcc/winapi.h"
+#include "libcc/winapi.hpp"
 #include "../libgrumble/snarl.h"
 
 // ui
@@ -23,7 +23,7 @@
 #include "path.hpp"
 #include "utility.hpp"
 
-#include "GrumbleSupport.h"
+//#include "GrumbleSupport.h"
 #include "curlutil.h"
 
 bool ProcessFtpDestination(DestinationArgs& args)
@@ -74,7 +74,7 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	if (!request.Perform())
 	{
 		args.statusDlg.EventSetIcon(msgid, EI_ERROR);
-		args.statusDlg.EventSetText(msgid, LibCC::ToUnicode(request.GetErrorText()));
+		args.statusDlg.EventSetText(msgid, LibCC::ToUTF16(request.GetErrorText()));
 
 		return false;
 	}
@@ -89,7 +89,7 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	{
 		tstd::tstring url = LibCC::Format(TEXT("%%")).s(args.dest.ftp.resultURL).s(remoteFileName).Str();
 
-		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");
+//		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");
 
 		args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % bytes (% KB/s) to %").ui(request.GetUploadSize()).d(request.GetUploadSpeed(), 3).s(url).Str());
 		args.statusDlg.EventSetURL(msgid, url);

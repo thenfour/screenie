@@ -2,9 +2,9 @@
 #include "stdafx.hpp"
 #include "animbitmap.h"
 #include "viewport.h"
-#include "libcc/timer.h"
-#include "libcc/log.h"
-#include "libcc/stringutil.h"
+#include "libcc/timer.hpp"
+#include "libcc/log.hpp"
+#include "libcc/stringutil.hpp"
 
 #include "image.hpp"
 #include "cropdlg.hpp"

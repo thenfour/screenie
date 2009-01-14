@@ -8,6 +8,7 @@
 
 #include "codec.hpp"
 #include "image.hpp"
+#include "utility.hpp"
 
 tstd::tstring GetGdiplusStatusString(Gdiplus::Status status)
 {
@@ -46,8 +47,7 @@ tstd::tstring GetImageCodecExtension(Gdiplus::ImageCodecInfo* codecInfo, bool do
 
 	if (codecInfo != NULL)
 	{
-		tstd::tstring extensionList;
-		LibCC::ConvertString(codecInfo->FilenameExtension, extensionList);
+		tstd::tstring extensionList = ToTstring(codecInfo->FilenameExtension);
 
 		tstd::tstring::size_type dotPos = extensionList.find_first_of(_TT('.'));
 		tstd::tstring::size_type semicolonPos = extensionList.find_first_of(_TT(';'));
@@ -287,7 +287,7 @@ bool SaveImageToFile(Gdiplus::Image& image, const tstd::tstring& mimeType, const
 
 	if (codecInfo != NULL)
 	{
-		std::wstring wideFilename = LibCC::ToUnicode(filename);
+		std::wstring wideFilename = LibCC::ToUTF16(filename);
 
 		Gdiplus::EncoderParameters encoderParameters;
 		encoderParameters.Count = 1;

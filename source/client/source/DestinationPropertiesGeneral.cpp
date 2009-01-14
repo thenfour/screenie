@@ -6,7 +6,7 @@
 
 #include "stdafx.hpp"
 #include "resource.h"
-#include "libcc/winapi.h"
+#include "libcc/winapi.hpp"
 
 #include "codec.hpp"
 #include "image.hpp"
@@ -56,7 +56,7 @@ tstd::tstring CDestinationPropertiesGeneral::GetImageFormat()
 
 	if (codecInfo != 0)
 	{
-		LibCC::ConvertString(codecInfo->MimeType, ret);
+		ret = ToTstring(codecInfo->MimeType);
 	}
 
 	return ret;
@@ -74,8 +74,7 @@ void CDestinationPropertiesGeneral::SetImageFormat(const tstd::tstring& imageFor
 
 	if (codecInfo != 0)
 	{
-		tstd::tstring description;
-		LibCC::ConvertString(codecInfo->FormatDescription, description);
+		tstd::tstring description = ToTstring(codecInfo->FormatDescription);
 
 		CComboBox fileFormat(GetDlgItem(IDC_GENERAL_FORMAT));
 		fileFormat.SelectString(-1, description.c_str());
@@ -94,8 +93,7 @@ void CDestinationPropertiesGeneral::PopulateFormatList()
 		Gdiplus::ImageCodecInfo* codecInfo = imageCodecs.GetCodec(i);
 
 		std::wstring wideCodecDescription = codecInfo->FormatDescription;
-		tstd::tstring codecDescription;
-		LibCC::ConvertString(wideCodecDescription, codecDescription);
+		tstd::tstring codecDescription = ToTstring(wideCodecDescription);
 
 		fileFormats.AddString(codecDescription.c_str());
 	}

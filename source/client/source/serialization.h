@@ -3,7 +3,7 @@
 
 #include <map>
 #include <vector>
-#include "libcc/blob.h"
+#include "libcc/blob.hpp"
 #import "msxml3.dll"
 
 extern "C" size_t Curl_base64_encode(const char *input, size_t size, char **str);
@@ -195,13 +195,13 @@ namespace Xml
 	{
 		char* outA;
 		size_t size = Curl_base64_encode((const char*)in.p, in.size, &outA);
-		LibCC::ConvertString(std::string(outA, size), out);
+		out = LibCC::ToUTF16(std::string(outA, size));
 		free(outA);
 	}
 	inline void FromString(const std::wstring& in, LibCC::Blob<BYTE>& out)
 	{
 		std::string a;
-		LibCC::ConvertString(in, a);
+		out = LibCC::ToANSI(in);
 		unsigned char* buf;
 		size_t size = Curl_base64_decode(a.c_str(), &buf);
 		out.Alloc(size);

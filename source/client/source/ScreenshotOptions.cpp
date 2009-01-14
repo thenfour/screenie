@@ -9,7 +9,7 @@
 
 #include "ScreenshotDestination.hpp"
 #include "ScreenshotOptions.hpp"
-#include "libcc/registry.h"
+#include "libcc/registry.hpp"
 
 const wchar_t ScreenshotDestination::Ftp::xorKey[] = { 62171, 50087, 61907, 5753, 59244, 31190, 14869, 15056, 6894, 40105, 16528, 27281, 10301 };
 const int ScreenshotDestination::Ftp::xorKeyLength = 13;

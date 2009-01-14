@@ -5,7 +5,7 @@
 #include "image.hpp"
 #include "Clipboard.hpp"
 #include "MainWindow.hpp"
-#include "libcc\timer.h"
+#include "libcc\timer.hpp"
 
 void ActivityList::Attach(HWND h)
 {

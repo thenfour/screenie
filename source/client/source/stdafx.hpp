@@ -36,9 +36,9 @@ extern CAppModule _Module;
 #include "tstdlib/tstring.hpp"
 #include "tstdlib/tsstream.hpp"
 
-#include "libcc/stringutil.h"
-#include "libcc/result.h"
-#include "libcc/log.h"
+#include "libcc/stringutil.hpp"
+#include "libcc/result.hpp"
+#include "libcc/log.hpp"
 
 #include "../sqlite/sqlite3x.hpp"
 

@@ -4,7 +4,7 @@
 #include <vector>
 #include "ScreenshotDestination.hpp"
 #include "serialization.h"
-#include "libcc/winapi.h"
+#include "libcc/winapi.hpp"
 
 enum ScreenshotAction
 {

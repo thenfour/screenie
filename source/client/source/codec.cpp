@@ -50,7 +50,7 @@ Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodec(UINT codec) const
 
 Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByMimeType(PCTSTR mimeType) const
 {
-	std::wstring wideMimeType = LibCC::ToUnicode(tstd::tstring(mimeType));
+	std::wstring wideMimeType = LibCC::ToUTF16(mimeType);
 
 	for (UINT i = 0; i < GetNumCodecs(); ++i)
 	{
@@ -63,7 +63,7 @@ Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByMimeType(PCTSTR mimeType) co
 
 Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByDescription(PCTSTR description) const
 {
-	std::wstring wideDescription = LibCC::StringToLower(LibCC::ToUnicode(tstd::tstring(description)));
+	std::wstring wideDescription = LibCC::StringToLower(LibCC::ToUTF16(description));
 
 	for (UINT i = 0; i < GetNumCodecs(); ++i)
 	{
@@ -77,7 +77,7 @@ Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByDescription(PCTSTR descripti
 
 Gdiplus::ImageCodecInfo* ImageCodecsEnum::GetCodecByExtension(PCTSTR extension) const
 {
-	std::wstring wideExtension = LibCC::ToUnicode(extension);
+	std::wstring wideExtension = LibCC::ToUTF16(extension);
 
 	for (UINT i = 0; i < GetNumCodecs(); ++i)
 	{

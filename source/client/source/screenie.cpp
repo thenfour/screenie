@@ -17,10 +17,10 @@
 #include "DestinationDlg.hpp"
 #include "ScreenshotArchive.hpp"
 
-#include "libcc/registry.h"
+#include "libcc/registry.hpp"
 
 #include "version.h"
-#include "..\libcrashman\libcrashman.h"
+//#include "..\libcrashman\libcrashman.h"
 
 // UNCOMMENT THIS TO RUN TESTMAIN() INSTEAD OF THE NORMAL WINMAIN
 //#define TESTMODE
@@ -90,101 +90,101 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 	return retval;
 }
 
-void PopulateSystemInfo(CrashMan::StringMap& strings)
-{
-	// windows version
-	{
-		OSVERSIONINFO ex;
-		ex.dwOSVersionInfoSize = sizeof(ex);
-		::GetVersionEx(&ex);
-
-		strings[L"osversion"] = LibCC::FormatW(L"Windows NT %.%.% %")
-			.i(ex.dwMajorVersion)
-			.i(ex.dwMinorVersion)
-			.i(ex.dwBuildNumber)
-			.s(ex.szCSDVersion).Str();
-	}
-
-	// internet explorer version
-	{
-		LibCC::RegistryKey key(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Internet Explorer");
-		std::wstring iever;
-		key.GetValue(L"Version", iever);
-		strings[L"ieversion"] = iever;
-	}
-
-	// number of processors
-	{
-		SYSTEM_INFO si = { 0 };
-		::GetNativeSystemInfo(&si);
-
-		strings[L"cpus"] = LibCC::FormatW(L"%").i(si.dwNumberOfProcessors).Str();
-	}
-
-	// processor
-	{
-		LibCC::RegistryKey key(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0");
-		std::wstring cpuname;
-		key.GetValue(L"ProcessorNameString", cpuname);
-		strings[L"cpuname"] = cpuname;
-	}
-
-	// memory
-	{
-		MEMORYSTATUSEX statex = { 0 };
-		statex.dwLength = sizeof(statex);
-		GlobalMemoryStatusEx(&statex);
-
-		strings[L"physmem"] = LibCC::FormatW(L"% MB").ul(statex.ullTotalPhys / 1024 / 1024).Str();
-	}
-}
-
-bool ScreenieCrashHandler(const wchar_t* dumpfile, EXCEPTION_POINTERS* pExInfo, void* pContext)
-{
-	std::wstring exepath = LibCC::PathRemoveFilename(GetModuleFileNameX());
-	LibCC::PathAppendX(exepath, L"crashman.exe");
-
-	std::wstring inipath = LibCC::PathRemoveFilename(GetModuleFileNameX());
-	LibCC::PathAppendX(inipath, L"crashman.ini");
-
-	if (LibCC::PathFileExistsX(dumpfile) &&
-		LibCC::PathFileExistsX(exepath.c_str()) &&
-		LibCC::PathFileExistsX(inipath.c_str()))
-	{
-		CrashMan::StringMap params;
-		PopulateSystemInfo(params);
-		params[L"svnrevision"] = LibCC::FormatW(L"%").i(TSVN_VERMINOR).Str();
-
-		CrashMan::StringMap strings;
-		strings[L"url"] = L"http://screenie.net/debug/dump.php";
-
-		if (CrashMan::Execute(exepath.c_str(), dumpfile, params, strings,
-			GetModuleFileNameX().c_str(), L"/restart", inipath.c_str()))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-struct AutoCrashMan
-{
-	AutoCrashMan(CrashMan::CrashHandler handler)
-	{
-		CrashMan::Initialize(handler);
-	}
-
-	~AutoCrashMan()
-	{
-		CrashMan::Uninitialize();
-	}
-};
+//void PopulateSystemInfo(CrashMan::StringMap& strings)
+//{
+//	// windows version
+//	{
+//		OSVERSIONINFO ex;
+//		ex.dwOSVersionInfoSize = sizeof(ex);
+//		::GetVersionEx(&ex);
+//
+//		strings[L"osversion"] = LibCC::FormatW(L"Windows NT %.%.% %")
+//			.i(ex.dwMajorVersion)
+//			.i(ex.dwMinorVersion)
+//			.i(ex.dwBuildNumber)
+//			.s(ex.szCSDVersion).Str();
+//	}
+//
+//	// internet explorer version
+//	{
+//		LibCC::RegistryKey key(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Internet Explorer");
+//		std::wstring iever;
+//		key.GetValue(L"Version", iever);
+//		strings[L"ieversion"] = iever;
+//	}
+//
+//	// number of processors
+//	{
+//		SYSTEM_INFO si = { 0 };
+//		::GetNativeSystemInfo(&si);
+//
+//		strings[L"cpus"] = LibCC::FormatW(L"%").i(si.dwNumberOfProcessors).Str();
+//	}
+//
+//	// processor
+//	{
+//		LibCC::RegistryKey key(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0");
+//		std::wstring cpuname;
+//		key.GetValue(L"ProcessorNameString", cpuname);
+//		strings[L"cpuname"] = cpuname;
+//	}
+//
+//	// memory
+//	{
+//		MEMORYSTATUSEX statex = { 0 };
+//		statex.dwLength = sizeof(statex);
+//		GlobalMemoryStatusEx(&statex);
+//
+//		strings[L"physmem"] = LibCC::FormatW(L"% MB").ul(statex.ullTotalPhys / 1024 / 1024).Str();
+//	}
+//}
+//
+//bool ScreenieCrashHandler(const wchar_t* dumpfile, EXCEPTION_POINTERS* pExInfo, void* pContext)
+//{
+//	std::wstring exepath = LibCC::PathRemoveFilename(GetModuleFileNameX());
+//	LibCC::PathAppendX(exepath, L"crashman.exe");
+//
+//	std::wstring inipath = LibCC::PathRemoveFilename(GetModuleFileNameX());
+//	LibCC::PathAppendX(inipath, L"crashman.ini");
+//
+//	if (LibCC::PathFileExistsX(dumpfile) &&
+//		LibCC::PathFileExistsX(exepath.c_str()) &&
+//		LibCC::PathFileExistsX(inipath.c_str()))
+//	{
+//		CrashMan::StringMap params;
+//		PopulateSystemInfo(params);
+//		params[L"svnrevision"] = LibCC::FormatW(L"%").i(TSVN_VERMINOR).Str();
+//
+//		CrashMan::StringMap strings;
+//		strings[L"url"] = L"http://screenie.net/debug/dump.php";
+//
+//		if (CrashMan::Execute(exepath.c_str(), dumpfile, params, strings,
+//			GetModuleFileNameX().c_str(), L"/restart", inipath.c_str()))
+//		{
+//			return true;
+//		}
+//	}
+//
+//	return false;
+//}
+//
+//
+//struct AutoCrashMan
+//{
+//	AutoCrashMan(CrashMan::CrashHandler handler)
+//	{
+//		CrashMan::Initialize(handler);
+//	}
+//
+//	~AutoCrashMan()
+//	{
+//		CrashMan::Uninitialize();
+//	}
+//};
 
 int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 {
-	AutoCrashMan crash(ScreenieCrashHandler);
+//	AutoCrashMan crash(ScreenieCrashHandler);
 
 #ifdef TESTMODE
 	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance());

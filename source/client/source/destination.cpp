@@ -7,7 +7,7 @@
 #include "stdafx.hpp"
 #include "resource.h"
 
-#include "libcc/winapi.h"
+#include "libcc/winapi.hpp"
 
 // ui
 #include "destination.hpp"
@@ -83,7 +83,7 @@ bool ProcessImageShackDestination(DestinationArgs& args)
 
 	if (request.Perform())
 	{
-		std::wstring xml = LibCC::ToUnicode(request.GetData());
+		std::wstring xml = LibCC::ToUTF16(request.GetData());
 
 		::CoInitialize(NULL);
 		Document doc;
@@ -148,7 +148,7 @@ bool ProcessImageShackDestination(DestinationArgs& args)
 	else
 	{
 		// delete the temp file
-		args.statusDlg.EventSetText(msgid, LibCC::ToUnicode(request.GetErrorText()));
+		args.statusDlg.EventSetText(msgid, LibCC::ToUTF16(request.GetErrorText()));
 		args.statusDlg.EventSetIcon(msgid, EI_ERROR);
 	}
 
