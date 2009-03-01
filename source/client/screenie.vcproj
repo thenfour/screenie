@@ -234,6 +234,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\source\GrumbleSupport.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\source\GrumbleSupport.h"
 				>
 			</File>
