@@ -45,7 +45,9 @@ extern CAppModule _Module;
 // this header contains Graham Batty's implementation of the C++
 // Technical Report 1 smart pointers (shared_ptr and weak_ptr).
 //
-// #include "tr1/memory" -- now use VC2008's =[
+// <carl> i don't get it. build fails with this commented. uncommenting. is there a built-in shared_ptr in vc2008 i don't know about? if so, how do we enable it?
+//
+#include "tr1/memory"// -- now use VC2008's =[
 
 // These classes are used from the 'util' namespace so that if the backing
 // implementation changes, the codebase can always use this interface.

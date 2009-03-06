@@ -226,7 +226,7 @@ std::wstring ScreenshotArchive::GetDBFilename() const
 	// generate the filename.
 	std::wstring path = m_options.GetConfigPath();
 	path = LibCC::PathRemoveFilename(path);
-	LibCC::PathAppendX(path, L"screenie.db");
+	path = LibCC::PathAppendX(path, L"screenie.db");
 	return path;
 }
 

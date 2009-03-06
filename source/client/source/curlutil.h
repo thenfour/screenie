@@ -14,7 +14,12 @@ public:
 private:
 	IActivity* m_status;
 	EventID m_msgid;
-private:
+public:
+	bool OnPrePerform(CURL* curl)
+	{
+		this->EnableProgress(curl);
+		return Curl::FtpRequest::OnPrePerform(curl);
+	}
 	bool OnProgress(double dltotal, double dlnow, double ultotal, double ulnow, bool canceled)
 	{
 		m_status->EventSetProgress(m_msgid, static_cast<int>(ulnow), static_cast<int>(ultotal));
@@ -34,7 +39,12 @@ public:
 private:
 	IActivity* m_status;
 	EventID m_msgid;
-private:
+public:
+	bool OnPrePerform(CURL* curl)
+	{
+		this->EnableProgress(curl);
+		return Curl::StreamHttpRequest<true>::OnPrePerform(curl);
+	}
 	bool OnProgress(double dltotal, double dlnow, double ultotal, double ulnow, bool canceled)
 	{
 		m_status->EventSetProgress(m_msgid, static_cast<int>(ulnow), static_cast<int>(ultotal));

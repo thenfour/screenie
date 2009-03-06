@@ -287,7 +287,7 @@ LRESULT CMainWindow::OnTraySetTimer(WORD notifyCode, WORD id, HWND hWndCtl, BOOL
 {
 	CTextPromptDlg dlg(TEXT("Set screenshot timer"), TEXT("Set the number of seconds until the screen capture is triggered"), L"5");
 
-	if (dlg.DoModal())
+	if (dlg.DoModal() == IDOK)
 	{
 		int nSeconds = _wtoi(dlg.GetText().c_str());
 		
