@@ -25,19 +25,20 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_mouseEntrancy(false),
   m_bIsPanning(false),
   m_selectionTool(this),
+  m_highlightTool(this),
   m_nextTimerID(123),
   m_lastCursor(0,0),
   m_lastCursorImage(0,0),
   m_panningTimer(0),
-	m_currentTool(&m_selectionTool),
+	m_currentTool(0),
 	m_showCursor(false),
 	m_enablePanning(true),
 	m_isLeftClickDragging(false),
 	m_enableTools(true),
 	m_captureRefs(0)
 {
-  CopyImage(m_dibOriginal, *bitmap);
-	m_display.SetOriginalImage(m_dibOriginal);
+  CopyImage(m_dibDocument, *bitmap);
+	m_display.SetOriginalImage(m_dibRenderSource);
   m_display.SetZoomFactor(3.0f);
   m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2), "ImageEditWnd()");
 
@@ -54,7 +55,7 @@ ViewPortSubPixel CImageEditWindow::GetZoomFactor() const
 
 util::shared_ptr<Gdiplus::Bitmap> CImageEditWindow::GetBitmapRect(const RECT& rectToCopy)
 {
-	Gdiplus::Bitmap* bitmapClone = m_bitmap->Clone(rectToCopy.left, rectToCopy.top,
+	Gdiplus::Bitmap* bitmapClone = m_dibDocument.GetGdiplusBitmap()->Clone(rectToCopy.left, rectToCopy.top,
 		rectToCopy.right - rectToCopy.left, rectToCopy.bottom - rectToCopy.top, PixelFormatDontCare);
 
 	return util::shared_ptr<Gdiplus::Bitmap>(bitmapClone);
@@ -168,7 +169,7 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 	AddCapture();
 
 	if(m_currentTool != 0 && m_enableTools)
-	  m_currentTool->OnStartDragging();
+	  m_currentTool->OnStartDragging(pt);
 
   return MouseLeave();
 }
@@ -301,10 +302,18 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
 
 LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
+	// see ImageEditRenderer for more info on how rendering works.
+	// but basically here we need to allow tools to paint temporary stuff, and use m_display to render.
 	//OutputDebugString("--OnPaint\r\n");
 
 	PAINTSTRUCT paintStruct = { 0 };
 	HDC dc = BeginPaint(&paintStruct);
+
+	m_dibRenderSource.SetSize(m_dibDocument.GetWidth(), m_dibDocument.GetHeight());
+	m_dibDocument.Blit(m_dibRenderSource, 0, 0);
+
+	if(m_currentTool != 0)
+		m_currentTool->OnPaintClient(m_dibRenderSource);
 
 	m_display.Render(m_offscreen, paintStruct.rcPaint);
 
@@ -396,24 +405,6 @@ void CImageEditWindow::Pan(int x, int y)
 	ClampImageOrigin(org);
 
   m_display.SetImageOrigin(org, "Pan()");
-
-  // the thing about panning is that now the mouse cursor position also changes (relative to the view).
-  // so, send a mousemove if necessary.
-  //POINT pt;
-  //GetCursorPos(&pt);
-  //ScreenToClient(&pt);
-  //bool doit = true;// always send if we are capturing.
-  //if(!HaveCapture())
-  //{
-  //  // is the cursor inside the window?
-  //  doit = (PtInRect(&rcClient, pt) == TRUE);
-  //}
-  //if(doit)
-  //{
-  //  BOOL temp;
-  //  LPARAM lParam = MAKELPARAM(pt.x, pt.y);
-  //  OnMouseMove(WM_MOUSEMOVE, 0, lParam, temp);
-  //}
 }
 
 PointF CImageEditWindow::GetCursorPosition()
@@ -463,9 +454,6 @@ void CImageEditWindow::DeleteTimer(UINT_PTR cookie)
 
 LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
-  // fire tool events
-	if(m_currentTool != 0 && m_enableTools)
-	  m_currentTool->OnInitTool();
 	m_display.SetHWND(this->m_hWnd);
   return 0;
 }
@@ -612,8 +600,8 @@ void CImageEditWindow::PopCursor(bool set)
 void CImageEditWindow::SetBitmap(util::shared_ptr<Gdiplus::Bitmap> n)
 {
 	m_bitmap = n;
-  CopyImage(m_dibOriginal, *n);
-	m_display.SetOriginalImage(m_dibOriginal);
+  CopyImage(m_dibDocument, *n);
+	m_display.SetOriginalImage(m_dibRenderSource);
 	m_display.ClearSelection();
   m_display.SetImageOrigin(PointF(m_bitmap->GetWidth() / 2, m_bitmap->GetHeight() / 2), "ImageEditWnd()");
 }

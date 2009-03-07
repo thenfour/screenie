@@ -202,7 +202,7 @@ BEGIN
     LTEXT           "Static",IDC_IMAGE,109,17,330,150,0,WS_EX_CLIENTEDGE
     PUSHBUTTON      "Options...",IDC_CONFIGURE,389,173,50,14
     LTEXT           "1:1 Preview:",IDC_ZOOM_CAPTION2,7,7,55,8
-    LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,167,8
+    LTEXT           "Crop Selection:",IDC_SELECTIONSTATIC,109,7,147,8
     LTEXT           "To Pan: Click and drag with the RIGHT mouse button.",IDC_CONTROLS3,109,182,173,8
     LTEXT           "To Zoom: Use the mouse wheel.",IDC_CONTROLS2,109,191,173,8
     LTEXT           "To Select: Click and drag with the LEFT mouse button.",IDC_CONTROLS4,109,173,173,8
@@ -210,7 +210,10 @@ BEGIN
     PUSHBUTTON      "Edit image...",IDC_EDITINPAINT,335,173,50,14
     CONTROL         "",IDC_ETCHEDLINE,"Static",SS_WHITEFRAME,335,192,104,1,WS_EX_STATICEDGE
     LTEXT           "Static",IDC_INFOBOX,7,173,98,40
-    LTEXT           "PLACEHOLDER for splitter",IDC_SPLITTER,272,7,167,8
+    LTEXT           "PLACEHOLDER for splitter",IDC_SPLITTER,222,0,89,8
+    CONTROL         "C",IDC_CROPPINGTOOL,"Button",BS_AUTORADIOBUTTON,389,7,20,10
+    CONTROL         "H",IDC_HIGHLIGHTTOOL,"Button",BS_AUTORADIOBUTTON,411,7,20,10
+    PUSHBUTTON      "Reset Image",IDC_RESETIMAGE,335,7,49,10
 END
 
 IDD_NEW_DESTINATION DIALOGEX 0, 0, 207, 73

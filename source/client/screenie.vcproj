@@ -458,6 +458,10 @@
 				Name="Image Editor"
 				>
 				<File
+					RelativePath=".\source\HighlightTool.hpp"
+					>
+				</File>
+				<File
 					RelativePath=".\source\ImageEditRenderer.h"
 					>
 				</File>

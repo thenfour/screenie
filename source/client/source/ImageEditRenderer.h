@@ -1,3 +1,17 @@
+/*
+	Tools should get an offscreen area where they can draw temporary stuff on their PaintClient callback. It should be the original size, not zoomed.
+	So, here's how rendering works.
+
+	ImageEditWnd::m_bitmap is the original screenshot. A backup. It's only copied rarely.
+	ImageEditWnd::m_dibOriginal is the copied screenshot. This is the "canvas" - the actual document which will be copied from.
+	ImageEditWnd::m_offscreen is the copied screenshot plus any temporary tool paintings. When the tool declares it has temporary rendering, they can draw on this. Each paint, it's copied from m_dibOriginal, so it's always wiped clean.
+	then it hits ImageEditRenderer and this "original image canvas" gets copied to a Zoomed canvas with just the zoomed image on it
+	It's also rendered as a zoomed-grayed image
+	And then offscreen is a mixture of these based on selection rect
+	And it's rendered to the window.
+
+*/
+
 
 #pragma once
 
@@ -72,6 +86,13 @@ public:
 	{
 		m_original = &o;
 		SetDirty();
+	}
+
+	// ideally this should be done automatically somehow, or at least i should accept a rect.
+	void Invalidate()
+	{
+		SetDirty();
+		InvalidateAll();
 	}
 
 	const Viewport& GetViewport() const { return m_queued.view; }
@@ -166,14 +187,14 @@ public:
 
 		if(ZoomDirty || PanningDirty || ClientSizeDirty)
 		{
-			RenderZoomed();
-			RenderGrayed();
-			RenderOffscreen();
+			RenderZoomed(rcArea);
+			RenderGrayed(rcArea);
+			RenderOffscreen(rcArea);
 		}
 		else if(SelectionDirty)
 		{
-			RenderGrayed();
-			RenderOffscreen();
+			RenderGrayed(rcArea);
+			RenderOffscreen(rcArea);
 		}
 
 		//OutputDebugString(LibCC::Format(
@@ -314,7 +335,22 @@ private:
 		newRP.selectionZoomedCoords = v.ViewToImage(RectF(newRP.selectionScreenCoords)).Round();
 	}
 
-	void RenderZoomed()
+	inline bool PointIsBetween(int pt, int bound1, int bound2)
+	{
+		return (pt > min(bound1, bound2)) && (pt < max(bound1, bound2));
+	}
+
+	// returns true if any of source is within the display.
+	inline bool RectIsRelevant(const CRect& rcDisplay, const CRect& source)
+	{
+		// for source to be visible, EITHER x coordinate must be within the display, AND EITHER y coordinate must be within the display.
+		bool anXcoordIsWithin = PointIsBetween(source.left, rcDisplay.left, rcDisplay.right) || PointIsBetween(source.right, rcDisplay.left, rcDisplay.right);
+		bool aYcoordIsWithin = PointIsBetween(source.top, rcDisplay.top, rcDisplay.bottom) || PointIsBetween(source.bottom, rcDisplay.top, rcDisplay.bottom);
+		return anXcoordIsWithin && aYcoordIsWithin;
+	}
+
+	// TODO: only draw what we need to (using rcArea)
+	void RenderZoomed(const CRect& rcArea)
 	{
 		MakeBigEnough(m_zoomed, newRP.zoomedBufferScreenCoords.Width(), newRP.zoomedBufferScreenCoords.Height());
 		//m_zoomed.Fill(MakeRgbPixel32(255, 0, 0));
@@ -332,7 +368,8 @@ private:
 			mode);
 	}
 
-	void RenderGrayed()
+	// TODO: only draw what we need to (using rcArea)
+	void RenderGrayed(const CRect& rcArea)
 	{
 		//// simple rendering code for debugging purposes.
 		//MakeBigEnough(m_zoomedGrayed, zoomedBufferScreenCoords.Width(), zoomedBufferScreenCoords.Width());
@@ -353,19 +390,28 @@ private:
 			m_cachedSelectionArea = m_queued.selectionRect;
 
 			SubtractRectHelper s(CRect(0, 0, newRP.zoomedBufferScreenCoords.Width(), newRP.zoomedBufferScreenCoords.Height()), newRP.selectionZoomedCoords);
-			m_zoomed.Blit(m_zoomedGrayed, s.top);
-			m_zoomed.Blit(m_zoomedGrayed, s.left);
-			m_zoomed.Blit(m_zoomedGrayed, s.right);
-			m_zoomed.Blit(m_zoomedGrayed, s.bottom);
+			//if(RectIsRelevant(rcArea, s.top))
+				m_zoomed.Blit(m_zoomedGrayed, s.top);
+			//if(RectIsRelevant(rcArea, s.left))
+				m_zoomed.Blit(m_zoomedGrayed, s.left);
+			//if(RectIsRelevant(rcArea, s.right))
+				m_zoomed.Blit(m_zoomedGrayed, s.right);
+			//if(RectIsRelevant(rcArea, s.bottom))
+				m_zoomed.Blit(m_zoomedGrayed, s.bottom);
 
-			m_zoomedGrayed.GrayRect(s.top);
-			m_zoomedGrayed.GrayRect(s.left);
-			m_zoomedGrayed.GrayRect(s.right);
-			m_zoomedGrayed.GrayRect(s.bottom);
+			//if(RectIsRelevant(rcArea, s.top))
+				m_zoomedGrayed.GrayRect(s.top);
+			//if(RectIsRelevant(rcArea, s.left))
+				m_zoomedGrayed.GrayRect(s.left);
+			//if(RectIsRelevant(rcArea, s.right))
+				m_zoomedGrayed.GrayRect(s.right);
+			//if(RectIsRelevant(rcArea, s.bottom))
+				m_zoomedGrayed.GrayRect(s.bottom);
 		}
 	}
 
-	void RenderOffscreen()
+	// TODO: only draw what we need to (using rcArea)
+	void RenderOffscreen(const CRect& rcArea)
 	{
 		MakeBigEnough(m_offscreen, m_queued.clientWidth, m_queued.clientHeight);
 		//m_offscreen.Fill(MakeRgbPixel32(0,0,255));
@@ -528,6 +574,7 @@ private:
 		PanningDirty = b;
 		ClientSizeDirty = b;
 		SelectionDirty = b;
+		InvalidateAll();
 	}
 };
 

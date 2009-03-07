@@ -1,24 +1,6 @@
 //
-// Copyright (c) 2005 Roger Clark
-// Copyright (c) 2003 Carl Corcoran
+// Copyright (c) 2003-2009 Roger Clark & Carl Corcoran
 //
-/*
-  Major features of the edit window:
-  1) selection rectangle (left-mouse drags)
-  2) panning (right-drag)
-  3) zooming (mouse-wheel)
-
-  Ok let's plan for the future here... tools.  Let's design 1 "tool" to add to the
-  arsenal to kickstart the longterm design.  Selection tool is of course 1 tool.
-  Let's do the Text edit tool also, because it's so 
-
-  Some words about the tool base class.  OnPaint should be called even if the tool
-  is not selected.  That way the tool can have the option of painting stuff at all times.
-  Selection tool should be showing selection all the time.
-
-  In the future the tools should be managed in an external toolcollection class or something
-*/
-
 
 #ifndef SCREENIE_IMAGEEDITWND_HPP
 #define SCREENIE_IMAGEEDITWND_HPP
@@ -28,6 +10,7 @@
 #include "viewport.h"
 #include "ToolBase.h"
 #include "SelectionTool.h"
+#include "HighlightTool.hpp"
 #include "ImageEditRenderer.h"
 #include <map>
 #include <stack>
@@ -41,6 +24,7 @@ public:
   virtual void OnCursorPositionChanged(const PointF&) = 0;
   virtual void OnZoomFactorChanged() = 0;
   virtual void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n) = 0;
+	virtual void OnToolChanging(ToolBase* tool) = 0;
 };
 
 
@@ -86,6 +70,7 @@ public:
   void OnSelectionChanged() { }
   void OnZoomFactorChanged() { }
 	void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n) { }
+	virtual void OnToolChanging(ToolBase* tool) { }
 
   // IToolOperations methods
   void Pan(int x, int y);
@@ -112,9 +97,54 @@ public:
 	void PushCursor(PCWSTR newcursor);
 	void PopCursor(bool set);
 
+	virtual AnimBitmap<32>* GetDocument()
+	{
+		return &m_dibDocument;
+	}
+	virtual void SetDocumentDirty()
+	{
+		m_display.SetOriginalImage(m_dibRenderSource);
+	}
+	virtual void Redraw()
+	{
+		m_display.Invalidate();
+	}
+
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
 	void CenterOnImage(const PointF&);// centers the display on the given image coords
+
+	ToolBase* GetCurrentTool() const
+	{
+		return m_currentTool;
+	}
+
+	void SwitchToTool(UINT resourceID)
+	{
+		ToolBase* newTool = 0;
+		switch(resourceID)
+		{
+		case IDC_CROPPINGTOOL:
+			newTool = &m_selectionTool;
+			break;
+		case IDC_HIGHLIGHTTOOL:
+			newTool = &m_highlightTool;
+			break;
+		}
+
+		if(newTool)
+		{
+			m_notify->OnToolChanging(newTool);
+		}
+		m_currentTool = newTool;
+
+	}
+
+	void ResetImage()
+	{
+		CopyImage(m_dibDocument, *m_bitmap.get());
+		m_display.SetOriginalImage(m_dibRenderSource);
+	}
 
   // zoom
   void SetZoomFactor(float n);
@@ -134,7 +164,7 @@ public:
 	RgbPixel32 GetPixel_(CPoint p)
 	{
 		RgbPixel32 ret;
-		if(!m_dibOriginal.GetPixelSafe(ret, p.x, p.y))
+		if(!m_dibDocument.GetPixelSafe(ret, p.x, p.y))
 		{
 			return 0;
 		}
@@ -196,10 +226,11 @@ protected:
 	bool m_isLeftClickDragging;
 
   // members
-	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap.
+	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap. never modified.
 	ImageEditRenderer m_display;
-  AnimBitmap<32> m_dibOriginal;// a cached image of the original bitmap.
-	AnimBitmap<32> m_offscreen;// backbuffer.
+  AnimBitmap<32> m_dibDocument;// a cached image of the original bitmap. this is the "working" bitmap that tools can draw onto.
+  AnimBitmap<32> m_dibRenderSource;// a cached image of the original bitmap. this is the "working" bitmap that tools can draw onto.
+	AnimBitmap<32> m_offscreen;// backbuffer (m_display renders to this).
 
 	bool m_showCursor;
 	bool m_enablePanning;
@@ -217,8 +248,8 @@ protected:
 
 		PointF b(v.x - rcClient.left, v.y - rcClient.top);
 		b = m_display.GetViewport().ViewToImageSize(b);// for this one, need to also add the image size
-		b.x += m_dibOriginal.GetWidth();
-		b.y += m_dibOriginal.GetHeight();		
+		b.x += m_dibDocument.GetWidth();
+		b.y += m_dibDocument.GetHeight();		
 
 		if(org.x < -a.x) org.x = -a.x;
 		if(org.y < -a.y) org.y = -a.y;
@@ -231,6 +262,7 @@ protected:
   // tool selection stuff
   ToolBase* m_currentTool;
   SelectionTool m_selectionTool;
+	HighlightTool m_highlightTool;
 
   // timer crap (ugh all this could be avoided if SetTimer() had a userdata arg.
   std::map<UINT_PTR, std::pair<ToolTimerProc, void*> > m_timerMap;// maps 'this' pointer to proc

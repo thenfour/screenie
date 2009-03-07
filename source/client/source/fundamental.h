@@ -95,6 +95,11 @@ public:
   T x;
   T y;
 
+	Gdiplus::PointF ToGdiplusPointF()
+	{
+		return Gdiplus::PointF((Gdiplus::REAL)x, (Gdiplus::REAL)y);
+	}
+
 	bool IsEqual(const PointF& rhs, T accuracy) const
 	{
 		if(abs(x - rhs.x) > accuracy) return false;

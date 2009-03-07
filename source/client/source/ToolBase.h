@@ -1,5 +1,15 @@
 /*
   Tools for use in the ImageEdit window
+
+	Tools may need to:
+	1) modify the original image
+	2) display their own custom controls like sizing handles and stuff.
+	
+	right now the selection tool (cropping tool) is rendered specially in imageEditRenderer because
+	it's slow and needs all the optimization it can get, and it doesn't modify the original in a typical way.
+	But the highlight tool needs to do both of these things (potentially).
+
+	For now, the highlighter tool will just draw on the original image.
 */
 
 #pragma once
@@ -31,22 +41,26 @@ public:
 	virtual void SetCursorPosition(const PointF& img) = 0;
 	virtual void PushCursor(PCWSTR newcursor) = 0;// technically, the idea of a stack of cursors might not work, because cursor changes don't necessarily happen in a stack-like behavior.... but for now it works fine.
 	virtual void PopCursor(bool set) = 0;
+
+	// eventually i should probably make this cleaner. right now tools can just do whatever they want with the original image
+	// and they should call SetDirty() when it's updated.
+	virtual AnimBitmap<32>* GetDocument() = 0;
+	virtual void SetDocumentDirty() = 0;
+	virtual void Redraw() = 0;
 };
 
 
 class ToolBase
 {
 public:
-  virtual void OnInitTool() = 0;
   virtual void OnSelectTool() = 0;
   virtual void OnDeselectTool() = 0;
   virtual void OnCursorMove(PointF p, bool dragging) = 0;
   virtual void OnLeftButtonDown(PointF p) = 0;
   virtual void OnLeftButtonUp(PointF p) = 0;
-	// clean is guaranteed "clean" with no tools drawn on it.
-	// dest is, at dirtiest, the last rendering, so it may have tool drawings on it.
-  virtual void OnPaintClient(const AnimBitmap<32>& clean, AnimBitmap<32>& dest, const CRect& rcPaint) = 0;
+  virtual void OnPaintClient(AnimBitmap<32>& document) = 0;
   virtual void OnStopDragging() = 0;
-  virtual void OnStartDragging() = 0;
+  virtual void OnStartDragging(PointF p) = 0;
+	virtual int GetResourceID() = 0;// IDC_CROPPINGTOOL, IDC_HIGHLIGHTTOOL
 };
 

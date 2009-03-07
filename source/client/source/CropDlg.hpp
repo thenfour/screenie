@@ -63,12 +63,18 @@ public:
     COMMAND_ID_HANDLER(IDC_EDITINPAINT, OnEditExternally)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_CONFIGURE, OnConfigure)    
+		COMMAND_ID_HANDLER(IDC_CROPPINGTOOL, OnCroppingTool)    
+		COMMAND_ID_HANDLER(IDC_HIGHLIGHTTOOL, OnHighlightTool)    
+		COMMAND_ID_HANDLER(IDC_RESETIMAGE, OnResetImage)    
 
     CHAIN_MSG_MAP(CDialogResize<CCropDlg>)
 	END_MSG_MAP()
 
 	BEGIN_DLGRESIZE_MAP(CCropDlg)
 		DLGRESIZE_CONTROL(IDC_SPLITTER, DLSZ_SIZE_X | DLSZ_SIZE_Y)
+
+		DLGRESIZE_CONTROL(IDC_CROPPINGTOOL, DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_HIGHLIGHTTOOL, DLSZ_MOVE_X)
 
 		DLGRESIZE_CONTROL(IDC_INFOBOX, DLSZ_MOVE_Y)
 		DLGRESIZE_CONTROL(IDC_CONTROLS1, DLSZ_MOVE_Y | DLSZ_SIZE_X)
@@ -106,6 +112,13 @@ public:
   void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n)
 	{
 		m_zoomWnd.SetBitmap(n);
+	}
+
+	virtual void OnToolChanging(ToolBase* tool)
+	{
+		if(m_editWnd.GetCurrentTool())
+			CheckDlgButton(m_editWnd.GetCurrentTool()->GetResourceID(), BST_UNCHECKED);
+		CheckDlgButton(tool->GetResourceID(), BST_CHECKED);
 	}
 
   // other crap
@@ -330,6 +343,8 @@ public:
     if(ideal > 1.0f) ideal = 1.0f;
     SetZoomFactor(ideal, true);
 
+		m_editWnd.SwitchToTool(IDC_CROPPINGTOOL);
+
     m_editWnd.CenterImage();
 
     SyncZoomWindowSelection();
@@ -435,6 +450,24 @@ public:
 	{
 	  CDestinationDlg dialog(m_options, _T("OK"));
 	  dialog.DoModal();
+	  return 0;
+	}
+
+	LRESULT OnHighlightTool(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		m_editWnd.SwitchToTool(IDC_HIGHLIGHTTOOL);
+	  return 0;
+	}
+
+	LRESULT OnCroppingTool(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		m_editWnd.SwitchToTool(IDC_CROPPINGTOOL);
+	  return 0;
+	}
+
+	LRESULT OnResetImage(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		m_editWnd.ResetImage();
 	  return 0;
 	}
 

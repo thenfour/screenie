@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "resource.h"
 
 class SelectionTool :
   public ToolBase
@@ -53,9 +54,9 @@ public:
 	{
   }
 
-	void OnInitTool(){ }
   void OnSelectTool(){}
   void OnDeselectTool(){}
+	virtual int GetResourceID() { return IDC_CROPPINGTOOL; }
 
 	static inline PointF::T Calculate2DDistanceCheap(PointF::T x1, PointF::T y1, PointF::T x2, PointF::T y2)
 	{
@@ -219,7 +220,7 @@ public:
 		m_ops->SetCursorPosition(newCursorPos);
 	}
 
-  void OnStartDragging()
+  void OnStartDragging(PointF pt)
   {
 		switch(m_gripper)
 		{
@@ -275,7 +276,7 @@ public:
 	{
 	}
 
-  void OnPaintClient(const AnimBitmap<32>& clean, AnimBitmap<32>& dest, const CRect& rcPaint)
+  void OnPaintClient(AnimBitmap<32>& doc)
 	{
 	}
 
