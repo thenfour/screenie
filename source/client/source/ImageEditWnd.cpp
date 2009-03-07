@@ -76,7 +76,7 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 
   POINTS& psTemp = MAKEPOINTS(lParam);
 
-	LibCC::LogScopeMessage l(LibCC::Format(L"OnMouseMove (%,%)")(psTemp.x)(psTemp.y).Str());
+	//LibCC::LogScopeMessage l(LibCC::Format(L"OnMouseMove (%,%)")(psTemp.x)(psTemp.y).Str());
 
 	// this is necessary to prevent an endless loop when calling SetCursorPos().
 	CPoint lastCursorRounded = m_lastCursor.Round();
@@ -304,7 +304,7 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 {
 	// see ImageEditRenderer for more info on how rendering works.
 	// but basically here we need to allow tools to paint temporary stuff, and use m_display to render.
-	OutputDebugString(L"--OnPaint\r\n");
+	//OutputDebugString(L"--OnPaint\r\n");
 
 	PAINTSTRUCT paintStruct = { 0 };
 	HDC dc = BeginPaint(&paintStruct);

@@ -23,7 +23,7 @@
 //#include "..\libcrashman\libcrashman.h"
 
 // UNCOMMENT THIS TO RUN TESTMAIN() INSTEAD OF THE NORMAL WINMAIN
-//#define TESTMODE
+#define TESTMODE
 
 
 extern void TestMain();

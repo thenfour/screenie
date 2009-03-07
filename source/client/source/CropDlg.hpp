@@ -269,9 +269,13 @@ public:
     // populate the list of zoom factors.
     bool bHitOne = false;
     m_zoomFactors.push_back(0.1f);
+    m_zoomFactors.push_back(0.1677f);
     m_zoomFactors.push_back(0.25f);
+    m_zoomFactors.push_back(0.333f);
     m_zoomFactors.push_back(0.50f);
+    m_zoomFactors.push_back(0.75f);
     m_zoomFactors.push_back(1.00f);
+    m_zoomFactors.push_back(1.50f);
     m_zoomFactors.push_back(2.0f);
     m_zoomFactors.push_back(3.0f);
     m_zoomFactors.push_back(4.0f);
@@ -279,7 +283,8 @@ public:
     m_zoomFactors.push_back(8.0f);
     m_zoomFactors.push_back(12.5f);
     m_zoomFactors.push_back(18.0f);
-    m_zoomFactors.push_back(30.0f);
+    m_zoomFactors.push_back(24.0f);
+    //m_zoomFactors.push_back(30.0f);
 
     // set icons
     if(m_hIcon) DestroyIcon(m_hIcon);
@@ -414,7 +419,7 @@ public:
 		// launch mspaint
 		tstd::tstring appname;
 		GetSpecialFolderPath(appname, CSIDL_SYSTEM);
-		LibCC::PathAppendX(appname, L"mspaint.exe");
+		appname = LibCC::PathAppendX(appname, L"mspaint.exe");
 		std::wstring cmdLine = LibCC::Format(L"% %").qs(appname).qs(tempFileName).Str();
 
 		LibCC::Blob<wchar_t> blobCommandLine(cmdLine.size());
