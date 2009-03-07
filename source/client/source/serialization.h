@@ -201,7 +201,7 @@ namespace Xml
 	inline void FromString(const std::wstring& in, LibCC::Blob<BYTE>& out)
 	{
 		std::string a;
-		out = LibCC::ToANSI(in);
+		a = LibCC::ToANSI(in);
 		unsigned char* buf;
 		size_t size = Curl_base64_decode(a.c_str(), &buf);
 		out.Alloc(size);
