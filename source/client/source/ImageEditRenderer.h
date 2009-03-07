@@ -574,7 +574,8 @@ private:
 		PanningDirty = b;
 		ClientSizeDirty = b;
 		SelectionDirty = b;
-		InvalidateAll();
+		if(b)
+			InvalidateAll();
 	}
 };
 

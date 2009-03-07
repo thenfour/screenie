@@ -304,7 +304,7 @@ LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 {
 	// see ImageEditRenderer for more info on how rendering works.
 	// but basically here we need to allow tools to paint temporary stuff, and use m_display to render.
-	//OutputDebugString("--OnPaint\r\n");
+	OutputDebugString(L"--OnPaint\r\n");
 
 	PAINTSTRUCT paintStruct = { 0 };
 	HDC dc = BeginPaint(&paintStruct);
