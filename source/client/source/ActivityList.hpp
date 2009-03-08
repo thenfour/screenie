@@ -1,3 +1,5 @@
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 
 #ifndef SCREENIE_ACTIVITYLIST_HPP
 #define SCREENIE_ACTIVITYLIST_HPP

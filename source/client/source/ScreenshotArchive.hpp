@@ -1,3 +1,5 @@
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 /*
 	Interfaces with sqlite to deal with archived screenshot information.
 	Basically, each screenshot is 1 row. It may have many Events.

@@ -1,3 +1,6 @@
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
+
 /*
 	Tools should get an offscreen area where they can draw temporary stuff on their PaintClient callback. It should be the original size, not zoomed.
 	So, here's how rendering works.

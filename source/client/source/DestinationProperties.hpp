@@ -1,7 +1,7 @@
 //
 // DestinationProperties.hpp - interfaces for the destination properties dialog
-// Copyright (c) 2005 Roger Clark
-// Copyright (c) 2004 Carl Corcoran
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 //
 
 #ifndef SCREENIE_DESTINATIONPROPERTIES_HPP

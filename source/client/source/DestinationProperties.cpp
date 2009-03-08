@@ -1,7 +1,7 @@
 //
 // DestinationProperties.cpp - destination property sheet
-// Copyright (c) 2005 Roger Clark
-// Copyright (c) 2003 Carl Corcoran
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 //
 
 #include "stdafx.hpp"

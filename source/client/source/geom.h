@@ -1,3 +1,6 @@
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
+
 /*
   Jun 5, 2005 - updated for latest libcc blob
 

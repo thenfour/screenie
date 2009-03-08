@@ -1,7 +1,7 @@
 //
 // ScreenshotOptions.cpp - saving and loading of screenshot options
-// Copyright (c) 2003 Carl Corcoran
-// Copyright (c) 2005 Roger Clark
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 //
 
 #include "stdafx.hpp"

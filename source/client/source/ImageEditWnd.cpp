@@ -1,3 +1,6 @@
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
+
 /*
 	TODO: optimize rendering. We need the following surfaces:
 	- original bitmap

@@ -1,7 +1,7 @@
 //
 // internet.hpp - WinInet wrappers and utility functions
-// Copyright (c) 2003 Carl Corcoran
-// Copyright (c) 2005 Roger Clark
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 //
 
 #ifndef SCREENIE_INTERNET_HPP

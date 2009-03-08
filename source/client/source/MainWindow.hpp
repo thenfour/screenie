@@ -1,7 +1,7 @@
 //
 // MainWindow.hpp - screenie's hidden control window
-// Copyright (c) 2005 Roger Clark
-// Copyright (c) 2003 Carl Corcoran
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
 //
 
 #ifndef SCREENIE_MAINWINDOW_HPP

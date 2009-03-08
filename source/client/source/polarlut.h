@@ -1,3 +1,6 @@
+// http://screenie.net
+// Copyright (c) 2003-2009 Carl Corcoran & Roger Clark
+
 // lookup tables for polar coordinate conversion.
 // updated June 6, 2005 carlc
 //  - added GetRadius()
