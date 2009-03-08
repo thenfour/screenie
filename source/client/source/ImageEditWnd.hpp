@@ -85,11 +85,15 @@ public:
 	void ClearSelection()
 	{
 		m_display.ClearSelection();
+		if(m_slave != 0)
+			m_slave->ClearSelection();
 		m_notify->OnSelectionChanged();
 	}
 	void SetSelection(const RECT& rc)
 	{
 		m_display.SetSelectionRect(rc);
+		if(m_slave != 0)
+			m_slave->SetSelection(rc);
 		m_notify->OnSelectionChanged();
 	}
 	bool HasSelection() const { return m_display.HasSelection(); }
@@ -109,9 +113,27 @@ public:
 	{
 		m_display.Invalidate();
 	}
+	virtual void SetTemporarySurfaceDirty()
+	{
+		m_display.Invalidate();
+	}
 
   // Our own shit
 	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
+
+	void Render(HDC target, CRect rc);
+	void RenderOffscreen();
+
+	void SetMaster(CImageEditWindow* s)
+	{
+		m_slave = 0;
+		m_master = s;
+		s->m_slave = this;
+		s->m_master = 0;
+		s->m_display.SetSlaveHWND(*this);
+		m_display.SetOriginalImage(s->m_dibRenderSource);
+	}
+
 	void CenterOnImage(const PointF&);// centers the display on the given image coords
 
 	ToolBase* GetCurrentTool() const
@@ -143,7 +165,7 @@ public:
 	void ResetImage()
 	{
 		CopyImage(m_dibDocument, *m_bitmap.get());
-		m_display.SetOriginalImage(m_dibRenderSource);
+		m_display.Invalidate();
 	}
 
   // zoom
@@ -152,9 +174,9 @@ public:
 
   void CenterImage();
 
-	void SetShowCursor(bool b) { m_showCursor = b; }
-	void SetEnablePanning(bool b) { m_enablePanning = b; }
-	void SetEnableTools(bool b) { m_enableTools = b; }
+	//void SetShowCursor(bool b) { m_showCursor = b; }
+	//void SetEnablePanning(bool b) { m_enablePanning = b; }
+	//void SetEnableTools(bool b) { m_enableTools = b; }
 
   // gets the specified section of the original image.
 	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
@@ -232,9 +254,16 @@ protected:
   AnimBitmap<32> m_dibRenderSource;// a cached image of the original bitmap. this is the "working" bitmap that tools can draw onto.
 	AnimBitmap<32> m_offscreen;// backbuffer (m_display renders to this).
 
-	bool m_showCursor;
-	bool m_enablePanning;
-	bool m_enableTools;
+	CImageEditWindow* m_master;// the zoom window needs a pointer to the main one to be able to synchronize stuff.
+	CImageEditWindow* m_slave;// the zoom window needs a pointer to the main one to be able to synchronize stuff.
+
+	//bool m_showCursor;
+	//bool m_enablePanning;
+	//bool m_enableTools;
+	bool EnableTools()
+	{
+		return m_master == 0;
+	}
 
 	void ClampImageOrigin(PointF& org)
 	{

@@ -32,9 +32,18 @@ public:
   {
 		if(dragging)
 		{
-			m_path.AddLine(previousPoint.ToGdiplusPointF(), p.ToGdiplusPointF());
-			previousPoint = p;
-			m_ops->Redraw();
+			// don't bother adding a segment unless it's at least 3 original pixels away.
+			static const double minimumSegmentLength = 3.0;
+			static const double minimumSegmentLengthSquared = minimumSegmentLength * minimumSegmentLength;
+
+			double dx = abs(p.x - previousPoint.x);
+			double dy = abs(p.y - previousPoint.y);
+			if((dx * dx + dy * dy) >= minimumSegmentLengthSquared)
+			{
+				m_path.AddLine(previousPoint.ToGdiplusPointF(), p.ToGdiplusPointF());
+				previousPoint = p;
+				m_ops->Redraw();
+			}
 		}
   }
 
@@ -67,6 +76,7 @@ public:
 		if(isDrawing)
 		{
 			Gdiplus::Graphics g(doc.GetDC());
+			g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 			g.DrawPath(&m_pen, &m_path);
 		}
 	}

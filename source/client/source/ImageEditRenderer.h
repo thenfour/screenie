@@ -69,6 +69,7 @@ class ImageEditRenderer
 public:
 	ImageEditRenderer() :
 		m_original(0),
+		hwndSlave(0),
 		hwnd(0)
 	{
 		SetDirty();
@@ -80,6 +81,11 @@ public:
 		GetClientRect(hwnd, &rc);
 		m_queued.clientWidth = rc.right;
 		m_queued.clientHeight = rc.bottom;
+		SetDirty();
+	}
+	void SetSlaveHWND(HWND h)
+	{
+		hwndSlave = h;
 		SetDirty();
 	}
 	void SetOriginalImage(AnimBitmap<32>& o)
@@ -246,6 +252,11 @@ private:
 		RECT rc;
 		GetClientRect(hwnd, &rc);
 		InvalidateRect(hwnd, &rc, FALSE);
+
+		if(!hwndSlave)
+			return;
+		GetClientRect(hwndSlave, &rc);
+		InvalidateRect(hwndSlave, &rc, FALSE);
 	}
 
 	inline static void ClampRect(CRect& rc, const CRect& constraint)
@@ -561,6 +572,7 @@ private:
 	AnimBitmap<32> m_offscreen;// copy of what should be blitted to the destination... should always be "fresh" ready to be painted to the screen.
 
 	HWND hwnd;
+	HWND hwndSlave;
 	ViewParams m_params;// the currently-cached parameters
 	ViewParams m_queued;// these are worked on until rendering is requested. then caches are updated if necessary, and values are copied to m_params.
 	bool ZoomDirty;

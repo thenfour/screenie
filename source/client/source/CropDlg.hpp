@@ -94,7 +94,7 @@ public:
   // IImageEditWindowEvents methods
   void OnSelectionChanged()
   {
-    SyncZoomWindowSelection();
+    //SyncZoomWindowSelection();
   }
   void OnCursorPositionChanged(const PointF& pf)// image coords
   {
@@ -103,15 +103,15 @@ public:
 		m_infoCursorPos = pf2.Floor();
 		UpdateInfoBox();
 
-		m_zoomWnd.CenterOnImage(pf);
-    SyncZoomWindowSelection();
+		//m_zoomWnd.CenterOnImage(pf);
+    //SyncZoomWindowSelection();
   }
   void OnZoomFactorChanged()
   {
   }
   void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n)
 	{
-		m_zoomWnd.SetBitmap(n);
+		//m_zoomWnd.SetBitmap(n);
 	}
 
 	virtual void OnToolChanging(ToolBase* tool)
@@ -151,7 +151,7 @@ public:
 
   void SetZoomFactor(float ideal, bool updateTrackbar)
   {
-	size_t i;
+		size_t i;
     for(i = 0; i < m_zoomFactors.size(); ++ i)
     {
       if(m_zoomFactors[i] > ideal) break;
@@ -311,9 +311,11 @@ public:
     ::DestroyWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, WS_EX_CLIENTEDGE, IDC_ZOOM);
 		m_zoomWnd.SetZoomFactor(1.0f);
-		m_zoomWnd.SetShowCursor(true);
-		m_zoomWnd.SetEnablePanning(false);
-		m_zoomWnd.SetEnableTools(false);
+		//m_zoomWnd.SetShowCursor(true);
+		//m_zoomWnd.SetEnablePanning(false);
+		//m_zoomWnd.SetEnableTools(false);
+
+		m_zoomWnd.SetMaster(&m_editWnd);
 
 		::DestroyWindow(GetDlgItem(IDC_SPLITTER));
 		m_splitter.Create(*this, rcSplitter, L"", WS_CHILD | WS_VISIBLE, /*exstyle*/0, IDC_SPLITTER, /*lparam*/0);
@@ -352,25 +354,25 @@ public:
 
     m_editWnd.CenterImage();
 
-    SyncZoomWindowSelection();
+    //SyncZoomWindowSelection();
 
 		return 0;
 	}
 
-  void SyncZoomWindowSelection()
-  {
-		if(m_editWnd.HasSelection())
-		{
-	    CRect rc = m_editWnd.GetSelection();
-			m_infoSelection = rc;
-			UpdateInfoBox();
-			m_zoomWnd.SetSelection(rc);
-    }
-    else
-    {
-      m_zoomWnd.ClearSelection();
-    }
-  }
+  //void SyncZoomWindowSelection()
+  //{
+		//if(m_editWnd.HasSelection())
+		//{
+	 //   CRect rc = m_editWnd.GetSelection();
+		//	m_infoSelection = rc;
+		//	UpdateInfoBox();
+		//	m_zoomWnd.SetSelection(rc);
+  //  }
+  //  else
+  //  {
+  //    m_zoomWnd.ClearSelection();
+  //  }
+  //}
 
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
@@ -394,7 +396,7 @@ public:
 				return false;
 
 			m_bitmap = util::shared_ptr<Gdiplus::Bitmap>(p);
-			m_zoomWnd.SetBitmap(m_bitmap);
+			//m_zoomWnd.SetBitmap(m_bitmap);
 			m_editWnd.SetBitmap(m_bitmap);
 
       SetZoomFactor(1.0f, true);

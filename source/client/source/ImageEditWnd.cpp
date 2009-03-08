@@ -1,4 +1,18 @@
+/*
+	TODO: optimize rendering. We need the following surfaces:
+	- original bitmap
+	- "document" that can be modified by tools
+	- a temporary surface that can be modified by tools
+	- a zoomed surface with the zoomed image
+	- another temporary surface where tools can render on the zoomed image (directly to the offscreen surface basically like for drawing selection handles)
+	- whatever other surfaces are necessary for rendering
 
+	* we should make the selection tool do all of its drawing in class SelectionTool, instead of ImageEditRenderer
+	* we should make master / slave drawing optimized.
+	* never redraw stuff that didn't change
+	* consider partial window rendering
+	* consider panning optimization
+*/
 #include "stdafx.hpp"
 #include "ImageEditWnd.hpp"
 #include "image.hpp"
@@ -31,11 +45,13 @@ CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IIm
   m_lastCursorImage(0,0),
   m_panningTimer(0),
 	m_currentTool(0),
-	m_showCursor(false),
-	m_enablePanning(true),
+//	m_showCursor(false),
+//	m_enablePanning(true),
 	m_isLeftClickDragging(false),
-	m_enableTools(true),
-	m_captureRefs(0)
+//	m_enableTools(true),
+	m_captureRefs(0),
+	m_master(0),
+	m_slave(0)
 {
   CopyImage(m_dibDocument, *bitmap);
 	m_display.SetOriginalImage(m_dibRenderSource);
@@ -123,8 +139,13 @@ LRESULT CImageEditWindow::OnMouseMove(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 	}
 
   // fire tool events.
-	if(m_currentTool != 0 && m_enableTools)
+	if(m_currentTool != 0 && EnableTools())
 		m_currentTool->OnCursorMove(cursorPosImage, m_isLeftClickDragging && HaveCapture());
+
+	if(m_slave != 0)
+	{
+		m_slave->CenterOnImage(cursorPosImage);
+	}
 
   m_notify->OnCursorPositionChanged(cursorPosImage);
 
@@ -156,19 +177,19 @@ LRESULT CImageEditWindow::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
 
-	LibCC::LogScopeMessage l(LibCC::Format(L"OnLButtonDown (%,%)")(psTemp.x)(psTemp.y).Str());
+	//LibCC::LogScopeMessage l(LibCC::Format(L"OnLButtonDown (%,%)")(psTemp.x)(psTemp.y).Str());
 
 	PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
 	m_isLeftClickDragging = true;
 
   // fire tool events.
-	if(m_currentTool != 0 && m_enableTools)
+	if(m_currentTool != 0 && EnableTools())
 	  m_currentTool->OnLeftButtonDown(pt);
 
 	AddCapture();
 
-	if(m_currentTool != 0 && m_enableTools)
+	if(m_currentTool != 0 && EnableTools())
 	  m_currentTool->OnStartDragging(pt);
 
   return MouseLeave();
@@ -179,7 +200,7 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
   if(!MouseEnter()) return 0;
 
   POINTS& psTemp = MAKEPOINTS(lParam);
-	LibCC::LogScopeMessage l(LibCC::Format(L"OnLButtonUp (%,%)")(psTemp.x)(psTemp.y).Str());
+	//LibCC::LogScopeMessage l(LibCC::Format(L"OnLButtonUp (%,%)")(psTemp.x)(psTemp.y).Str());
 	CPoint cursorPos(psTemp.x, psTemp.y);
   PointF pt = m_display.GetViewport().ViewToImage(PointF((float)cursorPos.x, (float)cursorPos.y));
 
@@ -187,7 +208,7 @@ LRESULT CImageEditWindow::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 	m_isLeftClickDragging = false;
 
   // fire tool events.
-	if(m_currentTool != 0 && m_enableTools)
+	if(m_currentTool != 0 && EnableTools())
 	  m_currentTool->OnLeftButtonUp(pt);
 
   return MouseLeave();
@@ -201,10 +222,10 @@ LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 	BOOL t;
 	OnMouseMove(0, 0, lParam, t);
 
-	if(!m_enablePanning) return 0;
+	if(m_master != 0) return 0;
   if(!MouseEnter()) return 0;
   POINTS& psTemp = MAKEPOINTS(lParam);
-	LibCC::LogScopeMessage l(LibCC::Format(L"OnRButtonDown (%,%)")(psTemp.x)(psTemp.y).Str());
+	//LibCC::LogScopeMessage l(LibCC::Format(L"OnRButtonDown (%,%)")(psTemp.x)(psTemp.y).Str());
 
   m_bIsPanning = true;
 	m_actuallyDidPanning = false;
@@ -218,10 +239,10 @@ LRESULT CImageEditWindow::OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled)
 {
 	bHandled = FALSE;// necessary to send WM_CONTEXTMENU
-	if(!m_enablePanning) return 0;
+	if(m_master != 0) return 0;
   if(!MouseEnter()) return 0;
   POINTS& psTemp = MAKEPOINTS(lParam);
-	LibCC::LogScopeMessage l(LibCC::Format(L"OnRButtonUp (%,%)")(psTemp.x)(psTemp.y).Str());
+	//LibCC::LogScopeMessage l(LibCC::Format(L"OnRButtonUp (%,%)")(psTemp.x)(psTemp.y).Str());
 
 	if(m_bIsPanning)
   {
@@ -239,11 +260,12 @@ LRESULT CImageEditWindow::OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM l
 
 LRESULT CImageEditWindow::OnContextMenu(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
+	if(m_master != 0) return 0;// do not show context menus if this is a "slave" (e.g. the zoom window)
   if(!MouseEnter()) return 0;
   POINTS& psTemp = MAKEPOINTS(lParam);
 	CPoint cursorPos(psTemp.x, psTemp.y);
 
-	LibCC::LogScopeMessage l(LibCC::Format(L"OnContextMenu (%,%)")(psTemp.x)(psTemp.y).Str());
+	//LibCC::LogScopeMessage l(LibCC::Format(L"OnContextMenu (%,%)")(psTemp.x)(psTemp.y).Str());
 
 	CMenu contextMenu(AtlLoadMenu(IDR_CROPMENU));
 	CMenuHandle trayMenu = contextMenu.GetSubMenu(0);
@@ -270,7 +292,7 @@ LRESULT CImageEditWindow::OnLoseCapture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 	m_isLeftClickDragging = false;
 
 	// fire tool events.
- 	if(m_currentTool != 0 && m_enableTools)
+ 	if(m_currentTool != 0 && EnableTools())
 		m_currentTool->OnStopDragging();
 
   return 0;
@@ -300,42 +322,87 @@ LRESULT CImageEditWindow::OnSize(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lPara
   return 0;
 }
 
+void CImageEditWindow::RenderOffscreen()
+{
+	CRect rcUpdate;
+	GetClientRect(&rcUpdate);
+	if(m_master != 0)// we are a slave (zoom window)
+	{
+		m_master->RenderOffscreen();
+		m_display.Render(m_offscreen, rcUpdate);
+	}
+	else// we are a master or independent
+	{
+		m_dibRenderSource.SetSize(m_dibDocument.GetWidth(), m_dibDocument.GetHeight());
+		m_dibDocument.Blit(m_dibRenderSource, 0, 0);
+
+		if(m_currentTool != 0)
+			m_currentTool->OnPaintClient(m_dibRenderSource);
+
+		m_display.Render(m_offscreen, rcUpdate);
+	}
+}
+
+void CImageEditWindow::Render(HDC target, CRect rc)
+{
+	GetClientRect(&rc);// just always draw the whole window.
+
+	RenderOffscreen();
+
+	m_offscreen.Blit(target, 0, 0, rc.right, rc.bottom);
+
+	if(m_master != 0)// if this is a slave
+	{
+		ICONINFO ii = {0};
+		GetIconInfo(LoadCursor(0, IDC_CROSS), &ii);
+		DeleteObject(ii.hbmColor);
+		DeleteObject(ii.hbmMask);
+		::DrawIcon(target,
+			(rc.right / 2) - ii.xHotspot,
+			(rc.bottom / 2) - ii.yHotspot,
+			LoadCursor(0, IDC_CROSS));
+	}
+}
+
 LRESULT CImageEditWindow::OnPaint(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
 {
-	// see ImageEditRenderer for more info on how rendering works.
-	// but basically here we need to allow tools to paint temporary stuff, and use m_display to render.
-	//OutputDebugString(L"--OnPaint\r\n");
-
-	PAINTSTRUCT paintStruct = { 0 };
-	HDC dc = BeginPaint(&paintStruct);
-
-	m_dibRenderSource.SetSize(m_dibDocument.GetWidth(), m_dibDocument.GetHeight());
-	m_dibDocument.Blit(m_dibRenderSource, 0, 0);
-
-	if(m_currentTool != 0)
-		m_currentTool->OnPaintClient(m_dibRenderSource);
-
-	m_display.Render(m_offscreen, paintStruct.rcPaint);
-
-	if(m_showCursor)
+	// when slave is being painted, it should tell the master to paint as well.
+	if(m_master != 0)
 	{
-		RECT clientRect;
-		GetClientRect(&clientRect);
-    ICONINFO ii = {0};
-    GetIconInfo(LoadCursor(0, IDC_CROSS), &ii);
-    DeleteObject(ii.hbmColor);
-    DeleteObject(ii.hbmMask);
-    ::DrawIcon(m_offscreen.GetDC(),
-      (clientRect.right / 2) - ii.xHotspot,
-      (clientRect.bottom / 2) - ii.yHotspot,
-      LoadCursor(0, IDC_CROSS));
+		if(0 != m_master->GetUpdateRect(NULL))
+		{
+			CRect rcMaster;
+			m_master->GetClientRect(&rcMaster);
+			HDC dcMaster = m_master->GetDC();
+			m_master->Render(dcMaster, rcMaster);
+			m_master->ReleaseDC(dcMaster);
+			m_master->ValidateRect(rcMaster);
+		}
 	}
 
-	m_offscreen.Blit(paintStruct.hdc, paintStruct.rcPaint.left, paintStruct.rcPaint.top, paintStruct.rcPaint.right - paintStruct.rcPaint.left,
-		paintStruct.rcPaint.bottom - paintStruct.rcPaint.top,
-		paintStruct.rcPaint.left, paintStruct.rcPaint.top);
+	if(m_slave != 0)
+	{
+		if(0 != m_slave->GetUpdateRect(NULL))
+		{
+			CRect rcSlave;
+			m_slave->GetClientRect(&rcSlave);
+			HDC dcSlave = m_slave->GetDC();
+			m_slave->Render(dcSlave, rcSlave);
+			m_slave->ReleaseDC(dcSlave);
+			m_slave->ValidateRect(rcSlave);
+		}
+	}
 
+	PAINTSTRUCT paintStruct = { 0 };
+	BeginPaint(&paintStruct);
 	EndPaint(&paintStruct);
+
+	CRect rc;
+	this->GetClientRect(&rc);
+	HDC dc = this->GetDC();
+	this->Render(dc, rc);
+	this->ReleaseDC(dc);
+
 	return 0;
 }
 

@@ -46,6 +46,7 @@ public:
 	// and they should call SetDirty() when it's updated.
 	virtual AnimBitmap<32>* GetDocument() = 0;
 	virtual void SetDocumentDirty() = 0;
+	virtual void SetTemporarySurfaceDirty() = 0;
 	virtual void Redraw() = 0;
 };
 
@@ -63,4 +64,3 @@ public:
   virtual void OnStartDragging(PointF p) = 0;
 	virtual int GetResourceID() = 0;// IDC_CROPPINGTOOL, IDC_HIGHLIGHTTOOL
 };
-
