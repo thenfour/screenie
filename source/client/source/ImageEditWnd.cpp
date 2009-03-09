@@ -74,7 +74,7 @@ ViewPortSubPixel CImageEditWindow::GetZoomFactor() const
 
 util::shared_ptr<Gdiplus::Bitmap> CImageEditWindow::GetBitmapRect(const RECT& rectToCopy)
 {
-	Gdiplus::Bitmap* bitmapClone = m_dibDocument.GetGdiplusBitmap()->Clone(rectToCopy.left, rectToCopy.top,
+	Gdiplus::Bitmap* bitmapClone = m_dibRenderSource.GetGdiplusBitmap()->Clone(rectToCopy.left, rectToCopy.top,
 		rectToCopy.right - rectToCopy.left, rectToCopy.bottom - rectToCopy.top, PixelFormatDontCare);
 
 	return util::shared_ptr<Gdiplus::Bitmap>(bitmapClone);
