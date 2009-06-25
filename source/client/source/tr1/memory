@@ -1,6 +1,9 @@
 #ifndef _SSTL_TR1_MEMORY_
 #define _SSTL_TR1_MEMORY_
 
+#if _HAS_TR1
+#else
+
 // This is an implementation of some or all of the classes expected to be included in the Library Technical Report in 2003.
 // These are likely to end up in the standard. Until they do, they rest in the std::tr1 namespace.
 
@@ -486,4 +489,5 @@ namespace std
 	}
 }}
 
+#endif
 #endif
