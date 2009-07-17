@@ -73,6 +73,14 @@ bool ProcessImageShackDestination(DestinationArgs& args)
 		return false;
 	}
 
+	// get the file size.
+	//DWORD fileSize = 0;
+	//Win32Handle f = CreateFile(temporaryFilename.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0); 
+	//if(LibCC::IsValidHandle(f.val))
+	//{
+	//	fileSize = GetFileSize(f.val, 0);
+	//}
+
 	ScreenieHttpRequest request(&args.statusDlg, msgid);
 
 	request.AddFile("fileupload", LibCC::ToUTF8(temporaryFilename), LibCC::ToUTF8(args.dest.general.imageFormat));
@@ -104,7 +112,7 @@ bool ProcessImageShackDestination(DestinationArgs& args)
 							args.statusDlg.EventSetText(msgid, TEXT("Upload complete."));
 							args.statusDlg.EventSetIcon(msgid, EI_CHECK);
 
-							args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded to: %").s(bstrURL).Str());
+							args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % to: %").s(BytesToString(request.GetUploadSize())).s(bstrURL).Str());
 							args.statusDlg.EventSetURL(msgid, bstrURL);
 
 							if (args.dest.imageshack.copyURL)
@@ -195,7 +203,7 @@ bool ProcessFileDestination(DestinationArgs& args)
 		if(LibCC::IsValidHandle(f.val))
 		{
 			args.statusDlg.RegisterEvent(args.screenshotID, EI_CHECK, ET_FILE, args.dest.general.name,
-				LibCC::Format(L"File (% bytes) saved to %").ul(GetFileSize(f.val, 0)).qs(fullPath).Str(), fullPath);
+				LibCC::Format(L"File (%) saved to %").s(BytesToString(GetFileSize(f.val, 0))).qs(fullPath).Str(), fullPath);
 		}
 		else
 		{
@@ -238,27 +246,6 @@ bool ProcessClipboardDestination(DestinationArgs& args)
 			args.bUsedClipboard = true;
 			r.Succeed();
 		}
-
-		//HBITMAP clipboardBitmap = NULL;
-		//if (Gdiplus::Ok != transformedScreenshot->GetHBITMAP(Gdiplus::Color(0,0,0), &clipboardBitmap))
-  //  {
-		//	r.Fail(TEXT("Clipboard: Can't get clipboard-friendly image data"));
-  //  }
-  //  else
-		//{
-		//	HBITMAP bitmapCopy = DuplicateScreenshotBitmap(clipboardBitmap);
-		//	DeleteObject(clipboardBitmap);
-
-  //    LibCC::Result r = Clipboard(hwnd).SetBitmap(bitmapCopy);
-		//	DeleteObject(bitmapCopy);
-  //    if(r.Succeeded())
-  //    {
-		//		args.statusDlg.RegisterEvent(args.screenshotID, EI_CHECK, ET_GENERAL, args.dest.general.name,
-  //        _T("Copied image to clipboard"));
-  //      usedClipboard = true;
-  //      r.Succeed();
-		//	}
-		//}
 	}
 
   if(!r)

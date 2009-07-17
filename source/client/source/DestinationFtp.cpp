@@ -91,7 +91,7 @@ bool ProcessFtpDestination(DestinationArgs& args)
 
 		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");
 
-		args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % bytes (% KB/s) to %").ui(request.GetUploadSize()).d(request.GetUploadSpeed(), 3).s(url).Str());
+		args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % (% KB/s) to %").s(BytesToString(request.GetUploadSize())).d(request.GetUploadSpeed(), 3).s(url).Str());
 		args.statusDlg.EventSetURL(msgid, url);
 
 		if (args.dest.ftp.copyURL)

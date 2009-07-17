@@ -36,6 +36,7 @@
 #define IDC_COMBO1                      1005
 #define IDC_FTP_PASSWORD                1005
 #define IDC_GENERAL_TYPE                1005
+#define IDC_CONTROLS5                   1005
 #define IDC_REMOVE                      1006
 #define IDC_COMBO2                      1006
 #define IDC_GENERAL_FILENAME            1006
@@ -132,7 +133,6 @@
 #define IDC_INFO                        1077
 #define IDC_INFOBOX                     1078
 #define IDC_QUALITYLABEL                1079
-#define IDC_RESET                       1081
 #define IDC_RESETIMAGE                  1081
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121

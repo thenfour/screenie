@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="screenie"
 	ProjectGUID="{C842F6FF-88EE-4F49-A446-74A504643F8F}"
 	RootNamespace="screenie"
@@ -660,6 +660,42 @@
 			</File>
 			<File
 				RelativePath=".\source\HttpRequest.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="LibCC"
+			>
+			<File
+				RelativePath=".\source\libcc\blob.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\float.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\log.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\registry.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\result.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\stringutil.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\timer.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\libcc\winapi.hpp"
 				>
 			</File>
 		</Filter>

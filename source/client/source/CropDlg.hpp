@@ -29,6 +29,11 @@ public:
 		IDD = IDD_CROPDLG
 	};
 
+	enum
+	{
+		ID_TOGGLEINFOUPDATE = WM_APP + 1
+	};
+
 	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
     m_editWnd(bitmap, this),
@@ -38,7 +43,8 @@ public:
     m_hIcon(0),
 		m_didCropping(false),
 		m_hHook(0),
-		m_hAccelerators(0)
+		m_hAccelerators(0),
+		m_infoUpdate(true)
   {
 		g_instances.insert(this);
   }
@@ -66,6 +72,7 @@ public:
 		COMMAND_ID_HANDLER(IDC_CROPPINGTOOL, OnCroppingTool)    
 		COMMAND_ID_HANDLER(IDC_HIGHLIGHTTOOL, OnHighlightTool)    
 		COMMAND_ID_HANDLER(IDC_RESETIMAGE, OnResetImage)    
+		COMMAND_ID_HANDLER(ID_TOGGLEINFOUPDATE, OnToggleInfoUpdate)    
 
     CHAIN_MSG_MAP(CDialogResize<CCropDlg>)
 	END_MSG_MAP()
@@ -81,6 +88,7 @@ public:
 		DLGRESIZE_CONTROL(IDC_CONTROLS2, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS3, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 		DLGRESIZE_CONTROL(IDC_CONTROLS4, DLSZ_MOVE_Y | DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_CONTROLS5, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 
     DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
     DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
@@ -236,7 +244,7 @@ public:
 		DragAcceptFiles();
 
 		{
-			ACCEL accel[6] = {0};
+			ACCEL accel[7] = {0};
 			accel[0].fVirt = FCONTROL | FVIRTKEY;
 			accel[0].key = 'C';
 			accel[0].cmd = ID_EDIT_COPY;
@@ -261,7 +269,11 @@ public:
 			accel[5].key = VK_INSERT;
 			accel[5].cmd = ID_EDIT_PASTE;
 
-			m_hAccelerators = CreateAcceleratorTable(accel, 6);
+			accel[5].fVirt = FVIRTKEY;
+			accel[5].key = VK_F4;
+			accel[5].cmd = ID_TOGGLEINFOUPDATE;
+
+			m_hAccelerators = CreateAcceleratorTable(accel, LibCC::SizeofStaticArray(accel));
 			// because there is no PreTranslateMessage with WTL's implementation of DoModal, i need a way to handle accelerators manually.
 			m_hHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgProc, _Module.GetResourceInstance(), GetCurrentThreadId());
 		}
@@ -478,6 +490,15 @@ public:
 	  return 0;
 	}
 
+	bool m_infoUpdate;
+
+	LRESULT OnToggleInfoUpdate(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		m_infoUpdate = !m_infoUpdate;
+		UpdateInfoBox();
+	  return 0;
+	}
+
 	void CloseDialog(int nVal)
 	{
 		if (nVal == IDOK)
@@ -522,12 +543,16 @@ private:
 	// info stuff
 	CPoint m_infoCursorPos;
 	float m_infoZoomFactor;
-	CRect m_infoSelection;
+	//CRect m_infoSelection;
 	std::wstring m_infoText;
 
 	void UpdateInfoBox()
 	{
+		if(!m_infoUpdate)
+			return;
+
 		RgbPixel32 pixel = m_editWnd.GetPixel_(m_infoCursorPos);
+    CRect m_infoSelection = m_editWnd.GetSelection();
 
 		LibCC::Format info = LibCC::Format(
 			"Zoom: %^%|"

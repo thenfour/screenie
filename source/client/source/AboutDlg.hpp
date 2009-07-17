@@ -65,7 +65,7 @@ public:
 		DWORD s;
 		if(m_archive.GetDBFileSize(s))
 		{
-			archiveSize = FormatSize(s);
+			archiveSize = BytesToString(s);
 		}
 		LibCC::Format infoText = LibCC::Format(
 			"Application:|  %|"

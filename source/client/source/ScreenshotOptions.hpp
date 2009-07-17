@@ -16,6 +16,39 @@ enum ScreenshotAction
 	SA_SHOWDESTINATIONS
 };
 
+#define SA_NONE_GUI L"Save the screenshot without showing the image editor or options dialog"
+#define SA_SHOWCROP_GUI L"Show the image editor before saving the screenshot"
+#define SA_SHOWDESTINATIONS_GUI L"Show the options dialog before saving the screenshot"
+
+// these strings are used for the GUI
+inline std::wstring ScreenshotActionToString(ScreenshotAction sa)
+{
+	switch(sa)
+	{
+	case SA_NONE:
+		return SA_NONE_GUI;
+	case SA_SHOWDESTINATIONS:
+		return SA_SHOWDESTINATIONS_GUI;
+	}
+	return SA_SHOWCROP_GUI;
+}
+
+
+inline ScreenshotAction StringToScreenshotAction(const std::wstring& s)
+{
+	std::wstring l = LibCC::StringToLower(s);
+	if(l == LibCC::StringToLower(SA_NONE_GUI))
+	{
+		return SA_NONE;
+	}
+	else if(l == LibCC::StringToLower(SA_SHOWDESTINATIONS_GUI))
+	{
+		return SA_SHOWDESTINATIONS;
+	}
+	return SA_SHOWCROP;
+}
+
+
 #define SA_NONE_STR_OLD L"Do nothing."
 #define SA_SHOWCROP_STR_OLD L"Edit the image."
 #define SA_SHOWDESTINATIONS_STR_OLD L"Show the options dialog."
@@ -24,8 +57,8 @@ enum ScreenshotAction
 #define SA_SHOWCROP_STR L"Show cropping window"
 #define SA_SHOWDESTINATIONS_STR L"Show options dialog"
 
-// NOTE that these strings are used for both the GUI and the options XML.
-inline std::wstring ScreenshotActionToString(ScreenshotAction sa)
+// NOTE that these strings are used for the options XML. if the values change, need to come up with an upgrade plan.
+inline std::wstring SerializeScreenshotAction(ScreenshotAction sa)
 {
 	switch(sa)
 	{
@@ -38,7 +71,7 @@ inline std::wstring ScreenshotActionToString(ScreenshotAction sa)
 }
 
 
-inline ScreenshotAction StringToScreenshotAction(const std::wstring& s)
+inline ScreenshotAction DeserializeScreenshotAction(const std::wstring& s)
 {
 	std::wstring l = LibCC::StringToLower(s);
 	if(l == LibCC::StringToLower(SA_NONE_STR) || l == LibCC::StringToLower(SA_NONE_STR_OLD))
@@ -51,6 +84,9 @@ inline ScreenshotAction StringToScreenshotAction(const std::wstring& s)
 	}
 	return SA_SHOWCROP;
 }
+
+
+
 
 class ScreenshotOptions
 {

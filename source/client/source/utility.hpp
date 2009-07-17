@@ -64,27 +64,62 @@ inline std::wstring GetNumberFormatX(std::wstring input)
 	GetNumberFormat(LOCALE_USER_DEFAULT, 0, input.c_str(), 0, retBlob.GetBuffer(100), 99);
 	return retBlob.GetBuffer();
 }
+//
+//inline std::wstring FormatSize(DWORD dwFileSize)
+//{
+//  static const DWORD dwKB = 1024;
+//  static const DWORD dwMB = 1024 * dwKB;
+//  static const DWORD dwGB = 1024 * dwMB;
+//
+//  if (dwFileSize < dwKB)
+//  {
+//		return LibCC::Format("% b")(GetNumberFormatX(LibCC::Format().f<2,2>((float)dwFileSize).Str())).Str();
+//  }
+//  if (dwFileSize < dwMB)
+//  {
+//		return LibCC::Format("% kb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwKB).Str())).Str();
+//  }
+//  if (dwFileSize < dwGB)
+//  {
+//		return LibCC::Format("% mb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwMB).Str())).Str();
+//  }
+//	return LibCC::Format("% gb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwGB).Str())).Str();
+//}
 
-inline std::wstring FormatSize(DWORD dwFileSize)
+/*
+	1 bytes
+	1023 bytes
+	1.0 kb
+	9.9 kb
+	10 kb
+	1023 kb
+	1.0 mb
+	9.9 mb
+*/
+inline std::wstring BytesToString(size_t bytes)
 {
-  static const DWORD dwKB = 1024;
-  static const DWORD dwMB = 1024 * dwKB;
-  static const DWORD dwGB = 1024 * dwMB;
+	if(bytes < 1024)
+		return LibCC::Format(L"% bytes").ui(bytes).Str();
+	PCWSTR suffixes[] = { L"kb", L"mb", L"gb" };
+	int lastSuffix = LibCC::SizeofStaticArray(suffixes) - 1;
+	double size = (double)bytes / 1024;
+	int suffix = 0;
+	while(true)
+	{
+		if(size < 10)
+		{
+			return LibCC::Format(L"% %").d<1>(size).s(suffixes[suffix]).Str();
+		}
+		if(size < 1024 || suffix == lastSuffix)
+		{
+			return LibCC::Format(L"% %").d<0>(size).s(suffixes[suffix]).Str();
+		}
 
-  if (dwFileSize < dwKB)
-  {
-		return LibCC::Format("% b")(GetNumberFormatX(LibCC::Format().f<2,2>((float)dwFileSize).Str())).Str();
-  }
-  if (dwFileSize < dwMB)
-  {
-		return LibCC::Format("% kb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwKB).Str())).Str();
-  }
-  if (dwFileSize < dwGB)
-  {
-		return LibCC::Format("% mb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwMB).Str())).Str();
-  }
-	return LibCC::Format("% gb")(GetNumberFormatX(LibCC::Format().f<2,2>(((float)dwFileSize) / dwGB).Str())).Str();
+		size /= 1024;
+		suffix ++;
+	}
 }
+
 
 class Guid
 {
@@ -339,7 +374,6 @@ public:
 		m_pStream->Release();
 	}
 };
-
 
 inline std::wstring LoadTextFileResource(HINSTANCE hInstance, LPCTSTR szResName, LPCTSTR szResType)
 {

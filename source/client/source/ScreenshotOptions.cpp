@@ -189,7 +189,7 @@ void ScreenshotOptions::Serialize(Xml::Element parent) const
 //	Xml::Serialize(parent, L"ConfirmOptions", m_confirmOptions);
 	Xml::Serialize(parent, L"ShowStatus", m_showStatus);
 //	Xml::Serialize(parent, L"ShowCropWindow", m_showCropWindow);
-	Xml::Serialize(parent, L"ScreenshotAction", ScreenshotActionToString(m_screenshotAction));
+	Xml::Serialize(parent, L"ScreenshotAction", SerializeScreenshotAction(m_screenshotAction));
 	//Xml::Serialize(parent, L"ShowSplash", m_showSplash);
 	Xml::Serialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
 	Xml::Serialize(parent, L"EnableArchive", m_enableArchive);
@@ -234,7 +234,7 @@ void ScreenshotOptions::Deserialize(Xml::Element parent)
 	Xml::Deserialize(parent, L"ShowStatus", m_showStatus);
 	std::wstring stemp;
 	Xml::Deserialize(parent, L"ScreenshotAction", stemp);
-	m_screenshotAction = StringToScreenshotAction(stemp);
+	m_screenshotAction = DeserializeScreenshotAction(stemp);
 
 	Xml::Deserialize(parent, L"CroppingZoomFactor", m_croppingZoomFactor);
 	Xml::Deserialize(parent, L"CroppingSplitterPosition", CroppingSplitterPosition);
