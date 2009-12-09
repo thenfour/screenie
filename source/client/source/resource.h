@@ -61,12 +61,15 @@
 #define IDC_FTP_PORT                    1014
 #define IDC_SHOWSTATUS2                 1014
 #define IDC_AUTOSTART                   1014
+#define IDC_IMAGESHACK_SHORTENURL       1014
 #define IDC_FTP_HOSTNAME                1015
 #define IDC_SHOWSPLASH                  1015
 #define IDC_HIGHLIGHTTOOL               1015
 #define IDC_FTP_REMOTEPATH              1016
 #define IDC_GENERAL_NAME                1017
 #define IDC_FTP_HTTPURL                 1017
+#define IDC_IMAGESHACK_COPYURL2         1018
+#define IDC_FTP_SHORTENURL              1018
 #define IDC_RADIO1                      1020
 #define IDC_RESIZE_SCALE                1020
 #define IDC_EDIT2                       1021

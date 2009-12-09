@@ -42,6 +42,9 @@ void CDestinationPropertiesFTP::ShowSettings()
 		SetDlgItemText(IDC_FTP_REMOTEPATH, m_settings.remotePath.c_str());
 		SetDlgItemText(IDC_FTP_HTTPURL, m_settings.resultURL.c_str());
 		CheckDlgButton(IDC_FTP_COPYURL, m_settings.copyURL ? BST_CHECKED : BST_UNCHECKED);
+
+		GetDlgItem(IDC_FTP_SHORTENURL).EnableWindow(IsDlgButtonChecked(IDC_FTP_COPYURL) == TRUE);
+		CheckDlgButton(IDC_FTP_SHORTENURL, m_settings.shortenURL ? BST_CHECKED : BST_UNCHECKED);
 	}
 }
 
@@ -51,6 +54,13 @@ LRESULT CDestinationPropertiesFTP::OnInitDialog(UINT msg, WPARAM wParam, LPARAM 
 
 	return 0;
 }
+
+LRESULT CDestinationPropertiesFTP::OnCopyURLClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	GetDlgItem(IDC_FTP_SHORTENURL).EnableWindow(IsDlgButtonChecked(IDC_FTP_COPYURL) == TRUE);
+	return 0;
+}
+
 
 //
 // DestinationPropertyPage implementation
@@ -87,6 +97,8 @@ void CDestinationPropertiesFTP::GetSettings(ScreenshotDestination& destination)
 			m_settings.resultURL += _T('/');
 
 		m_settings.copyURL = (IsDlgButtonChecked(IDC_FTP_COPYURL) == TRUE);
+		m_settings.shortenURL = (IsDlgButtonChecked(IDC_FTP_SHORTENURL) == TRUE);
+
 		CComboBox passwordOptions(GetDlgItem(IDC_PASSWORDOPTIONS));
 		m_settings.passwordOptions = (ScreenshotDestination::Ftp::PasswordOptions)passwordOptions.GetCurSel();
 	}

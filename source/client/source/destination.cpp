@@ -25,6 +25,8 @@
 #include <curl/easy.h>
 #include "curlutil.h"
 
+#include "BitlyURL.h"
+
 typedef MSXML2::IXMLDOMDocumentPtr Document;
 typedef MSXML2::IXMLDOMElementPtr Element;
 typedef MSXML2::IXMLDOMNodePtr Node;
@@ -115,24 +117,35 @@ bool ProcessImageShackDestination(DestinationArgs& args)
 							args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % to: %").s(BytesToString(request.GetUploadSize())).s(bstrURL).Str());
 							args.statusDlg.EventSetURL(msgid, bstrURL);
 
+							std::wstring strFinalURL = bstrURL;
+
 							if (args.dest.imageshack.copyURL)
 							{
+								if (args.dest.imageshack.shortenURL)
+								{
+									BitlyShortenInfo info;
+									if (BitlyShortenURL(args, strFinalURL, info))
+									{
+										strFinalURL = info.shortURL;
+									}
+								}
+
 								if (args.bUsedClipboard)
 								{
 									args.statusDlg.RegisterEvent(args.screenshotID, EI_WARNING, ET_GENERAL, args.dest.general.name, _T("Warning: Overwriting clipboard contents"));
 								}
 
-								LibCC::Result r = Clipboard(args.hwnd).SetText(bstrURL);
+								LibCC::Result r = Clipboard(args.hwnd).SetText(strFinalURL);
 								if(r.Succeeded())
 								{
 									args.statusDlg.RegisterEvent(args.screenshotID, EI_INFO, ET_GENERAL, args.dest.general.name,
-										LibCC::Format("Copied URL to clipboard %").qs(bstrURL).Str(), bstrURL);
+										LibCC::Format("Copied URL to clipboard %").qs(strFinalURL).Str(), strFinalURL);
 									args.bUsedClipboard = true;
 								}
 								else
 								{
 									args.statusDlg.RegisterEvent(args.screenshotID, EI_ERROR, ET_GENERAL, args.dest.general.name,
-										LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), bstrURL);
+										LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), strFinalURL);
 								}
 							}
 

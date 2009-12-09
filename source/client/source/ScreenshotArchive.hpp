@@ -25,7 +25,8 @@ enum EventType
   ET_GENERAL,
   ET_FTP,
   ET_IMAGESHACK,
-  ET_FILE
+  ET_FILE,
+  ET_SHORTENURL
 };
 
 // because activity is sent to different places, this interface exists (fka class AsyncStatusWindow)

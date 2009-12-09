@@ -24,9 +24,11 @@ public:
 
 	BEGIN_MSG_MAP(CDestinationPropertiesImageShack)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
+		COMMAND_HANDLER(IDC_IMAGESHACK_COPYURL, BN_CLICKED, OnCopyURLClick)
 	END_MSG_MAP()
 
 	LRESULT OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
+	LRESULT OnCopyURLClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
 	//
 	// DestinationPropertyPage implementation

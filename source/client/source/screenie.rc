@@ -165,15 +165,16 @@ BEGIN
     EDITTEXT        IDC_FTP_USERNAME,78,90,138,12,ES_AUTOHSCROLL
     LTEXT           "Password",IDC_STATIC,18,110,60,12
     EDITTEXT        IDC_FTP_PASSWORD,78,108,138,12,ES_PASSWORD | ES_AUTOHSCROLL
-    GROUPBOX        "Remote File",IDC_STATIC,7,154,221,98
+    GROUPBOX        "Remote File",IDC_STATIC,7,154,221,101
     LTEXT           "File Path (e.g., /home/joe/public_html/screenshots/):",IDC_STATIC,18,171,198,12
     EDITTEXT        IDC_FTP_REMOTEPATH,18,183,198,12,ES_AUTOHSCROLL
     LTEXT           "Base URL (e.g., http://mysite.com/~joe/screenshots/):",IDC_STATIC,18,201,198,12
     EDITTEXT        IDC_FTP_HTTPURL,18,213,198,12,ES_AUTOHSCROLL
     CONTROL         "Copy image URL to clipboard after processing",IDC_FTP_COPYURL,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,231,198,12
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,230,198,12
     COMBOBOX        IDC_PASSWORDOPTIONS,78,126,138,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Password options",IDC_STATIC,18,126,60,12
+    CONTROL         "Shorten URL with bit.ly",IDC_FTP_SHORTENURL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,242,190,12
 END
 
 IDD_DESTPROP_RESIZING DIALOGEX 0, 0, 235, 262
@@ -246,9 +247,11 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAP
 CAPTION "ImageShack"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Options",IDC_STATIC,7,7,222,38
+    GROUPBOX        "Options",IDC_STATIC,7,7,222,51
     CONTROL         "Copy image URL to clipboard after uploading",IDC_IMAGESHACK_COPYURL,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,22,198,12
+    CONTROL         "Shorten URL with bit.ly",IDC_IMAGESHACK_SHORTENURL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,26,34,190,12
 END
 
 

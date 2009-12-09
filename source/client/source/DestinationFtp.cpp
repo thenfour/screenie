@@ -25,6 +25,7 @@
 
 #include "GrumbleSupport.h"
 #include "curlutil.h"
+#include "BitlyURL.h"
 
 bool ProcessFtpDestination(DestinationArgs& args)
 {
@@ -96,22 +97,32 @@ bool ProcessFtpDestination(DestinationArgs& args)
 
 		if (args.dest.ftp.copyURL)
 		{
+			tstd::tstring strFinalURL = url;
+			if (args.dest.ftp.shortenURL)
+			{
+				BitlyShortenInfo info;
+				if (BitlyShortenURL(args, strFinalURL, info))
+				{
+					strFinalURL = info.shortURL;
+				}
+			}
+
 			if(args.bUsedClipboard)
 			{
 				args.statusDlg.RegisterEvent(args.screenshotID, EI_WARNING, ET_GENERAL, args.dest.general.name, _T("Warning: Overwriting clipboard contents"));
 			}
 
-			LibCC::Result r = Clipboard(args.hwnd).SetText(url);
+			LibCC::Result r = Clipboard(args.hwnd).SetText(strFinalURL);
 			if(r.Succeeded())
 			{
 				args.statusDlg.RegisterEvent(args.screenshotID, EI_INFO, ET_GENERAL, args.dest.general.name,
-					LibCC::Format("Copied URL to clipboard %").qs(url).Str(), url);
+					LibCC::Format("Copied URL to clipboard %").qs(strFinalURL).Str(), strFinalURL);
 				args.bUsedClipboard = true;
 			}
 			else
 			{
 				args.statusDlg.RegisterEvent(args.screenshotID, EI_ERROR, ET_GENERAL, args.dest.general.name,
-					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), url);
+					LibCC::Format(TEXT("Can't copy text to clipboard: %")).s(r.str()).Str(), strFinalURL);
 			}
 		}
 	}

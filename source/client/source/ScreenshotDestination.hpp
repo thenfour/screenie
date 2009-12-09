@@ -104,6 +104,7 @@ struct ScreenshotDestination
 			remotePath = rightHand.remotePath;
 			resultURL = rightHand.resultURL;
 			copyURL = rightHand.copyURL;
+			shortenURL = rightHand.shortenURL;
 			passwordOptions = rightHand.passwordOptions;
 
       m_passwordEncrypted.Assign(rightHand.m_passwordEncrypted);
@@ -125,6 +126,7 @@ struct ScreenshotDestination
 
 		tstd::tstring resultURL;
 		bool copyURL;
+		bool shortenURL;
 
     tstd::tstring DecryptPassword() const
     {
@@ -215,9 +217,10 @@ struct ScreenshotDestination
 
 	struct ImageShack
 	{
-		ImageShack() : copyURL(true) { }
+		ImageShack() : copyURL(true), shortenURL(true) { }
 
 		bool copyURL;
+		bool shortenURL;
 	};
 
 	std::wstring GetFormatInfo() const
@@ -301,6 +304,7 @@ struct ScreenshotDestination
 		Xml::Serialize(parent, L"FtpRemotePath",  ftp.remotePath);
 		Xml::Serialize(parent, L"FtpResultURL", ftp.resultURL);
 		Xml::Serialize(parent, L"FtpCopyURL", ftp.copyURL);
+		Xml::Serialize(parent, L"FtpShortenURL", ftp.shortenURL);
 		Xml::Serialize(parent, L"FtpPasswordOptions", (int)ftp.passwordOptions);
 
 		switch(ftp.passwordOptions)
@@ -327,6 +331,7 @@ struct ScreenshotDestination
 
 		// imageshack settings
 		Xml::Serialize(parent, L"ImageShackCopyURL", imageshack.copyURL);
+		Xml::Serialize(parent, L"ImageShackShortenURL", imageshack.shortenURL);
 
 		// screenie.net settings
 		//Xml::Serialize(parent, L"ScreenieNetURL", screenie.url);
@@ -365,6 +370,7 @@ struct ScreenshotDestination
 		Xml::Deserialize(parent, L"FtpRemotePath",  ftp.remotePath);
 		Xml::Deserialize(parent, L"FtpResultURL", ftp.resultURL);
 		Xml::Deserialize(parent, L"FtpCopyURL", ftp.copyURL);
+		Xml::Deserialize(parent, L"FtpShortenURL", ftp.shortenURL);
 		Xml::Deserialize(parent, L"FtpPasswordOptions", (int&)ftp.passwordOptions);
 
 		switch(ftp.passwordOptions)
@@ -402,6 +408,7 @@ struct ScreenshotDestination
 
 		// imageshack settings
 		Xml::Deserialize(parent, L"ImageShackCopyURL", imageshack.copyURL);
+		Xml::Deserialize(parent, L"ImageShackShortenURL", imageshack.shortenURL);
 
 		// screenie.net settings
 		//Xml::Deserialize(parent, L"ScreenieNetURL", screenie.url);
