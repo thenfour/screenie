@@ -1,5 +1,6 @@
 @echo off
 
+
 echo * Usage:
 echo * official_build.cmd {binary-dir} {installer-name}
 echo * {binary-dir} is relative to root\ directory.  if it's omitted,
@@ -8,7 +9,7 @@ echo * {installer-name} may also be omitted... "Screenie" is the default.
 echo.  
 
   pushd %~dp0
-  set path=%ProgramFiles%\nsis;%path%
+  set path=%ProgramFiles%\nsis;%ProgramFiles(X86)%\nsis;%path%
 
 echo Confirming arguments / variables...
   set svnroot=%cd%
