@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="screenie"
 	ProjectGUID="{C842F6FF-88EE-4F49-A446-74A504643F8F}"
 	RootNamespace="screenie"
@@ -26,6 +26,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description=""
 				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) source\version.in source\version.h"
 			/>
 			<Tool
@@ -120,7 +121,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(ProjectDir) &quot;$(ProjectDir)source\version.in&quot; &quot;$(ProjectDir)source\version.h&quot;"
+				Description="&quot;..\..\tools\subwcrev.exe&quot; $(ProjectDir) &quot;$(ProjectDir)source\version.in&quot; &quot;$(ProjectDir)source\version.h&quot;"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -217,6 +219,14 @@
 		<Filter
 			Name="Application Sources"
 			>
+			<File
+				RelativePath=".\source\BitlyURL.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\source\BitlyURL.h"
+				>
+			</File>
 			<File
 				RelativePath=".\source\codec.cpp"
 				>
@@ -696,6 +706,34 @@
 			</File>
 			<File
 				RelativePath=".\source\libcc\winapi.hpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="jsonxx"
+			>
+			<File
+				RelativePath=".\source\jsonxx\jsonxx.cc"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\source\jsonxx\jsonxx.h"
 				>
 			</File>
 		</Filter>
