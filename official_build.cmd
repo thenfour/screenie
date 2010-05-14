@@ -41,8 +41,8 @@ echo Copying program binaries...
   copy "%svnroot%\%bindir%\screenie.exe" "%outdir%" >nul
 
 echo Generating version information for "%svnroot%\source\client"
-  "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\source\installer\screenie.nsi" "%outdir%\installer.nsi"
-  "%svnroot%\tools\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml"
+  "%svnroot%\tools\32bit\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\source\installer\screenie.nsi" "%outdir%\installer.nsi"
+  "%svnroot%\tools\32bit\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml"
   REM The thing will return an error if there are local modifications.
   REM if %errorlevel% == 0 goto SubWCRevError
 
