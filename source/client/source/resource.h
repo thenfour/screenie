@@ -23,6 +23,7 @@
 #define IDB_BITMAP1                     246
 #define IDB_HEADER                      246
 #define IDR_SCHEMA                      247
+#define IDB_TOOLBAR                     251
 #define IDC_DESTINATIONS                1002
 #define IDC_ABOUT                       1003
 #define IDC_NEW                         1004
@@ -63,10 +64,13 @@
 #define IDC_SHOWSTATUS2                 1014
 #define IDC_AUTOSTART                   1014
 #define IDC_IMAGESHACK_SHORTENURL       1014
+#define IDC_ZOOMOUT                     1014
 #define IDC_FTP_HOSTNAME                1015
 #define IDC_SHOWSPLASH                  1015
 #define IDC_HIGHLIGHTTOOL               1015
 #define IDC_FTP_REMOTEPATH              1016
+#define IDC_ZOOMIN                      1016
+#define IDC_ZOOMOUT2                    1016
 #define IDC_GENERAL_NAME                1017
 #define IDC_FTP_HTTPURL                 1017
 #define IDC_IMAGESHACK_COPYURL2         1018
@@ -108,6 +112,7 @@
 #define IDC_DESTINATIONS_GROUP          1045
 #define IDC_CONFIGURE                   1046
 #define IDC_HYPERLINK                   1047
+#define IDC_SCREENIEHELP                1047
 #define IDC_SLIDER1                     1048
 #define IDC_ZOOMFACTOR                  1048
 #define IDC_QUALITY                     1048
@@ -140,7 +145,9 @@
 #define IDC_INFOBOX                     1078
 #define IDC_QUALITYLABEL                1079
 #define IDC_RESETIMAGE                  1081
-#define IDC_BUTTON2                     1082
+#define IDC_NEXTDESTINATION             1083
+#define IDC_PREVDESTINATION             1084
+#define IDC_CURRENTDESTINATION          1085
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -212,9 +219,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        248
+#define _APS_NEXT_RESOURCE_VALUE        252
 #define _APS_NEXT_COMMAND_VALUE         32791
-#define _APS_NEXT_CONTROL_VALUE         1083
+#define _APS_NEXT_CONTROL_VALUE         1086
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

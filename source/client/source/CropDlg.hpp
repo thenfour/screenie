@@ -16,6 +16,82 @@
 #include "ScreenshotOptions.hpp"
 
 
+inline void RGBtoHSV( float r, float g, float b, float *h, float *s, float *v )
+{
+	float min_, max_, delta;
+	min_ = min( min(r, g), b );
+	max_ = max( max(r, g), b );
+	*v = max_;				// v
+	delta = max_ - min_;
+	if( max_ != 0 )
+		*s = delta / max_;		// s
+	else {
+		// r = g = b = 0		// s = 0, v is undefined
+		*s = 0;
+		*h = LibCC::SinglePrecisionFloat::BuildQNaN().m_BasicVal;
+		return;
+	}
+	if( r == max_ )
+		*h = ( g - b ) / delta;		// between yellow & magenta
+	else if( g == max_ )
+		*h = 2 + ( b - r ) / delta;	// between cyan & yellow
+	else
+		*h = 4 + ( r - g ) / delta;	// between magenta & cyan
+	*h *= 60;				// degrees
+	while( *h < 0 )
+		*h += 360;
+}
+
+
+struct CPNGButton :
+	CButton
+{
+	CImageList imgList;
+	Gdiplus::BitmapPtr myImage;
+
+	~CPNGButton()
+	{
+		imgList.Destroy();
+	}
+
+	void AddImage(Gdiplus::BitmapPtr masterbmp, int yoffset, int xoffset, int buttonWidth, int buttonHeight)
+	{
+		HICON hi;
+		Gdiplus::Bitmap* temp = masterbmp->Clone(xoffset, yoffset, buttonWidth, buttonHeight, PixelFormat32bppARGB);// grab the portion of the bitmap
+		temp->GetHICON(&hi);// convert to icon
+		delete temp;
+		imgList.AddIcon(hi);// store it.
+		DestroyIcon(hi);
+	}
+
+	void Init(HWND hwnd, UINT ctrlID, Gdiplus::BitmapPtr masterbmp, int yoffset, int buttonWidth, int buttonHeight)
+	{
+		// change the style to support icons
+		Attach(::GetDlgItem(hwnd, ctrlID));
+		SetWindowLong(GWL_STYLE, GetWindowLong(GWL_STYLE) | BS_ICON);
+
+		// chop up the image into 6 icons
+		imgList.Create(buttonWidth, buttonHeight, ILC_COLOR32, 6, 1);
+		int xoffset = 0;
+		AddImage(masterbmp, yoffset, xoffset, buttonWidth, buttonHeight);
+		if((xoffset += buttonWidth) < masterbmp->GetWidth())
+			AddImage(masterbmp, yoffset, xoffset, buttonWidth, buttonHeight);
+		if((xoffset += buttonWidth) < masterbmp->GetWidth())
+			AddImage(masterbmp, yoffset, xoffset, buttonWidth, buttonHeight);
+		if((xoffset += buttonWidth) < masterbmp->GetWidth())
+			AddImage(masterbmp, yoffset, xoffset, buttonWidth, buttonHeight);
+		if((xoffset += buttonWidth) < masterbmp->GetWidth())
+			AddImage(masterbmp, yoffset, xoffset, buttonWidth, buttonHeight);
+		if((xoffset += buttonWidth) < masterbmp->GetWidth())
+			AddImage(masterbmp, yoffset, xoffset, buttonWidth, buttonHeight);
+
+		BUTTON_IMAGELIST bi = {0};
+		bi.himl = imgList.m_hImageList;
+		SetImageList(&bi);
+	}
+
+};
+
 class CCropDlg :
 	public CDialogImpl<CCropDlg>,
 	public CDialogResize<CCropDlg>,
@@ -57,6 +133,7 @@ public:
   }
 
 	BEGIN_MSG_MAP(CCropDlg)
+		MESSAGE_RANGE_HANDLER(WM_MOUSEFIRST,WM_MOUSELAST, OnMouse)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		MESSAGE_HANDLER(WM_DROPFILES, OnDropFiles)
@@ -72,7 +149,13 @@ public:
 		COMMAND_ID_HANDLER(IDC_CROPPINGTOOL, OnCroppingTool)    
 		COMMAND_ID_HANDLER(IDC_HIGHLIGHTTOOL, OnHighlightTool)    
 		COMMAND_ID_HANDLER(IDC_RESETIMAGE, OnResetImage)    
-		COMMAND_ID_HANDLER(ID_TOGGLEINFOUPDATE, OnToggleInfoUpdate)    
+		COMMAND_ID_HANDLER(ID_TOGGLEINFOUPDATE, OnToggleInfoUpdate) 
+
+		COMMAND_ID_HANDLER(IDC_SCREENIEHELP, OnHelp)    
+		COMMAND_ID_HANDLER(IDC_ZOOMIN, OnZoomIn)    
+		COMMAND_ID_HANDLER(IDC_ZOOMOUT, OnZoomOut)
+		COMMAND_ID_HANDLER(IDC_NEXTDESTINATION, OnNextDestination)
+		COMMAND_ID_HANDLER(IDC_PREVDESTINATION, OnPrevDestination)
 
     CHAIN_MSG_MAP(CDialogResize<CCropDlg>)
 	END_MSG_MAP()
@@ -80,29 +163,37 @@ public:
 	BEGIN_DLGRESIZE_MAP(CCropDlg)
 		DLGRESIZE_CONTROL(IDC_SPLITTER, DLSZ_SIZE_X | DLSZ_SIZE_Y)
 
+		// toolbar stuff
 		DLGRESIZE_CONTROL(IDC_CROPPINGTOOL, DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDC_HIGHLIGHTTOOL, DLSZ_MOVE_X)
+    DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_X)
+    DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_RESETIMAGE, DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_ZOOMOUT, DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_ZOOMIN, DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_SCREENIEHELP, DLSZ_MOVE_X)
 
-		DLGRESIZE_CONTROL(IDC_INFOBOX, DLSZ_MOVE_Y)
-		DLGRESIZE_CONTROL(IDC_CONTROLS1, DLSZ_MOVE_Y | DLSZ_SIZE_X)
-		DLGRESIZE_CONTROL(IDC_CONTROLS2, DLSZ_MOVE_Y | DLSZ_SIZE_X)
-		DLGRESIZE_CONTROL(IDC_CONTROLS3, DLSZ_MOVE_Y | DLSZ_SIZE_X)
-		DLGRESIZE_CONTROL(IDC_CONTROLS4, DLSZ_MOVE_Y | DLSZ_SIZE_X)
-		DLGRESIZE_CONTROL(IDC_CONTROLS5, DLSZ_MOVE_Y | DLSZ_SIZE_X)
+		DLGRESIZE_CONTROL(IDC_INFOBOX, DLSZ_MOVE_X | DLSZ_SIZE_Y)
 
-    DLGRESIZE_CONTROL(IDC_EDITINPAINT, DLSZ_MOVE_Y | DLSZ_MOVE_X)
-    DLGRESIZE_CONTROL(IDC_SELECTIONSTATIC, DLSZ_SIZE_X)
-    DLGRESIZE_CONTROL(IDC_CONFIGURE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
-	DLGRESIZE_CONTROL(IDC_ETCHEDLINE, DLSZ_MOVE_Y | DLSZ_MOVE_X)
+		DLGRESIZE_CONTROL(IDC_NEXTDESTINATION, DLSZ_MOVE_Y)
+		DLGRESIZE_CONTROL(IDC_PREVDESTINATION, DLSZ_MOVE_Y)
+		DLGRESIZE_CONTROL(IDC_CURRENTDESTINATION, DLSZ_MOVE_Y | DLSZ_SIZE_X)
 
 		DLGRESIZE_CONTROL(IDOK, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 		DLGRESIZE_CONTROL(IDCANCEL, DLSZ_MOVE_Y | DLSZ_MOVE_X)
 	END_DLGRESIZE_MAP()
 
+	LRESULT OnMouse(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+	{
+		bHandled = FALSE;
+		if(toolTip.IsWindow())
+			toolTip.RelayEvent((LPMSG)GetCurrentMessage());
+		return FALSE;
+	}
+
   // IImageEditWindowEvents methods
   void OnSelectionChanged()
   {
-    //SyncZoomWindowSelection();
   }
   void OnCursorPositionChanged(const PointF& pf)// image coords
   {
@@ -110,16 +201,12 @@ public:
 		m_editWnd.ClampToImage(pf2);
 		m_infoCursorPos = pf2.Floor();
 		UpdateInfoBox();
-
-		//m_zoomWnd.CenterOnImage(pf);
-    //SyncZoomWindowSelection();
   }
   void OnZoomFactorChanged()
   {
   }
   void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n)
 	{
-		//m_zoomWnd.SetBitmap(n);
 	}
 
 	virtual void OnToolChanging(ToolBase* tool)
@@ -244,7 +331,7 @@ public:
 		DragAcceptFiles();
 
 		{
-			ACCEL accel[7] = {0};
+			ACCEL accel[11] = {0};
 			accel[0].fVirt = FCONTROL | FVIRTKEY;
 			accel[0].key = 'C';
 			accel[0].cmd = ID_EDIT_COPY;
@@ -269,9 +356,25 @@ public:
 			accel[5].key = VK_INSERT;
 			accel[5].cmd = ID_EDIT_PASTE;
 
-			accel[5].fVirt = FVIRTKEY;
-			accel[5].key = VK_F4;
-			accel[5].cmd = ID_TOGGLEINFOUPDATE;
+			accel[6].fVirt = FVIRTKEY;
+			accel[6].key = VK_F4;
+			accel[6].cmd = ID_TOGGLEINFOUPDATE;
+
+			accel[7].fVirt = FVIRTKEY;
+			accel[7].key = VK_ADD;
+			accel[7].cmd = IDC_NEXTDESTINATION;
+
+			accel[8].fVirt = FVIRTKEY;
+			accel[8].key = VK_SUBTRACT;
+			accel[8].cmd = IDC_PREVDESTINATION;
+
+			accel[9].fVirt = FVIRTKEY;
+			accel[9].key = VK_F6;
+			accel[9].cmd = IDC_ZOOMOUT;
+
+			accel[10].fVirt = FVIRTKEY;
+			accel[10].key = VK_F7;
+			accel[10].cmd = IDC_ZOOMIN;
 
 			m_hAccelerators = CreateAcceleratorTable(accel, LibCC::SizeofStaticArray(accel));
 			// because there is no PreTranslateMessage with WTL's implementation of DoModal, i need a way to handle accelerators manually.
@@ -323,9 +426,6 @@ public:
     ::DestroyWindow(GetDlgItem(IDC_ZOOM));
     m_zoomWnd.Create(*this, rcImage, _T(""), WS_CHILD | WS_VISIBLE, WS_EX_CLIENTEDGE, IDC_ZOOM);
 		m_zoomWnd.SetZoomFactor(1.0f);
-		//m_zoomWnd.SetShowCursor(true);
-		//m_zoomWnd.SetEnablePanning(false);
-		//m_zoomWnd.SetEnableTools(false);
 
 		m_zoomWnd.SetMaster(&m_editWnd);
 
@@ -335,6 +435,34 @@ public:
 		m_zoomWnd.SetParent(m_splitter);
 		m_editWnd.SetParent(m_splitter);
 		m_splitter.SetSplitterPanes(m_zoomWnd, m_editWnd, false);
+
+		// set up toolbar
+		const UINT tbButtonCtrls[] = { IDC_RESETIMAGE, IDC_EDITINPAINT, IDC_CROPPINGTOOL, IDC_HIGHLIGHTTOOL, IDC_ZOOMOUT, IDC_ZOOMIN, IDC_SCREENIEHELP, IDC_CONFIGURE };
+
+		MemStream backgroundStream(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDB_TOOLBAR), L"PNG");
+		Gdiplus::BitmapPtr masterBitmap(Gdiplus::Bitmap::FromStream(backgroundStream.m_pStream));
+
+		for(int i = 0; i < ToolbarButtonCount; ++ i)
+		{
+			tbButons[i].Init(this->m_hWnd, tbButtonCtrls[i], masterBitmap, i * ToolbarButtonImageSize, ToolbarButtonImageSize, ToolbarButtonImageSize);
+		}
+
+		// tooltips
+		toolTip.Create( m_hWnd, NULL, NULL, TTS_NOPREFIX );
+		toolTip.SetMaxTipWidth( 0 );
+		toolTip.Activate( TRUE );
+		toolTip.SetDelayTime(TTDT_INITIAL, 300);
+		toolTip.SetDelayTime(TTDT_AUTOPOP, 3000);
+		toolTip.SetDelayTime(TTDT_RESHOW, 60);
+
+		toolTip.AddTool(&CreateToolInfo(IDC_RESETIMAGE, L"Reset Image"));
+		toolTip.AddTool(&CreateToolInfo(IDC_EDITINPAINT, L"Edit the image in an external editor"));
+		toolTip.AddTool(&CreateToolInfo(IDC_CROPPINGTOOL, L"Crop tool"));
+		toolTip.AddTool(&CreateToolInfo(IDC_HIGHLIGHTTOOL, L"Highlight tool"));
+		toolTip.AddTool(&CreateToolInfo(IDC_ZOOMOUT, L"Zoom out further"));
+		toolTip.AddTool(&CreateToolInfo(IDC_ZOOMIN, L"Zoom in closer"));
+		toolTip.AddTool(&CreateToolInfo(IDC_SCREENIEHELP, L"Open Screenie help"));
+		toolTip.AddTool(&CreateToolInfo(IDC_CONFIGURE, L"Open the options dialog"));
 
     DlgResize_Init(true, true, WS_CLIPCHILDREN);
 
@@ -366,25 +494,23 @@ public:
 
     m_editWnd.CenterImage();
 
-    //SyncZoomWindowSelection();
-
+		UpdateCurrentDestination();
 		return 0;
 	}
 
-  //void SyncZoomWindowSelection()
-  //{
-		//if(m_editWnd.HasSelection())
-		//{
-	 //   CRect rc = m_editWnd.GetSelection();
-		//	m_infoSelection = rc;
-		//	UpdateInfoBox();
-		//	m_zoomWnd.SetSelection(rc);
-  //  }
-  //  else
-  //  {
-  //    m_zoomWnd.ClearSelection();
-  //  }
-  //}
+	TOOLINFO CreateToolInfo(UINT ctrlID, const std::wstring& text)
+	{
+		TOOLINFO ret = {0};
+		ret.cbSize = sizeof(ret);
+		ret.uFlags = TTF_SUBCLASS | TTF_IDISHWND | TTF_TRANSPARENT;
+		ret.hwnd = m_hWnd;
+		ret.uId = (UINT_PTR)::GetDlgItem(m_hWnd, ctrlID);
+		//ret.rect = ignored.
+		ret.lpszText = const_cast<PWSTR>(text.c_str());
+		return ret;
+	};
+
+
 
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
@@ -459,6 +585,12 @@ public:
 		return 0;
 	}
 
+	LRESULT OnHelp(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		::ShellExecute(0, _T("open"), _T("http://screenie.net/help"), 0, 0, SW_SHOWNORMAL);
+		return 0;
+	}
+
 	LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
 		CloseDialog(IDCANCEL);
@@ -469,6 +601,7 @@ public:
 	{
 	  CDestinationDlg dialog(m_options, _T("OK"));
 	  dialog.DoModal();
+		UpdateCurrentDestination();
 	  return 0;
 	}
 
@@ -497,6 +630,98 @@ public:
 		m_infoUpdate = !m_infoUpdate;
 		UpdateInfoBox();
 	  return 0;
+	}
+
+	LRESULT OnZoomIn(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+    AttemptNewFactorIndex(m_zoomFactorIndex + 1, true);
+	  return 0;
+	}
+
+	LRESULT OnZoomOut(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+    AttemptNewFactorIndex(m_zoomFactorIndex - 1, true);
+	  return 0;
+	}
+
+	void UpdateCurrentDestination()
+	{
+		int found = 0;
+		int total = (int)m_options.GetNumDestinations();
+		std::wstring nameOfSelected = L"(none)";
+		for(int i = 0; i < total; i ++)
+		{
+			ScreenshotDestination& dest(m_options.GetDestination(i));
+			if(dest.enabled)
+			{
+				nameOfSelected = LibCC::Format(L"[%/%] % (%)")(i+1)(total).s(dest.general.name).s(dest.GetGeneralInfo()).Str();
+				found ++;
+			}
+		}
+
+		if(found > 1)
+		{
+			nameOfSelected = LibCC::Format(L"% destinations selected.")(found).Str();
+		}
+
+		SetDlgItemText(IDC_CURRENTDESTINATION, nameOfSelected.c_str());
+	}
+
+	void SelectNewDestination(int delta)
+	{
+		int total = (int)m_options.GetNumDestinations();
+
+		if(total == 0)
+			return;
+
+		// figure out the current selected index.
+		int sel = -1;
+		for(size_t i = 0; i < total; i ++)
+		{
+			ScreenshotDestination& dest(m_options.GetDestination(i));
+			if(dest.enabled)
+			{
+				sel = i;
+				break;
+			}
+		}
+
+		if(sel == -1)
+		{
+			sel = 0;
+		}
+		else
+		{
+			sel += delta;
+			// wrap the value.
+			while(sel < 0) sel += total;
+			while(sel >= total) sel -= total;
+		}
+
+		// disable all
+		for(size_t i = 0; i < total; i ++)
+		{
+			ScreenshotDestination& dest(m_options.GetDestination(i));
+			dest.enabled = false;
+		}
+
+		// enable the destination one.
+		ScreenshotDestination& dest(m_options.GetDestination(sel));
+		dest.enabled = true;
+
+		UpdateCurrentDestination();
+	}
+
+	LRESULT OnNextDestination(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		SelectNewDestination(1);
+		return 0;
+	}
+
+	LRESULT OnPrevDestination(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+	{
+		SelectNewDestination(-1);
+		return 0;
 	}
 
 	void CloseDialog(int nVal)
@@ -533,6 +758,12 @@ private:
 
 	CSplitterWindow m_splitter;
 
+	static const int ToolbarButtonCount = 8;
+	static const int ToolbarButtonImageSize = 24;
+	CPNGButton tbButons[ToolbarButtonCount];
+
+	CToolTipCtrl toolTip;
+
   // zoom stuff
   int m_zoomFactorIndex;
   std::vector<float> m_zoomFactors;
@@ -554,12 +785,25 @@ private:
 		RgbPixel32 pixel = m_editWnd.GetPixel_(m_infoCursorPos);
     CRect m_infoSelection = m_editWnd.GetSelection();
 
+		float h = 0, s = 0, v = 0;
+		RGBtoHSV((float)R(pixel) / 255, (float)G(pixel) / 255,(float)B(pixel) / 255, &h, &s, &v);
+
+		std::wstring hue;
+		if(LibCC::SinglePrecisionFloat(h).IsQNaN())
+		{
+			hue = L"n/a";
+		}
+		else
+		{
+			hue = LibCC::Format(L"%%").i((int)h).c(0x00B0).Str();
+		}
+
 		LibCC::Format info = LibCC::Format(
-			"Zoom: %^%|"
-			"Pos: (%,%)|"
-			"Sel: (%,%)-(%,%)|"
-			"Sel: % x %|"
-			"RGB: #%%% (%, %, %)"
+			"Zoom:|%^%||"
+			"Pos:|(%,%)||"
+			"Sel:|TL(%,%)|BR(%,%)|% x %||"
+			"RGB:|#%%%|(%,%,%)||"
+			"H:%|S:%^%|V:%^%||"
 			)
 			.f<0>(m_infoZoomFactor*100)
 			.i(m_infoCursorPos.x)
@@ -576,6 +820,9 @@ private:
 			.i(R(pixel))
 			.i(G(pixel))
 			.i(B(pixel))
+			(hue)
+			.i((int)(s*100.0f))
+			.i((int)(v*100.0f))
 			;
 		if(m_infoText != info.CStr())
 		{

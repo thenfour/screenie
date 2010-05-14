@@ -120,7 +120,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description=""
 				CommandLine=""
 			/>
 			<Tool
@@ -738,6 +737,10 @@
 		</Filter>
 		<File
 			RelativePath=".\source\ArchiveSchema.sql"
+			>
+		</File>
+		<File
+			RelativePath=".\source\resources\toolbar.png"
 			>
 		</File>
 	</Files>
