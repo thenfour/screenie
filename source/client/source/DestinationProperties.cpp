@@ -36,7 +36,7 @@ BOOL CDestinationProperties::InitializePages()
 		AddPage(m_propertyPages[i]->CreatePropertyPage());
 
 		m_propertyPages[i]->SetParentSheet(dynamic_cast<DestinationPropertySheet*>(this));
-		m_propertyPages[i]->SetSettings(m_screenshotDestination);
+		m_propertyPages[i]->SetSettings(&m_screenshotDestination);
 	}
 
 	return TRUE;
@@ -68,7 +68,7 @@ LRESULT CDestinationProperties::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam
 	{
 		for (size_t i = 0; i < m_propertyPages.size(); ++i)
 		{
-			m_propertyPages[i]->GetSettings(m_screenshotDestination);
+			m_propertyPages[i]->GetSettings();
 		}
 	}
 

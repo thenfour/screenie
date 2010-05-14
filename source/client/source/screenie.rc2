@@ -38,7 +38,7 @@ BEGIN
             VALUE "Comments", ""
             VALUE "CompanyName", "Carl Corcoran and Roger Clark"
             VALUE "FileVersion", STRFILEVER
-            VALUE "LegalCopyright", "©2004-2009 Carl Corcoran and Roger Clark. All rights reserved."
+            VALUE "LegalCopyright", "©2004-2010 Carl Corcoran and Roger Clark. All rights reserved."
             VALUE "ProductVersion", STRPRODUCTVER
             VALUE "RegisteredTo", STRREGISTRANT
         END

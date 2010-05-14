@@ -26,8 +26,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description=""
-				CommandLine="&quot;..\..\tools\subwcrev.exe&quot; $(InputDir) source\version.in source\version.h"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -121,7 +120,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="&quot;..\..\tools\subwcrev.exe&quot; $(ProjectDir) &quot;$(ProjectDir)source\version.in&quot; &quot;$(ProjectDir)source\version.h&quot;"
+				Description=""
 				CommandLine=""
 			/>
 			<Tool

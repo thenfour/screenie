@@ -25,7 +25,7 @@ OutFile "${outfile}"
 VIProductVersion 1.$WCREV$.$WCMODS?1:0$.0
 VIAddVersionKey "ProductName" "${installname}"
 VIAddVersionKey "CompanyName" "Carl Corcoran & Roger Clark"
-VIAddVersionKey "LegalCopyright" "© 2004-2008 Carl Corcoran & Roger Clark.  All Rights Reserved."
+VIAddVersionKey "LegalCopyright" "© 2004-2010 Carl Corcoran & Roger Clark.  All Rights Reserved."
 VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net. Built on $WCNOW$"
 VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0$.0
 VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0$.0

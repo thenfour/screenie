@@ -228,6 +228,7 @@ LRESULT CDestinationDlg::OnItemActivated(int idCtrl, LPNMHDR pnmh, BOOL& bHandle
 
 LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+	std::wstring defaultFileName = TEXT("%Y%m%d-%h%i%s.png");
 	ScreenshotDestination destination;
 
 	destination.enabled = true;
@@ -235,7 +236,6 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.general.name = TEXT("My New Destination");
 	destination.general.type = ScreenshotDestination::TYPE_FILE;
 	destination.general.imageFormat = TEXT("image/png");
-	destination.general.filenameFormat = TEXT("%Y%m%d-%h%i%s.png");
 
 	destination.image.scaleType = ScreenshotDestination::SCALE_NONE;
 	destination.image.scalePercent = 100;
@@ -246,13 +246,16 @@ LRESULT CDestinationDlg::OnNewDestination(WORD /*wNotifyCode*/, WORD /*wID*/, HW
 	destination.ftp.username = TEXT("username");
 	destination.ftp.SetPassword(TEXT("password"));
 	destination.ftp.passwordOptions = ScreenshotDestination::Ftp::PO_Plaintext;
-	destination.ftp.remotePath = TEXT("/home/username/public_html/");
-	destination.ftp.resultURL = TEXT("http://mysite.com/~username/");
+	destination.ftp.remotePathFormat = TEXT("/home/username/public_html/");
+	destination.ftp.remotePathFormat += defaultFileName;
+	destination.ftp.resultURLFormat = TEXT("http://mysite.com/~username/");
+	destination.ftp.resultURLFormat += defaultFileName;
 	destination.ftp.copyURL = false;
 
 	destination.imageshack.copyURL = true;
 
-	GetSpecialFolderPath(destination.general.path, CSIDL_MYPICTURES);
+	GetSpecialFolderPath(destination.general.pathFormat, CSIDL_MYPICTURES);
+	destination.general.pathFormat = LibCC::PathAppendX(destination.general.pathFormat, defaultFileName);
 
 	CDestinationProperties properties(destination, m_optionsCopy, TEXT("Create New Destination"));
 	if (properties.DoModal(m_hWnd) == IDOK)

@@ -25,6 +25,7 @@ public:
 	BEGIN_MSG_MAP(CDestinationPropertiesImageShack)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		COMMAND_HANDLER(IDC_IMAGESHACK_COPYURL, BN_CLICKED, OnCopyURLClick)
+		CHAIN_MSG_MAP(CPropertyPageImpl<CDestinationPropertiesImageShack>)
 	END_MSG_MAP()
 
 	LRESULT OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
@@ -33,17 +34,20 @@ public:
 	//
 	// DestinationPropertyPage implementation
 	//
+	BOOL OnSetActive() { ShowSettings(); return TRUE; }
+	BOOL OnKillActive() { GetSettings(); return TRUE; }// being hidden
+	BOOL OnApply() { GetSettings(); return TRUE; }
 
 	HPROPSHEETPAGE CreatePropertyPage();
 
-	void SetSettings(const ScreenshotDestination& destination);
-	void GetSettings(ScreenshotDestination& destination);
+	void SetSettings(ScreenshotDestination* destination);
+	void GetSettings();
 
 	void SetDestinationType(const ScreenshotDestination::Type type);
 	void SetParentSheet(DestinationPropertySheet* parentSheet);
 private:
 	DestinationPropertySheet* m_parentSheet;
-	ScreenshotDestination::ImageShack m_settings;
+	ScreenshotDestination* m_settings;
 };
 
 #endif

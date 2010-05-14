@@ -14,7 +14,6 @@
 #include "libcc\winapi.hpp"
 #include "codec.hpp"
 
-
 struct ScreenshotDestination
 {
 	enum Type
@@ -51,8 +50,7 @@ struct ScreenshotDestination
 			type = rightHand.type;
 			name = rightHand.name;
 			imageFormat = rightHand.imageFormat;
-			filenameFormat = rightHand.filenameFormat;
-			path = rightHand.path;
+			pathFormat = rightHand.pathFormat;
       localTime = rightHand.localTime;
 			imageQuality = rightHand.imageQuality;
 
@@ -65,8 +63,7 @@ struct ScreenshotDestination
 		tstd::tstring name;
 		tstd::tstring imageFormat;
     bool localTime;
-		tstd::tstring filenameFormat;
-		tstd::tstring path;
+		tstd::tstring pathFormat;
 		int imageQuality;
 	};
 
@@ -76,16 +73,6 @@ struct ScreenshotDestination
 		int scalePercent;
 		int maxDimension;
 	};
-
-	//struct Screenienet
-	//{
-	//	Screenienet() : copyURL(false) { }
-
-	//	tstd::tstring url;
-	//	tstd::tstring username;
-	//	tstd::tstring password;
-	//	bool copyURL;
-	//};
 
 	struct Ftp
 	{
@@ -101,8 +88,8 @@ struct ScreenshotDestination
 			hostname = rightHand.hostname;
 			port = rightHand.port;
 			username = rightHand.username;
-			remotePath = rightHand.remotePath;
-			resultURL = rightHand.resultURL;
+			remotePathFormat = rightHand.remotePathFormat;
+			resultURLFormat = rightHand.resultURLFormat;
 			copyURL = rightHand.copyURL;
 			shortenURL = rightHand.shortenURL;
 			passwordOptions = rightHand.passwordOptions;
@@ -122,9 +109,8 @@ struct ScreenshotDestination
 		tstd::tstring hostname;
 		unsigned short port;
 		tstd::tstring username;
-		tstd::tstring remotePath;
-
-		tstd::tstring resultURL;
+		tstd::tstring remotePathFormat;
+		tstd::tstring resultURLFormat;
 		bool copyURL;
 		bool shortenURL;
 
@@ -246,14 +232,15 @@ struct ScreenshotDestination
 		case TYPE_FILE:
 			return LibCC::Format(L"% - %")
 				(GetFormatInfo())
-				(LibCC::PathAppendX(general.path, general.filenameFormat)).Str();
+				(general.pathFormat)
+				.Str();
 			break;
 		case TYPE_FTP:
-			if(!ftp.resultURL.empty())
+			if(!ftp.resultURLFormat.empty())
 			{
 				return LibCC::Format(L"% - %")
 					(GetFormatInfo())
-					(LibCC::PathAppendX(ftp.resultURL, general.filenameFormat))
+					(ftp.resultURLFormat)
 					.Str();
 			}
 			if(ftp.port != 80)
@@ -262,13 +249,13 @@ struct ScreenshotDestination
 					(GetFormatInfo())
 					(ftp.hostname)
 					(ftp.port)
-					(LibCC::PathAppendX(ftp.remotePath, general.filenameFormat))
+					(ftp.remotePathFormat)
 					.Str();
 			}
 			return LibCC::Format(L"% - %/%")
 				(GetFormatInfo())
 				(ftp.hostname)
-				(LibCC::PathAppendX(ftp.remotePath, general.filenameFormat))
+				(ftp.remotePathFormat)
 				.Str();
 			break;
 		case TYPE_IMAGESHACK:
@@ -281,14 +268,14 @@ struct ScreenshotDestination
 	// xml serialization
 	void Serialize(Xml::Element parent) const
 	{
+		Xml::Serialize(parent, L"Version", 229);
 		Xml::Serialize(parent, L"Enabled", enabled);
 		// general settings
 		Xml::Serialize(parent, L"GeneralName", general.name);
 		Xml::Serialize(parent, L"GeneralType", (int)general.type);
 		Xml::Serialize(parent, L"GeneralImageFormat", general.imageFormat);
 		Xml::Serialize(parent, L"GeneralImageQuality", general.imageQuality);
-		Xml::Serialize(parent, L"GeneralFilenameFormat", general.filenameFormat);
-		Xml::Serialize(parent, L"GeneralPath", general.path);
+		Xml::Serialize(parent, L"GeneralPathFormat", general.pathFormat);
 		Xml::Serialize(parent, L"GeneralLocalTime", general.localTime);
 		Xml::Serialize(parent, L"GeneralID", general.id.ToString());
 
@@ -301,8 +288,8 @@ struct ScreenshotDestination
 		Xml::Serialize(parent, L"FtpHostName", ftp.hostname);
 		Xml::Serialize(parent, L"FtpPort", ftp.port);
 		Xml::Serialize(parent, L"FtpUsername", ftp.username);
-		Xml::Serialize(parent, L"FtpRemotePath",  ftp.remotePath);
-		Xml::Serialize(parent, L"FtpResultURL", ftp.resultURL);
+		Xml::Serialize(parent, L"FtpRemotePathFormat",  ftp.remotePathFormat);
+		Xml::Serialize(parent, L"FtpResultURLFormat", ftp.resultURLFormat);
 		Xml::Serialize(parent, L"FtpCopyURL", ftp.copyURL);
 		Xml::Serialize(parent, L"FtpShortenURL", ftp.shortenURL);
 		Xml::Serialize(parent, L"FtpPasswordOptions", (int)ftp.passwordOptions);
@@ -343,6 +330,17 @@ struct ScreenshotDestination
 	void Deserialize(Xml::Element parent)
 	{
 		Xml::Deserialize(parent, L"Enabled", enabled);
+
+		// auto-upgrade from previous settings version
+		tstd::tstring oldfileNameFormat;
+		tstd::tstring oldPath;
+		tstd::tstring oldFTPpath;
+		tstd::tstring oldURL;
+		Xml::Deserialize(parent, L"GeneralFilenameFormat", oldfileNameFormat);
+		Xml::Deserialize(parent, L"GeneralPath", oldPath);
+		Xml::Deserialize(parent, L"FtpRemotePath",  oldFTPpath);
+		Xml::Deserialize(parent, L"FtpResultURL", oldURL);
+
 		//DWORD temp;
 		std::wstring strTemp;
 
@@ -352,8 +350,10 @@ struct ScreenshotDestination
 
 		Xml::Deserialize(parent, L"GeneralImageFormat", general.imageFormat);
 		Xml::Deserialize(parent, L"GeneralImageQuality", general.imageQuality);
-		Xml::Deserialize(parent, L"GeneralFilenameFormat", general.filenameFormat);
-		Xml::Deserialize(parent, L"GeneralPath", general.path);
+		if(!Xml::Deserialize(parent, L"GeneralPathFormat", general.pathFormat))
+		{
+			general.pathFormat = LibCC::PathAppendX(oldPath, oldfileNameFormat);
+		}
 		Xml::Deserialize(parent, L"GeneralLocalTime", general.localTime);
 		Xml::Deserialize(parent, L"GeneralID", strTemp);
 		general.id.Assign(strTemp);
@@ -367,8 +367,21 @@ struct ScreenshotDestination
 		Xml::Deserialize(parent, L"FtpHostName", ftp.hostname);
 		Xml::Deserialize(parent, L"FtpPort", ftp.port);
 		Xml::Deserialize(parent, L"FtpUsername", ftp.username);
-		Xml::Deserialize(parent, L"FtpRemotePath",  ftp.remotePath);
-		Xml::Deserialize(parent, L"FtpResultURL", ftp.resultURL);
+		if(!Xml::Deserialize(parent, L"FtpRemotePathFormat",  ftp.remotePathFormat))
+		{
+			// forward slashes are used.
+			ftp.remotePathFormat = oldFTPpath;
+			if(*ftp.remotePathFormat.rbegin() != '/')
+				ftp.remotePathFormat.push_back('/');
+			ftp.remotePathFormat += oldfileNameFormat;
+		}
+		if(!Xml::Deserialize(parent, L"FtpResultURLFormat", ftp.resultURLFormat))
+		{
+			ftp.resultURLFormat = oldURL;
+			if(*ftp.resultURLFormat.rbegin() != '/')
+				ftp.resultURLFormat.push_back('/');
+			ftp.resultURLFormat += oldfileNameFormat;
+		}
 		Xml::Deserialize(parent, L"FtpCopyURL", ftp.copyURL);
 		Xml::Deserialize(parent, L"FtpShortenURL", ftp.shortenURL);
 		Xml::Deserialize(parent, L"FtpPasswordOptions", (int&)ftp.passwordOptions);
@@ -402,19 +415,9 @@ struct ScreenshotDestination
 			break;
 		}
 
-		//LibCC::Blob<BYTE> binaryTemp;
-		//Xml::Deserialize(parent, L"FtpPassword", binaryTemp);
-		//ftp.DeserializePassword(binaryTemp);
-
 		// imageshack settings
 		Xml::Deserialize(parent, L"ImageShackCopyURL", imageshack.copyURL);
 		Xml::Deserialize(parent, L"ImageShackShortenURL", imageshack.shortenURL);
-
-		// screenie.net settings
-		//Xml::Deserialize(parent, L"ScreenieNetURL", screenie.url);
-		//Xml::Deserialize(parent, L"ScreenieNetUserName", screenie.username);
-		//Xml::Deserialize(parent, L"ScreenieNetPassword", screenie.password);
-		//Xml::Deserialize(parent, L"ScreenieNetCopyURL", screenie.copyURL);
 	}
 
 	bool enabled;
@@ -471,3 +474,4 @@ struct ScreenshotDestination
 };
 
 #endif
+

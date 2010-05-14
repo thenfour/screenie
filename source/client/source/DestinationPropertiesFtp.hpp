@@ -25,25 +25,36 @@ public:
 	BEGIN_MSG_MAP(CDestinationPropertiesFTP)
 		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
 		COMMAND_HANDLER(IDC_IMAGESHACK_COPYURL, BN_CLICKED, OnCopyURLClick)
+		COMMAND_HANDLER(IDC_FTP_HTTPURL, EN_CHANGE, OnURLChanged)
+		COMMAND_HANDLER(IDC_FTP_REMOTEPATH, EN_CHANGE, OnPathChanged)
+		CHAIN_MSG_MAP(CPropertyPageImpl<CDestinationPropertiesFTP>)
 	END_MSG_MAP()
 
 	LRESULT OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
 	LRESULT OnCopyURLClick(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnURLChanged(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/);
+	LRESULT OnPathChanged(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/);
 
 	//
 	// DestinationPropertyPage implementation
 	//
+	BOOL OnSetActive() { ShowSettings(); return TRUE; }
+	BOOL OnKillActive() { GetSettings(); return TRUE; }// being hidden
+	BOOL OnApply() { GetSettings(); return TRUE; }
+
+	void UpdatePreview(UINT src, UINT dest, UINT other);
 
 	HPROPSHEETPAGE CreatePropertyPage();
 
-	void SetSettings(const ScreenshotDestination& destination);
-	void GetSettings(ScreenshotDestination& destination);
+	void SetSettings(ScreenshotDestination* destination);
+	void GetSettings();
 
 	void SetDestinationType(const ScreenshotDestination::Type type);
 	void SetParentSheet(DestinationPropertySheet* parentSheet);
 private:
 	DestinationPropertySheet* m_parentSheet;
-	ScreenshotDestination::Ftp m_settings;
+	ScreenshotDestination* m_settings;
 };
 
 #endif
+

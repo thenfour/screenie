@@ -131,24 +131,22 @@ void CDestinationPropertiesGeneral::UpdateQualityLabel()
 
 void CDestinationPropertiesGeneral::ShowSettings()
 {
-	SetDlgItemText(IDC_FILE_FOLDER, m_settings.path.c_str());
+	SetDlgItemText(IDC_FILE_PATH, m_settings->general.pathFormat.c_str());
 
 	CComboBox destinationType(GetDlgItem(IDC_GENERAL_TYPE));
 	destinationType.SelectString(0, 
-		ScreenshotDestination::TypeToString(m_settings.type).c_str());
+		ScreenshotDestination::TypeToString(m_settings->general.type).c_str());
 
-	SetDlgItemText(IDC_GENERAL_NAME, m_settings.name.c_str());
-	SetImageFormat(m_settings.imageFormat);
+	SetDlgItemText(IDC_GENERAL_NAME, m_settings->general.name.c_str());
+	SetImageFormat(m_settings->general.imageFormat);
 
 	// enable / disable quality settings
 	CTrackBarCtrl quality(GetDlgItem(IDC_QUALITY));
 	quality.SetRange(0, 100, FALSE);
-	quality.SetPos(m_settings.imageQuality);
+	quality.SetPos(m_settings->general.imageQuality);
 	UpdateQualityLabel();
 
-	SetDlgItemText(IDC_FILENAME_FORMAT, m_settings.filenameFormat.c_str());
-
-  CheckDlgButton(m_settings.localTime ? IDC_FILENAME_LOCAL : IDC_FILENAME_UTC, BST_CHECKED);
+  CheckDlgButton(m_settings->general.localTime ? IDC_FILENAME_LOCAL : IDC_FILENAME_UTC, BST_CHECKED);
 }
 
 LRESULT CDestinationPropertiesGeneral::OnHScroll(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)
@@ -179,7 +177,7 @@ LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPA
 
 	ShowSettings();
 
-	m_parentSheet->Update(m_settings.type);
+	m_parentSheet->Update(m_settings->general.type);
 
 	return 0;
 }
@@ -187,10 +185,11 @@ LRESULT CDestinationPropertiesGeneral::OnInitDialog(UINT msg, WPARAM wParam, LPA
 LRESULT CDestinationPropertiesGeneral::OnFolderBrowse(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
 	CFolderDialog dialog(m_hWnd);
+	dialog.m_bi.ulFlags |= BIF_NEWDIALOGSTYLE;
 
 	if (dialog.DoModal() == IDOK)
 	{
-		SetDlgItemText(IDC_FILE_FOLDER, dialog.GetFolderPath());
+		SetDlgItemText(IDC_FILE_PATH, dialog.GetFolderPath());
 
 		// it would be nice to show the user the end of the string,
 		// but unfortunately, EM_SCROLLCARET is only supported in rich edits.
@@ -214,30 +213,54 @@ LRESULT CDestinationPropertiesGeneral::OnTypeChanged(WORD /*wNotifyCode*/, WORD 
 	return 0;
 }
 
+std::wstring ChangeExtension(const std::wstring& org, const std::wstring& newExtension)
+{
+	// must work for URLs and paths and freeform crap.
+	// if we don't understand the input then return it unchanged.
+	
+	// find the last backslash or slash
+	std::wstring::size_type lastslash = org.find_last_of(L"\\/");
+	std::wstring::size_type lastdot = org.find_last_of('.');
+	if(lastdot == std::wstring::npos)// there is no dot; forget the extension
+		return org;
+	if(lastslash != std::wstring::npos)// there is a slash; make sure the last dot is AFTER it.
+	{
+		if(lastslash > lastdot)
+			return org;// for example http://blah.org/mypic
+	}
+
+	// we know we are good to go.
+	std::wstring ret = org.substr(0, lastdot + 1);
+	ret.append(newExtension);
+	return ret;
+}
+
 LRESULT CDestinationPropertiesGeneral::OnImageFormatChanged(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
 	// using "format" for both of these settings is pretty confusing. i should probably change that.
-	tstd::tstring filenameFormat = GetWindowString(GetDlgItem(IDC_FILENAME_FORMAT));
+	tstd::tstring filenameFormat = GetWindowString(GetDlgItem(IDC_FILE_PATH));
 	tstd::tstring formatDescription = GetComboSelectionString(GetDlgItem(IDC_GENERAL_FORMAT));
 
 	ImageCodecsEnum codecs;
 	Gdiplus::ImageCodecInfo* codecInfo = codecs.GetCodecByDescription(formatDescription.c_str());
 
-	Path pathFilenameFormat(filenameFormat);
-
 	// get the filename extension for this codec, without the dot prefix
 	tstd::tstring extension = tstring_tolower(GetImageCodecExtension(codecInfo, false));
 
-	SetDlgItemText(IDC_FILENAME_FORMAT, LibCC::Format(TEXT("%.%")).s(pathFilenameFormat.filename).s(extension).CStr());
+	SetDlgItemText(IDC_FILE_PATH, ChangeExtension(filenameFormat, extension).c_str());
 
 	SetDestinationType(GetType());
+
+	// set the FTP info now...
+	m_settings->ftp.remotePathFormat = ChangeExtension(m_settings->ftp.remotePathFormat, extension);
+	m_settings->ftp.resultURLFormat = ChangeExtension(m_settings->ftp.resultURLFormat, extension);
 
 	return 0;
 }
 
 LRESULT CDestinationPropertiesGeneral::OnFilenameFormatChanged(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
-	tstd::tstring formatString = GetWindowString(GetDlgItem(IDC_FILENAME_FORMAT));
+	tstd::tstring formatString = GetWindowString(GetDlgItem(IDC_FILE_PATH));
 
 	SYSTEMTIME systemTime = { 0 };
   if(BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL))
@@ -249,7 +272,7 @@ LRESULT CDestinationPropertiesGeneral::OnFilenameFormatChanged(WORD /*wNotifyCod
 	  ::GetSystemTime(&systemTime);
   }
 
-	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString, _T(""), true);
+	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString, _T("Screenie"), true);
 	SetDlgItemText(IDC_FILENAME_FORMATPREVIEW, formattedOutput.c_str());
 
 	return 0;
@@ -264,26 +287,26 @@ HPROPSHEETPAGE CDestinationPropertiesGeneral::CreatePropertyPage()
 	return CPropertyPageImpl<CDestinationPropertiesGeneral>::Create();
 }
 
-void CDestinationPropertiesGeneral::SetSettings(const ScreenshotDestination& destination)
+void CDestinationPropertiesGeneral::SetSettings(ScreenshotDestination* destination)
 {
-	m_settings = destination.general;
+	m_settings = destination;
 
 	if (IsWindow())
 		ShowSettings();
 }
 
-void CDestinationPropertiesGeneral::GetSettings(ScreenshotDestination& destination)
+void CDestinationPropertiesGeneral::GetSettings()
 {
 	if (IsWindow())
 	{
-		destination.general.type = GetType();
-		destination.general.name = GetWindowString(GetDlgItem(IDC_GENERAL_NAME));
-		destination.general.imageFormat = GetImageFormat();
-		destination.general.imageQuality = CTrackBarCtrl(GetDlgItem(IDC_QUALITY)).GetPos();
-		destination.general.filenameFormat = GetWindowString(GetDlgItem(IDC_GENERAL_FILENAME));
-		destination.general.path = GetWindowString(GetDlgItem(IDC_FILE_FOLDER));
+		m_settings->general.type = GetType();
+		m_settings->general.name = GetWindowString(GetDlgItem(IDC_GENERAL_NAME));
+		m_settings->general.imageFormat = GetImageFormat();
+		m_settings->general.imageQuality = CTrackBarCtrl(GetDlgItem(IDC_QUALITY)).GetPos();
+		//destination.general.filenameFormat = GetWindowString(GetDlgItem(IDC_GENERAL_FILENAME));
+		m_settings->general.pathFormat = GetWindowString(GetDlgItem(IDC_FILE_PATH));
 
-    destination.general.localTime = (BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL));
+    m_settings->general.localTime = (BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL));
 	}
 }
 
@@ -297,11 +320,12 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 	bool enableQuality = ImageCodecsEnum::SupportsQualitySetting(formatDescription);
 
 	::EnableWindow(GetDlgItem(IDC_QUALITY), enableQuality);
+	::EnableWindow(GetDlgItem(IDC_QUALITYLABEL), enableQuality);
 
 	if (type != ScreenshotDestination::TYPE_FILE)
 	{
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER_BROWSE), FALSE);
-		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER), FALSE);
+		::EnableWindow(GetDlgItem(IDC_FILE_PATH), FALSE);
 	}
 	
 	if ((type == ScreenshotDestination::TYPE_CLIPBOARD) || (type == ScreenshotDestination::TYPE_IMAGESHACK))
@@ -312,10 +336,10 @@ void CDestinationPropertiesGeneral::SetDestinationType(ScreenshotDestination::Ty
 		BOOL enableControls = FALSE;
 
 		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER_BROWSE), enableControls);
-		::EnableWindow(GetDlgItem(IDC_FILE_FOLDER), enableControls);
+		::EnableWindow(GetDlgItem(IDC_FILE_PATH), enableControls);
 		::EnableWindow(GetDlgItem(IDC_GENERAL_FORMAT), type == ScreenshotDestination::TYPE_IMAGESHACK);
 		::EnableWindow(GetDlgItem(IDC_QUALITY), type == ScreenshotDestination::TYPE_IMAGESHACK && enableQuality);
-		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMAT), enableControls);
+		::EnableWindow(GetDlgItem(IDC_QUALITYLABEL), type == ScreenshotDestination::TYPE_IMAGESHACK && enableQuality);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATDESC), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_FORMATPREVIEW), enableControls);
 		::EnableWindow(GetDlgItem(IDC_FILENAME_LOCAL), enableControls);
@@ -327,3 +351,4 @@ void CDestinationPropertiesGeneral::SetParentSheet(DestinationPropertySheet* par
 {
 	m_parentSheet = parentSheet;
 }
+

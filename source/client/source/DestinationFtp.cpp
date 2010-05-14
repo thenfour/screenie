@@ -53,7 +53,7 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	SYSTEMTIME systemTime = args.localTime;
 	args.dest.GetNowBasedOnTimeSettings(systemTime);
 
-	tstd::tstring remoteFileName = FormatFilename(systemTime, args.dest.general.filenameFormat, args.windowTitle);
+	tstd::tstring remotePath = FormatFilename(systemTime, args.dest.ftp.remotePathFormat, args.windowTitle);
 
 	LibCC::Result r;
 	DWORD size = 0;
@@ -63,8 +63,8 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	tstd::tstring url = LibCC::Format("ftp://%:%/%%")
 		.s(args.dest.ftp.hostname)
 		.ul(args.dest.ftp.port)
-		.s(args.dest.ftp.remotePath)
-		.s(remoteFileName)
+		.s(args.dest.ftp.remotePathFormat)
+		.s(remotePath)
 		.Str();
 
 	request.SetFilename(LibCC::ToUTF8(temporaryFilename));
@@ -86,9 +86,10 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	args.statusDlg.EventSetText(msgid, TEXT("Upload complete."));
 	args.statusDlg.EventSetIcon(msgid, EI_CHECK);
 
-	if (!args.dest.ftp.resultURL.empty())
+	if (!args.dest.ftp.resultURLFormat.empty())
 	{
-		tstd::tstring url = LibCC::Format(TEXT("%%")).s(args.dest.ftp.resultURL).s(remoteFileName).Str();
+		tstd::tstring remotePath = FormatFilename(systemTime, args.dest.ftp.resultURLFormat, args.windowTitle);
+		//tstd::tstring url = LibCC::Format(TEXT("%%")).s(args.dest.ftp.resultURL).s(remoteFileName).Str();
 
 		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");
 

@@ -40,10 +40,10 @@ struct DestinationPropertyPage
 	virtual HPROPSHEETPAGE CreatePropertyPage() = 0;
 
 	// each property page should make a local copy of the relevant settings.
-	virtual void SetSettings(const ScreenshotDestination& destination) = 0;
+	virtual void SetSettings(ScreenshotDestination* destination) = 0;
 
 	// only the settings relevant to the property page should be modified.
-	virtual void GetSettings(ScreenshotDestination& destination) = 0;
+	virtual void GetSettings() = 0;
 
 	virtual void SetDestinationType(const ScreenshotDestination::Type type) = 0;
 	virtual void SetParentSheet(DestinationPropertySheet* parentSheet) = 0;

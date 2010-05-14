@@ -183,30 +183,24 @@ bool ProcessFileDestination(DestinationArgs& args)
 {
 	bool success = false;
 
-	// let's see if the directory they want us to save to even exists.
-	if (!::PathFileExists(args.dest.general.path.c_str()))
-	{
-		args.statusDlg.RegisterEvent(args.screenshotID, EI_ERROR, ET_GENERAL, args.dest.general.name,
-			LibCC::Format(TEXT("File: folder \"%\" doesn't exist")).s(args.dest.general.path).Str());
-		return false;
-	}
-
 	// try to get the transformed screenshot.
 	util::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
 	if (!GetTransformedScreenshot(args.dest.image, args.image, transformedScreenshot))
 	{
 		args.statusDlg.RegisterEvent(args.screenshotID, EI_ERROR, ET_GENERAL, args.dest.general.name,
-			LibCC::Format(TEXT("File: can't get screenshot data!")).s(args.dest.general.path).Str());
+			LibCC::Format(TEXT("File: can't get screenshot data, destination %")).qs(args.dest.general.pathFormat).Str());
 		return false;
 	}
 
-	// let's get the filename and format it.
+	// generate a filename.
 
 	SYSTEMTIME systemTime = args.localTime;
 	args.dest.GetNowBasedOnTimeSettings(systemTime);
 
-	tstd::tstring filename = FormatFilename(systemTime, args.dest.general.filenameFormat, args.windowTitle);
-	tstd::tstring fullPath = LibCC::Format(TEXT("%\\%")).s(args.dest.general.path).s(filename).Str();
+	tstd::tstring fullPath = FormatFilename(systemTime, args.dest.general.pathFormat, args.windowTitle);
+
+	// make sure the directory exists
+	SHCreateDirectoryEx(NULL, LibCC::PathRemoveFilename(fullPath).c_str(), NULL);
 
 	// do the deed
 	if (SaveImageToFile(*transformedScreenshot, args.dest.general.imageFormat, fullPath, args.dest.general.imageQuality))

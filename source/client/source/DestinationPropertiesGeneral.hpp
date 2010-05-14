@@ -21,7 +21,7 @@ public:
 	virtual ~CDestinationPropertiesGeneral();
 
 	void SetSettings(const ScreenshotDestination::General& settings);
-	ScreenshotDestination::General GetSettings();
+	//ScreenshotDestination::General GetSettings();
 
 	ScreenshotDestination::Type GetType();
 
@@ -38,9 +38,10 @@ public:
 		COMMAND_HANDLER(IDC_FILE_FOLDER_BROWSE, BN_CLICKED, OnFolderBrowse)
 		COMMAND_HANDLER(IDC_GENERAL_TYPE, CBN_SELCHANGE, OnTypeChanged)
 		COMMAND_HANDLER(IDC_GENERAL_FORMAT, CBN_SELCHANGE, OnImageFormatChanged)
-		COMMAND_HANDLER(IDC_GENERAL_FILENAME, EN_CHANGE, OnFilenameFormatChanged)
+		COMMAND_HANDLER(IDC_FILE_PATH, EN_CHANGE, OnFilenameFormatChanged)
     COMMAND_HANDLER(IDC_FILENAME_LOCAL, BN_CLICKED, OnFilenameFormatChanged)
     COMMAND_HANDLER(IDC_FILENAME_UTC, BN_CLICKED, OnFilenameFormatChanged)
+		CHAIN_MSG_MAP(CPropertyPageImpl<CDestinationPropertiesGeneral>)
 	END_MSG_MAP()
 
 	LRESULT OnInitDialog(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled);
@@ -54,17 +55,20 @@ public:
 	//
 	// DestinationPropertyPage implementation
 	//
+	BOOL OnSetActive() { ShowSettings(); return TRUE; }
+	BOOL OnKillActive() { GetSettings(); return TRUE; }// being hidden
+	BOOL OnApply() { GetSettings(); return TRUE; }
 
 	HPROPSHEETPAGE CreatePropertyPage();
 
-	void SetSettings(const ScreenshotDestination& destination);
-	void GetSettings(ScreenshotDestination& destination);
+	void SetSettings(ScreenshotDestination* destination);
+	void GetSettings();
 
 	void SetDestinationType(const ScreenshotDestination::Type type);
 	void SetParentSheet(DestinationPropertySheet* parentSheet);
 private:
 	DestinationPropertySheet* m_parentSheet;
-	ScreenshotDestination::General m_settings;
+	ScreenshotDestination* m_settings;
 
 	void UpdateQualityLabel();
 };

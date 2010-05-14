@@ -32,6 +32,7 @@
 #define IDC_FILE_FOLDER                 1004
 #define IDC_CONTROLS1                   1004
 #define IDC_REGISTRANT                  1004
+#define IDC_FILE_PATH                   1004
 #define IDC_EDIT                        1005
 #define IDC_COMBO1                      1005
 #define IDC_FTP_PASSWORD                1005
@@ -70,8 +71,10 @@
 #define IDC_FTP_HTTPURL                 1017
 #define IDC_IMAGESHACK_COPYURL2         1018
 #define IDC_FTP_SHORTENURL              1018
+#define IDC_FTP_REMOTEPATHPREVIEW       1019
 #define IDC_RADIO1                      1020
 #define IDC_RESIZE_SCALE                1020
+#define IDC_FTP_URLPREVIEW              1020
 #define IDC_EDIT2                       1021
 #define IDC_RESIZE_SCALE_VALUE          1021
 #define IDC_ARCHIVELIMIT                1021
@@ -137,6 +140,7 @@
 #define IDC_INFOBOX                     1078
 #define IDC_QUALITYLABEL                1079
 #define IDC_RESETIMAGE                  1081
+#define IDC_BUTTON2                     1082
 #define IDD_DESTPROP_FTP                30120
 #define IDD_DESTPROP_IMAGE              30121
 #define IDD_DESTPROP_RESIZING           30121
@@ -210,7 +214,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         32791
-#define _APS_NEXT_CONTROL_VALUE         1082
+#define _APS_NEXT_CONTROL_VALUE         1083
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -347,88 +347,88 @@ tstd::tstring tstring_toupper(const tstd::tstring& input)
 	return output;
 }
 
-
-LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFileName, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser, OUT DWORD* size)
-{
-  // open / login
-	WinInetHandle internet = ::InternetOpen(_T("Screenie v1.0"), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-	if (internet.handle == NULL)
-	{
-    return LibCC::Result(E_FAIL, LibCC::Format("Failed to connect to the FTP site.  Technical info: [InternetOpen] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
-	}
-
-	WinInetHandle ftp = ::InternetConnect(internet.handle,
-		dest.ftp.hostname.c_str(), dest.ftp.port,
-		dest.ftp.username.c_str(), dest.ftp.DecryptPassword().c_str(),
-		INTERNET_SERVICE_FTP, 0, 0);
-  if (ftp.handle == NULL)
-	{
-    return LibCC::Result(E_FAIL, LibCC::Format("Failed to connect to the FTP site.  Technical info: [InternetConnect] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
-	}
-
-  if (!::FtpSetCurrentDirectory(ftp.handle, dest.ftp.remotePath.c_str()))
-	{
-    return LibCC::Result(E_FAIL, LibCC::Format("Failed to set the current directory remotely.  Technical info: [FtpSetCurrentDirectory] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
-	}
-
-  // open the remote file
-  WinInetHandle remoteFile = ::FtpOpenFile(ftp.handle, remoteFileName.c_str(), GENERIC_WRITE, FTP_TRANSFER_TYPE_BINARY, 0);
-  if(remoteFile.handle == NULL)
-  {
-    return LibCC::Result(E_FAIL, LibCC::Format("Failed to open the remote file for writing.  Technical info: [FtpOpenFile] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
-  }
-
-  // open the local file.
-  Win32Handle hFile = CreateFile(localFile.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-	if(!LibCC::IsValidHandle(hFile.val))
-  {
-    return LibCC::Result(E_FAIL, LibCC::Format("Unable to open the temp file for reading.  Technical info: [CreateFile] [gle: %]").gle().Str());
-  }
-
-  LibCC::Blob<BYTE> buffer(bufferSize);
-  DWORD total = GetFileSize(hFile.val, 0);
-	if(size)
-		*size = total;
-  DWORD progress = 0;
-  for(;;)
-  {
-    // read in
-    DWORD br;
-    BOOL ret = ReadFile(hFile.val, buffer.GetBuffer(), bufferSize, &br, 0);
-    if(FALSE == ret)
-    {
-      return LibCC::Result(E_FAIL, LibCC::Format("Error reading from the temp file.  Technical info: [ReadFile] [gle: %]").gle().Str());
-    }
-    if(br == 0)
-    {
-      break;
-    }
-
-    // write out
-    DWORD bw;
-    if(FALSE == InternetWriteFile(remoteFile.handle, buffer.GetBuffer(), br, &bw))
-    {
-      return LibCC::Result(E_FAIL, LibCC::Format("Error writing to the remote file.  Technical info: [InternetWriteFile] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
-    }
-
-    if(bw != br)
-    {
-      return LibCC::Result(E_FAIL, LibCC::Format("Error writing to the remote file.  Technical info: [InternetWriteFile] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
-    }
-
-    progress += bw;
-
-    if(pProc)
-    {
-      if(!pProc(progress, total, pUser))
-      {
-        return LibCC::Result(E_FAIL, LibCC::Format("User canceled.").Str());
-      }
-    }
-  }
-
-	return Result(S_OK);
-}
+//
+//LibCC::Result UploadFTPFile(ScreenshotDestination& dest, const tstd::tstring& localFile, const tstd::tstring& remoteFileName, DWORD bufferSize, UploadFTPFileProgressProc_T pProc, void* pUser, OUT DWORD* size)
+//{
+//  // open / login
+//	WinInetHandle internet = ::InternetOpen(_T("Screenie v1.0"), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+//	if (internet.handle == NULL)
+//	{
+//    return LibCC::Result(E_FAIL, LibCC::Format("Failed to connect to the FTP site.  Technical info: [InternetOpen] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
+//	}
+//
+//	WinInetHandle ftp = ::InternetConnect(internet.handle,
+//		dest.ftp.hostname.c_str(), dest.ftp.port,
+//		dest.ftp.username.c_str(), dest.ftp.DecryptPassword().c_str(),
+//		INTERNET_SERVICE_FTP, 0, 0);
+//  if (ftp.handle == NULL)
+//	{
+//    return LibCC::Result(E_FAIL, LibCC::Format("Failed to connect to the FTP site.  Technical info: [InternetConnect] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
+//	}
+//
+//  if (!::FtpSetCurrentDirectory(ftp.handle, dest.ftp.remotePath.c_str()))
+//	{
+//    return LibCC::Result(E_FAIL, LibCC::Format("Failed to set the current directory remotely.  Technical info: [FtpSetCurrentDirectory] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
+//	}
+//
+//  // open the remote file
+//  WinInetHandle remoteFile = ::FtpOpenFile(ftp.handle, remoteFileName.c_str(), GENERIC_WRITE, FTP_TRANSFER_TYPE_BINARY, 0);
+//  if(remoteFile.handle == NULL)
+//  {
+//    return LibCC::Result(E_FAIL, LibCC::Format("Failed to open the remote file for writing.  Technical info: [FtpOpenFile] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
+//  }
+//
+//  // open the local file.
+//  Win32Handle hFile = CreateFile(localFile.c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+//	if(!LibCC::IsValidHandle(hFile.val))
+//  {
+//    return LibCC::Result(E_FAIL, LibCC::Format("Unable to open the temp file for reading.  Technical info: [CreateFile] [gle: %]").gle().Str());
+//  }
+//
+//  LibCC::Blob<BYTE> buffer(bufferSize);
+//  DWORD total = GetFileSize(hFile.val, 0);
+//	if(size)
+//		*size = total;
+//  DWORD progress = 0;
+//  for(;;)
+//  {
+//    // read in
+//    DWORD br;
+//    BOOL ret = ReadFile(hFile.val, buffer.GetBuffer(), bufferSize, &br, 0);
+//    if(FALSE == ret)
+//    {
+//      return LibCC::Result(E_FAIL, LibCC::Format("Error reading from the temp file.  Technical info: [ReadFile] [gle: %]").gle().Str());
+//    }
+//    if(br == 0)
+//    {
+//      break;
+//    }
+//
+//    // write out
+//    DWORD bw;
+//    if(FALSE == InternetWriteFile(remoteFile.handle, buffer.GetBuffer(), br, &bw))
+//    {
+//      return LibCC::Result(E_FAIL, LibCC::Format("Error writing to the remote file.  Technical info: [InternetWriteFile] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
+//    }
+//
+//    if(bw != br)
+//    {
+//      return LibCC::Result(E_FAIL, LibCC::Format("Error writing to the remote file.  Technical info: [InternetWriteFile] [gle: %] [igle: %]").gle().s(InternetGetLastResponseInfoX()).Str());
+//    }
+//
+//    progress += bw;
+//
+//    if(pProc)
+//    {
+//      if(!pProc(progress, total, pUser))
+//      {
+//        return LibCC::Result(E_FAIL, LibCC::Format("User canceled.").Str());
+//      }
+//    }
+//  }
+//
+//	return Result(S_OK);
+//}
 
 
 CFont& UtilGetShellFont()

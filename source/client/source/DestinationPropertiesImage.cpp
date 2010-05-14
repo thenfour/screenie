@@ -24,7 +24,7 @@ CDestinationPropertiesImage::~CDestinationPropertiesImage()
 
 void CDestinationPropertiesImage::ShowSettings()
 {
-	BOOL doScaling = (m_settings.scaleType != ScreenshotDestination::SCALE_NONE);
+	BOOL doScaling = (m_settings->image.scaleType != ScreenshotDestination::SCALE_NONE);
 
 	CheckDlgButton(IDC_RESIZE, doScaling ? BST_CHECKED : BST_UNCHECKED);
 	EnableSizingControls(doScaling);
@@ -32,16 +32,16 @@ void CDestinationPropertiesImage::ShowSettings()
 	if (doScaling)
 	{
 		CheckDlgButton(IDC_RESIZE_SCALE,
-			(m_settings.scaleType == ScreenshotDestination::SCALE_SCALETOPERCENT) ?
+			(m_settings->image.scaleType == ScreenshotDestination::SCALE_SCALETOPERCENT) ?
 			BST_CHECKED : BST_UNCHECKED);
 
 		CheckDlgButton(IDC_RESIZE_LIMIT,
-			(m_settings.scaleType == ScreenshotDestination::SCALE_LIMITDIMENSIONS) ?
+			(m_settings->image.scaleType == ScreenshotDestination::SCALE_LIMITDIMENSIONS) ?
 			BST_CHECKED : BST_UNCHECKED);
 	}
 
-	SetDlgItemInt(IDC_RESIZE_SCALE_VALUE, m_settings.scalePercent, FALSE);
-	SetDlgItemInt(IDC_RESIZE_LIMIT_VALUE, m_settings.maxDimension, FALSE);
+	SetDlgItemInt(IDC_RESIZE_SCALE_VALUE, m_settings->image.scalePercent, FALSE);
+	SetDlgItemInt(IDC_RESIZE_LIMIT_VALUE, m_settings->image.maxDimension, FALSE);
 
 	ScreenshotDestination::Type type = m_parentSheet->GetCurrentType();
 }
@@ -82,15 +82,15 @@ HPROPSHEETPAGE CDestinationPropertiesImage::CreatePropertyPage()
 	return CPropertyPageImpl<CDestinationPropertiesImage>::Create();
 }
 
-void CDestinationPropertiesImage::SetSettings(const ScreenshotDestination& destination)
+void CDestinationPropertiesImage::SetSettings(ScreenshotDestination* destination)
 {
-	m_settings = destination.image;
+	m_settings = destination;
 
 	if (IsWindow())
 		ShowSettings();
 }
 
-void CDestinationPropertiesImage::GetSettings(ScreenshotDestination& destination)
+void CDestinationPropertiesImage::GetSettings()
 {
 	if (!IsWindow())
 		return;
@@ -99,31 +99,23 @@ void CDestinationPropertiesImage::GetSettings(ScreenshotDestination& destination
 	{
 		if (IsDlgButtonChecked(IDC_RESIZE_SCALE))
 		{
-			destination.image.scaleType = ScreenshotDestination::SCALE_SCALETOPERCENT;
-			destination.image.scalePercent = GetDlgItemInt(IDC_RESIZE_SCALE_VALUE, NULL, FALSE);
+			m_settings->image.scaleType = ScreenshotDestination::SCALE_SCALETOPERCENT;
+			m_settings->image.scalePercent = GetDlgItemInt(IDC_RESIZE_SCALE_VALUE, NULL, FALSE);
 		}
 		else
 		{
-			destination.image.scaleType = ScreenshotDestination::SCALE_LIMITDIMENSIONS;
-			destination.image.maxDimension = GetDlgItemInt(IDC_RESIZE_LIMIT_VALUE, NULL, FALSE);
+			m_settings->image.scaleType = ScreenshotDestination::SCALE_LIMITDIMENSIONS;
+			m_settings->image.maxDimension = GetDlgItemInt(IDC_RESIZE_LIMIT_VALUE, NULL, FALSE);
 		}
 	}
 	else
 	{
-		destination.image.scaleType = ScreenshotDestination::SCALE_NONE;
+		m_settings->image.scaleType = ScreenshotDestination::SCALE_NONE;
 	}
 }
 
 void CDestinationPropertiesImage::SetDestinationType(const ScreenshotDestination::Type type)
 {
-	if (IsWindow())
-	{
-		// enable all child windows to ensure a predefined state
-		EnableChildWindows(m_hWnd, TRUE);
-
-		// disable what needs to be disabled
-		ShowSettings();
-	}
 }
 
 void CDestinationPropertiesImage::SetParentSheet(DestinationPropertySheet* parentSheet)

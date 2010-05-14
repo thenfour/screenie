@@ -186,10 +186,10 @@ public:
 		}
 
 		// no xml file. try from registry.
-		if (LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2")))
-		{
-			return true;
-		}
+		//if (LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2")))
+		//{
+		//	return true;
+		//}
 
 		return false;
 	}
@@ -314,8 +314,8 @@ public:
 	DestinationCollection m_destinations;// making this public because, at the moment, there is no value in adding wrappers around everything here.
 
 private:
-	static bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
-	static bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
+	//static bool LoadOptionsFromRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
+	//static bool SaveOptionsToRegistry(ScreenshotOptions& options, HKEY root, PCTSTR keyName);
 	tstd::tstring GenerateXmlFileName(bool createDirectories) const
 	{
 		// use the users' application data path

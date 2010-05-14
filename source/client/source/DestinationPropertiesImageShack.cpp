@@ -24,13 +24,14 @@ void CDestinationPropertiesImageShack::ShowSettings()
 {
 	if (IsWindow())
 	{
-		::EnableChildWindows(m_hWnd,
-			(m_parentSheet->GetCurrentType() == ScreenshotDestination::TYPE_IMAGESHACK));
+		bool enableAny = (m_parentSheet->GetCurrentType() == ScreenshotDestination::TYPE_IMAGESHACK);
+		::EnableChildWindows(m_hWnd, enableAny);
 
-		CheckDlgButton(IDC_IMAGESHACK_COPYURL, m_settings.copyURL ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(IDC_IMAGESHACK_COPYURL, m_settings->imageshack.copyURL ? BST_CHECKED : BST_UNCHECKED);
 
-		GetDlgItem(IDC_IMAGESHACK_SHORTENURL).EnableWindow(IsDlgButtonChecked(IDC_IMAGESHACK_COPYURL) == TRUE);
-		CheckDlgButton(IDC_IMAGESHACK_SHORTENURL, m_settings.shortenURL ? BST_CHECKED : BST_UNCHECKED);
+		GetDlgItem(IDC_IMAGESHACK_SHORTENURL).EnableWindow(enableAny && (IsDlgButtonChecked(IDC_IMAGESHACK_COPYURL) == TRUE));
+		CheckDlgButton(IDC_IMAGESHACK_SHORTENURL, m_settings->imageshack.shortenURL ? BST_CHECKED : BST_UNCHECKED);
+
 	}
 }
 
@@ -56,31 +57,25 @@ HPROPSHEETPAGE CDestinationPropertiesImageShack::CreatePropertyPage()
 	return CPropertyPageImpl<CDestinationPropertiesImageShack>::Create();
 }
 
-void CDestinationPropertiesImageShack::SetSettings(const ScreenshotDestination& destination)
+void CDestinationPropertiesImageShack::SetSettings(ScreenshotDestination* destination)
 {
-	m_settings = destination.imageshack;
+	m_settings = destination;
 
 	if (IsWindow())
 		ShowSettings();
 }
 
-void CDestinationPropertiesImageShack::GetSettings(ScreenshotDestination& destination)
+void CDestinationPropertiesImageShack::GetSettings()
 {
 	if (IsWindow())
 	{
-		m_settings.copyURL = (IsDlgButtonChecked(IDC_IMAGESHACK_COPYURL) == TRUE);
-		m_settings.shortenURL = (IsDlgButtonChecked(IDC_IMAGESHACK_SHORTENURL) == TRUE);
+		m_settings->imageshack.copyURL = (IsDlgButtonChecked(IDC_IMAGESHACK_COPYURL) == TRUE);
+		m_settings->imageshack.shortenURL = (IsDlgButtonChecked(IDC_IMAGESHACK_SHORTENURL) == TRUE);
 	}
-
-	destination.imageshack = m_settings;
 }
 
 void CDestinationPropertiesImageShack::SetDestinationType(const ScreenshotDestination::Type type)
 {
-	if (IsWindow())
-	{
-		::EnableChildWindows(m_hWnd, (type == ScreenshotDestination::TYPE_IMAGESHACK));
-	}
 }
 
 void CDestinationPropertiesImageShack::SetParentSheet(DestinationPropertySheet* parentSheet)
