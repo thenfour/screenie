@@ -371,14 +371,14 @@ struct ScreenshotDestination
 		{
 			// forward slashes are used.
 			ftp.remotePathFormat = oldFTPpath;
-			if(*ftp.remotePathFormat.rbegin() != '/')
+			if(ftp.remotePathFormat.size() && (*ftp.remotePathFormat.rbegin() != '/'))
 				ftp.remotePathFormat.push_back('/');
 			ftp.remotePathFormat += oldfileNameFormat;
 		}
 		if(!Xml::Deserialize(parent, L"FtpResultURLFormat", ftp.resultURLFormat))
 		{
 			ftp.resultURLFormat = oldURL;
-			if(*ftp.resultURLFormat.rbegin() != '/')
+			if(ftp.resultURLFormat.size() && (*ftp.resultURLFormat.rbegin() != '/'))
 				ftp.resultURLFormat.push_back('/');
 			ftp.resultURLFormat += oldfileNameFormat;
 		}
