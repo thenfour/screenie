@@ -185,12 +185,6 @@ public:
 			}
 		}
 
-		// no xml file. try from registry.
-		//if (LoadOptionsFromRegistry(*this, HKEY_CURRENT_USER, TEXT("Software\\Screenie2")))
-		//{
-		//	return true;
-		//}
-
 		return false;
 	}
 

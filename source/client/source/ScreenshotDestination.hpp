@@ -69,6 +69,12 @@ struct ScreenshotDestination
 
 	struct Image
 	{
+		Image()
+		{
+			scalePercent = 50;
+			maxDimension = 300;
+			scaleType = SCALE_NONE;
+		}
 		ScaleType scaleType;
 		int scalePercent;
 		int maxDimension;
