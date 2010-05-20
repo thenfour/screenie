@@ -90,14 +90,14 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	{
 		//tstd::tstring url = LibCC::Format(TEXT("%%")).s(args.dest.ftp.resultURL).s(remoteFileName).Str();
 
-		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");
+		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(resultingURL).CStr(), 10, L"", 0, L"FTP Upload Complete");
 
-		args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % (% KB/s) to %").s(BytesToString(request.GetUploadSize())).d(request.GetUploadSpeed(), 3).s(url).Str());
-		args.statusDlg.EventSetURL(msgid, url);
+		args.statusDlg.EventSetText(msgid, LibCC::Format("Uploaded % (% KB/s) to %").s(BytesToString(request.GetUploadSize())).d(request.GetUploadSpeed(), 3).s(resultingURL).Str());
+		args.statusDlg.EventSetURL(msgid, resultingURL);
 
 		if (args.dest.ftp.copyURL)
 		{
-			tstd::tstring strFinalURL = url;
+			tstd::tstring strFinalURL = resultingURL;
 			if (args.dest.ftp.shortenURL)
 			{
 				BitlyShortenInfo info;
