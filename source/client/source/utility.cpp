@@ -215,9 +215,35 @@ tstd::tstring StripBadFilenameChars(const tstd::tstring& str)
 	return result;
 }
 
-tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat,
-							 const tstd::tstring& windowTitle, bool preview)
+
+ScreenshotNamingData::ScreenshotNamingData()
 {
+	GetLocalTime(&localTime);
+	GetSystemTime(&utcTime);
+
+  //void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
+  //{
+	 // // now the time is already local, so just do nothing
+	 // // unless local time is turned off
+
+	 // if (!general.localTime)
+	 // {
+		//  SYSTEMTIME out;
+		//  ::TzSpecificLocalTimeToSystemTime(NULL, &st, &out);
+
+		//  st = out;
+	 // }
+  //}
+}
+
+
+//tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat,
+//														 const tstd::tstring& windowTitle, bool preview, )
+tstd::tstring FormatFilename(ScreenshotNamingData& namingData, bool useLocalTime, const tstd::tstring& inputFormat, bool preview)
+{
+	int guidIndex = 0;
+	int userTextIndex = 0;
+
 	tstd::tstringstream outputStream;
 
 	for (tstd::tstring::size_type pos = 0; pos < inputFormat.length(); ++pos)
@@ -231,44 +257,44 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 			switch (nextCharacter)
 			{
       case 'a':
-        outputStream << ((systemTime.wHour >= 12) ? _T("PM") : _T("AM"));
+        outputStream << ((namingData.UsableTime(useLocalTime).wHour >= 12) ? _T("PM") : _T("AM"));
         break;
 
 				case TEXT('m'):
-          outputStream << Format().ui<10,2>(systemTime.wMonth).Str();
+          outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wMonth).Str();
 					break;
 				case TEXT('M'):
-					outputStream << MonthNameFromNumber(systemTime.wMonth);
+					outputStream << MonthNameFromNumber(namingData.UsableTime(useLocalTime).wMonth);
 					break;
 				case TEXT('d'):
-          outputStream << Format().ui<10,2>(systemTime.wDay).Str();
+          outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wDay).Str();
 					break;
 				case TEXT('D'):
-					outputStream << WeekdayNameFromNumber(systemTime.wDayOfWeek);
+					outputStream << WeekdayNameFromNumber(namingData.UsableTime(useLocalTime).wDayOfWeek);
 					break;
 				case TEXT('y'):
-					outputStream << Format().ui<10,2>(systemTime.wYear % 100).Str();
+					outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wYear % 100).Str();
 					break;
 				case TEXT('Y'):
-					outputStream << Format().ui<10,4>(systemTime.wYear).Str();
+					outputStream << Format().ui<10,4>(namingData.UsableTime(useLocalTime).wYear).Str();
 					break;
 				case TEXT('h'):
-					outputStream << Format().ui<10,2>(systemTime.wHour).Str();
+					outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wHour).Str();
 					break;
 				case TEXT('H'):
-					outputStream << Format().ui<10,2>(systemTime.wHour % 12).Str();
+					outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wHour % 12).Str();
 					break;
 				case TEXT('c'):
-					if (systemTime.wHour == 0)
+					if (namingData.UsableTime(useLocalTime).wHour == 0)
 						outputStream << TEXT("AM");
 					else
-						outputStream << (systemTime.wHour >= 12) ? TEXT("PM") : TEXT("AM");
+						outputStream << (namingData.UsableTime(useLocalTime).wHour >= 12) ? TEXT("PM") : TEXT("AM");
 					break;
 				case TEXT('i'):
-          outputStream << Format().ui<10,2>(systemTime.wMinute).Str();
+          outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wMinute).Str();
 					break;
 				case TEXT('s'):
-          outputStream << Format().ui<10,2>(systemTime.wSecond).Str();
+          outputStream << Format().ui<10,2>(namingData.UsableTime(useLocalTime).wSecond).Str();
 					break;
 				case TEXT('w'):
 				case TEXT('t'):
@@ -282,24 +308,41 @@ tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& 
 						}
 						else
 						{
-							CTextPromptDlg dlg(TEXT("Enter filename text"),
-								TEXT("Enter a name or word to be used in your screenshot's filename"),
-								(nextCharacter == 'w') ? windowTitle : TEXT(""));
-
-							if (dlg.DoModal() == IDOK)
+							if(userTextIndex >= namingData.userStrings.size())
 							{
-								outputStream << StripBadFilenameChars(dlg.GetText());
+								CTextPromptDlg dlg(TEXT("Enter filename text"),
+									TEXT("Enter a name or word to be used in your screenshot's filename"),
+									(nextCharacter == 'w') ? namingData.windowTitle : TEXT(""));
+
+								if (dlg.DoModal() == IDOK)
+								{
+									namingData.userStrings.push_back(dlg.GetText());
+								}
+								else
+								{
+									namingData.userStrings.push_back(L"");
+								}
 							}
+
+							outputStream << StripBadFilenameChars(namingData.userStrings[userTextIndex]);
+
+							userTextIndex ++;
 						}
 					}
 					break;
 				case TEXT('g'):
 					{
-						Guid g;
-						g.CreateNew();
+						if(guidIndex >= namingData.guids.size())
+						{
+							Guid g;
+							g.CreateNew();
+							namingData.guids.push_back(g);
+						}
 
-						std::wstring str = g.ToString();
+						std::wstring str = namingData.guids[guidIndex].ToString();
 						outputStream << str.substr(1, str.length() - 2);
+
+						guidIndex ++;
 					}
 					break;
 				case TEXT('u'):

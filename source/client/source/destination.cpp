@@ -193,11 +193,7 @@ bool ProcessFileDestination(DestinationArgs& args)
 	}
 
 	// generate a filename.
-
-	SYSTEMTIME systemTime = args.localTime;
-	args.dest.GetNowBasedOnTimeSettings(systemTime);
-
-	tstd::tstring fullPath = FormatFilename(systemTime, args.dest.general.pathFormat, args.windowTitle);
+	tstd::tstring fullPath = FormatFilename(args.namingData, args.dest.general.localTime, args.dest.general.pathFormat);
 
 	// make sure the directory exists
 	SHCreateDirectoryEx(NULL, LibCC::PathRemoveFilename(fullPath).c_str(), NULL);
@@ -284,3 +280,4 @@ bool ProcessDestination(DestinationArgs& args)
 
 	return false;
 }
+

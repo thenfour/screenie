@@ -427,19 +427,19 @@ struct ScreenshotDestination
 	ImageShack imageshack;
 //	Screenienet screenie;
 
-  void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
-  {
-	  // now the time is already local, so just do nothing
-	  // unless local time is turned off
+  //void GetNowBasedOnTimeSettings(SYSTEMTIME& st)
+  //{
+	 // // now the time is already local, so just do nothing
+	 // // unless local time is turned off
 
-	  if (!general.localTime)
-	  {
-		  SYSTEMTIME out;
-		  ::TzSpecificLocalTimeToSystemTime(NULL, &st, &out);
+	 // if (!general.localTime)
+	 // {
+		//  SYSTEMTIME out;
+		//  ::TzSpecificLocalTimeToSystemTime(NULL, &st, &out);
 
-		  st = out;
-	  }
-  }
+		//  st = out;
+	 // }
+  //}
 
 	static tstd::tstring TypeToString(Type type)
 	{

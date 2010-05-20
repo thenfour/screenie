@@ -29,9 +29,6 @@ tstd::tstring GetUniqueFilename(tstd::tstring path);
 tstd::tstring GetWindowString(HWND hwnd);
 tstd::tstring GetComboSelectionString(HWND hWndCombo);
 
-tstd::tstring FormatFilename(const SYSTEMTIME& systemTime, const tstd::tstring& inputFormat,
-							 const tstd::tstring& windowTitle, bool preview = false);
-
 tstd::tstring tstring_tolower(const tstd::tstring& input);
 tstd::tstring tstring_toupper(const tstd::tstring& input);
 
@@ -176,6 +173,21 @@ public:
     return ret;
   }
 };
+
+// used to ensure that different filenames in the same destination will be the same
+struct ScreenshotNamingData
+{
+	ScreenshotNamingData();
+
+	SYSTEMTIME& UsableTime(bool useLocalTime) { return useLocalTime ? localTime : utcTime; }
+	SYSTEMTIME utcTime;
+	SYSTEMTIME localTime;
+	std::wstring windowTitle;
+	std::vector<Guid> guids;
+	std::vector<std::wstring> userStrings;
+};
+
+tstd::tstring FormatFilename(ScreenshotNamingData& namingData, bool useLocalTime, const tstd::tstring& inputFormat, bool preview = false);
 
 // RAII critsec class
 class CriticalSection

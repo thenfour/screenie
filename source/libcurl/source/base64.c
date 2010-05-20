@@ -73,6 +73,11 @@ static void decodeQuantum(unsigned char *dest, const char *src)
   dest[0] = (unsigned char)(x & 255);
 }
 
+void Curl_base64_free(void* ptr)
+{
+	free(ptr);
+}
+
 /*
  * Curl_base64_decode()
  *

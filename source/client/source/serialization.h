@@ -10,6 +10,7 @@
 
 extern "C" size_t Curl_base64_encode(const char *input, size_t size, char **str);
 extern "C" size_t Curl_base64_decode(const char *source, unsigned char **outptr);
+extern "C" void Curl_base64_free(void* ptr);
 
 
 
@@ -198,7 +199,7 @@ namespace Xml
 		char* outA;
 		size_t size = Curl_base64_encode((const char*)in.p, in.size, &outA);
 		out = LibCC::ToUTF16(std::string(outA, size));
-		free(outA);
+		Curl_base64_free(outA);
 	}
 	inline void FromString(const std::wstring& in, LibCC::Blob<BYTE>& out)
 	{
@@ -208,7 +209,7 @@ namespace Xml
 		size_t size = Curl_base64_decode(a.c_str(), &buf);
 		out.Alloc(size);
 		memcpy(out.GetBuffer(), buf, size);
-		free(buf);
+		Curl_base64_free(buf);
 	}
 
 	// for serializing wstring

@@ -136,8 +136,6 @@ unsigned __stdcall CMainWindow::ProcessDestinationsThreadProc(void* p)
   int enabledDestinations = 0;
   DestinationArgs args(pThis->m_hWnd, pThis->m_statusDialog, params.screenshot, params.windowTitle, false, params.screenshotID);
 
-  ::GetLocalTime(&args.localTime);
-
   for (size_t i = 0; i < options.GetNumDestinations(); ++i)
   {
 	  if (options.GetDestination(args.dest, i))

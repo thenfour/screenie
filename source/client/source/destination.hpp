@@ -23,15 +23,15 @@ struct DestinationArgs
 	CStatusDlg& statusDlg;
 	ScreenshotDestination dest;
 	util::shared_ptr<Gdiplus::Bitmap> image;
-	tstd::tstring windowTitle;
 	bool bUsedClipboard;
 	ScreenshotID screenshotID;
-	SYSTEMTIME localTime;
+	ScreenshotNamingData namingData;
 
 	DestinationArgs(HWND wnd, CStatusDlg& dlg, util::shared_ptr<Gdiplus::Bitmap> pImage,
 		tstd::tstring title, bool usedClipboard, ScreenshotID id)
-		: hwnd(wnd), statusDlg(dlg), image(pImage), windowTitle(title), bUsedClipboard(usedClipboard), screenshotID(id)
+		: hwnd(wnd), statusDlg(dlg), image(pImage), bUsedClipboard(usedClipboard), screenshotID(id)
 	{
+		namingData.windowTitle = title;
 	}
 };
 

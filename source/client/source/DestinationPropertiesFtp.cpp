@@ -29,7 +29,7 @@ void CDestinationPropertiesFTP::ShowSettings()
 
 		CComboBox passwordOptions(GetDlgItem(IDC_PASSWORDOPTIONS));
 		// indices must correspond directly to enum values.
-		passwordOptions.Clear();
+		while(passwordOptions.DeleteString(0) > 0);
 		passwordOptions.AddString(_T("Insecure; store as plain text"));
 		passwordOptions.AddString(_T("Obscure; basic symmetric encryption"));
 		passwordOptions.AddString(_T("Most secure, but only usable on this computer"));
@@ -115,10 +115,10 @@ void CDestinationPropertiesFTP::UpdatePreview(UINT src, UINT preview, UINT other
 	tstd::tstring formatString = GetWindowString(GetDlgItem(src));
 	tstd::tstring otherFormatString = GetWindowString(GetDlgItem(other));
 
-	SYSTEMTIME systemTime = { 0 };
-  ::GetLocalTime(&systemTime);
+	ScreenshotNamingData namingData;
+	namingData.windowTitle = L"Screenie";
 
-	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString, _T("Screenie"), true);
+	tstd::tstring formattedOutput = FormatFilename(namingData, m_settings->general.localTime, formatString, true);
 	SetDlgItemText(preview, formattedOutput.c_str());
 }
 

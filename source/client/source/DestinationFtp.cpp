@@ -50,20 +50,20 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	}
 
 	// format the destination filename based on the current time
-	SYSTEMTIME systemTime = args.localTime;
-	args.dest.GetNowBasedOnTimeSettings(systemTime);
-
-	tstd::tstring remotePath = FormatFilename(systemTime, args.dest.ftp.remotePathFormat, args.windowTitle);
+	tstd::tstring remotePath = FormatFilename(args.namingData, args.dest.general.localTime, args.dest.ftp.remotePathFormat);
+	tstd::tstring resultingURL = FormatFilename(args.namingData, args.dest.general.localTime, args.dest.ftp.resultURLFormat);
 
 	LibCC::Result r;
 	DWORD size = 0;
 
 	ScreenieFtpRequest request(&args.statusDlg, msgid);
 
-	tstd::tstring url = LibCC::Format("ftp://%:%/%%")
+	bool needsSlash = (remotePath.size() > 0) && (remotePath.find_first_of(L"\\/") != 0);
+
+	tstd::tstring url = LibCC::Format("ftp://%:%/%%")// there is an extra slash because it's an absolute path. http://curl.haxx.se/mail/archive-2007-10/0053.html
 		.s(args.dest.ftp.hostname)
 		.ul(args.dest.ftp.port)
-		.s(args.dest.ftp.remotePathFormat)
+		.s(needsSlash ? L"/" : L"")
 		.s(remotePath)
 		.Str();
 
@@ -86,9 +86,8 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	args.statusDlg.EventSetText(msgid, TEXT("Upload complete."));
 	args.statusDlg.EventSetIcon(msgid, EI_CHECK);
 
-	if (!args.dest.ftp.resultURLFormat.empty())
+	if (!resultingURL.empty())
 	{
-		tstd::tstring remotePath = FormatFilename(systemTime, args.dest.ftp.resultURLFormat, args.windowTitle);
 		//tstd::tstring url = LibCC::Format(TEXT("%%")).s(args.dest.ftp.resultURL).s(remoteFileName).Str();
 
 		Grumble.ShowMessage(L"Uploaded Screenshot", LibCC::Format(TEXT("Successfully uploaded image to:\r\n%")).s(url).CStr(), 10, L"", 0, L"FTP Upload Complete");

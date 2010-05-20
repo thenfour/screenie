@@ -261,18 +261,12 @@ LRESULT CDestinationPropertiesGeneral::OnImageFormatChanged(WORD /*wNotifyCode*/
 LRESULT CDestinationPropertiesGeneral::OnFilenameFormatChanged(WORD /*wNotifyCode*/, WORD wID, HWND hWndCtl, BOOL& /*bHandled*/)
 {
 	tstd::tstring formatString = GetWindowString(GetDlgItem(IDC_FILE_PATH));
+	bool useLocalTime = (BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL));
 
-	SYSTEMTIME systemTime = { 0 };
-  if(BST_CHECKED == IsDlgButtonChecked(IDC_FILENAME_LOCAL))
-  {
-	  ::GetLocalTime(&systemTime);
-  }
-  else
-  {
-	  ::GetSystemTime(&systemTime);
-  }
+	ScreenshotNamingData namingData;
+	namingData.windowTitle = L"Screenie";
 
-	tstd::tstring formattedOutput = FormatFilename(systemTime, formatString, _T("Screenie"), true);
+	tstd::tstring formattedOutput = FormatFilename(namingData, useLocalTime, formatString, true);
 	SetDlgItemText(IDC_FILENAME_FORMATPREVIEW, formattedOutput.c_str());
 
 	return 0;

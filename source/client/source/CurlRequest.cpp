@@ -54,6 +54,10 @@ namespace Curl
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuf);
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
 
+#ifdef _DEBUG
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, TRUE);
+#endif
+
 		std::string userpwd = m_username;
 		if (!userpwd.empty())
 		{

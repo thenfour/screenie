@@ -632,7 +632,7 @@ std::wstring ScreenshotArchive::GetDatabaseSchemaVersion()
 	char* encodedA;
 	Curl_base64_encode((const char*)md5a, 16, &encodedA);
 	std::string ret = encodedA;
-	free(encodedA);
+	Curl_base64_free(encodedA);
 	m_schemaVersion = LibCC::ToUTF16(ret);
 	return m_schemaVersion;
 }
