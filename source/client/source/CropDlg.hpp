@@ -28,18 +28,30 @@ inline void RGBtoHSV( float r, float g, float b, float *h, float *s, float *v )
 	else {
 		// r = g = b = 0		// s = 0, v is undefined
 		*s = 0;
-		*h = LibCC::SinglePrecisionFloat::BuildQNaN().m_BasicVal;
+		*h = -1;//
 		return;
 	}
-	if( r == max_ )
-		*h = ( g - b ) / delta;		// between yellow & magenta
-	else if( g == max_ )
-		*h = 2 + ( b - r ) / delta;	// between cyan & yellow
+	if(delta == 0)
+	{
+		*h = -1;
+	}
 	else
-		*h = 4 + ( r - g ) / delta;	// between magenta & cyan
-	*h *= 60;				// degrees
-	while( *h < 0 )
-		*h += 360;
+	{
+		if( r == max_ )
+			*h = ( g - b ) / delta;		// between yellow & magenta
+		else if( g == max_ )
+			*h = 2 + ( b - r ) / delta;	// between cyan & yellow
+		else
+			*h = 4 + ( r - g ) / delta;	// between magenta & cyan
+
+		*h *= 60;				// degrees
+
+		// window it in 0-360
+		while( *h < 0 )
+			*h += 360;
+		while( *h >= 360 )
+			*h -= 360;
+	}
 }
 
 
@@ -777,52 +789,115 @@ private:
 	//CRect m_infoSelection;
 	std::wstring m_infoText;
 
+
 	void UpdateInfoBox()
 	{
 		if(!m_infoUpdate)
 			return;
 
-		RgbPixel32 pixel = m_editWnd.GetPixel_(m_infoCursorPos);
-    CRect m_infoSelection = m_editWnd.GetSelection();
+		bool first = true;
+		float minh, mins, minv, maxh, maxs, maxv;
 
-		float h = 0, s = 0, v = 0;
-		RGBtoHSV((float)R(pixel) / 255, (float)G(pixel) / 255,(float)B(pixel) / 255, &h, &s, &v);
+		std::vector<WTL::CPoint> samples;
+		samples.push_back(WTL::CPoint(-1, -1));
+		samples.push_back(WTL::CPoint(0, -1));
+		samples.push_back(WTL::CPoint(1, -1));
+		samples.push_back(WTL::CPoint(-1, 0));
+		samples.push_back(WTL::CPoint(0, 0));
+		samples.push_back(WTL::CPoint(1, 0));
+		samples.push_back(WTL::CPoint(-1, 1));
+		samples.push_back(WTL::CPoint(0, 1));
+		samples.push_back(WTL::CPoint(1, 1));
 
-		std::wstring hue;
-		if(LibCC::SinglePrecisionFloat(h).IsQNaN())
+		std::set<float> hues;
+		bool foundNonGrayHue = false;
+
+		for(std::vector<WTL::CPoint>::iterator it = samples.begin(); it != samples.end(); ++ it)
 		{
-			hue = L"n/a";
+			RgbPixel32 rgb = m_editWnd.GetPixel_(m_infoCursorPos + *it);
+			float h = 0, s = 0, v = 0;
+			RGBtoHSV((float)R(rgb) / 255, (float)G(rgb) / 255,(float)B(rgb) / 255, &h, &s, &v);
+
+			hues.insert(h);
+
+			if(h != -1)
+			{
+				if(!foundNonGrayHue || (h < minh))
+					minh = h;
+
+				if(!foundNonGrayHue || (h > maxh))
+					maxh = h;
+				foundNonGrayHue = true;
+			}
+			if(first || (s < mins))
+				mins = s;
+
+			if(first || (s > maxs))
+				maxs = s;
+
+			if(first || (v < minv))
+				minv = v;
+
+			if(first || (v > maxv))
+				maxv = v;
+
+			first = false;
+		}
+
+		if(foundNonGrayHue)
+		{
+			// there are two hue scenarios - one where everything is contained in the range 0-360, and then the scenario
+			// where the best way to represent min/max will spill below 0 or above 360. the best way is to figure out the
+			// biggest "hole" in the circle, and base min/max on that.
+			float biggestHole = 360.0f - (maxh - minh);// start with the exceptional hole - the one that spans across bonudaries
+			float previousH = *hues.begin();
+			for(std::set<float>::iterator it = hues.begin(); it != hues.end(); ++ it)
+			{
+				float dist = *it - previousH;
+				if(dist > biggestHole)
+				{
+					biggestHole = dist;
+					minh = *it;
+					maxh = previousH;
+				}
+				previousH = *it;
+			}
 		}
 		else
 		{
-			hue = LibCC::Format(L"%%").i((int)h).c(0x00B0).Str();
+			// only gray.
+			minh = -1;
+			maxh = -1;
 		}
 
 		LibCC::Format info = LibCC::Format(
 			"Zoom:|%^%||"
 			"Pos:|(%,%)||"
-			"Sel:|TL(%,%)|BR(%,%)|% x %||"
-			"RGB:|#%%%|(%,%,%)||"
-			"H:%|S:%^%|V:%^%||"
+			"min:|%,%,%||"
+			"max:|%,%,%||"
+
+			"%\t%\t%\t"
+			"%\t%\t%"
 			)
 			.f<0>(m_infoZoomFactor*100)
 			.i(m_infoCursorPos.x)
 			.i(m_infoCursorPos.y)
-      .i(m_infoSelection.left)
-      .i(m_infoSelection.top)
-      .i(m_infoSelection.right)
-      .i(m_infoSelection.bottom)
-      .i(m_infoSelection.Width())
-      .i(m_infoSelection.Height())
-			.i<16,2>(R(pixel))
-			.i<16,2>(G(pixel))
-			.i<16,2>(B(pixel))
-			.i(R(pixel))
-			.i(G(pixel))
-			.i(B(pixel))
-			(hue)
-			.i((int)(s*100.0f))
-			.i((int)(v*100.0f))
+
+			.i((int)floor(minh))
+			.i((int)floor(mins * 100))
+			.i((int)floor(minv * 100))
+
+			.i((int)ceil(maxh))
+			.i((int)ceil(maxs * 100))
+			.i((int)ceil(maxv * 100))
+
+			.i((int)floor(minh))
+			.i((int)floor(mins * 100))
+			.i((int)floor(minv * 100))
+
+			.i((int)ceil(maxh))
+			.i((int)ceil(maxs * 100))
+			.i((int)ceil(maxv * 100))
 			;
 		if(m_infoText != info.CStr())
 		{
