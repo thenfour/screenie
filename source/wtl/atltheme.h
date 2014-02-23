@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,10 +13,6 @@
 #define __ATLTHEME_H__
 
 #pragma once
-
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
 
 #ifdef _WIN32_WCE
 	#error atltheme.h is not supported on Windows CE
@@ -37,10 +33,14 @@
 #if defined(_WTL_USE_VSSYM32) || (defined(NTDDI_VERSION) && (NTDDI_VERSION >= NTDDI_LONGHORN))
   #include <vssym32.h>
 #else
+  #ifndef TMSCHEMA_H
   #include <tmschema.h>
+  #endif
 #endif
 
+#ifndef _UXTHEME_H_
 #include <uxtheme.h>
+#endif
 #pragma comment(lib, "uxtheme.lib")
 
 // Note: To create an application that also runs on older versions of Windows,
@@ -82,8 +82,10 @@
 // CThemeImpl<T, TBase>
 //
 // CBufferedPaint
+// CBufferedPaintImpl<T>
 // CBufferedPaintWindowImpl<T, TBase, TWinTraits>
 // CBufferedAnimation
+// CBufferedAnimationImpl<T, TState>
 // CBufferedAnimationWindowImpl<T, TState, TBase, TWinTraits>
 //
 // Global functions:
@@ -104,7 +106,7 @@ public:
 	static int m_nIsThemingSupported;
 
 // Constructor
-	CTheme() : m_hTheme(NULL)
+	CTheme(HTHEME hTheme = NULL) : m_hTheme(hTheme)
 	{
 		IsThemingSupported();
 	}
@@ -578,18 +580,9 @@ public:
 		if(m_lpstrThemeClassList == NULL)
 			return false;
 
-#if _SECURE_ATL
-		ATL::Checked::wcscpy_s(m_lpstrThemeClassList, cchLen, lpstrThemeClassList);
-		bool bRet = true;
-#else
-		bool bRet = (lstrcpyW(m_lpstrThemeClassList, lpstrThemeClassList) != NULL);
-#endif
-		if(!bRet)
-		{
-			delete [] m_lpstrThemeClassList;
-			m_lpstrThemeClassList = NULL;
-		}
-		return bRet;
+		SecureHelper::strcpyW_x(m_lpstrThemeClassList, cchLen, lpstrThemeClassList);
+
+		return true;
 	}
 
 	bool GetThemeClassList(LPWSTR lpstrThemeClassList, int cchListBuffer) const
@@ -598,12 +591,9 @@ public:
 		if(cchListBuffer < cchLen)
 			return false;
 
-#if _SECURE_ATL
-		ATL::Checked::wcscpy_s(lpstrThemeClassList, cchListBuffer, m_lpstrThemeClassList);
+		SecureHelper::strcpyW_x(lpstrThemeClassList, cchListBuffer, m_lpstrThemeClassList);
+
 		return true;
-#else
-		return (lstrcpyW(lpstrThemeClassList, m_lpstrThemeClassList) != NULL);
-#endif
 	}
 
 	LPCWSTR GetThemeClassList() const
@@ -803,6 +793,52 @@ public:
 #ifdef _WTL_NEW_UXTHEME
 
 ///////////////////////////////////////////////////////////////////////////////
+// CBufferedPaintBase - Buffered Paint support for othe classes
+
+class CBufferedPaintBase
+{
+public:
+	static int m_nIsBufferedPaintSupported;
+
+	CBufferedPaintBase()
+	{
+		if(IsBufferedPaintSupported())
+			ATLVERIFY(SUCCEEDED(::BufferedPaintInit()));
+	}
+
+	~CBufferedPaintBase()
+	{
+		if(IsBufferedPaintSupported())
+			ATLVERIFY(SUCCEEDED(::BufferedPaintUnInit()));
+	}
+
+	static bool IsBufferedPaintSupported()
+	{
+		if(m_nIsBufferedPaintSupported == -1)
+		{
+			CStaticDataInitCriticalSectionLock lock;
+			if(FAILED(lock.Lock()))
+			{
+				ATLTRACE2(atlTraceUI, 0, _T("ERROR : Unable to lock critical section in CBufferedPaintBase::IsBufferedPaintSupported.\n"));
+				ATLASSERT(FALSE);
+				return false;
+			}
+
+			if(m_nIsBufferedPaintSupported == -1)
+				m_nIsBufferedPaintSupported = RunTimeHelper::IsVista() ? 1 : 0;
+
+			lock.Unlock();
+		}
+
+		ATLASSERT(m_nIsBufferedPaintSupported != -1);
+		return (m_nIsBufferedPaintSupported == 1);
+	}
+};
+
+__declspec(selectany) int CBufferedPaintBase::m_nIsBufferedPaintSupported = -1;
+
+
+///////////////////////////////////////////////////////////////////////////////
 // CBufferedPaint - support for buffered paint functions
 
 class CBufferedPaint
@@ -886,42 +922,28 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CBufferedPaintWindowImpl - implements a window that uses buffered paint
+// CBufferedPaintImpl - provides buffered paint for any window
 
-template <class T, class TBase = ATL::CWindow, class TWinTraits = ATL::CControlWinTraits>
-class ATL_NO_VTABLE CBufferedPaintWindowImpl : public ATL::CWindowImpl<T, TBase, TWinTraits>
+template <class T>
+class ATL_NO_VTABLE CBufferedPaintImpl : public CBufferedPaintBase
 {
 public:
 	CBufferedPaint m_BufferedPaint;
 	BP_BUFFERFORMAT m_dwFormat;
 	BP_PAINTPARAMS m_PaintParams;
 
-	CBufferedPaintWindowImpl() : m_dwFormat(BPBF_TOPDOWNDIB)
+	CBufferedPaintImpl() : m_dwFormat(BPBF_TOPDOWNDIB)
 	{
 		memset(&m_PaintParams, 0, sizeof(BP_PAINTPARAMS));
 		m_PaintParams.cbSize = sizeof(BP_PAINTPARAMS);
 	}
 
 // Message map and handlers
-	BEGIN_MSG_MAP(CBufferedPaintWindowImpl)
-		MESSAGE_HANDLER(WM_CREATE, OnCreate)
-		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+	BEGIN_MSG_MAP(CBufferedPaintImpl)
 		MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBackground)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_PRINTCLIENT, OnPaint)
 	END_MSG_MAP()
-
-	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-	{
-		ATLVERIFY(SUCCEEDED(::BufferedPaintInit()));
-		return 0;
-	}
-
-	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-	{
-		ATLVERIFY(SUCCEEDED(::BufferedPaintUnInit()));
-		return 0;
-	}
 
 	LRESULT OnEraseBackground(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
@@ -939,7 +961,7 @@ public:
 		}
 		else
 		{
-			CPaintDC dc(m_hWnd);
+			CPaintDC dc(pT->m_hWnd);
 			pT->DoBufferedPaint(dc.m_hDC, dc.m_ps.rcPaint);
 		}
 
@@ -950,7 +972,8 @@ public:
 	void DoBufferedPaint(CDCHandle dc, RECT& rect)
 	{
 		HDC hDCPaint = NULL;
-		m_BufferedPaint.Begin(dc, &rect, m_dwFormat, &m_PaintParams, &hDCPaint);
+		if(IsBufferedPaintSupported())
+			m_BufferedPaint.Begin(dc, &rect, m_dwFormat, &m_PaintParams, &hDCPaint);
 
 		T* pT = static_cast<T*>(this);
 		if(hDCPaint != NULL)
@@ -958,7 +981,8 @@ public:
 		else
 			pT->DoPaint(dc.m_hDC, rect);
 
-		m_BufferedPaint.End();
+		if(IsBufferedPaintSupported())
+			m_BufferedPaint.End();
 	}
 
 	void DoPaint(CDCHandle /*dc*/, RECT& /*rect*/)
@@ -966,6 +990,21 @@ public:
 		// must be implemented in a derived class
 		ATLASSERT(FALSE);
 	}
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CBufferedPaintWindowImpl - implements a window that uses buffered paint
+
+template <class T, class TBase = ATL::CWindow, class TWinTraits = ATL::CControlWinTraits>
+class ATL_NO_VTABLE CBufferedPaintWindowImpl : 
+		public ATL::CWindowImpl<T, TBase, TWinTraits>, 
+		public CBufferedPaintImpl< T >
+{
+public:
+	BEGIN_MSG_MAP(CBufferedPaintWindowImpl)
+		CHAIN_MSG_MAP(CBufferedPaintImpl< T >)
+	END_MSG_MAP()
 };
 
 
@@ -1016,14 +1055,14 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CBufferedAnimationWindowImpl - implements a window that uses buffered animation
+// CBufferedAnimationImpl - provides buffered animation support for any window
 
 // Note: You can either use m_State and m_NewState to store the state information
 // for the animation change, or map your state to those data members. DoPaint()
 // should only rely on the state information that is passed to it.
 
-template <class T, class TState = DWORD_PTR, class TBase = ATL::CWindow, class TWinTraits = ATL::CControlWinTraits>
-class ATL_NO_VTABLE CBufferedAnimationWindowImpl : public ATL::CWindowImpl<T, TBase, TWinTraits>
+template <class T, class TState = DWORD_PTR>
+class ATL_NO_VTABLE CBufferedAnimationImpl : public CBufferedPaintBase
 {
 public:
 	BP_BUFFERFORMAT m_dwFormat;
@@ -1033,7 +1072,7 @@ public:
 	TState m_State;
 	TState m_NewState;
 
-	CBufferedAnimationWindowImpl(TState InitialState) : m_dwFormat(BPBF_TOPDOWNDIB)
+	CBufferedAnimationImpl(TState InitialState) : m_dwFormat(BPBF_TOPDOWNDIB)
 	{
 		memset(&m_PaintParams, 0, sizeof(BP_PAINTPARAMS));
 		m_PaintParams.cbSize = sizeof(BP_PAINTPARAMS);
@@ -1070,25 +1109,11 @@ public:
 	}
 
 // Message map and handlers
-	BEGIN_MSG_MAP(CBufferedAnimationWindowImpl)
-		MESSAGE_HANDLER(WM_CREATE, OnCreate)
-		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+	BEGIN_MSG_MAP(CBufferedAnimationImpl)
 		MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBackground)
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_PRINTCLIENT, OnPaint)
 	END_MSG_MAP()
-
-	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-	{
-		ATLVERIFY(SUCCEEDED(::BufferedPaintInit()));
-		return 0;
-	}
-
-	LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
-	{
-		ATLVERIFY(SUCCEEDED(::BufferedPaintUnInit()));
-		return 0;
-	}
 
 	LRESULT OnEraseBackground(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 	{
@@ -1106,7 +1131,7 @@ public:
 		}
 		else
 		{
-			CPaintDC dc(m_hWnd);
+			CPaintDC dc(pT->m_hWnd);
 			pT->DoAnimationPaint(dc.m_hDC, dc.m_ps.rcPaint);
 		}
 
@@ -1131,17 +1156,19 @@ public:
 
 	void DoAnimationPaint(CDCHandle dc, RECT& rect)
 	{
-		if(CBufferedAnimation::IsRendering(m_hWnd, dc))
+		T* pT = static_cast<T*>(this);
+		if(IsBufferedPaintSupported() && CBufferedAnimation::IsRendering(pT->m_hWnd, dc))
 			return;
 
 		DWORD dwDurationSave = m_AnimationParams.dwDuration;
-		T* pT = static_cast<T*>(this);
 		if(pT->AreStatesEqual())
 			m_AnimationParams.dwDuration = 0;
 
 		HDC hdcFrom = NULL, hdcTo = NULL;
 		CBufferedAnimation ba;
-		ba.Begin(m_hWnd, dc, &rect, m_dwFormat, &m_PaintParams, &m_AnimationParams, &hdcFrom, &hdcTo);
+		if(IsBufferedPaintSupported())
+			ba.Begin(pT->m_hWnd, dc, &rect, m_dwFormat, &m_PaintParams, &m_AnimationParams, &hdcFrom, &hdcTo);
+
 		if(!ba.IsNull())
 		{
 			if(hdcFrom != NULL)
@@ -1163,6 +1190,25 @@ public:
 		// must be implemented in a derived class
 		ATLASSERT(FALSE);
 	}
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CBufferedAnimationWindowImpl - implements a window that uses buffered animation
+
+template <class T, class TState = DWORD_PTR, class TBase = ATL::CWindow, class TWinTraits = ATL::CControlWinTraits>
+class ATL_NO_VTABLE CBufferedAnimationWindowImpl : 
+		public ATL::CWindowImpl<T, TBase, TWinTraits>, 
+		public CBufferedAnimationImpl< T, TState >
+{
+public:
+	CBufferedAnimationWindowImpl(TState InitialState) : CBufferedAnimationImpl< T, TState >(InitialState)
+	{ }
+
+	typedef CBufferedAnimationImpl< T, TState >   _baseBufferedAnimation;
+	BEGIN_MSG_MAP(CBufferedAnimationWindowImpl)
+		CHAIN_MSG_MAP(_baseBufferedAnimation)
+	END_MSG_MAP()
 };
 
 #endif // _WTL_NEW_UXTHEME

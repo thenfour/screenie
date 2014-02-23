@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,10 +13,6 @@
 #define __ATLDLGS_H__
 
 #pragma once
-
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
 
 #ifndef __ATLAPP_H__
 	#error atldlgs.h requires atlapp.h to be included first
@@ -39,6 +35,9 @@
 //
 // CFileDialogImpl<T>
 // CFileDialog
+// CFileDialogEx
+// CMultiFileDialogImpl<T>
+// CMultiFileDialog
 // CShellFileDialogImpl<T>
 // CShellFileOpenDialogImpl<T>
 // CShellFileOpenDialog
@@ -61,6 +60,7 @@
 // CFindReplaceDialogImpl<T>
 // CFindReplaceDialog
 //
+// CDialogBaseUnits
 // CMemDlgTemplate
 // CIndirectDialogImpl<T, TDlgTemplate, TBase>
 //
@@ -126,7 +126,11 @@ template <class T>
 class ATL_NO_VTABLE CFileDialogImpl : public ATL::CDialogImplBase
 {
 public:
+#if defined(__AYGSHELL_H__) && (_WIN32_WCE >= 0x0501)
+	OPENFILENAMEEX m_ofn;
+#else
 	OPENFILENAME m_ofn;
+#endif
 	BOOL m_bOpenFileDialog;            // TRUE for file open, FALSE for file save
 	TCHAR m_szFileTitle[_MAX_FNAME];   // contains file title after return
 	TCHAR m_szFileName[_MAX_PATH];     // contains full path name after return
@@ -144,7 +148,12 @@ public:
 
 		m_bOpenFileDialog = bOpenFileDialog;
 
+#if defined(__AYGSHELL_H__) && (_WIN32_WCE >= 0x0501)
+		m_ofn.lStructSize = bOpenFileDialog ? sizeof(m_ofn) : sizeof(OPENFILENAME);
+#else
 		m_ofn.lStructSize = sizeof(m_ofn);
+#endif
+
 #if (_WIN32_WINNT >= 0x0500)
 		// adjust struct size if running on older version of Windows
 		if(AtlIsOldWindows())
@@ -170,11 +179,7 @@ public:
 
 		// setup initial file name
 		if(lpszFileName != NULL)
-#if _SECURE_ATL
-			ATL::Checked::tcsncpy_s(m_szFileName, _countof(m_szFileName), lpszFileName, _TRUNCATE);
-#else
-			lstrcpyn(m_szFileName, lpszFileName, _MAX_PATH);
-#endif
+		SecureHelper::strncpy_x(m_szFileName, _countof(m_szFileName), lpszFileName, _TRUNCATE);
 	}
 
 	INT_PTR DoModal(HWND hWndParent = ::GetActiveWindow())
@@ -192,9 +197,15 @@ public:
 
 		BOOL bRet;
 		if(m_bOpenFileDialog)
+#if defined(__AYGSHELL_H__) && (_WIN32_WCE >= 0x0501)
+			bRet = ::GetOpenFileNameEx(&m_ofn);
+		else
+			bRet = ::GetSaveFileName((LPOPENFILENAME)&m_ofn);
+#else
 			bRet = ::GetOpenFileName(&m_ofn);
 		else
 			bRet = ::GetSaveFileName(&m_ofn);
+#endif
 
 		m_hWnd = NULL;
 
@@ -394,7 +405,6 @@ public:
 #endif // !_WIN32_WCE
 };
 
-
 class CFileDialog : public CFileDialogImpl<CFileDialog>
 {
 public:
@@ -410,6 +420,461 @@ public:
 	// override base class map and references to handlers
 	DECLARE_EMPTY_MSG_MAP()
 };
+
+#if defined(__AYGSHELL_H__) && (_WIN32_WCE >= 0x0501)
+class CFileDialogEx : public CFileDialogImpl<CFileDialogEx>
+{
+public:
+	CFileDialogEx( // Supports only FileOpen
+		LPCTSTR lpszDefExt = NULL,
+		LPCTSTR lpszFileName = NULL,
+		DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		OFN_EXFLAG ExFlags = OFN_EXFLAG_THUMBNAILVIEW,
+		OFN_SORTORDER dwSortOrder = OFN_SORTORDER_AUTO,		
+		LPCTSTR lpszFilter = NULL,
+		HWND hWndParent = NULL)
+		: CFileDialogImpl<CFileDialogEx>(TRUE, lpszDefExt, lpszFileName, dwFlags, lpszFilter, hWndParent)
+	{
+		m_ofn.ExFlags = ExFlags;
+		m_ofn.dwSortOrder = dwSortOrder;
+	}
+
+	// override base class map and references to handlers
+	DECLARE_EMPTY_MSG_MAP()
+};
+#endif // defined(__AYGSHELL_H__) && (_WIN32_WCE >= 0x0501)
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Multi File Dialog - Multi-select File Open dialog
+
+#ifndef _WIN32_WCE
+
+// The class dynamically resizes the buffer as the file selection changes
+// (as described in Knowledge Base article 131462). It also expands selected
+// shortcut files to take into account the full path of the target file.
+// Note that this doesn't work on Win9x for the old style dialogs, as well as
+// on NT for non-Unicode builds. 
+
+#ifndef _WTL_FIXED_OFN_BUFFER_LENGTH
+  #define _WTL_FIXED_OFN_BUFFER_LENGTH 0x10000
+#endif
+
+template <class T>
+class ATL_NO_VTABLE CMultiFileDialogImpl : public CFileDialogImpl< T >
+{
+public:
+	mutable LPCTSTR m_pNextFile; 
+#ifndef _UNICODE
+	bool m_bIsNT;
+#endif
+
+	CMultiFileDialogImpl(
+		LPCTSTR lpszDefExt = NULL,
+		LPCTSTR lpszFileName = NULL,
+		DWORD dwFlags = OFN_HIDEREADONLY,
+		LPCTSTR lpszFilter = NULL,
+		HWND hWndParent = NULL)
+		: CFileDialogImpl<T>(TRUE, lpszDefExt, lpszFileName, dwFlags, lpszFilter, hWndParent), 
+		  m_pNextFile(NULL)
+	{
+		m_ofn.Flags |= OFN_ALLOWMULTISELECT;   // Force multiple selection mode
+
+#ifndef _UNICODE
+#ifdef _versionhelpers_H_INCLUDED_
+		OSVERSIONINFOEX ovi = { sizeof(OSVERSIONINFOEX) };
+		ovi.dwPlatformId = VER_PLATFORM_WIN32_NT;
+		DWORDLONG const dwlConditionMask = ::VerSetConditionMask(0, VER_PLATFORMID, VER_EQUAL);
+		m_bIsNT = (::VerifyVersionInfo(&ovi, VER_PLATFORMID, dwlConditionMask) != FALSE);
+#else // !_versionhelpers_H_INCLUDED_
+		OSVERSIONINFO ovi = { sizeof(OSVERSIONINFO) };
+		::GetVersionEx(&ovi);
+		m_bIsNT = (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT);
+#endif // _versionhelpers_H_INCLUDED_
+		if (m_bIsNT)
+		{
+			// On NT platforms, GetOpenFileNameA thunks to GetOpenFileNameW and there 
+			// is absolutely nothing we can do except to start off with a large buffer.
+			ATLVERIFY(ResizeFilenameBuffer(_WTL_FIXED_OFN_BUFFER_LENGTH));
+		}
+#endif
+	}
+
+	~CMultiFileDialogImpl()
+	{
+		if (m_ofn.lpstrFile != m_szFileName)   // Free the buffer if we allocated it
+			delete[] m_ofn.lpstrFile;
+	}
+
+// Operations
+	// Get the directory that the files were chosen from.
+	// The function returns the number of characters copied, not including the terminating zero. 
+	// If the buffer is NULL, the function returns the required size, in characters, including the terminating zero.
+	// If the function fails, the return value is zero.
+	int GetDirectory(LPTSTR pBuffer, int nBufLen) const
+	{
+		if (m_ofn.lpstrFile == NULL)
+			return 0;
+
+		LPCTSTR pStr = m_ofn.lpstrFile;
+		int nLength = lstrlen(pStr);
+		if (pStr[nLength + 1] == 0)
+		{
+			// The OFN buffer contains a single item so extract its path.
+			LPCTSTR pSep = MinCrtHelper::_strrchr(pStr, _T('\\'));
+			if (pSep != NULL)
+				nLength = (int)(DWORD_PTR)(pSep - pStr);
+		}
+
+		int nRet = 0;
+		if (pBuffer == NULL)   // If the buffer is NULL, return the required length
+		{
+			nRet = nLength + 1;
+		}
+		else if (nBufLen > nLength)
+		{
+			SecureHelper::strncpy_x(pBuffer, nBufLen, pStr, nLength);
+			nRet = nLength;
+		}
+
+		return nRet;
+	}
+
+#if defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
+	bool GetDirectory(_CSTRING_NS::CString& strDir) const
+	{
+		bool bRet = false;
+
+		int nLength = GetDirectory(NULL, 0);
+		if (nLength > 0)
+		{
+			bRet = (GetDirectory(strDir.GetBuffer(nLength), nLength) > 0);
+			strDir.ReleaseBuffer(nLength - 1);
+		}
+
+		return bRet;
+	}
+#endif // defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
+
+	// Get the first filename as a pointer into the buffer.
+	LPCTSTR GetFirstFileName() const
+	{
+		if (m_ofn.lpstrFile == NULL)
+			return NULL;
+
+		m_pNextFile = NULL;   // Reset internal buffer pointer
+
+		LPCTSTR pStr = m_ofn.lpstrFile;
+		int nLength = lstrlen(pStr);
+		if (pStr[nLength + 1] != 0)
+		{
+			// Multiple items were selected. The first string is the directory,
+			// so skip forwards to the second string.
+			pStr += nLength + 1;
+
+			// Set up m_pNext so it points to the second item (or null).
+			m_pNextFile = pStr;
+			GetNextFileName();
+		}
+		else
+		{
+			// A single item was selected. Skip forward past the path.
+			LPCTSTR pSep = MinCrtHelper::_strrchr(pStr, _T('\\'));
+			if (pSep != NULL)
+				pStr = pSep + 1;
+		}
+
+		return pStr;
+	}
+
+	// Get the next filename as a pointer into the buffer.
+	LPCTSTR GetNextFileName() const
+	{
+		if (m_pNextFile == NULL)
+			return NULL;
+
+		LPCTSTR pStr = m_pNextFile;
+		// Set "m_pNextFile" to point to the next file name, or null if we 
+		// have reached the last file in the list.
+		int nLength = lstrlen(pStr);
+		m_pNextFile = (pStr[nLength + 1] != 0) ? &pStr[nLength + 1] : NULL;
+
+		return pStr;
+	}
+
+	// Get the first filename as a full path.
+	// The function returns the number of characters copied, not including the terminating zero. 
+	// If the buffer is NULL, the function returns the required size, in characters, including the terminating zero.
+	// If the function fails, the return value is zero.
+	int GetFirstPathName(LPTSTR pBuffer, int nBufLen) const
+	{
+		LPCTSTR pStr = GetFirstFileName();
+		int nLengthDir = GetDirectory(NULL, 0);
+		if((pStr == NULL) || (nLengthDir == 0))
+			return 0;
+
+		// Figure out the required length.
+		int nLengthTotal = nLengthDir + lstrlen(pStr);
+
+		int nRet = 0;
+		if(pBuffer == NULL) // If the buffer is NULL, return the required length
+		{
+			nRet = nLengthTotal + 1;
+		}
+		else if (nBufLen > nLengthTotal) // If the buffer is big enough, go ahead and construct the path
+		{		
+			GetDirectory(pBuffer, nBufLen);
+			SecureHelper::strcat_x(pBuffer, nBufLen, _T("\\"));
+			SecureHelper::strcat_x(pBuffer, nBufLen, pStr);
+			nRet = nLengthTotal;
+		}
+
+		return nRet;
+	}
+
+#if defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
+	bool GetFirstPathName(_CSTRING_NS::CString& strPath) const
+	{
+		bool bRet = false;
+
+		int nLength = GetFirstPathName(NULL, 0);
+		if (nLength > 0)
+		{
+			bRet = (GetFirstPathName(strPath.GetBuffer(nLength), nLength) > 0);
+			strPath.ReleaseBuffer(nLength - 1);
+		}
+
+		return bRet;
+	}
+#endif // defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
+
+	// Get the next filename as a full path.
+	// The function returns the number of characters copied, not including the terminating zero. 
+	// If the buffer is NULL, the function returns the required size, in characters, including the terminating zero.
+	// If the function fails, the return value is zero.
+	// The internal position marker is moved forward only if the function succeeds and the buffer was large enough.
+	int GetNextPathName(LPTSTR pBuffer, int nBufLen) const
+	{
+		if (m_pNextFile == NULL)
+			return 0;
+
+		int nRet = 0;
+		LPCTSTR pStr = m_pNextFile;
+		// Does the filename contain a backslash?
+		if (MinCrtHelper::_strrchr(pStr, _T('\\')) != NULL)
+		{
+			// Yes, so we'll assume it's a full path.
+			int nLength = lstrlen(pStr);
+
+			if (pBuffer == NULL) // If the buffer is NULL, return the required length
+			{
+				nRet = nLength + 1;
+			}
+			else if (nBufLen > nLength) // The buffer is big enough, so go ahead and copy the filename
+			{
+				SecureHelper::strcpy_x(pBuffer, nBufLen, GetNextFileName());
+				nRet = nBufLen;
+			}
+		}
+		else
+		{
+			// The filename is relative, so construct the full path.
+			int nLengthDir = GetDirectory(NULL, 0);
+			if (nLengthDir > 0)
+			{
+				// Calculate the required space.
+				int nLengthTotal = nLengthDir + lstrlen(pStr);
+
+				if(pBuffer == NULL) // If the buffer is NULL, return the required length
+				{
+					nRet = nLengthTotal + 1;
+				}
+				else if (nBufLen > nLengthTotal) // If the buffer is big enough, go ahead and construct the path
+				{
+					GetDirectory(pBuffer, nBufLen);
+					SecureHelper::strcat_x(pBuffer, nBufLen, _T("\\"));
+					SecureHelper::strcat_x(pBuffer, nBufLen, GetNextFileName());
+					nRet = nLengthTotal;
+				}
+			}
+		}
+
+		return nRet;
+	}
+
+#if defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
+	bool GetNextPathName(_CSTRING_NS::CString& strPath) const
+	{
+		bool bRet = false;
+
+		int nLength = GetNextPathName(NULL, 0);
+		if (nLength > 0)
+		{
+			bRet = (GetNextPathName(strPath.GetBuffer(nLength), nLength) > 0);
+			strPath.ReleaseBuffer(nLength - 1);
+		}
+
+		return bRet;
+	}
+#endif // defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
+
+// Implementation
+	bool ResizeFilenameBuffer(DWORD dwLength)
+	{
+		if (dwLength > m_ofn.nMaxFile)
+		{
+			// Free the old buffer.
+			if (m_ofn.lpstrFile != m_szFileName)
+			{
+				delete[] m_ofn.lpstrFile;
+				m_ofn.lpstrFile = NULL;
+				m_ofn.nMaxFile = 0;
+			}
+
+			// Allocate the new buffer.
+			LPTSTR lpstrBuff = NULL;
+			ATLTRY(lpstrBuff = new TCHAR[dwLength]);
+			if (lpstrBuff != NULL)
+			{
+				m_ofn.lpstrFile = lpstrBuff;
+				m_ofn.lpstrFile[0] = 0;
+				m_ofn.nMaxFile = dwLength;
+			}
+		}
+
+		return (m_ofn.lpstrFile != NULL);
+	}
+
+	void OnSelChange(LPOFNOTIFY /*lpon*/)
+	{
+#ifndef _UNICODE
+		// There is no point resizing the buffer in ANSI builds running on NT.
+		if (m_bIsNT)
+			return;
+#endif
+
+		// Get the buffer length required to hold the spec.
+		int nLength = GetSpec(NULL, 0);
+		if (nLength <= 1)
+			return; // no files are selected, presumably
+		
+		// Add room for the directory, and an extra terminating zero.
+		nLength += GetFolderPath(NULL, 0) + 1;
+
+		if (!ResizeFilenameBuffer(nLength))
+		{
+			ATLASSERT(FALSE);
+			return;
+		}
+
+		// If we are not following links then our work is done.
+		if ((m_ofn.Flags & OFN_NODEREFERENCELINKS) != 0)
+			return;
+
+		// Get the file spec, which is the text in the edit control.
+		if (GetSpec(m_ofn.lpstrFile, m_ofn.nMaxFile) <= 0)
+			return;
+		
+		// Get the ID-list of the current folder.
+		int nBytes = GetFolderIDList(NULL, 0);
+		CTempBuffer<ITEMIDLIST> idlist;
+		idlist.AllocateBytes(nBytes);
+		if ((nBytes <= 0) || (GetFolderIDList(idlist, nBytes) <= 0))
+			return;
+
+		// First bind to the desktop folder, then to the current folder.
+		ATL::CComPtr<IShellFolder> pDesktop, pFolder;
+		if (FAILED(::SHGetDesktopFolder(&pDesktop)))
+			return;
+		if (FAILED(pDesktop->BindToObject(idlist, NULL, IID_IShellFolder, (void**)&pFolder)))
+			return;
+
+		// Work through the file spec, looking for quoted filenames. If we find a shortcut file, then 
+		// we need to add enough extra buffer space to hold its target path.
+		DWORD nExtraChars = 0;
+		bool bInsideQuotes = false;
+		LPCTSTR pAnchor = m_ofn.lpstrFile;
+		LPCTSTR pChar = m_ofn.lpstrFile;
+		for ( ; *pChar; ++pChar)
+		{
+			// Look for quotation marks.
+			if (*pChar == _T('\"'))
+			{
+				// We are either entering or leaving a passage of quoted text.
+				bInsideQuotes = !bInsideQuotes;
+
+				// Is it an opening or closing quote?
+				if (bInsideQuotes)
+				{
+					// We found an opening quote, so set "pAnchor" to the following character.
+					pAnchor = pChar + 1;
+				}
+				else // closing quote
+				{
+					// Each quoted entity should be shorter than MAX_PATH.
+					if (pChar - pAnchor >= MAX_PATH)
+						return;
+
+					// Get the ID-list and attributes of the file.
+					USES_CONVERSION;
+					int nFileNameLength = (int)(DWORD_PTR)(pChar - pAnchor);
+					TCHAR szFileName[MAX_PATH] = { 0 };
+					SecureHelper::strncpy_x(szFileName, MAX_PATH, pAnchor, nFileNameLength);
+					LPITEMIDLIST pidl = NULL;
+					DWORD dwAttrib = SFGAO_LINK;
+					if (SUCCEEDED(pFolder->ParseDisplayName(NULL, NULL, T2W(szFileName), NULL, &pidl, &dwAttrib)))
+					{
+						// Is it a shortcut file?
+						if (dwAttrib & SFGAO_LINK)
+						{
+							// Bind to its IShellLink interface.
+							ATL::CComPtr<IShellLink> pLink;
+							if (SUCCEEDED(pFolder->BindToObject(pidl, NULL, IID_IShellLink, (void**)&pLink)))
+							{
+								// Get the shortcut's target path.
+								TCHAR szPath[MAX_PATH] = { 0 };
+								if (SUCCEEDED(pLink->GetPath(szPath, MAX_PATH, NULL, 0)))
+								{
+									// If the target path is longer than the shortcut name, then add on the number 
+									// of extra characters that are required.
+									int nNewLength = lstrlen(szPath);
+									if (nNewLength > nFileNameLength)
+										nExtraChars += nNewLength - nFileNameLength;
+								}
+							}
+						}
+
+						// Free the ID-list returned by ParseDisplayName.
+						::CoTaskMemFree(pidl);
+					}
+				}
+			}
+		}
+
+		// If we need more space for shortcut targets, then reallocate.
+		if (nExtraChars > 0)
+			ATLVERIFY(ResizeFilenameBuffer(m_ofn.nMaxFile + nExtraChars));
+	}
+};
+
+class CMultiFileDialog : public CMultiFileDialogImpl<CMultiFileDialog>
+{
+public:
+	CMultiFileDialog(
+		LPCTSTR lpszDefExt = NULL,
+		LPCTSTR lpszFileName = NULL,
+		DWORD dwFlags = OFN_HIDEREADONLY,
+		LPCTSTR lpszFilter = NULL,
+		HWND hWndParent = NULL)
+		: CMultiFileDialogImpl<CMultiFileDialog>(lpszDefExt, lpszFileName, dwFlags, lpszFilter, hWndParent)
+	{ }
+
+	BEGIN_MSG_MAP(CMultiFileDialog)
+		CHAIN_MSG_MAP(CMultiFileDialogImpl<CMultiFileDialog>)
+	END_MSG_MAP()
+};
+
+#endif // !_WIN32_WCE
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -534,11 +999,7 @@ public:
 		{
 			if(lstrlenW(lpstrName) < cchLength)
 			{
-#if _SECURE_ATL
-				ATL::Checked::wcscpy_s(lpstr, cchLength, lpstrName);
-#else
-				ATLVERIFY(lstrcpyW(lpstr, lpstrName) != NULL);
-#endif
+				SecureHelper::strcpyW_x(lpstr, cchLength, lpstrName);
 			}
 			else
 			{
@@ -851,13 +1312,16 @@ class ATL_NO_VTABLE CFolderDialogImpl
 public:
 	BROWSEINFO m_bi;
 	LPCTSTR m_lpstrInitialFolder;
+	LPCITEMIDLIST m_pidlInitialSelection;
+	bool m_bExpandInitialSelection;
 	TCHAR m_szFolderDisplayName[MAX_PATH];
 	TCHAR m_szFolderPath[MAX_PATH];
+	LPITEMIDLIST m_pidlSelected;
 	HWND m_hWnd;   // used only in the callback function
 
 // Constructor
 	CFolderDialogImpl(HWND hWndParent = NULL, LPCTSTR lpstrTitle = NULL, UINT uFlags = BIF_RETURNONLYFSDIRS) : 
-			m_lpstrInitialFolder(NULL), m_hWnd(NULL)
+			m_lpstrInitialFolder(NULL), m_pidlInitialSelection(NULL), m_bExpandInitialSelection(false), m_pidlSelected(NULL), m_hWnd(NULL)
 	{
 		memset(&m_bi, 0, sizeof(m_bi)); // initialize structure to 0/NULL
 
@@ -873,41 +1337,65 @@ public:
 		m_szFolderDisplayName[0] = 0;
 	}
 
+	~CFolderDialogImpl()
+	{
+		::CoTaskMemFree(m_pidlSelected);
+	}
+
 // Operations
 	INT_PTR DoModal(HWND hWndParent = ::GetActiveWindow())
 	{
 		if(m_bi.hwndOwner == NULL)   // set only if not specified before
 			m_bi.hwndOwner = hWndParent;
 
-		INT_PTR nRet = -1;
-		LPITEMIDLIST pItemIDList = ::SHBrowseForFolder(&m_bi);
-		if(pItemIDList != NULL)
+		// Clear out any previous results
+		m_szFolderPath[0] = 0;
+		m_szFolderDisplayName[0] = 0;
+		::CoTaskMemFree(m_pidlSelected);
+
+		INT_PTR nRet = IDCANCEL;
+		m_pidlSelected = ::SHBrowseForFolder(&m_bi);
+
+		if(m_pidlSelected != NULL)
 		{
-			if(::SHGetPathFromIDList(pItemIDList, m_szFolderPath))
+			nRet = IDOK;
+
+			// If BIF_RETURNONLYFSDIRS is set, we try to get the filesystem path.
+			// Otherwise, the caller must handle the ID-list directly.
+			if((m_bi.ulFlags & BIF_RETURNONLYFSDIRS) != 0)
 			{
-				IMalloc* pMalloc = NULL;
-				if(SUCCEEDED(::SHGetMalloc(&pMalloc)))
-				{
-					pMalloc->Free(pItemIDList);
-					pMalloc->Release();
-				}
-				nRet = IDOK;
-			}
-			else
-			{
-				nRet = IDCANCEL;
+				if(::SHGetPathFromIDList(m_pidlSelected, m_szFolderPath) == FALSE)
+					nRet = IDCANCEL;
 			}
 		}
 
 		return nRet;
 	}
 
-	void SetInitialFolder(LPCTSTR lpstrInitialFolder)
+	// Methods to call before DoModal
+	void SetInitialFolder(LPCTSTR lpstrInitialFolder, bool bExpand = true)
 	{
+		// lpstrInitialFolder may be a file if BIF_BROWSEINCLUDEFILES is specified
 		m_lpstrInitialFolder = lpstrInitialFolder;
+		m_bExpandInitialSelection = bExpand;
 	}
 
-	// filled after a call to DoModal
+	void SetInitialSelection(LPCITEMIDLIST pidl, bool bExpand = true)
+	{
+		m_pidlInitialSelection = pidl;
+		m_bExpandInitialSelection = bExpand;
+	}
+
+	// Methods to call after DoModal
+	LPITEMIDLIST GetSelectedItem(bool bDetach = false)
+	{
+		LPITEMIDLIST pidl = m_pidlSelected;
+		if(bDetach)
+			m_pidlSelected = NULL;
+
+		return pidl;
+	}
+
 	LPCTSTR GetFolderPath() const
 	{
 		return m_szFolderPath;
@@ -956,12 +1444,20 @@ public:
 		switch(uMsg)
 		{
 		case BFFM_INITIALIZED:
-			if(pT->m_lpstrInitialFolder != NULL)
+			// Set initial selection
+			// Note that m_pidlInitialSelection, if set, takes precedence over m_lpstrInitialFolder
+			if(pT->m_pidlInitialSelection != NULL)
+				pT->SetSelection(pT->m_pidlInitialSelection);
+			else if(pT->m_lpstrInitialFolder != NULL)
+				pT->SetSelection(pT->m_lpstrInitialFolder);
+
+			// Expand initial selection if appropriate
+			if(pT->m_bExpandInitialSelection && ((pT->m_bi.ulFlags & BIF_NEWDIALOGSTYLE) != 0))
 			{
-				if((pT->m_bi.ulFlags & BIF_NEWDIALOGSTYLE) != 0)
+				if(pT->m_pidlInitialSelection != NULL)
+					pT->SetExpanded(pT->m_pidlInitialSelection);
+				else if(pT->m_lpstrInitialFolder != NULL)
 					pT->SetExpanded(pT->m_lpstrInitialFolder);
-				else
-					pT->SetSelection(pT->m_lpstrInitialFolder);
 			}
 			pT->OnInitialized();
 			break;
@@ -1008,7 +1504,7 @@ public:
 		::SendMessage(m_hWnd, BFFM_ENABLEOK, 0, bEnable);
 	}
 
-	void SetSelection(LPITEMIDLIST pItemIDList)
+	void SetSelection(LPCITEMIDLIST pItemIDList)
 	{
 		ATLASSERT(m_hWnd != NULL);
 		::SendMessage(m_hWnd, BFFM_SETSELECTION, FALSE, (LPARAM)pItemIDList);
@@ -1034,10 +1530,10 @@ public:
 		ATLASSERT(m_hWnd != NULL);
 		USES_CONVERSION;
 		LPCWSTR lpstr = T2CW(lpstrOKText);
-		::SendMessage(m_hWnd, BFFM_SETOKTEXT, (WPARAM)lpstr, 0L);
+		::SendMessage(m_hWnd, BFFM_SETOKTEXT, 0, (LPARAM)lpstr);
 	}
 
-	void SetExpanded(LPITEMIDLIST pItemIDList)
+	void SetExpanded(LPCITEMIDLIST pItemIDList)
 	{
 #ifndef BFFM_SETEXPANDED
 		const UINT BFFM_SETEXPANDED = WM_USER + 106;
@@ -1186,11 +1682,7 @@ public:
 		m_hWnd = NULL;
 
 		if(bRet)   // copy logical font from user's initialization buffer (if needed)
-#if _SECURE_ATL
-			ATL::Checked::memcpy_s(&m_lf, sizeof(m_lf), m_cf.lpLogFont, sizeof(m_lf));
-#else
-			memcpy(&m_lf, m_cf.lpLogFont, sizeof(m_lf));
-#endif
+			SecureHelper::memcpy_x(&m_lf, sizeof(m_lf), m_cf.lpLogFont, sizeof(m_lf));
 
 		return bRet ? IDOK : IDCANCEL;
 	}
@@ -1352,17 +1844,9 @@ public:
 			cf.dwMask |= CFM_FACE;
 			cf.bPitchAndFamily = m_cf.lpLogFont->lfPitchAndFamily;
 #if (_RICHEDIT_VER >= 0x0200)
-  #if _SECURE_ATL
-			ATL::Checked::tcscpy_s(cf.szFaceName, _countof(cf.szFaceName), GetFaceName());
-  #else
-			lstrcpy(cf.szFaceName, GetFaceName());
-  #endif
+			SecureHelper::strcpy_x(cf.szFaceName, _countof(cf.szFaceName), GetFaceName());
 #else // !(_RICHEDIT_VER >= 0x0200)
-  #if _SECURE_ATL
-			ATL::Checked::strcpy_s(cf.szFaceName, _countof(cf.szFaceName), T2A((LPTSTR)(LPCTSTR)GetFaceName()));
-  #else
-			lstrcpyA(cf.szFaceName, T2A((LPTSTR)(LPCTSTR)GetFaceName()));
-  #endif
+			SecureHelper::strcpyA_x(cf.szFaceName, _countof(cf.szFaceName), T2A((LPTSTR)(LPCTSTR)GetFaceName()));
 #endif // !(_RICHEDIT_VER >= 0x0200)
 		}
 
@@ -1433,17 +1917,9 @@ public:
 		{
 			m_lf.lfPitchAndFamily = cf.bPitchAndFamily;
 #if (_RICHEDIT_VER >= 0x0200)
-  #if _SECURE_ATL
-			ATL::Checked::tcscpy_s(m_lf.lfFaceName, _countof(m_lf.lfFaceName), cf.szFaceName);
-  #else
-			lstrcpy(m_lf.lfFaceName, cf.szFaceName);
-  #endif
+			SecureHelper::strcpy_x(m_lf.lfFaceName, _countof(m_lf.lfFaceName), cf.szFaceName);
 #else // !(_RICHEDIT_VER >= 0x0200)
-  #if _SECURE_ATL
-			ATL::Checked::tcscpy_s(m_lf.lfFaceName, _countof(m_lf.lfFaceName), A2T((LPSTR)cf.szFaceName));
-  #else
-			lstrcpy(m_lf.lfFaceName, A2T((LPSTR)cf.szFaceName));
-  #endif
+			SecureHelper::strcpy_x(m_lf.lfFaceName, _countof(m_lf.lfFaceName), A2T((LPSTR)cf.szFaceName));
 #endif // !(_RICHEDIT_VER >= 0x0200)
 		}
 		else
@@ -1474,7 +1950,19 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 // CColorDialogImpl - color selection
 
-#ifndef _WIN32_WCE
+#if !defined(_WIN32_WCE) || ((_WIN32_WCE > 420) && !(defined(WIN32_PLATFORM_WFSP) && (_WIN32_WCE > 0x0500)))
+
+#ifdef _WIN32_WCE
+  #pragma comment(lib, "commdlg.lib")
+
+  #ifndef SETRGBSTRING
+    #define SETRGBSTRING _T("commdlg_SetRGBColor")
+  #endif
+
+  #ifndef COLOROKSTRING
+    #define COLOROKSTRING _T("commdlg_ColorOK")
+  #endif
+#endif
 
 template <class T>
 class ATL_NO_VTABLE CColorDialogImpl : public CCommonDialogImplBase
@@ -1660,7 +2148,7 @@ public:
 	DECLARE_EMPTY_MSG_MAP()
 };
 
-#endif // _WIN32_WCE
+#endif // !defined(_WIN32_WCE) || ((_WIN32_WCE > 420) && !(defined(WIN32_PLATFORM_WFSP) && (_WIN32_WCE > 0x0500)))
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2372,18 +2860,10 @@ public:
 		ATLASSERT(m_fr.hwndOwner != NULL); // must have an owner for modeless dialog
 
 		if(lpszFindWhat != NULL)
-#if _SECURE_ATL
-			ATL::Checked::tcsncpy_s(m_szFindWhat, _countof(m_szFindWhat), lpszFindWhat, _TRUNCATE);
-#else
-			lstrcpyn(m_szFindWhat, lpszFindWhat, _cchFindReplaceBuffer);
-#endif
+			SecureHelper::strncpy_x(m_szFindWhat, _countof(m_szFindWhat), lpszFindWhat, _TRUNCATE);
 
 		if(lpszReplaceWith != NULL)
-#if _SECURE_ATL
-			ATL::Checked::tcsncpy_s(m_szReplaceWith, _countof(m_szReplaceWith), lpszReplaceWith, _TRUNCATE);
-#else
-			lstrcpyn(m_szReplaceWith, lpszReplaceWith, _cchFindReplaceBuffer);
-#endif
+			SecureHelper::strncpy_x(m_szReplaceWith, _countof(m_szReplaceWith), lpszReplaceWith, _TRUNCATE);
 
 		ATLASSERT(m_hWnd == NULL);
 		ModuleHelper::AddCreateWndData(&m_thunk.cd, (CCommonDialogImplBase*)this);
@@ -2469,14 +2949,159 @@ public:
 #endif // !_WIN32_WCE
 
 
-#if (_ATL_VER >= 0x800)
-typedef ATL::_DialogSplitHelper::DLGTEMPLATEEX DLGTEMPLATEEX;
-typedef ATL::_DialogSplitHelper::DLGITEMTEMPLATEEX DLGITEMTEMPLATEEX;
-#else // (_ATL_VER >= 0x800)
-typedef ATL::_DialogSizeHelper::_ATL_DLGTEMPLATEEX DLGTEMPLATEEX;
-#pragma pack(push, 4)
-struct DLGITEMTEMPLATEEX
+/////////////////////////////////////////////////////////////////////////
+// CDialogBaseUnits - Dialog Units helper
+//
+
+class CDialogBaseUnits
 {
+public:
+	SIZE m_sizeUnits;
+
+// Constructors
+	CDialogBaseUnits()
+	{
+		// The base units of the out-dated System Font
+		LONG nDlgBaseUnits = ::GetDialogBaseUnits();
+		m_sizeUnits.cx = LOWORD(nDlgBaseUnits);
+		m_sizeUnits.cy = HIWORD(nDlgBaseUnits);
+	}
+
+	CDialogBaseUnits(HWND hWnd)
+	{
+		if(!InitDialogBaseUnits(hWnd)) {
+			LONG nDlgBaseUnits = ::GetDialogBaseUnits();
+			m_sizeUnits.cx = LOWORD(nDlgBaseUnits);
+			m_sizeUnits.cy = HIWORD(nDlgBaseUnits);
+		}
+	}
+
+	CDialogBaseUnits(HFONT hFont, HWND hWnd = NULL)
+	{
+		if(!InitDialogBaseUnits(hFont, hWnd)) {
+			LONG nDlgBaseUnits = ::GetDialogBaseUnits();
+			m_sizeUnits.cx = LOWORD(nDlgBaseUnits);
+			m_sizeUnits.cy = HIWORD(nDlgBaseUnits);
+		}
+	}
+
+	CDialogBaseUnits(LOGFONT lf, HWND hWnd = NULL)
+	{
+		if(!InitDialogBaseUnits(lf, hWnd)) {
+			LONG nDlgBaseUnits = ::GetDialogBaseUnits();
+			m_sizeUnits.cx = LOWORD(nDlgBaseUnits);
+			m_sizeUnits.cy = HIWORD(nDlgBaseUnits);
+		}
+	}
+
+// Operations
+	BOOL InitDialogBaseUnits(HWND hWnd)
+	{
+		ATLASSERT(::IsWindow(hWnd));
+		RECT rc = { 0, 0, 4, 8 };
+		if(!::MapDialogRect(hWnd, &rc)) return FALSE;
+		m_sizeUnits.cx = rc.right;
+		m_sizeUnits.cy = rc.bottom;
+		return TRUE;
+	}
+
+	BOOL InitDialogBaseUnits(LOGFONT lf, HWND hWnd = NULL)
+	{
+		CFont font;
+		font.CreateFontIndirect(&lf);
+		if(font.IsNull()) return FALSE;
+		return InitDialogBaseUnits(font, hWnd);
+	}
+
+	BOOL InitDialogBaseUnits(HFONT hFont, HWND hWnd = NULL)
+	{
+		ATLASSERT(hFont != NULL);
+		CWindowDC dc = hWnd;
+		TEXTMETRIC tmText = { 0 };
+		SIZE sizeText = { 0 };
+		HFONT hFontOld = dc.SelectFont(hFont);
+		dc.GetTextMetrics(&tmText);
+		m_sizeUnits.cy = tmText.tmHeight + tmText.tmExternalLeading;
+		dc.GetTextExtent(_T("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"), 52, &sizeText);
+		m_sizeUnits.cx = (sizeText.cx + 26) / 52;
+		dc.SelectFont(hFontOld);
+		return TRUE;
+	}
+
+	SIZE GetDialogBaseUnits() const
+	{
+		return m_sizeUnits;
+	}
+
+	INT MapDialogPixelsX(INT x) const
+	{
+		return ::MulDiv(x, 4, m_sizeUnits.cx);  // Pixels X to DLU
+	}
+
+	INT MapDialogPixelsY(INT y) const
+	{
+		return ::MulDiv(y, 8, m_sizeUnits.cy);  // Pixels Y to DLU
+	}
+
+	POINT MapDialogPixels(POINT pt) const
+	{
+		POINT out = { MapDialogPixelsX(pt.x), MapDialogPixelsY(pt.y) };
+		return out;
+	}
+
+	SIZE MapDialogPixels(SIZE input) const
+	{
+		SIZE out = { MapDialogPixelsX(input.cx), MapDialogPixelsY(input.cy) };
+		return out;
+	}
+
+	RECT MapDialogPixels(RECT input) const
+	{
+		RECT out = { MapDialogPixelsX(input.left), MapDialogPixelsY(input.top), MapDialogPixelsX(input.right), MapDialogPixelsY(input.bottom) };
+		return out;
+	}
+
+	INT MapDialogUnitsX(INT x) const
+	{
+		return ::MulDiv(x, m_sizeUnits.cx, 4);  // DLU to Pixels X
+	}
+
+	INT MapDialogUnitsY(INT y) const
+	{
+		return ::MulDiv(y, m_sizeUnits.cx, 8);  // DLU to Pixels Y
+	}
+
+	POINT MapDialogUnits(POINT pt) const
+	{
+		POINT out = { MapDialogUnitsX(pt.x), MapDialogUnitsY(pt.y) };
+		return out;
+	}
+
+	SIZE MapDialogUnits(SIZE input) const
+	{
+		SIZE out = { MapDialogUnitsX(input.cx), MapDialogUnitsY(input.cy) };
+		return out;
+	}
+
+	RECT MapDialogUnits(RECT input) const
+	{
+		RECT out = { MapDialogUnitsX(input.left), MapDialogUnitsY(input.top), MapDialogUnitsX(input.right), MapDialogUnitsY(input.bottom) };
+		return out;
+	}
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CMemDlgTemplate - in-memory dialog template - DLGTEMPLATE or DLGTEMPLATEEX
+
+#if (_ATL_VER >= 0x800)
+  typedef ATL::_DialogSplitHelper::DLGTEMPLATEEX DLGTEMPLATEEX;
+  typedef ATL::_DialogSplitHelper::DLGITEMTEMPLATEEX DLGITEMTEMPLATEEX;
+#else // (_ATL_VER >= 0x800)
+  typedef ATL::_DialogSizeHelper::_ATL_DLGTEMPLATEEX DLGTEMPLATEEX;
+  #pragma pack(push, 4)
+  struct DLGITEMTEMPLATEEX
+  {
 	DWORD helpID;
 	DWORD exStyle;
 	DWORD style;
@@ -2484,14 +3109,11 @@ struct DLGITEMTEMPLATEEX
 	short y;
 	short cx;
 	short cy;
-	WORD id;
-};
-#pragma pack(pop)
+	DWORD id;
+  };
+  #pragma pack(pop)
 #endif // (_ATL_VER >= 0x800)
 
-
-///////////////////////////////////////////////////////////////////////////////
-// CMemDlgTemplate - in-memory dialog template - DLGTEMPLATE or DLGTEMPLATEEX
 
 class CMemDlgTemplate
 {
@@ -2506,7 +3128,7 @@ public:
 		CTRL_COMBOBOX  = 0x0085
 	};
 
-	CMemDlgTemplate() : m_pData(NULL), m_pPtr(NULL), m_cAllocated(0)
+	CMemDlgTemplate() : m_hData(NULL), m_pData(NULL), m_pPtr(NULL), m_cAllocated(0)
 	{ }
 
 	~CMemDlgTemplate()
@@ -2536,17 +3158,30 @@ public:
 
 	void Reset()
 	{
-		if (IsValid())
-			ATLVERIFY(::GlobalFree(m_pData) == NULL);
+		if (IsValid()) {
+#ifndef UNDER_CE
+			::GlobalUnlock(m_pData);
+#endif
+			ATLVERIFY(::GlobalFree(m_hData) == NULL);
+		}
 
+		m_hData = NULL;
 		m_pData = NULL;
 		m_pPtr = NULL;
 		m_cAllocated = 0;
 	}
 
-	void Create(bool bDlgEx, LPCTSTR lpszCaption, short nX, short nY, short nWidth, short nHeight, DWORD dwStyle = 0, DWORD dwExStyle = 0, 
-	            LPCTSTR lpstrFontName = NULL, WORD wFontSize = 0, WORD wWeight = 0, BYTE bItalic = 0, BYTE bCharset = 0, DWORD dwHelpID = 0,
-				ATL::_U_STRINGorID ClassName = 0U, ATL::_U_STRINGorID Menu = 0U)
+	void Create(bool bDlgEx, LPCTSTR lpszCaption, RECT rc, DWORD dwStyle = 0, DWORD dwExStyle = 0,
+		LPCTSTR lpstrFontName = NULL, WORD wFontSize = 0, WORD wWeight = 0, BYTE bItalic = 0, BYTE bCharset = 0, DWORD dwHelpID = 0,
+		ATL::_U_STRINGorID ClassName = 0U, ATL::_U_STRINGorID Menu = 0U)
+	{
+		Create(bDlgEx, lpszCaption, (short) rc.left, (short) rc.top, (short) (rc.right - rc.left), (short) (rc.bottom - rc.top), dwStyle, dwExStyle,
+			lpstrFontName, wFontSize, wWeight, bItalic, bCharset, dwHelpID, ClassName.m_lpstr, Menu.m_lpstr);
+	}
+
+	void Create(bool bDlgEx, LPCTSTR lpszCaption, short nX, short nY, short nWidth, short nHeight, DWORD dwStyle = 0, DWORD dwExStyle = 0,
+		LPCTSTR lpstrFontName = NULL, WORD wFontSize = 0, WORD wWeight = 0, BYTE bItalic = 0, BYTE bCharset = 0, DWORD dwHelpID = 0,
+		ATL::_U_STRINGorID ClassName = 0U, ATL::_U_STRINGorID Menu = 0U)
 	{
 		// Should have DS_SETFONT style to set the dialog font name and size
 		if (lpstrFontName != NULL)
@@ -2625,6 +3260,13 @@ public:
 		}
 	}
 
+	void AddControl(ATL::_U_STRINGorID ClassName, WORD wId, RECT rc, DWORD dwStyle, DWORD dwExStyle,
+	                ATL::_U_STRINGorID Text, const WORD* pCreationData = NULL, WORD nCreationData = 0, DWORD dwHelpID = 0)
+	{
+		AddControl(ClassName.m_lpstr, wId, (short) rc.left, (short) rc.top, (short) (rc.right - rc.left), (short) (rc.bottom - rc.top), dwStyle, dwExStyle,
+			Text.m_lpstr, pCreationData, nCreationData, dwHelpID);
+	}
+
 	void AddControl(ATL::_U_STRINGorID ClassName, WORD wId, short nX, short nY, short nWidth, short nHeight, DWORD dwStyle, DWORD dwExStyle,
 	                ATL::_U_STRINGorID Text, const WORD* pCreationData = NULL, WORD nCreationData = 0, DWORD dwHelpID = 0)
 	{
@@ -2691,33 +3333,43 @@ public:
 		AddControl(CtrlType, wId, nX, nY, nWidth, nHeight, dwStyle, dwExStyle, Text, pCreationData, nCreationData, dwHelpID);
 	}
 
-protected:
 	void AddData(LPCVOID pData, size_t nData)
 	{
 		ATLASSERT(pData != NULL);
 
-		const size_t ALLOCATION_INCREMENT = 1024;
+		const SIZE_T ALLOCATION_INCREMENT = 1024;
 
 		if (m_pData == NULL)
 		{
 			m_cAllocated = ((nData / ALLOCATION_INCREMENT) + 1) * ALLOCATION_INCREMENT;
-			m_pPtr = m_pData = static_cast<LPBYTE>(::GlobalAlloc(GPTR, m_cAllocated));
+			m_hData = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, m_cAllocated);
+			ATLASSERT(m_hData != NULL);
+#ifndef UNDER_CE
+			m_pPtr = m_pData = static_cast<LPBYTE>(::GlobalLock(m_hData));
+#else
+			m_pPtr = m_pData = static_cast<LPBYTE>(m_hData);
+#endif
 			ATLASSERT(m_pData != NULL);
 		}
 		else if (((m_pPtr - m_pData) + nData) > m_cAllocated)
 		{
-			size_t ptrPos = (m_pPtr - m_pData);
+			SIZE_T ptrPos = (m_pPtr - m_pData);
 			m_cAllocated += ((nData / ALLOCATION_INCREMENT) + 1) * ALLOCATION_INCREMENT;
-			m_pData = static_cast<LPBYTE>(::GlobalReAlloc(m_pData, m_cAllocated, 0));
+#ifndef UNDER_CE
+			::GlobalUnlock(m_pData);
+#endif
+			m_hData = ::GlobalReAlloc(m_hData, m_cAllocated, GMEM_MOVEABLE | GMEM_ZEROINIT);
+			ATLASSERT(m_hData != NULL);
+#ifndef UNDER_CE
+			m_pData = static_cast<LPBYTE>(::GlobalLock(m_hData));
+#else
+			m_pData = static_cast<LPBYTE>(m_hData);
+#endif
 			ATLASSERT(m_pData != NULL);
 			m_pPtr = m_pData + ptrPos;
 		}
 
-#if _SECURE_ATL
-		ATL::Checked::memcpy_s(m_pPtr, m_cAllocated - (m_pPtr - m_pData), pData, nData);
-#else
-		memcpy(m_pPtr, pData, nData);
-#endif
+		SecureHelper::memcpy_x(m_pPtr, m_cAllocated - (m_pPtr - m_pData), pData, nData);
 
 		m_pPtr += nData;
 	}
@@ -2738,6 +3390,7 @@ protected:
 		}
 	}
 
+	HANDLE m_hData;
 	LPBYTE m_pData;
 	LPBYTE m_pPtr;
 	SIZE_T m_cAllocated;
@@ -3616,10 +4269,6 @@ public:
 	CPropertySheet(ATL::_U_STRINGorID title = (LPCTSTR)NULL, UINT uStartPage = 0, HWND hWndParent = NULL)
 		: CPropertySheetImpl<CPropertySheet>(title, uStartPage, hWndParent)
 	{ }
-
-	BEGIN_MSG_MAP(CPropertySheet)
-		MESSAGE_HANDLER(WM_COMMAND, CPropertySheetImpl<CPropertySheet>::OnCommand)
-	END_MSG_MAP()
 };
 
 
@@ -4329,11 +4978,7 @@ public:
 								{
 									BYTE* pBytes = (BYTE*) GlobalLock(h);
 									BYTE* pSource = pData; 
-#if _SECURE_ATL
-									ATL::Checked::memcpy_s(pBytes, dwLen, pSource, dwLen);
-#else
-									memcpy(pBytes, pSource, dwLen);
-#endif
+									SecureHelper::memcpy_x(pBytes, dwLen, pSource, dwLen);
 									GlobalUnlock(h);
 									CreateStreamOnHGlobal(h, TRUE, &spStream);
 								}
@@ -4705,11 +5350,7 @@ public:
 		// as Verdana Bold, 12pt.
 		titleLogFont.lfCharSet = DEFAULT_CHARSET;
 		titleLogFont.lfWeight = FW_BOLD;
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(titleLogFont.lfFaceName, _countof(titleLogFont.lfFaceName), _T("Verdana Bold"));
-#else
-		lstrcpy(titleLogFont.lfFaceName, _T("Verdana Bold"));
-#endif
+		SecureHelper::strcpy_x(titleLogFont.lfFaceName, _countof(titleLogFont.lfFaceName), _T("Verdana Bold"));
 		INT titleFontPointSize = 12;
 		titleLogFont.lfHeight = -::MulDiv(titleFontPointSize, dcScreen.GetDeviceCaps(LOGPIXELSY), 72);
 		m_fontExteriorPageTitle.CreateFontIndirect(&titleLogFont);
@@ -4718,11 +5359,7 @@ public:
 		// static text of "h" in the Marlett font.
 		bulletLogFont.lfCharSet = DEFAULT_CHARSET;
 		bulletLogFont.lfWeight = FW_NORMAL;
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(bulletLogFont.lfFaceName, _countof(bulletLogFont.lfFaceName), _T("Marlett"));
-#else
-		lstrcpy(bulletLogFont.lfFaceName, _T("Marlett"));
-#endif
+		SecureHelper::strcpy_x(bulletLogFont.lfFaceName, _countof(bulletLogFont.lfFaceName), _T("Marlett"));
 		INT bulletFontSize = 8;
 		bulletLogFont.lfHeight = -::MulDiv(bulletFontSize, dcScreen.GetDeviceCaps(LOGPIXELSY), 72);
 		m_fontBullet.CreateFontIndirect(&bulletLogFont);
@@ -5160,7 +5797,13 @@ inline int AtlTaskDialog(HWND hWndParent,
 
 #ifdef _WTL_TASKDIALOG_DIRECT
 	USES_CONVERSION;
-	HRESULT hRet = ::TaskDialog(hWndParent, ModuleHelper::GetResourceInstance(), T2CW(WindowTitle.m_lpstr), T2CW(MainInstructionText.m_lpstr), T2CW(ContentText.m_lpstr), dwCommonButtons, T2CW(Icon.m_lpstr), &nRet);
+	HRESULT hRet = ::TaskDialog(hWndParent, ModuleHelper::GetResourceInstance(), 
+		IS_INTRESOURCE(WindowTitle.m_lpstr) ? (LPCWSTR) WindowTitle.m_lpstr : T2CW(WindowTitle.m_lpstr), 
+		IS_INTRESOURCE(MainInstructionText.m_lpstr) ? (LPCWSTR) MainInstructionText.m_lpstr : T2CW(MainInstructionText.m_lpstr), 
+		IS_INTRESOURCE(ContentText.m_lpstr) ?  (LPCWSTR) ContentText.m_lpstr : T2CW(ContentText.m_lpstr), 
+		dwCommonButtons, 
+		IS_INTRESOURCE(Icon.m_lpstr) ? (LPCWSTR) Icon.m_lpstr : T2CW(Icon.m_lpstr),
+		&nRet);
 	ATLVERIFY(SUCCEEDED(hRet));
 #else
 	// This allows apps to run on older versions of Windows
@@ -5173,7 +5816,13 @@ inline int AtlTaskDialog(HWND hWndParent,
 		if(pfnTaskDialog != NULL)
 		{
 			USES_CONVERSION;
-			HRESULT hRet = pfnTaskDialog(hWndParent, ModuleHelper::GetResourceInstance(), T2CW(WindowTitle.m_lpstr), T2CW(MainInstructionText.m_lpstr), T2CW(ContentText.m_lpstr), dwCommonButtons, T2CW(Icon.m_lpstr), &nRet);
+			HRESULT hRet = pfnTaskDialog(hWndParent, ModuleHelper::GetResourceInstance(), 
+				IS_INTRESOURCE(WindowTitle.m_lpstr) ? (LPCWSTR) WindowTitle.m_lpstr : T2CW(WindowTitle.m_lpstr), 
+				IS_INTRESOURCE(MainInstructionText.m_lpstr) ? (LPCWSTR) MainInstructionText.m_lpstr : T2CW(MainInstructionText.m_lpstr), 
+				IS_INTRESOURCE(ContentText.m_lpstr) ?  (LPCWSTR) ContentText.m_lpstr : T2CW(ContentText.m_lpstr), 
+				dwCommonButtons, 
+				IS_INTRESOURCE(Icon.m_lpstr) ? (LPCWSTR) Icon.m_lpstr : T2CW(Icon.m_lpstr),
+				&nRet);
 			ATLVERIFY(SUCCEEDED(hRet));
 		}
 

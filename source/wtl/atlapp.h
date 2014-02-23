@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -15,7 +15,7 @@
 #pragma once
 
 #ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
+	#error WTL requires C++ compilation (use a .cpp suffix)
 #endif
 
 #ifndef __ATLBASE_H__
@@ -34,21 +34,33 @@
 
 #ifdef _ATL_NO_COMMODULE
 	#error WTL requires that _ATL_NO_COMMODULE is not defined
-#endif // _ATL_NO_COMMODULE
+#endif
+
+#if (_ATL_VER >= 0x0900) && defined(_ATL_MIN_CRT)
+	#error _ATL_MIN_CRT is not supported with ATL 9.0 and higher
+#endif
 
 #if defined(_WIN32_WCE) && defined(_ATL_MIN_CRT)
 	#pragma message("Warning: WTL for Windows CE doesn't use _ATL_MIN_CRT")
-#endif // defined(_WIN32_WCE) && defined(_ATL_MIN_CRT)
+#endif
 
 #include <limits.h>
 #if !defined(_ATL_MIN_CRT) && defined(_MT) && !defined(_WIN32_WCE)
   #include <process.h>	// for _beginthreadex
 #endif
 
+#if (_ATL_VER < 0x0800) && !defined(_DEBUG)
+  #include <stdio.h>
+#endif
+
 #include <commctrl.h>
 #ifndef _WIN32_WCE
-#pragma comment(lib, "comctl32.lib")
-#endif // !_WIN32_WCE
+  #pragma comment(lib, "comctl32.lib")
+#endif
+
+#if defined(_SYSINFOAPI_H_) || defined(_WTL_USE_VERSION_HELPERS)
+  #include <VersionHelpers.h>
+#endif
 
 #ifndef _WIN32_WCE
   #include "atlres.h"
@@ -59,11 +71,15 @@
 // We need to disable this warning because of template class arguments
 #pragma warning(disable: 4127)
 
+#if (_ATL_VER >= 0x0900) && !defined(_SECURE_ATL)
+  #define _SECURE_ATL	1
+#endif
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // WTL version number
 
-#define _WTL_VER	0x0800
+#define _WTL_VER	0x0900
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,8 +92,11 @@
 // CAppModule
 // CServerAppModule
 //
+// CRegKeyEx
+//
 // Global functions:
 //   AtlGetDefaultGuiFont()
+//   AtlCreateControlFont()
 //   AtlCreateBoldFont()
 //   AtlInitCommonControls()
 
@@ -203,6 +222,25 @@ inline int WINAPI lstrlenA(LPCSTR lpszString)
 		return NULL;
 	int nLen = min(lstrlen(lpstrSrc), nLength - 1);
 	LPTSTR lpstrRet = (LPTSTR)memcpy(lpstrDest, lpstrSrc, nLen * sizeof(TCHAR));
+	lpstrDest[nLen] = 0;
+	return lpstrRet;
+  }
+#endif // !lstrcpyn
+
+#ifndef lstrcpynW
+  inline LPWSTR lstrcpynW(LPWSTR lpstrDest, LPCWSTR lpstrSrc, int nLength)
+  {
+	return lstrcpyn(lpstrDest, lpstrSrc, nLength);   // WinCE is Unicode only
+  }
+#endif // !lstrcpynW
+
+#ifndef lstrcpynA
+  inline LPSTR lstrcpynA(LPSTR lpstrDest, LPCSTR lpstrSrc, int nLength)
+  {
+	if(lpstrDest == NULL || lpstrSrc == NULL || nLength <= 0)
+		return NULL;
+	int nLen = min(lstrlenA(lpstrSrc), nLength - 1);
+	LPSTR lpstrRet = (LPSTR)memcpy(lpstrDest, lpstrSrc, nLen * sizeof(char));
 	lpstrDest[nLen] = 0;
 	return lpstrRet;
   }
@@ -376,6 +414,29 @@ static CWndClassInfo& GetWndClassInfo() \
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Global support for SecureHelper functions
+
+#ifndef _TRUNCATE
+  #define _TRUNCATE ((size_t)-1)
+#endif
+
+#ifndef _ERRCODE_DEFINED
+  #define _ERRCODE_DEFINED
+  typedef int errno_t;
+#endif
+
+#ifndef _SECURECRT_ERRCODE_VALUES_DEFINED
+  #define _SECURECRT_ERRCODE_VALUES_DEFINED
+  #define EINVAL          22
+  #define STRUNCATE       80
+#endif
+
+#ifndef _countof
+  #define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#endif
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Miscellaneous global support
 
 // define useful macros from winuser.h
@@ -414,9 +475,13 @@ static CWndClassInfo& GetWndClassInfo() \
   #endif // ATLVERIFY
 #endif // (_ATL_VER < 0x0700)
 
-// Forward declaration for ATL3 fix
-#if (_ATL_VER < 0x0700) && defined(_ATL_DLL) && !defined(_WIN32_WCE)
+// Forward declaration for ATL3 and ATL11 fix
+#if (((_ATL_VER < 0x0700) && defined(_ATL_DLL)) || (_ATL_VER >= 0x0B00)) && !defined(_WIN32_WCE)
   namespace ATL { HRESULT AtlGetCommCtrlVersion(LPDWORD pdwMajor, LPDWORD pdwMinor); };
+#endif
+
+#ifndef WM_MOUSEHWHEEL
+  #define WM_MOUSEHWHEEL                  0x020E
 #endif
 
 
@@ -438,13 +503,16 @@ namespace WTL
 // Windows version helper
 inline bool AtlIsOldWindows()
 {
-	OSVERSIONINFO ovi = { 0 };
-	ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+#ifdef _versionhelpers_H_INCLUDED_
+	return !::IsWindowsVersionOrGreater(4, 90, 0);
+#else // !_versionhelpers_H_INCLUDED_
+OSVERSIONINFO ovi = { sizeof(OSVERSIONINFO) };
 	BOOL bRet = ::GetVersionEx(&ovi);
 	return (!bRet || !((ovi.dwMajorVersion >= 5) || (ovi.dwMajorVersion == 4 && ovi.dwMinorVersion >= 90)));
+#endif // _versionhelpers_H_INCLUDED_
 }
 
-// default GUI font helper
+// Default GUI font helper - "MS Shell Dlg" stock font
 inline HFONT AtlGetDefaultGuiFont()
 {
 #ifndef _WIN32_WCE
@@ -454,24 +522,39 @@ inline HFONT AtlGetDefaultGuiFont()
 #endif // _WIN32_WCE
 }
 
-// bold font helper (NOTE: Caller owns the font, and should destroy it when done using it)
+// Control font helper - default font for controls not in a dialog
+// (NOTE: Caller owns the font, and should destroy it when it's no longer needed)
+inline HFONT AtlCreateControlFont()
+{
+#ifndef _WIN32_WCE
+	LOGFONT lf = { 0 };
+	ATLVERIFY(::SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &lf, 0) != FALSE);
+	HFONT hFont = ::CreateFontIndirect(&lf);
+	ATLASSERT(hFont != NULL);
+	return hFont;
+#else // CE specific
+	return (HFONT)::GetStockObject(SYSTEM_FONT);
+#endif // _WIN32_WCE
+}
+
+// Bold font helper
+// (NOTE: Caller owns the font, and should destroy it when it's no longer needed)
 inline HFONT AtlCreateBoldFont(HFONT hFont = NULL)
 {
-	if(hFont == NULL)
-		hFont = AtlGetDefaultGuiFont();
-	ATLASSERT(hFont != NULL);
-	HFONT hFontBold = NULL;
 	LOGFONT lf = { 0 };
-	if(::GetObject(hFont, sizeof(LOGFONT), &lf) == sizeof(LOGFONT))
-	{
-		lf.lfWeight = FW_BOLD;
-		hFontBold =  ::CreateFontIndirect(&lf);
-		ATLASSERT(hFontBold != NULL);
-	}
+#ifndef _WIN32_WCE
+	if(hFont == NULL)
+		ATLVERIFY(::SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &lf, 0) != FALSE);
 	else
-	{
-		ATLASSERT(FALSE);
-	}
+		ATLVERIFY(::GetObject(hFont, sizeof(LOGFONT), &lf) == sizeof(LOGFONT));
+#else // CE specific
+	if(hFont == NULL)
+		hFont = (HFONT)::GetStockObject(SYSTEM_FONT);
+	ATLVERIFY(::GetObject(hFont, sizeof(LOGFONT), &lf) == sizeof(LOGFONT));
+#endif // _WIN32_WCE
+	lf.lfWeight = FW_BOLD;
+	HFONT hFontBold =  ::CreateFontIndirect(&lf);
+	ATLASSERT(hFontBold != NULL);
 	return hFontBold;
 }
 
@@ -533,10 +616,82 @@ namespace RunTimeHelper
 
 	inline bool IsVista()
 	{
+#ifdef _versionhelpers_H_INCLUDED_
+		return ::IsWindowsVistaOrGreater();
+#else // !_versionhelpers_H_INCLUDED_
 		OSVERSIONINFO ovi = { sizeof(OSVERSIONINFO) };
 		BOOL bRet = ::GetVersionEx(&ovi);
 		return ((bRet != FALSE) && (ovi.dwMajorVersion >= 6));
+#endif // _versionhelpers_H_INCLUDED_
 	}
+
+	inline bool IsThemeAvailable()
+	{
+		bool bRet = false;
+
+		if(IsCommCtrl6())
+		{
+			HMODULE hThemeDLL = ::LoadLibrary(_T("uxtheme.dll"));
+			if(hThemeDLL != NULL)
+			{
+				typedef BOOL (STDAPICALLTYPE *PFN_IsThemeActive)();
+				PFN_IsThemeActive pfnIsThemeActive = (PFN_IsThemeActive)::GetProcAddress(hThemeDLL, "IsThemeActive");
+				ATLASSERT(pfnIsThemeActive != NULL);
+				bRet = (pfnIsThemeActive != NULL) && (pfnIsThemeActive() != FALSE);
+				if(bRet)
+				{
+					typedef BOOL (STDAPICALLTYPE *PFN_IsAppThemed)();
+					PFN_IsAppThemed pfnIsAppThemed = (PFN_IsAppThemed)::GetProcAddress(hThemeDLL, "IsAppThemed");
+					ATLASSERT(pfnIsAppThemed != NULL);
+					bRet = (pfnIsAppThemed != NULL) && (pfnIsAppThemed() != FALSE);
+				}
+
+				::FreeLibrary(hThemeDLL);
+			}
+		}
+
+		return bRet;
+	}
+
+	inline bool IsWin7()
+	{
+#ifdef _versionhelpers_H_INCLUDED_
+		return ::IsWindows7OrGreater();
+#else // !_versionhelpers_H_INCLUDED_
+		OSVERSIONINFO ovi = { sizeof(OSVERSIONINFO) };
+		BOOL bRet = ::GetVersionEx(&ovi);
+		return ((bRet != FALSE) && (ovi.dwMajorVersion == 6) && (ovi.dwMinorVersion >= 1));
+#endif // _versionhelpers_H_INCLUDED_
+	}
+
+	inline bool IsRibbonUIAvailable()
+	{
+		static INT iRibbonUI = -1;
+
+#if defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7)
+		if (iRibbonUI == -1)
+		{
+			HMODULE hRibbonDLL = ::LoadLibrary(_T("propsys.dll"));
+			if (hRibbonDLL != NULL)
+			{
+				const GUID CLSID_UIRibbonFramework = { 0x926749fa, 0x2615, 0x4987, { 0x88, 0x45, 0xc3, 0x3e, 0x65, 0xf2, 0xb9, 0x57 } };
+				// block - create instance
+				{
+					ATL::CComPtr<IUnknown> pIUIFramework;
+					iRibbonUI = SUCCEEDED(pIUIFramework.CoCreateInstance(CLSID_UIRibbonFramework)) ? 1 : 0;
+				}
+				::FreeLibrary(hRibbonDLL);
+			}
+			else
+			{
+				iRibbonUI = 0;
+			}
+		}
+#endif // defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7)
+
+		return (iRibbonUI == 1);
+	}
+
 #endif // !_WIN32_WCE
 
 	inline int SizeOf_REBARBANDINFO()
@@ -636,6 +791,291 @@ namespace ModuleHelper
 #endif // !(_ATL_VER >= 0x0700)
 	}
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+// SecureHelper - helper functions for VS2005 secure CRT
+
+namespace SecureHelper
+{
+	inline void strcpyA_x(char* lpstrDest, size_t cchDest, const char* lpstrSrc)
+	{
+#if _SECURE_ATL
+		ATL::Checked::strcpy_s(lpstrDest, cchDest, lpstrSrc);
+#else
+		if(cchDest > (size_t)lstrlenA(lpstrSrc))
+			ATLVERIFY(lstrcpyA(lpstrDest, lpstrSrc) != NULL);
+		else
+			ATLASSERT(FALSE);
+#endif
+	}
+
+	inline void strcpyW_x(wchar_t* lpstrDest, size_t cchDest, const wchar_t* lpstrSrc)
+	{
+#if _SECURE_ATL
+		ATL::Checked::wcscpy_s(lpstrDest, cchDest, lpstrSrc);
+#else
+		if(cchDest > (size_t)lstrlenW(lpstrSrc))
+			ATLVERIFY(lstrcpyW(lpstrDest, lpstrSrc) != NULL);
+		else
+			ATLASSERT(FALSE);
+#endif
+	}
+
+	inline void strcpy_x(LPTSTR lpstrDest, size_t cchDest, LPCTSTR lpstrSrc)
+	{
+#ifdef _UNICODE
+		strcpyW_x(lpstrDest, cchDest, lpstrSrc);
+#else
+		strcpyA_x(lpstrDest, cchDest, lpstrSrc);
+#endif
+	}
+
+	inline errno_t strncpyA_x(char* lpstrDest, size_t cchDest, const char* lpstrSrc, size_t cchCount)
+	{
+#if _SECURE_ATL
+		return ATL::Checked::strncpy_s(lpstrDest, cchDest, lpstrSrc, cchCount);
+#else
+		errno_t nRet = 0;
+		if(lpstrDest == NULL || cchDest == 0 || lpstrSrc == NULL)
+		{
+			nRet = EINVAL;
+		}
+		else if(cchCount == _TRUNCATE)
+		{
+			cchCount = min(cchDest - 1, size_t(lstrlenA(lpstrSrc)));
+			nRet = STRUNCATE;
+		}
+		else if(cchDest <= cchCount)
+		{
+			lpstrDest[0] = 0;
+			nRet = EINVAL;
+		}
+		if(nRet == 0 || nRet == STRUNCATE)
+			nRet = (lstrcpynA(lpstrDest, lpstrSrc, (int)cchCount + 1) != NULL) ? nRet : EINVAL;
+		ATLASSERT(nRet == 0 || nRet == STRUNCATE);
+		return nRet;
+#endif
+	}
+
+	inline errno_t strncpyW_x(wchar_t* lpstrDest, size_t cchDest, const wchar_t* lpstrSrc, size_t cchCount)
+	{
+#if _SECURE_ATL
+		return ATL::Checked::wcsncpy_s(lpstrDest, cchDest, lpstrSrc, cchCount);
+#else
+		errno_t nRet = 0;
+		if(lpstrDest == NULL || cchDest == 0 || lpstrSrc == NULL)
+		{
+			nRet = EINVAL;
+		}
+		else if(cchCount == _TRUNCATE)
+		{
+			cchCount = min(cchDest - 1, size_t(lstrlenW(lpstrSrc)));
+			nRet = STRUNCATE;
+		}
+		else if(cchDest <= cchCount)
+		{
+			lpstrDest[0] = 0;
+			nRet = EINVAL;
+		}
+		if(nRet == 0 || nRet == STRUNCATE)
+			nRet = (lstrcpynW(lpstrDest, lpstrSrc, (int)cchCount + 1) != NULL) ? nRet : EINVAL;
+		ATLASSERT(nRet == 0 || nRet == STRUNCATE);
+		return nRet;
+#endif
+	}
+
+	inline errno_t strncpy_x(LPTSTR lpstrDest, size_t cchDest, LPCTSTR lpstrSrc, size_t cchCount)
+	{
+#ifdef _UNICODE
+		return strncpyW_x(lpstrDest, cchDest, lpstrSrc, cchCount);
+#else
+		return strncpyA_x(lpstrDest, cchDest, lpstrSrc, cchCount);
+#endif
+	}
+
+	inline void strcatA_x(char* lpstrDest, size_t cchDest, const char* lpstrSrc)
+	{
+#if _SECURE_ATL
+		ATL::Checked::strcat_s(lpstrDest, cchDest, lpstrSrc);
+#else
+		if(cchDest > (size_t)lstrlenA(lpstrSrc))
+			ATLVERIFY(lstrcatA(lpstrDest, lpstrSrc) != NULL);
+		else
+			ATLASSERT(FALSE);
+#endif
+	}
+
+	inline void strcatW_x(wchar_t* lpstrDest, size_t cchDest, const wchar_t* lpstrSrc)
+	{
+#if _SECURE_ATL
+		ATL::Checked::wcscat_s(lpstrDest, cchDest, lpstrSrc);
+#else
+		if(cchDest > (size_t)lstrlenW(lpstrSrc))
+			ATLVERIFY(lstrcatW(lpstrDest, lpstrSrc) != NULL);
+		else
+			ATLASSERT(FALSE);
+#endif
+	}
+
+	inline void strcat_x(LPTSTR lpstrDest, size_t cchDest, LPCTSTR lpstrSrc)
+	{
+#ifdef _UNICODE
+		strcatW_x(lpstrDest, cchDest, lpstrSrc);
+#else
+		strcatA_x(lpstrDest, cchDest, lpstrSrc);
+#endif
+	}
+
+	inline void memcpy_x(void* pDest, size_t cbDest, const void* pSrc, size_t cbSrc)
+	{
+#if _SECURE_ATL
+		ATL::Checked::memcpy_s(pDest, cbDest, pSrc, cbSrc);
+#else
+		if(cbDest >= cbSrc)
+			memcpy(pDest, pSrc, cbSrc);
+		else
+			ATLASSERT(FALSE);
+#endif
+	}
+
+	inline void memmove_x(void* pDest, size_t cbDest, const void* pSrc, size_t cbSrc)
+	{
+#if _SECURE_ATL
+		ATL::Checked::memmove_s(pDest, cbDest, pSrc, cbSrc);
+#else
+		if(cbDest >= cbSrc)
+			memmove(pDest, pSrc, cbSrc);
+		else
+			ATLASSERT(FALSE);
+#endif
+	}
+
+	inline int vsprintf_x(LPTSTR lpstrBuff, size_t cchBuff, LPCTSTR lpstrFormat, va_list args)
+	{
+#if _SECURE_ATL && !defined(_ATL_MIN_CRT) && !defined(_WIN32_WCE)
+		return _vstprintf_s(lpstrBuff, cchBuff, lpstrFormat, args);
+#else
+		cchBuff;   // Avoid unused argument warning
+#pragma warning(disable: 4996)
+		return _vstprintf(lpstrBuff, lpstrFormat, args);
+#pragma warning(default: 4996)
+#endif
+	}
+
+	inline int wvsprintf_x(LPTSTR lpstrBuff, size_t cchBuff, LPCTSTR lpstrFormat, va_list args)
+	{
+#if _SECURE_ATL && !defined(_ATL_MIN_CRT) && !defined(_WIN32_WCE)
+		return _vstprintf_s(lpstrBuff, cchBuff, lpstrFormat, args);
+#else
+		cchBuff;   // Avoid unused argument warning
+		return ::wvsprintf(lpstrBuff, lpstrFormat, args);
+#endif
+	}
+
+	inline int sprintf_x(LPTSTR lpstrBuff, size_t cchBuff, LPCTSTR lpstrFormat, ...)
+	{
+		va_list args;
+		va_start(args, lpstrFormat);
+		int nRes = vsprintf_x(lpstrBuff, cchBuff, lpstrFormat, args);
+		va_end(args);
+		return nRes;
+	}
+
+	inline int wsprintf_x(LPTSTR lpstrBuff, size_t cchBuff, LPCTSTR lpstrFormat, ...)
+	{
+		va_list args;
+		va_start(args, lpstrFormat);
+		int nRes = wvsprintf_x(lpstrBuff, cchBuff, lpstrFormat, args);
+		va_end(args);
+		return nRes;
+	}
+}; // namespace SecureHelper
+
+
+///////////////////////////////////////////////////////////////////////////////
+// MinCrtHelper - helper functions for using _ATL_MIN_CRT
+
+namespace MinCrtHelper
+{
+	inline int _isspace(TCHAR ch)
+	{
+#ifndef _ATL_MIN_CRT
+		return _istspace(ch);
+#else // _ATL_MIN_CRT
+		WORD type = 0;
+		::GetStringTypeEx(::GetThreadLocale(), CT_CTYPE1, &ch, 1, &type);
+		return (type & C1_SPACE) == C1_SPACE;
+#endif // _ATL_MIN_CRT
+	}
+
+	inline int _isdigit(TCHAR ch)
+	{
+#ifndef _ATL_MIN_CRT
+		return _istdigit(ch);
+#else // _ATL_MIN_CRT
+		WORD type = 0;
+		::GetStringTypeEx(::GetThreadLocale(), CT_CTYPE1, &ch, 1, &type);
+		return (type & C1_DIGIT) == C1_DIGIT;
+#endif // _ATL_MIN_CRT
+	}
+
+	inline int _atoi(LPCTSTR str)
+	{
+#ifndef _ATL_MIN_CRT
+		return _ttoi(str);
+#else // _ATL_MIN_CRT
+		while(_isspace(*str) != 0)
+			++str;
+
+		TCHAR ch = *str++;
+		TCHAR sign = ch;   // save sign indication
+		if(ch == _T('-') || ch == _T('+'))
+			ch = *str++;   // skip sign
+
+		int total = 0;
+		while(_isdigit(ch) != 0)
+		{
+			total = 10 * total + (ch - '0');   // accumulate digit
+			ch = *str++;        // get next char
+		}
+
+		return (sign == '-') ? -total : total;   // return result, negated if necessary
+#endif // _ATL_MIN_CRT
+	}
+
+	inline LPCTSTR _strrchr(LPCTSTR str, TCHAR ch)
+	{
+#ifndef _ATL_MIN_CRT
+		return _tcsrchr(str, ch);
+#else // _ATL_MIN_CRT
+		LPCTSTR lpsz = NULL;
+		while(*str != 0)
+		{
+			if(*str == ch)
+				lpsz = str;
+			str = ::CharNext(str);
+		}
+		return lpsz;
+#endif // _ATL_MIN_CRT
+	}
+
+	inline LPTSTR _strrchr(LPTSTR str, TCHAR ch)
+	{
+#ifndef _ATL_MIN_CRT
+		return _tcsrchr(str, ch);
+#else // _ATL_MIN_CRT
+		LPTSTR lpsz = NULL;
+		while(*str != 0)
+		{
+			if(*str == ch)
+				lpsz = str;
+			str = ::CharNext(str);
+		}
+		return lpsz;
+#endif // _ATL_MIN_CRT
+	}
+}; // namespace MinCrtHelper
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -864,6 +1304,86 @@ public:
 #endif // !(_ATL_VER >= 0x0700)
 	}
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CTempBuffer - helper class for stack allocations for ATL3
+
+#ifndef _WTL_STACK_ALLOC_THRESHOLD
+  #define _WTL_STACK_ALLOC_THRESHOLD   512
+#endif
+
+#if (_ATL_VER >= 0x0700)
+
+using ATL::CTempBuffer;
+
+#else // !(_ATL_VER >= 0x0700)
+
+#ifndef SIZE_MAX
+  #ifdef _WIN64 
+    #define SIZE_MAX _UI64_MAX
+  #else
+    #define SIZE_MAX UINT_MAX
+  #endif
+#endif
+
+#pragma warning(disable: 4284)   // warning for operator ->
+
+template<typename T, int t_nFixedBytes = 128>
+class CTempBuffer
+{
+public:
+	CTempBuffer() : m_p(NULL)
+	{
+	}
+
+	CTempBuffer(size_t nElements) : m_p(NULL)
+	{
+		Allocate(nElements);
+	}
+
+	~CTempBuffer()
+	{
+		if(m_p != reinterpret_cast<T*>(m_abFixedBuffer))
+			free(m_p);
+	}
+
+	operator T*() const
+	{
+		return m_p;
+	}
+
+	T* operator ->() const
+	{
+		ATLASSERT(m_p != NULL);
+		return m_p;
+	}
+
+	T* Allocate(size_t nElements)
+	{
+		ATLASSERT(nElements <= (SIZE_MAX / sizeof(T)));
+		return AllocateBytes(nElements * sizeof(T));
+	}
+
+	T* AllocateBytes(size_t nBytes)
+	{
+		ATLASSERT(m_p == NULL);
+		if(nBytes > t_nFixedBytes)
+			m_p = static_cast<T*>(malloc(nBytes));
+		else
+			m_p = reinterpret_cast<T*>(m_abFixedBuffer);
+
+		return m_p;
+	}
+
+private:
+	T* m_p;
+	BYTE m_abFixedBuffer[t_nFixedBytes];
+};
+
+#pragma warning(default: 4284)
+
+#endif // !(_ATL_VER >= 0x0700)
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1178,7 +1698,7 @@ public:
 		m_hEventShutdown = ::CreateEvent(NULL, false, false, NULL);
 		if(m_hEventShutdown == NULL)
 			return false;
-		DWORD dwThreadID;
+		DWORD dwThreadID = 0;
 #if !defined(_ATL_MIN_CRT) && defined(_MT) && !defined(_WIN32_WCE)
 		HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, (UINT (WINAPI*)(void*))MonitorProc, this, 0, (UINT*)&dwThreadID);
 #else
@@ -1219,6 +1739,261 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// CRegKeyEx - adds type-specific methods to ATL3 CRegKey
+
+#if (_ATL_VER < 0x0700)
+
+class CRegKeyEx : public ATL::CRegKey
+{
+public:
+// Constructors and operators
+	CRegKeyEx(HKEY hKey = NULL)
+	{
+		m_hKey = hKey;
+	}
+
+	CRegKeyEx(CRegKeyEx& key)
+	{
+		Attach(key.Detach());
+	}
+
+	CRegKeyEx& operator =(CRegKeyEx& key)
+	{
+		Close();
+		Attach(key.Detach());
+		return *this;
+	}
+
+// Methods
+	LONG SetValue(LPCTSTR pszValueName, DWORD dwType, const void* pValue, ULONG nBytes)
+	{
+		ATLASSERT(m_hKey != NULL);
+		return ::RegSetValueEx(m_hKey, pszValueName, NULL, dwType, static_cast<const BYTE*>(pValue), nBytes);
+	}
+
+	LONG SetGUIDValue(LPCTSTR pszValueName, REFGUID guidValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+
+		OLECHAR szGUID[64] = { 0 };
+		::StringFromGUID2(guidValue, szGUID, 64);
+
+		USES_CONVERSION;
+		LPCTSTR lpstr = OLE2CT(szGUID);
+#ifndef _UNICODE
+		if(lpstr == NULL) 
+			return E_OUTOFMEMORY;
+#endif	
+		return SetStringValue(pszValueName, lpstr);
+	}
+
+	LONG SetBinaryValue(LPCTSTR pszValueName, const void* pValue, ULONG nBytes)
+	{
+		ATLASSERT(m_hKey != NULL);
+		return ::RegSetValueEx(m_hKey, pszValueName, NULL, REG_BINARY, reinterpret_cast<const BYTE*>(pValue), nBytes);
+	}
+
+	LONG SetDWORDValue(LPCTSTR pszValueName, DWORD dwValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+		return ::RegSetValueEx(m_hKey, pszValueName, NULL, REG_DWORD, reinterpret_cast<const BYTE*>(&dwValue), sizeof(DWORD));
+	}
+
+#ifndef _WIN32_WCE
+	LONG SetQWORDValue(LPCTSTR pszValueName, ULONGLONG qwValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+		return ::RegSetValueEx(m_hKey, pszValueName, NULL, REG_QWORD, reinterpret_cast<const BYTE*>(&qwValue), sizeof(ULONGLONG));
+	}
+#endif
+
+	LONG SetStringValue(LPCTSTR pszValueName, LPCTSTR pszValue, DWORD dwType = REG_SZ)
+	{
+		ATLASSERT(m_hKey != NULL);
+		if(pszValue == NULL)
+		{
+			ATLASSERT(FALSE);
+			return ERROR_INVALID_DATA;
+		}
+		ATLASSERT((dwType == REG_SZ) || (dwType == REG_EXPAND_SZ));
+
+		return ::RegSetValueEx(m_hKey, pszValueName, NULL, dwType, reinterpret_cast<const BYTE*>(pszValue), (lstrlen(pszValue) + 1) * sizeof(TCHAR));
+	}
+
+	LONG SetMultiStringValue(LPCTSTR pszValueName, LPCTSTR pszValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+		if(pszValue == NULL)
+		{
+			ATLASSERT(FALSE);
+			return ERROR_INVALID_DATA;
+		}
+
+		ULONG nBytes = 0;
+		ULONG nLength = 0;
+		LPCTSTR pszTemp = pszValue;
+		do
+		{
+			nLength = lstrlen(pszTemp) + 1;
+			pszTemp += nLength;
+			nBytes += nLength * sizeof(TCHAR);
+		} while (nLength != 1);
+
+		return ::RegSetValueEx(m_hKey, pszValueName, NULL, REG_MULTI_SZ, reinterpret_cast<const BYTE*>(pszValue), nBytes);
+	}
+
+	LONG QueryValue(LPCTSTR pszValueName, DWORD* pdwType, void* pData, ULONG* pnBytes)
+	{
+		ATLASSERT(m_hKey != NULL);
+		return ::RegQueryValueEx(m_hKey, pszValueName, NULL, pdwType, static_cast<LPBYTE>(pData), pnBytes);
+	}
+
+	LONG QueryGUIDValue(LPCTSTR pszValueName, GUID& guidValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+
+		guidValue = GUID_NULL;
+
+		TCHAR szGUID[64] = { 0 };
+		ULONG nCount = 64;
+		LONG lRes = QueryStringValue(pszValueName, szGUID, &nCount);
+
+		if (lRes != ERROR_SUCCESS)
+			return lRes;
+
+		if(szGUID[0] != _T('{'))
+			return ERROR_INVALID_DATA;
+
+		USES_CONVERSION;
+		LPOLESTR lpstr = T2OLE(szGUID);
+#ifndef _UNICODE
+		if(lpstr == NULL) 
+			return E_OUTOFMEMORY;
+#endif	
+		
+		HRESULT hr = ::CLSIDFromString(lpstr, &guidValue);
+		if (FAILED(hr))
+			return ERROR_INVALID_DATA;
+
+		return ERROR_SUCCESS;
+	}
+
+	LONG QueryBinaryValue(LPCTSTR pszValueName, void* pValue, ULONG* pnBytes)
+	{
+		ATLASSERT(pnBytes != NULL);
+		ATLASSERT(m_hKey != NULL);
+
+		DWORD dwType = 0;
+		LONG lRes = ::RegQueryValueEx(m_hKey, pszValueName, NULL, &dwType, reinterpret_cast<LPBYTE>(pValue), pnBytes);
+		if (lRes != ERROR_SUCCESS)
+			return lRes;
+		if (dwType != REG_BINARY)
+			return ERROR_INVALID_DATA;
+
+		return ERROR_SUCCESS;
+	}
+
+	LONG QueryDWORDValue(LPCTSTR pszValueName, DWORD& dwValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+
+		ULONG nBytes = sizeof(DWORD);
+		DWORD dwType = 0;
+		LONG lRes = ::RegQueryValueEx(m_hKey, pszValueName, NULL, &dwType, reinterpret_cast<LPBYTE>(&dwValue), &nBytes);
+		if (lRes != ERROR_SUCCESS)
+			return lRes;
+		if (dwType != REG_DWORD)
+			return ERROR_INVALID_DATA;
+
+		return ERROR_SUCCESS;
+	}
+
+	LONG QueryQWORDValue(LPCTSTR pszValueName, ULONGLONG& qwValue)
+	{
+		ATLASSERT(m_hKey != NULL);
+
+		ULONG nBytes = sizeof(ULONGLONG);
+		DWORD dwType = 0;
+		LONG lRes = ::RegQueryValueEx(m_hKey, pszValueName, NULL, &dwType, reinterpret_cast<LPBYTE>(&qwValue), &nBytes);
+		if (lRes != ERROR_SUCCESS)
+			return lRes;
+		if (dwType != REG_QWORD)
+			return ERROR_INVALID_DATA;
+
+		return ERROR_SUCCESS;
+	}
+
+	LONG QueryStringValue(LPCTSTR pszValueName, LPTSTR pszValue, ULONG* pnChars)
+	{
+		ATLASSERT(m_hKey != NULL);
+		ATLASSERT(pnChars != NULL);
+
+		ULONG nBytes = (*pnChars) * sizeof(TCHAR);
+		DWORD dwType = 0;
+		*pnChars = 0;
+		LONG lRes = ::RegQueryValueEx(m_hKey, pszValueName, NULL, &dwType, reinterpret_cast<LPBYTE>(pszValue), &nBytes);
+	
+		if (lRes != ERROR_SUCCESS)
+		{
+			return lRes;
+		}
+
+		if(dwType != REG_SZ && dwType != REG_EXPAND_SZ)
+		{
+			return ERROR_INVALID_DATA;
+		}
+
+		if (pszValue != NULL)
+		{
+			if(nBytes != 0)
+			{
+				if ((nBytes % sizeof(TCHAR) != 0) || (pszValue[nBytes / sizeof(TCHAR) -1] != 0))
+					return ERROR_INVALID_DATA;
+			}
+			else
+			{
+				pszValue[0] = _T('\0');
+			}
+		}
+
+		*pnChars = nBytes / sizeof(TCHAR);
+
+		return ERROR_SUCCESS;
+	}
+
+	LONG QueryMultiStringValue(LPCTSTR pszValueName, LPTSTR pszValue, ULONG* pnChars)
+	{
+		ATLASSERT(m_hKey != NULL);
+		ATLASSERT(pnChars != NULL);
+
+		if (pszValue != NULL && *pnChars < 2)
+			return ERROR_INSUFFICIENT_BUFFER;
+		
+		ULONG nBytes = (*pnChars) * sizeof(TCHAR);
+		DWORD dwType = 0;
+		*pnChars = 0;
+		LONG lRes = ::RegQueryValueEx(m_hKey, pszValueName, NULL, &dwType, reinterpret_cast<LPBYTE>(pszValue), &nBytes);
+		if (lRes != ERROR_SUCCESS)
+			return lRes;
+		if (dwType != REG_MULTI_SZ)
+			return ERROR_INVALID_DATA;
+		if (pszValue != NULL && (nBytes % sizeof(TCHAR) != 0 || nBytes / sizeof(TCHAR) < 1 || pszValue[nBytes / sizeof(TCHAR) - 1] != 0 || ((nBytes / sizeof(TCHAR)) > 1 && pszValue[nBytes / sizeof(TCHAR) - 2] != 0)))
+			return ERROR_INVALID_DATA;
+
+		*pnChars = nBytes / sizeof(TCHAR);
+
+		return ERROR_SUCCESS;
+	}
+};
+
+#else // !(_ATL_VER < 0x0700)
+
+typedef ATL::CRegKey CRegKeyEx;
+
+#endif // !(_ATL_VER < 0x0700)
+
+
+///////////////////////////////////////////////////////////////////////////////
 // CString forward reference (enables CString use in atluser.h and atlgdi.h)
 
 #if defined(_WTL_FORWARD_DECLARE_CSTRING) && !defined(_WTL_USE_CSTRING)
@@ -1251,9 +2026,10 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// General DLL version helpers (excluded from atlbase.h if _ATL_DLL is defined)
+// General DLL version helpers
+// (ATL3: excluded from atlbase.h if _ATL_DLL is defined; ATL11: removed)
 
-#if (_ATL_VER < 0x0700) && defined(_ATL_DLL) && !defined(_WIN32_WCE)
+#if (((_ATL_VER < 0x0700) && defined(_ATL_DLL)) || (_ATL_VER >= 0x0B00)) && !defined(_WIN32_WCE)
 
 namespace ATL
 {

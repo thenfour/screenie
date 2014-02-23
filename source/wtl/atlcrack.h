@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,6 +13,10 @@
 #define __ATLCRACK_H__
 
 #pragma once
+
+#ifndef __ATLAPP_H__
+	#error atlcrack.h requires atlapp.h to be included first
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,7 +83,7 @@ public: \
 			return TRUE; \
 	}
 
-// BOOL	OnCopyData(CWindow wnd, PCOPYDATASTRUCT pCopyDataStruct)
+// BOOL OnCopyData(CWindow wnd, PCOPYDATASTRUCT pCopyDataStruct)
 #define MSG_WM_COPYDATA(func) \
 	if (uMsg == WM_COPYDATA) \
 	{ \
@@ -89,7 +93,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnDestroy()							
+// void OnDestroy()
 #define MSG_WM_DESTROY(func) \
 	if (uMsg == WM_DESTROY) \
 	{ \
@@ -100,7 +104,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnMove(CPoint ptPos)						
+// void OnMove(CPoint ptPos)
 #define MSG_WM_MOVE(func) \
 	if (uMsg == WM_MOVE) \
 	{ \
@@ -111,7 +115,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnSize(UINT nType, CSize size)				
+// void OnSize(UINT nType, CSize size)
 #define MSG_WM_SIZE(func) \
 	if (uMsg == WM_SIZE) \
 	{ \
@@ -144,7 +148,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnKillFocus(CWindow wndFocus)					
+// void OnKillFocus(CWindow wndFocus)
 #define MSG_WM_KILLFOCUS(func) \
 	if (uMsg == WM_KILLFOCUS) \
 	{ \
@@ -155,7 +159,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnEnable(BOOL bEnable)						
+// void OnEnable(BOOL bEnable)
 #define MSG_WM_ENABLE(func) \
 	if (uMsg == WM_ENABLE) \
 	{ \
@@ -188,7 +192,7 @@ public: \
 			return TRUE; \
 	}
 
-// BOOL OnQueryEndSession(UINT nSource, UINT uLogOff)			
+// BOOL OnQueryEndSession(UINT nSource, UINT uLogOff)
 #define MSG_WM_QUERYENDSESSION(func) \
 	if (uMsg == WM_QUERYENDSESSION) \
 	{ \
@@ -208,7 +212,7 @@ public: \
 			return TRUE; \
 	}
 
-// BOOL OnEraseBkgnd(CDCHandle dc)						
+// BOOL OnEraseBkgnd(CDCHandle dc)
 #define MSG_WM_ERASEBKGND(func) \
 	if (uMsg == WM_ERASEBKGND) \
 	{ \
@@ -229,7 +233,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnEndSession(BOOL bEnding, UINT uLogOff)			
+// void OnEndSession(BOOL bEnding, UINT uLogOff)
 #define MSG_WM_ENDSESSION(func) \
 	if (uMsg == WM_ENDSESSION) \
 	{ \
@@ -240,7 +244,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnShowWindow(BOOL bShow, UINT nStatus)			
+// void OnShowWindow(BOOL bShow, UINT nStatus)
 #define MSG_WM_SHOWWINDOW(func) \
 	if (uMsg == WM_SHOWWINDOW) \
 	{ \
@@ -261,7 +265,7 @@ public: \
 			return TRUE; \
 	}
 
-// HBRUSH OnCtlColorListBox(CDCHandle dc, CListBox listBox)				
+// HBRUSH OnCtlColorListBox(CDCHandle dc, CListBox listBox)
 #define MSG_WM_CTLCOLORLISTBOX(func) \
 	if (uMsg == WM_CTLCOLORLISTBOX) \
 	{ \
@@ -566,7 +570,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnNcPaint(CRgn rgn)
+// void OnNcPaint(CRgnHandle rgn)
 #define MSG_WM_NCPAINT(func) \
 	if (uMsg == WM_NCPAINT) \
 	{ \
@@ -795,7 +799,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnSysCommand(UINT nID, LPARAM lParam)
+// void OnSysCommand(UINT nID, CPoint point)
 #define MSG_WM_SYSCOMMAND(func) \
 	if (uMsg == WM_SYSCOMMAND) \
 	{ \
@@ -817,12 +821,12 @@ public: \
 			return TRUE; \
 	}
 
-// void OnTimer(UINT nIDEvent, TIMERPROC* pProc)
+// void OnTimer(UINT_PTR nIDEvent)
 #define MSG_WM_TIMER(func) \
 	if (uMsg == WM_TIMER) \
 	{ \
 		SetMsgHandled(TRUE); \
-		func((UINT)wParam, (TIMERPROC)lParam); \
+		func((UINT_PTR)wParam); \
 		lResult = 0; \
 		if(IsMsgHandled()) \
 			return TRUE; \
@@ -850,7 +854,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnInitMenu(CMenu menu)
+// void OnInitMenu(CMenuHandle menu)
 #define MSG_WM_INITMENU(func) \
 	if (uMsg == WM_INITMENU) \
 	{ \
@@ -861,7 +865,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnInitMenuPopup(CMenu menuPopup, UINT nIndex, BOOL bSysMenu)
+// void OnInitMenuPopup(CMenuHandle menuPopup, UINT nIndex, BOOL bSysMenu)
 #define MSG_WM_INITMENUPOPUP(func) \
 	if (uMsg == WM_INITMENUPOPUP) \
 	{ \
@@ -872,7 +876,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnMenuSelect(UINT nItemID, UINT nFlags, CMenu menu)
+// void OnMenuSelect(UINT nItemID, UINT nFlags, CMenuHandle menu)
 #define MSG_WM_MENUSELECT(func) \
 	if (uMsg == WM_MENUSELECT) \
 	{ \
@@ -883,7 +887,7 @@ public: \
 			return TRUE; \
 	}
 
-// LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu menu)
+// LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenuHandle menu)
 #define MSG_WM_MENUCHAR(func) \
 	if (uMsg == WM_MENUCHAR) \
 	{ \
@@ -1544,7 +1548,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnSetFont(CFont font, BOOL bRedraw)
+// void OnSetFont(CFontHandle font, BOOL bRedraw)
 #define MSG_WM_SETFONT(func) \
 	if (uMsg == WM_SETFONT) \
 	{ \
@@ -1612,7 +1616,7 @@ public: \
 
 #if(_WIN32_WINNT >= 0x0400)
 
-// void OnMouseHover(WPARAM wParam , CPoint ptPos)
+// void OnMouseHover(WPARAM wParam, CPoint ptPos)
 #define MSG_WM_MOUSEHOVER(func) \
 	if (uMsg == WM_MOUSEHOVER) \
 	{ \
@@ -1638,7 +1642,7 @@ public: \
 
 #if(WINVER >= 0x0500)
 
-// void OnMenuRButtonUp(WPARAM wParam , CMenu menu)
+// void OnMenuRButtonUp(WPARAM wParam, CMenuHandle menu)
 #define MSG_WM_MENURBUTTONUP(func) \
 	if (uMsg == WM_MENURBUTTONUP) \
 	{ \
@@ -1649,7 +1653,7 @@ public: \
 			return TRUE; \
 	}
 
-// LRESULT OnMenuDrag(WPARAM wParam , CMenu menu)
+// LRESULT OnMenuDrag(WPARAM wParam, CMenuHandle menu)
 #define MSG_WM_MENUDRAG(func) \
 	if (uMsg == WM_MENUDRAG) \
 	{ \
@@ -1669,7 +1673,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnUnInitMenuPopup(UINT nID, CMenu menu)
+// void OnUnInitMenuPopup(UINT nID, CMenuHandle menu)
 #define MSG_WM_UNINITMENUPOPUP(func) \
 	if (uMsg == WM_UNINITMENUPOPUP) \
 	{ \
@@ -1680,7 +1684,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnMenuCommand(WPARAM nIndex, CMenu menu)
+// void OnMenuCommand(WPARAM nIndex, CMenuHandle menu)
 #define MSG_WM_MENUCOMMAND(func) \
 	if (uMsg == WM_MENUCOMMAND) \
 	{ \
@@ -1695,7 +1699,7 @@ public: \
 
 #if(_WIN32_WINNT >= 0x0500)
 
-// BOOL OnAppCommand(CWindow wndFocus, short cmd, WORD uDevice , int dwKeys)
+// BOOL OnAppCommand(CWindow wndFocus, short cmd, WORD uDevice, int dwKeys)
 #define MSG_WM_APPCOMMAND(func) \
 	if (uMsg == WM_APPCOMMAND) \
 	{ \
@@ -1705,7 +1709,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnNCXButtonDown(int fwButton , short nHittest , CPoint ptPos)
+// void OnNCXButtonDown(int fwButton, short nHittest, CPoint ptPos)
 #define MSG_WM_NCXBUTTONDOWN(func) \
 	if (uMsg == WM_NCXBUTTONDOWN) \
 	{ \
@@ -1716,7 +1720,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnNCXButtonUp(int fwButton , short nHittest , CPoint ptPos)
+// void OnNCXButtonUp(int fwButton, short nHittest, CPoint ptPos)
 #define MSG_WM_NCXBUTTONUP(func) \
 	if (uMsg == WM_NCXBUTTONUP) \
 	{ \
@@ -1727,7 +1731,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnNCXButtonDblClk(int fwButton , short nHittest , CPoint ptPos)
+// void OnNCXButtonDblClk(int fwButton, short nHittest, CPoint ptPos)
 #define MSG_WM_NCXBUTTONDBLCLK(func) \
 	if (uMsg == WM_NCXBUTTONDBLCLK) \
 	{ \
@@ -1738,7 +1742,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnXButtonDown(int fwButton , int dwKeys , CPoint ptPos)
+// void OnXButtonDown(int fwButton, int dwKeys, CPoint ptPos)
 #define MSG_WM_XBUTTONDOWN(func) \
 	if (uMsg == WM_XBUTTONDOWN) \
 	{ \
@@ -1749,7 +1753,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnXButtonUp(int fwButton , int dwKeys , CPoint ptPos)
+// void OnXButtonUp(int fwButton, int dwKeys, CPoint ptPos)
 #define MSG_WM_XBUTTONUP(func) \
 	if (uMsg == WM_XBUTTONUP) \
 	{ \
@@ -1760,7 +1764,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnXButtonDblClk(int fwButton , int dwKeys , CPoint ptPos)
+// void OnXButtonDblClk(int fwButton, int dwKeys, CPoint ptPos)
 #define MSG_WM_XBUTTONDBLCLK(func) \
 	if (uMsg == WM_XBUTTONDBLCLK) \
 	{ \
@@ -1807,7 +1811,7 @@ public: \
 
 #if(_WIN32_WINNT >= 0x0501)
 
-// void OnInput(WPARAM RawInputCode , HRAWINPUT hRawInput)
+// void OnInput(WPARAM RawInputCode, HRAWINPUT hRawInput)
 #define MSG_WM_INPUT(func) \
 	if (uMsg == WM_INPUT) \
 	{ \
@@ -1818,7 +1822,7 @@ public: \
 			return TRUE; \
 	}
 
-// void OnUniChar(TCHAR nChar , UINT nRepCnt , UINT nFlags)
+// void OnUniChar(TCHAR nChar, UINT nRepCnt, UINT nFlags)
 #define MSG_WM_UNICHAR(func) \
 	if (uMsg == WM_UNICHAR) \
 	{ \
@@ -1831,7 +1835,7 @@ public: \
 		} \
 	}
 
-// void OnWTSSessionChange(WPARAM nStatusCode , PWTSSESSION_NOTIFICATION nSessionID)
+// void OnWTSSessionChange(WPARAM nStatusCode, PWTSSESSION_NOTIFICATION nSessionID)
 #define MSG_WM_WTSSESSION_CHANGE(func) \
 	if (uMsg == WM_WTSSESSION_CHANGE) \
 	{ \
@@ -1858,7 +1862,7 @@ public: \
 ///////////////////////////////////////////////////////////////////////////////
 // ATL defined messages
 
-// BOOL OnForwardMsg(LPMSG Msg , DWORD nUserData)
+// BOOL OnForwardMsg(LPMSG Msg, DWORD nUserData)
 #define MSG_WM_FORWARDMSG(func) \
 	if (uMsg == WM_FORWARDMSG) \
 	{ \
@@ -2033,7 +2037,7 @@ public: \
 			return TRUE; \
 	}
 
-// HBRUSH OnReflectedCtlColorListBox(CDCHandle dc, CListBox listBox)				
+// HBRUSH OnReflectedCtlColorListBox(CDCHandle dc, CListBox listBox)
 #define MSG_OCM_CTLCOLORLISTBOX(func) \
 	if (uMsg == OCM_CTLCOLORLISTBOX) \
 	{ \
@@ -2144,7 +2148,7 @@ public: \
 ///////////////////////////////////////////////////////////////////////////////
 // Generic message handlers
 
-// LRESULT OnMessageHandlerEX(UINT uMsg , WPARAM wParam , LPARAM lParam)
+// LRESULT OnMessageHandlerEX(UINT uMsg, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_HANDLER_EX(msg, func) \
 	if(uMsg == msg) \
 	{ \
@@ -2154,7 +2158,7 @@ public: \
 			return TRUE; \
 	}
 
-// LRESULT OnMessageRangeHandlerEX(UINT uMsg , WPARAM wParam , LPARAM lParam)
+// LRESULT OnMessageRangeHandlerEX(UINT uMsg, WPARAM wParam, LPARAM lParam)
 #define MESSAGE_RANGE_HANDLER_EX(msgFirst, msgLast, func) \
 	if(uMsg >= msgFirst && uMsg <= msgLast) \
 	{ \

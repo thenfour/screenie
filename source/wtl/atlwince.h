@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,10 +13,6 @@
 #define __ATLWINCE_H__
 
 #pragma once
-
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
 
 #ifndef __ATLAPP_H__
 	#error atlwince.h requires atlapp.h to be included first
@@ -28,7 +24,9 @@
 
 #ifndef _WIN32_WCE
 	#error atlwince.h compiles under Windows CE only
-#elif (_WIN32_WCE < 300)
+#endif
+
+#if (_WIN32_WCE < 300)
 	#error atlwince.h requires Windows CE 3.0 or higher.
 #endif
 
@@ -139,6 +137,7 @@
 //
 // CZoomScrollImpl<T> : WinCE zooming implementation
 //
+// CBottomTabViewImpl<T, TBase, TWinTraits> - CBottomTabView 
 // CHtmlCtrlT<TBase> - CHtmlCtrl
 // CRichInkCtrlT<TBase> - CRichInkCtrl
 // CInkXCtrlT<TBase> - CInkXCtrl
@@ -205,12 +204,14 @@ inline bool AtlIsEditFocus()
 	return false;
 }
 
+#if defined WIN32_PLATFORM_WFSP
 inline void AtlActivateBackKey(HWND hMenuBar)
 {
 	ATLASSERT(::IsWindow(hMenuBar));
 	::SendMessage(hMenuBar, SHCMBM_OVERRIDEKEY, VK_TBACK,
 		MAKELPARAM(SHMBOF_NODEFAULT | SHMBOF_NOTIFY, SHMBOF_NODEFAULT | SHMBOF_NOTIFY));
 }
+#endif // WIN32_PLATFORM_WFSP
 
 // --- Standard PPC/SmartPhone dialogs ---
 
@@ -246,7 +247,8 @@ public:
 		T* pT = static_cast<T*>(this);
 		ATLASSERT(pT->IsWindow());
 		BOOL bRes = ::GetClientRect(pT->m_hWnd, lpRect);
-		lpRect->top += nTitleHeight;
+		if (nTitleHeight)
+			lpRect->top += nTitleHeight + 1;
 		return bRes;
 	}
 
@@ -276,7 +278,7 @@ public:
 	{
 		T* pT = static_cast<T*>(this);
 		ATLASSERT(pT->IsWindow());
-		TCHAR sTitle[48];
+		TCHAR sTitle[48] = { 0 };
 
 		// Preparation
 		CPaintDC dc(pT->m_hWnd);
@@ -297,10 +299,17 @@ public:
 		dc.DrawText(sTitle, nLen, &rTitle, DT_VCENTER | DT_SINGLELINE);
 		dc.SelectFont(fontOld);
 
-		// Draw bottom line
+		// Draw bottom line, 2 pixels thick if HI_RES_AWARE
 		CPenHandle penOld = dc.SelectStockPen(BLACK_PEN);
-		POINT line[2] = { { 0, nTitleHeight }, { nWidth, nTitleHeight } };
-		dc.Polyline(line, 2);
+		POINT line[4] = {{0, nTitleHeight}, {nWidth, nTitleHeight}, {0, nTitleHeight - 1}, {nWidth, nTitleHeight - 1}};
+
+	#ifdef _WTL_CE_DRA
+		int nSeg = DRA::SCALEY(1);
+	#else // !_WTL_CE_DRA
+		int nSeg = nTitleHeight / 24; 
+	#endif // !_WTL_CE_DRA
+
+		dc.Polyline(line, nSeg <= 2 ? nSeg * 2 : 4);
 		dc.SelectPen(penOld);
 
 		return false;
@@ -536,6 +545,26 @@ public:
 	typedef CIndirectDialogImpl< T, CMemDlgTemplate, CStdDialogImpl<T, t_shidiFlags, t_bModal> >	_baseClass;
 	typedef CStdDialogImpl<T, t_shidiFlags, t_bModal> _baseStd;
 
+	void CheckStyle()
+	{
+		// Mobile devices don't support DLGTEMPLATEEX
+		ATLASSERT(!m_Template.IsTemplateEx());
+
+		// Standard dialogs need only DS_CENTER
+		DWORD &dwStyle = m_Template.GetTemplatePtr()->style; 
+		if (dwStyle & DS_CENTER)
+			if(t_bModal)
+			{
+				ATLASSERT((dwStyle & WS_CHILD) != WS_CHILD);
+				dwStyle |= WS_POPUP;
+			}
+			else
+			{
+				if((dwStyle & WS_CHILD) != WS_CHILD)
+					dwStyle |= WS_POPUP;
+			}
+	}
+
 	INT_PTR DoModal(HWND hWndParent = ::GetActiveWindow(), LPARAM dwInitParam = NULL)
 	{
 		ATLASSERT(t_bModal);
@@ -543,22 +572,7 @@ public:
 		if (!m_Template.IsValid())
 			CreateTemplate();
 
-		if (m_Template.IsTemplateEx())
-		{
-			if (m_Template.GetTemplateExPtr()->style & DS_CENTER)
-			{
-				ATLASSERT(m_Template.GetTemplateExPtr()->style ^ WS_CHILD);
-				GetTemplateExPtr()->style |= WS_POPUP;
-			}
-		}
-		else
-		{
-			if (m_Template.GetTemplatePtr()->style & DS_CENTER)
-			{
-				ATLASSERT(m_Template.GetTemplatePtr()->style ^ WS_CHILD);
-				m_Template.GetTemplatePtr()->style |= WS_POPUP;
-			}
-		}
+		CheckStyle();
 
 		return _baseClass::DoModal(hWndParent, dwInitParam);
 	}
@@ -570,22 +584,7 @@ public:
 		if (!m_Template.IsValid())
 			CreateTemplate();
 
-		if (m_Template.IsTemplateEx())
-		{
-			if (GetTemplateExPtr()->style & DS_CENTER)
-			{
-				ATLASSERT(GetTemplateExPtr()->style ^ WS_CHILD);
-				GetTemplateExPtr()->style |= WS_POPUP;
-			}
-		}
-		else
-		{
-			if (GetTemplatePtr()->style & DS_CENTER)
-			{
-				ATLASSERT(GetTemplatePtr()->style ^ WS_CHILD);
-				GetTemplatePtr()->style |= WS_POPUP;
-			}
-		}
+		CheckStyle();
 
 		return _baseClass::Create(hWndParent, dwInitParam);
 	}
@@ -783,7 +782,7 @@ public:
 	{
 		T* pT = static_cast<T*>(this);
 		ATLASSERT(pT->IsWindow());
-		if (wParam & SETTINGCHANGE_RESET)
+		if (wParam == SETTINGCHANGE_RESET)
 		{
 			SetOrientation(DRA::GetDisplayMode());
 			pT->StdPlatformInit();
@@ -895,7 +894,7 @@ public:
 class CAppInfoBase
 {
 public:
-	ATL::CRegKey m_Key;
+	CRegKeyEx m_Key;
 
 	CAppInfoBase(ATL::_U_STRINGorID sAppKey)
 	{
@@ -906,74 +905,46 @@ public:
 	template <class V>
 	LONG Save(V& val, ATL::_U_STRINGorID sName)
 	{
-		return ::RegSetValueEx(m_Key, sName.m_lpstr, 0, REG_BINARY, (LPBYTE)&val, sizeof(V));
+		return m_Key.SetBinaryValue(sName.m_lpstr, &val, sizeof(V));
 	}
 
 	template <class V>
 	LONG Save(int nb, V& val0, ATL::_U_STRINGorID sName)
 	{
-		return ::RegSetValueEx(m_Key, sName.m_lpstr, 0, REG_BINARY, (LPBYTE)&val0, nb * sizeof(V));
+		return m_Key.SetBinaryValue(sName.m_lpstr, &val0, nb * sizeof(V));
 	}
 
 	template <class V>
 	LONG Restore(V& val, ATL::_U_STRINGorID sName)
 	{
-		DWORD valtype;
-		DWORD bufSize = sizeof(V);
-		return ::RegQueryValueEx(m_Key, sName.m_lpstr, 0, &valtype, (LPBYTE)&val, &bufSize);
+		ULONG bufSize = sizeof(V);
+		return m_Key.QueryBinaryValue(sName.m_lpstr, &val, &bufSize);
 	}
 
 	template <class V>
 	LONG Restore(int nb, V& val0, ATL::_U_STRINGorID sName)
 	{
-		DWORD valtype;
-		DWORD bufSize = nb * sizeof(V);
-		return ::RegQueryValueEx(m_Key, sName.m_lpstr, 0, &valtype, (LPBYTE)&val0, &bufSize);
+		ULONG bufSize = nb * sizeof(V);
+		return m_Key.QueryBinaryValue(sName.m_lpstr, &val0, &bufSize);
 	}
 
 #if defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
-#if (_ATL_VER < 0x0800)
-	LONG Save(CString& sval, ATL::_U_STRINGorID sName)
+	LONG Save(_CSTRING_NS::CString& sval, ATL::_U_STRINGorID sName)
 	{
-		return m_Key.SetValue(sval, sName.m_lpstr);
+		return m_Key.SetStringValue(sName.m_lpstr, sval);
 	}
 
-	LONG Restore(CString& sval, ATL::_U_STRINGorID sName)
-	{
-		DWORD size = MAX_PATH;
-		LONG res = m_Key.QueryValue(sval.GetBuffer(size), sName.m_lpstr, &size);
-		sval.ReleaseBuffer();
-		return res;
-	}
-#else // !(_ATL_VER < 0x0800)
-	LONG Save(CString& sval, ATL::_U_STRINGorID sName)
-	{
-		return m_Key.SetStringValue(sName.m_lpstr, sval/*,REG_SZ*/);
-	}
-
-	LONG Restore(CString& sval, ATL::_U_STRINGorID sName)
+	LONG Restore(_CSTRING_NS::CString& sval, ATL::_U_STRINGorID sName)
 	{
 		DWORD size = MAX_PATH;
 		LONG res = m_Key.QueryStringValue(sName.m_lpstr, sval.GetBuffer(size), &size);
 		sval.ReleaseBuffer();
 		return res;
 	}
-#endif // !(_ATL_VER < 0x0800)
 #else
   #pragma message("Warning: CAppInfoBase compiles without CString support. Do not use CString in Save or Restore.")
 #endif // defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
 	
-#if (_ATL_VER < 0x0800)
-	LONG Save(LPCTSTR sval, ATL::_U_STRINGorID sName)
-	{
-		return m_Key.SetValue(sval, sName.m_lpstr);
-	}
-
-	LONG Restore(LPTSTR sval, ATL::_U_STRINGorID sName, DWORD *plength)
-	{
-		return m_Key.QueryValue(sval, sName.m_lpstr, plength);
-	}
-#else // !(_ATL_VER < 0x0800)
 	LONG Save(LPCTSTR sval, ATL::_U_STRINGorID sName)
 	{
 		return m_Key.SetStringValue(sName.m_lpstr, sval);
@@ -983,7 +954,6 @@ public:
 	{
 		return m_Key.QueryStringValue(sName.m_lpstr, sval, plength);
 	}
-#endif // !(_ATL_VER < 0x0800)
 	
 	LONG Delete(ATL::_U_STRINGorID sName)
 	{
@@ -1443,6 +1413,7 @@ public:
 	int FSDoModal(D& dlg)
 	{
 		T* pT = static_cast<T*>(this);
+		pT;   // avoid level 4 warning
 		ATLASSERT(pT->IsWindow());
 		if (m_bFullScreen)   // Show taskbar if hidden
 			ShowTaskBar(true, false);
@@ -1497,7 +1468,7 @@ public:
 #ifndef SETTINGCHANGE_RESET // not defined for PPC 2002
 	#define SETTINGCHANGE_RESET SPI_SETWORKAREA
 #endif
-		if (m_bFullScreen && (wParam & SETTINGCHANGE_RESET))
+		if (m_bFullScreen && (wParam == SETTINGCHANGE_RESET))
 			SetFullScreen(m_bFullScreen);
 		return bHandled = FALSE;
 	}
@@ -1704,6 +1675,15 @@ public:
 		return destDC.StretchBlt(0, 0, m_sizeClient.cx, m_sizeClient.cy, hsourceDC, ptOffset.x, ptOffset.y, sizeZClient.cx, sizeZClient.cy, dwROP);
 	}
 
+#ifdef _IMAGING_H
+	BOOL Draw(IImage* pIImage, HDC hdestDC)
+	{
+		CDCHandle destDC = hdestDC;
+		destDC.SetViewportOrg(0,0);
+		return SUCCEEDED(pIImage->Draw(destDC, _WTYPES_NS::CRect(-_WTYPES_NS::CPoint(m_ptOffset), m_sizeAll), NULL));
+	}
+#endif
+
 // Message map and handlers
 	BEGIN_MSG_MAP(CZoomScrollImpl< T >)
 		MESSAGE_HANDLER(WM_ERASEBKGND, OnEraseBkgnd)
@@ -1749,10 +1729,83 @@ public:
 
 #endif // _WTL_CE_NO_ZOOMSCROLL
 
+#ifndef _WTL_CE_NO_CONTROLS
+
+// --- PPC bottom TabView control ---
+
+#if defined(__ATLCTRLX_H__) && defined(WIN32_PLATFORM_PSPC)
+
+///////////////////////////////////////////////////////////////////////////////
+// CBottomTabViewImpl
+
+template <class T, class TBase = ATL::CWindow, class TWinTraits = ATL::CControlWinTraits>
+class ATL_NO_VTABLE CBottomTabViewImpl : public CTabViewImpl<T, TBase, TWinTraits>
+{
+public:
+	DECLARE_WND_CLASS_EX(NULL, 0, COLOR_APPWORKSPACE)
+
+// Implementation overrideables
+	bool CreateTabControl()
+	{
+		m_tab.Create(m_hWnd, rcDefault, NULL, WS_CHILD | TCS_BOTTOM, 0, m_nTabID);
+
+		ATLASSERT(m_tab.m_hWnd != NULL);
+		if(m_tab.m_hWnd == NULL)
+			return false;
+
+		m_tab.SendMessage(CCM_SETVERSION, COMCTL32_VERSION);
+		m_tab.SetItemExtra(sizeof(TABVIEWPAGE));
+
+		T* pT = static_cast<T*>(this);
+		m_cyTabHeight = pT->CalcTabHeight();
+
+		return true;
+	}
+
+	int CalcTabHeight()
+	{
+		int nCount = m_tab.GetItemCount();
+		TCITEMEXTRA tcix = { 0 };
+		tcix.tciheader.mask = TCIF_TEXT;
+		tcix.tciheader.pszText = _T("NS");
+		int nIndex = m_tab.InsertItem(nCount, tcix);
+
+		RECT rect = { 0 };
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+		RECT rcWnd = rect;
+
+		m_tab.AdjustRect(FALSE, &rect);
+		rcWnd.top = rect.bottom;
+		::AdjustWindowRectEx(&rcWnd, m_tab.GetStyle(), FALSE, m_tab.GetExStyle());
+		m_tab.DeleteItem(nIndex);
+
+		return rcWnd.bottom - rcWnd.top;
+	}
+
+	void UpdateLayout()
+	{
+		RECT rect;
+		GetClientRect(&rect);
+
+		if(m_tab.IsWindow() && ((m_tab.GetStyle() & WS_VISIBLE) != 0))
+			m_tab.SetWindowPos(NULL, 0, rect.bottom - m_cyTabHeight, rect.right - rect.left, m_cyTabHeight, SWP_NOZORDER /*| SWP_SHOWWINDOW*/);
+
+		if(m_nActivePage != -1)
+				::SetWindowPos(GetPageHWND(m_nActivePage), NULL, 0, 0, rect.right - rect.left, rect.bottom - m_cyTabHeight, SWP_NOZORDER);
+	}
+
+};
+
+class CBottomTabView : public CBottomTabViewImpl<CBottomTabView>
+{
+public:
+	DECLARE_WND_CLASS_EX(_T("WTL_BottomTabView"), 0, COLOR_APPWORKSPACE)
+};
+
+#endif // defined(__ATLCTRLX_H__) && defined(WIN32_PLATFORM_PSPC)
+
 
 // --- PPC/SmartPhone controls ---
-
-#ifndef _WTL_CE_NO_CONTROLS
 
 ////////////////////////////////////////////////////////////////////////////////
 // These are wrapper classes for the Pocket PC 2002/2003 and SmartPhone 2003 controls
@@ -2130,22 +2183,37 @@ public:
 		::SendMessage(m_hWnd, EM_UNDOEVENT, 0, 0L);
 	}
 
+	void Undo()
+	{
+		UndoEvent();
+	}
+
 // Standard EM_xxx messages
 	DWORD GetSel() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
+		ATLASSERT(GetViewStyle() != VT_DRAWINGVIEW);
 		return (DWORD)::SendMessage(m_hWnd, EM_GETSEL, 0, 0L);
 	}
 
 	void GetSel(int& nStartChar, int& nEndChar) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
+		ATLASSERT(GetViewStyle() != VT_DRAWINGVIEW);
 		::SendMessage(m_hWnd, EM_GETSEL, (WPARAM)&nStartChar, (LPARAM)&nEndChar);
+	}
+
+	void SetSel(int nStartChar, int nEndChar)
+	{
+		ATLASSERT(::IsWindow(m_hWnd));
+		ATLASSERT(GetViewStyle() != VT_DRAWINGVIEW);
+		::SendMessage(m_hWnd, EM_SETSEL, nStartChar, nEndChar);
 	}
 
 	void ReplaceSel(LPCTSTR lpszNewText, BOOL bCanUndo = FALSE)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
+		ATLASSERT(GetViewStyle() != VT_DRAWINGVIEW);
 		::SendMessage(m_hWnd, EM_REPLACESEL, (WPARAM)bCanUndo, (LPARAM)lpszNewText);
 	}
 
@@ -2411,7 +2479,7 @@ public:
 		::ZeroMemory(&m_dlc, sizeof(DOCLISTCREATE));
 		::ZeroMemory(m_szPath, sizeof(m_szPath));
 		if(pszFolder != NULL)
-			::lstrcpyn(m_szPath, pszFolder, MAX_PATH - 1);
+			SecureHelper::strncpy_x(m_szPath, MAX_PATH, pszFolder, MAX_PATH - 1);
 		m_dlc.dwStructSize = sizeof(DOCLISTCREATE);
 		m_dlc.hwndParent = hWndParent;
 		m_dlc.pszFolder = m_szPath;
@@ -2699,14 +2767,18 @@ public:
 	}
 
 // Operations
-	int SetToolTipText(LPCTSTR pstrTipText)
+	BOOL SetToolTipText(LPCTSTR pstrTipText)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(pstrTipText);
-		ATLASSERT(lstrlen(pstrTipText)<= 253);
-		LPTSTR pstr = (LPTSTR)_alloca((lstrlen(pstrTipText) + 3) * sizeof(TCHAR));
-		::lstrcpy(pstr, _T("~~"));
-		::lstrcat(pstr, pstrTipText);
+		ATLASSERT(lstrlen(pstrTipText) <= 253);
+		CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		int cchLen = lstrlen(pstrTipText) + 3;
+		LPTSTR pstr = buff.Allocate(cchLen);
+		if(pstr == NULL)
+			return FALSE;
+		SecureHelper::strcpy_x(pstr, cchLen, _T("~~"));
+		SecureHelper::strcat_x(pstr, cchLen, pstrTipText);
 		return SetWindowText(pstr);
 	}
 };
@@ -2747,14 +2819,18 @@ public:
 	}
 
 // Operations
-	int SetToolTipText(LPCTSTR pstrTipText)
+	BOOL SetToolTipText(LPCTSTR pstrTipText)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		ATLASSERT(pstrTipText);
-		ATLASSERT(lstrlen(pstrTipText)<= 253);
-		LPTSTR pstr = (LPTSTR)_alloca((lstrlen(pstrTipText) + 3) * sizeof(TCHAR));
-		::lstrcpy(pstr, _T("~~"));
-		::lstrcat(pstr, pstrTipText);
+		ATLASSERT(lstrlen(pstrTipText) <= 253);
+		CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		int cchLen = lstrlen(pstrTipText) + 3;
+		LPTSTR pstr = buff.Allocate(cchLen);
+		if(pstr == NULL)
+			return FALSE;
+		SecureHelper::strcpy_x(pstr, cchLen, _T("~~"));
+		SecureHelper::strcat_x(pstr, cchLen, pstrTipText);
 		return SetWindowText(pstr);
 	}
 };
@@ -2875,7 +2951,7 @@ public:
 		{
 			m_SpinCtrl.Attach(hSpin);
 #ifdef DEBUG
-			TCHAR sClassName[16];
+			TCHAR sClassName[16] = { 0 };
 			::GetClassName(hSpin, sClassName, 16);
 			ATLASSERT(!_tcscmp(sClassName, UPDOWN_CLASS));
 			ATLASSERT(m_SpinCtrl.GetBuddy().m_hWnd == pT->m_hWnd);

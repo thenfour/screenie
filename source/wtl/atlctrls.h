@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -14,20 +14,12 @@
 
 #pragma once
 
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
-
 #ifndef __ATLAPP_H__
 	#error atlctrls.h requires atlapp.h to be included first
 #endif
 
 #ifndef __ATLWIN_H__
 	#error atlctrls.h requires atlwin.h to be included first
-#endif
-
-#if (_WIN32_IE < 0x0300)
-	#error atlctrls.h requires IE Version 3.0 or higher
 #endif
 
 #ifndef _WIN32_WCE
@@ -611,12 +603,15 @@ public:
 		if(nLen == LB_ERR)
 			return FALSE;
 
-		LPTSTR lpszText = (LPTSTR)_alloca((nLen + 1) * sizeof(TCHAR));
-
-		if(GetText(nIndex, lpszText) == LB_ERR)
+		CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		LPTSTR lpstrText = buff.Allocate(nLen + 1);
+		if(lpstrText == NULL)
 			return FALSE;
 
-		bstrText = ::SysAllocString(T2OLE(lpszText));
+		if(GetText(nIndex, lpstrText) == LB_ERR)
+			return FALSE;
+
+		bstrText = ::SysAllocString(T2OLE(lpstrText));
 		return (bstrText != NULL) ? TRUE : FALSE;
 	}
 #endif // _OLEAUTO_H_
@@ -786,6 +781,8 @@ typedef CListBoxT<ATL::CWindow>   CListBox;
 ///////////////////////////////////////////////////////////////////////////////
 // CComboBox - client side for a Windows COMBOBOX control
 
+#ifndef WIN32_PLATFORM_WFSP   // No COMBOBOX on SmartPhones
+
 template <class TBase>
 class CComboBoxT : public TBase
 {
@@ -880,17 +877,17 @@ public:
 		return (int)::SendMessage(m_hWnd, CB_SETDROPPEDWIDTH, nWidth, 0L);
 	}
 
-#if (WINVER >= 0x0500) && !defined(_WIN32_WCE)
+#if ((WINVER >= 0x0500) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 420))
 	BOOL GetComboBoxInfo(PCOMBOBOXINFO pComboBoxInfo) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
-#if (_WIN32_WINNT >= 0x0501)
+#if ((_WIN32_WINNT >= 0x0501) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 420))
 		return (BOOL)::SendMessage(m_hWnd, CB_GETCOMBOBOXINFO, 0, (LPARAM)pComboBoxInfo);
-#else // !(_WIN32_WINNT >= 0x0501)
+#else // !((_WIN32_WINNT >= 0x0501) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 420))
 		return ::GetComboBoxInfo(m_hWnd, pComboBoxInfo);
-#endif // !(_WIN32_WINNT >= 0x0501)
+#endif // !((_WIN32_WINNT >= 0x0501) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 420))
 	}
-#endif // (WINVER >= 0x0500) && !defined(_WIN32_WCE)
+#endif // ((WINVER >= 0x0500) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 420))
 
 	// for edit control
 	DWORD GetEditSel() const
@@ -947,12 +944,15 @@ public:
 		if(nLen == CB_ERR)
 			return FALSE;
 
-		LPTSTR lpszText = (LPTSTR)_alloca((nLen + 1) * sizeof(TCHAR));
-
-		if(GetLBText(nIndex, lpszText) == CB_ERR)
+		CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		LPTSTR lpstrText = buff.Allocate(nLen + 1);
+		if(lpstrText == NULL)
 			return FALSE;
 
-		bstrText = ::SysAllocString(T2OLE(lpszText));
+		if(GetLBText(nIndex, lpstrText) == CB_ERR)
+			return FALSE;
+
+		bstrText = ::SysAllocString(T2OLE(lpstrText));
 		return (bstrText != NULL) ? TRUE : FALSE;
 	}
 #endif // !_ATL_NO_COM
@@ -1152,6 +1152,7 @@ public:
 
 typedef CComboBoxT<ATL::CWindow>   CComboBox;
 
+#endif // !WIN32_PLATFORM_WFSP
 
 ///////////////////////////////////////////////////////////////////////////////
 // CEdit - client side for a Windows EDIT control
@@ -1804,9 +1805,7 @@ public:
 	{
 		int nMin = 0, nMax = 0;
 		::GetScrollRange(m_hWnd, SB_CTL, &nMin, &nMax);
-		SCROLLINFO info = { 0 };
-		info.cbSize = sizeof(SCROLLINFO);
-		info.fMask = SIF_PAGE;
+		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_PAGE };
 		if(::GetScrollInfo(m_hWnd, SB_CTL, &info))
 			nMax -= ((info.nPage - 1) > 0) ? (info.nPage - 1) : 0;
 
@@ -1979,12 +1978,14 @@ public:
 	}
 
 #ifndef _WIN32_WCE
+#ifdef __IStream_INTERFACE_DEFINED__
 	BOOL CreateFromStream(LPSTREAM lpStream)
 	{
 		ATLASSERT(m_hImageList == NULL);
 		m_hImageList = ImageList_Read(lpStream);
 		return (m_hImageList != NULL) ? TRUE : FALSE;
 	}
+#endif // __IStream_INTERFACE_DEFINED__
 #endif // !_WIN32_WCE
 
 	BOOL Destroy()
@@ -2084,6 +2085,7 @@ public:
 		return ImageList_Copy(m_hImageList, nDst, m_hImageList, nSrc, uFlags);
 	}
 
+#ifdef __IStream_INTERFACE_DEFINED__
 #ifndef _WIN32_WCE
 	static HIMAGELIST Read(LPSTREAM lpStream)
 	{
@@ -2109,6 +2111,7 @@ public:
 		return ImageList_WriteEx(m_hImageList, dwFlags, lpStream);
 	}
 #endif // (_WIN32_WINNT >= 0x0501)
+#endif // __IStream_INTERFACE_DEFINED__
 
 	// Drag operations
 	BOOL BeginDrag(int nImage, POINT ptHotSpot)
@@ -3909,15 +3912,19 @@ public:
 	}
 #endif // (_WIN32_WINNT >= 0x0600)
 
-	// single-selection only
+	// Note: selects only one item
 	BOOL SelectItem(int nIndex)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
-		ATLASSERT((GetStyle() & LVS_SINGLESEL) != 0);
+
+		// multi-selection only: de-select all items
+		if((GetStyle() & LVS_SINGLESEL) == 0)
+			SetItemState(-1, 0, LVIS_SELECTED);
 
 		BOOL bRet = SetItemState(nIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 		if(bRet)
 			bRet = EnsureVisible(nIndex, FALSE);
+
 		return bRet;
 	}
 };
@@ -4776,106 +4783,106 @@ public:
 		return InsertItem(TVIF_TEXT, lpszItem, 0, 0, 0, 0, 0, hParent, hInsertAfter);
 	}
 
-	CTreeItemT<TBase> GetNextItem(HTREEITEM hItem, UINT nCode)
+	CTreeItemT<TBase> GetNextItem(HTREEITEM hItem, UINT nCode) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); 
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, nCode, (LPARAM)hItem);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetChildItem(HTREEITEM hItem)
+	CTreeItemT<TBase> GetChildItem(HTREEITEM hItem) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); 
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem);
-		return CTreeItemT<TBase>(hTreeItem, this); 
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this); 
 	}
 
-	CTreeItemT<TBase> GetNextSiblingItem(HTREEITEM hItem)
+	CTreeItemT<TBase> GetNextSiblingItem(HTREEITEM hItem) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); 
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hItem); 
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetPrevSiblingItem(HTREEITEM hItem)
+	CTreeItemT<TBase> GetPrevSiblingItem(HTREEITEM hItem) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); 
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_PREVIOUS, (LPARAM)hItem);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetParentItem(HTREEITEM hItem)
+	CTreeItemT<TBase> GetParentItem(HTREEITEM hItem) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); 
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)hItem); 
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetFirstVisibleItem()
+	CTreeItemT<TBase> GetFirstVisibleItem() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd)); 
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_FIRSTVISIBLE, 0L);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetNextVisibleItem(HTREEITEM hItem)
+	CTreeItemT<TBase> GetNextVisibleItem(HTREEITEM hItem) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_NEXTVISIBLE, (LPARAM)hItem);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetPrevVisibleItem(HTREEITEM hItem)
+	CTreeItemT<TBase> GetPrevVisibleItem(HTREEITEM hItem) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_PREVIOUSVISIBLE, (LPARAM)hItem);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetSelectedItem()
+	CTreeItemT<TBase> GetSelectedItem() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_CARET, 0L);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetDropHilightItem()
+	CTreeItemT<TBase> GetDropHilightItem() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_DROPHILITE, 0L);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
-	CTreeItemT<TBase> GetRootItem()
+	CTreeItemT<TBase> GetRootItem() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_ROOT, 0L);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
 #if !defined(_WIN32_WCE) && (_WIN32_IE >= 0x0400)
-	CTreeItemT<TBase> GetLastVisibleItem()
+	CTreeItemT<TBase> GetLastVisibleItem() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_LASTVISIBLE, 0L);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 #endif // !defined(_WIN32_WCE) && (_WIN32_IE >= 0x0400)
 
 #if (_WIN32_IE >= 0x0600)
-	CTreeItemT<TBase> GetNextSelectedItem()
+	CTreeItemT<TBase> GetNextSelectedItem() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_GETNEXTITEM, TVGN_NEXTSELECTED, 0L);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 #endif // (_WIN32_IE >= 0x0600)
 
-	CTreeItemT<TBase> HitTest(TVHITTESTINFO* pHitTestInfo)
+	CTreeItemT<TBase> HitTest(TVHITTESTINFO* pHitTestInfo) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_HITTEST, 0, (LPARAM)pHitTestInfo);
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
 	CTreeItemT<TBase> InsertItem(UINT nMask, LPCTSTR lpszItem, int nImage,
@@ -4897,7 +4904,7 @@ public:
 		return CTreeItemT<TBase>(hTreeItem, this);
 	}
 
-	CTreeItemT<TBase> HitTest(POINT pt, UINT* pFlags)
+	CTreeItemT<TBase> HitTest(POINT pt, UINT* pFlags) const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		TVHITTESTINFO hti = { 0 };
@@ -4905,7 +4912,7 @@ public:
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_HITTEST, 0, (LPARAM)&hti);
 		if (pFlags != NULL)
 			*pFlags = hti.flags;
-		return CTreeItemT<TBase>(hTreeItem, this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 
 #if (_WIN32_WINNT >= 0x0501)
@@ -4913,7 +4920,7 @@ public:
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		HTREEITEM hTreeItem = (HTREEITEM)::SendMessage(m_hWnd, TVM_MAPACCIDTOHTREEITEM, uID, 0L);
-		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlEx*)this);
+		return CTreeItemT<TBase>(hTreeItem, (CTreeViewCtrlExT<TBase>*)this);
 	}
 #endif // (_WIN32_WINNT >= 0x0501)
 };
@@ -5699,11 +5706,20 @@ public:
 		int nLength = (int)(short)LOWORD(::SendMessage(m_hWnd, TB_GETSTRING, MAKEWPARAM(0, nString), NULL));
 		if(nLength != -1)
 		{
-			LPTSTR lpszString = (LPTSTR)_alloca((nLength + 1) * sizeof(TCHAR));
-			nLength = (int)::SendMessage(m_hWnd, TB_GETSTRING, MAKEWPARAM(nLength + 1, nString), (LPARAM)lpszString);
-			if(nLength != -1)
-				bstrString = ::SysAllocString(T2OLE(lpszString));
+			CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+			LPTSTR lpstrText = buff.Allocate(nLength + 1);
+			if(lpstrText != NULL)
+			{
+				nLength = (int)::SendMessage(m_hWnd, TB_GETSTRING, MAKEWPARAM(nLength + 1, nString), (LPARAM)lpstrText);
+				if(nLength != -1)
+					bstrString = ::SysAllocString(T2OLE(lpstrText));
+			}
+			else
+			{
+				nLength = -1;
+			}
 		}
+
 		return nLength;
 	}
 
@@ -6063,11 +6079,15 @@ public:
 		if(nLength == 0)
 			return FALSE;
 
-		LPTSTR lpszText = (LPTSTR)_alloca((nLength + 1) * sizeof(TCHAR));
-		if(!GetText(nPane, lpszText, pType))
+		CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		LPTSTR lpstrText = buff.Allocate(nLength + 1);
+		if(lpstrText == NULL)
 			return FALSE;
 
-		bstrText = ::SysAllocString(T2OLE(lpszText));
+		if(!GetText(nPane, lpstrText, pType))
+			return FALSE;
+
+		bstrText = ::SysAllocString(T2OLE(lpstrText));
 		return (bstrText != NULL) ? TRUE : FALSE;
 	}
 #endif // !_ATL_NO_COM
@@ -6141,12 +6161,6 @@ public:
 	}
 
 #if (_WIN32_IE >= 0x0400) && !defined(_WIN32_WCE)
-	COLORREF SetBkColor(COLORREF clrBk)
-	{
-		ATLASSERT(::IsWindow(m_hWnd));
-		return (COLORREF)::SendMessage(m_hWnd, SB_SETBKCOLOR, 0, (LPARAM)clrBk);
-	}
-
 	BOOL GetUnicodeFormat() const
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
@@ -6172,6 +6186,14 @@ public:
 		ATLASSERT(nPane < 256);
 		::SendMessage(m_hWnd, SB_SETTIPTEXT, nPane, (LPARAM)lpstrText);
 	}
+#endif // (_WIN32_IE >= 0x0400) && !defined(_WIN32_WCE)
+
+#if ((_WIN32_IE >= 0x0400) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 0x0500))
+	COLORREF SetBkColor(COLORREF clrBk)
+	{
+		ATLASSERT(::IsWindow(m_hWnd));
+		return (COLORREF)::SendMessage(m_hWnd, SB_SETBKCOLOR, 0, (LPARAM)clrBk);
+	}
 
 	HICON GetIcon(int nPane) const
 	{
@@ -6186,7 +6208,7 @@ public:
 		ATLASSERT(nPane < 256);
 		return (BOOL)::SendMessage(m_hWnd, SB_SETICON, nPane, (LPARAM)hIcon);
 	}
-#endif // (_WIN32_IE >= 0x0400) && !defined(_WIN32_WCE)
+#endif // ((_WIN32_IE >= 0x0400) && !defined(_WIN32_WCE)) || (defined(_WIN32_WCE) && (_WIN32_WCE >= 0x0500))
 };
 
 typedef CStatusBarCtrlT<ATL::CWindow>   CStatusBarCtrl;
@@ -6252,7 +6274,7 @@ public:
 		return (BOOL)::SendMessage(m_hWnd, TCM_SETITEM, nItem, (LPARAM)pTabCtrlItem);
 	}
 
-	int SetItem(int nItem, UINT mask, LPCTSTR lpszItem, DWORD dwState, DWORD dwStateMask, int iImage, DWORD lParam)
+	int SetItem(int nItem, UINT mask, LPCTSTR lpszItem, DWORD dwState, DWORD dwStateMask, int iImage, LPARAM lParam)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		TCITEM tci = { 0 };
@@ -6383,7 +6405,7 @@ public:
 		return (int)::SendMessage(m_hWnd, TCM_INSERTITEM, nItem, (LPARAM)pTabCtrlItem);
 	}
 
-	int InsertItem(int nItem, UINT mask, LPCTSTR lpszItem, int iImage, DWORD lParam)
+	int InsertItem(int nItem, UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		TCITEM tci = { 0 };
@@ -6408,7 +6430,7 @@ public:
 		return InsertItem(GetItemCount(), pTabCtrlItem);
 	}
 
-	int AddItem(UINT mask, LPCTSTR lpszItem, int iImage, DWORD lParam)
+	int AddItem(UINT mask, LPCTSTR lpszItem, int iImage, LPARAM lParam)
 	{
 		return InsertItem(GetItemCount(), mask, lpszItem, iImage, lParam);
 	}
@@ -7394,15 +7416,19 @@ public:
 		::SendMessage(m_hWnd, EM_EXGETSEL, 0, (LPARAM)&cr);
 
 #if (_RICHEDIT_VER >= 0x0200)
-		LPTSTR lpstrText = (LPTSTR)_alloca((cr.cpMax - cr.cpMin + 1) * sizeof(TCHAR));
-		lpstrText[0] = 0;
+		CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		LPTSTR lpstrText = buff.Allocate(cr.cpMax - cr.cpMin + 1);
+		if(lpstrText == NULL)
+			return FALSE;
 		if(::SendMessage(m_hWnd, EM_GETSELTEXT, 0, (LPARAM)lpstrText) == 0)
 			return FALSE;
 
 		bstrText = ::SysAllocString(T2W(lpstrText));
 #else // !(_RICHEDIT_VER >= 0x0200)
-		LPSTR lpstrText = (char*)_alloca(cr.cpMax - cr.cpMin + 1);
-		lpstrText[0] = 0;
+		CTempBuffer<char, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		LPSTR lpstrText = buff.Allocate(cr.cpMax - cr.cpMin + 1);
+		if(lpstrText == NULL)
+			return FALSE;
 		if(::SendMessage(m_hWnd, EM_GETSELTEXT, 0, (LPARAM)lpstrText) == 0)
 			return FALSE;
 
@@ -7430,8 +7456,10 @@ public:
 			strText.ReleaseBuffer();
 		}
 #else // !(_RICHEDIT_VER >= 0x0200)
-		LPSTR lpstrText = (char*)_alloca(cr.cpMax - cr.cpMin + 1);
-		lpstrText[0] = 0;
+		CTempBuffer<char, _WTL_STACK_ALLOC_THRESHOLD> buff;
+		LPSTR lpstrText = buff.Allocate(cr.cpMax - cr.cpMin + 1);
+		if(lpstrText == NULL)
+			return 0;
 		LONG lLen = (LONG)::SendMessage(m_hWnd, EM_GETSELTEXT, 0, (LPARAM)lpstrText);
 		if(lLen == 0)
 			return 0;
@@ -8306,8 +8334,8 @@ public:
 		REBARINFO rbi = { 0 };
 		rbi.cbSize = sizeof(REBARINFO);
 		rbi.fMask = RBIM_IMAGELIST;
-		if( (BOOL)::SendMessage(m_hWnd, RB_GETBARINFO, 0, (LPARAM)&rbi) == FALSE ) return CImageList();
-		return CImageList(rbi.himl);
+		BOOL bRet = (BOOL)::SendMessage(m_hWnd, RB_GETBARINFO, 0, (LPARAM)&rbi);
+		return CImageList((bRet != FALSE) ? rbi.himl : NULL);
 	}
 
 	BOOL SetImageList(HIMAGELIST hImageList)
@@ -8709,7 +8737,7 @@ public:
 	}
 
 	int InsertItem(UINT nMask, int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage, 
-	               int iIndent, int iOverlay, DWORD lParam)
+	               int iIndent, int iOverlay, LPARAM lParam)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		COMBOBOXEXITEM cbex = { 0 };
@@ -8724,7 +8752,7 @@ public:
 		return (int)::SendMessage(m_hWnd, CBEM_INSERTITEM, 0, (LPARAM)&cbex);
 	}
 
-	int InsertItem(int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, DWORD lParam = 0)
+	int InsertItem(int nIndex, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, LPARAM lParam = 0)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		COMBOBOXEXITEM cbex = { 0 };
@@ -8738,12 +8766,12 @@ public:
 		return (int)::SendMessage(m_hWnd, CBEM_INSERTITEM, 0, (LPARAM)&cbex);
 	}
 
-	int AddItem(UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, int iOverlay, DWORD lParam)
+	int AddItem(UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, int iOverlay, LPARAM lParam)
 	{
 		return InsertItem(nMask, -1, lpszItem, nImage, nSelImage, iIndent, iOverlay, lParam);
 	}
 
-	int AddItem(LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, DWORD lParam = 0)
+	int AddItem(LPCTSTR lpszItem, int nImage, int nSelImage, int iIndent, LPARAM lParam = 0)
 	{
 		return InsertItem(-1, lpszItem, nImage, nSelImage, iIndent, lParam);
 	}
@@ -8767,7 +8795,7 @@ public:
 	}
 
 	int SetItem(int nIndex, UINT nMask, LPCTSTR lpszItem, int nImage, int nSelImage, 
-	            int iIndent, int iOverlay, DWORD lParam)
+	            int iIndent, int iOverlay, LPARAM lParam)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
 		COMBOBOXEXITEM cbex = { 0 };

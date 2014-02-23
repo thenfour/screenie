@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,10 +13,6 @@
 #define __ATLCTRLW_H__
 
 #pragma once
-
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
 
 #ifdef _WIN32_WCE
 	#error atlctrlw.h is not supported on Windows CE
@@ -502,13 +498,23 @@ public:
 	BOOL AttachMenu(HMENU hMenu)
 	{
 		ATLASSERT(::IsWindow(m_hWnd));
-		ATLASSERT(::IsMenu(hMenu));
+		ATLASSERT(hMenu == NULL || ::IsMenu(hMenu));
 		if(hMenu != NULL && !::IsMenu(hMenu))
 			return FALSE;
+
+#if _WTL_CMDBAR_VISTA_MENUS
+		// remove Vista bitmaps if used
+		if(m_bVistaMenus && (m_hMenu != NULL))
+		{
+			T* pT = static_cast<T*>(this);
+			pT->_RemoveVistaBitmapsFromMenu();
+		}
+#endif // _WTL_CMDBAR_VISTA_MENUS
 
 		// destroy old menu, if needed, and set new one
 		if(m_hMenu != NULL && (m_dwExtendedStyle & CBR_EX_SHAREMENU) == 0)
 			::DestroyMenu(m_hMenu);
+
 		m_hMenu = hMenu;
 
 		if(m_bAttachedMenu)   // Nothing else in this mode
@@ -517,15 +523,10 @@ public:
 		// Build buttons according to menu
 		SetRedraw(FALSE);
 
-		// Clear all
-		BOOL bRet;
+		// Clear all buttons
 		int nCount = GetButtonCount();
 		for(int i = 0; i < nCount; i++)
-		{
-			bRet = DeleteButton(0);
-			ATLASSERT(bRet);
-		}
-
+			ATLVERIFY(DeleteButton(0) != FALSE);
 
 		// Add buttons for each menu item
 		if(m_hMenu != NULL)
@@ -534,7 +535,7 @@ public:
 
 			T* pT = static_cast<T*>(this);
 			pT;   // avoid level 4 warning
-			TCHAR szString[pT->_nMaxMenuItemTextLength];
+			TCHAR szString[pT->_nMaxMenuItemTextLength] = { 0 };
 			for(int i = 0; i < nItems; i++)
 			{
 				CMenuItemInfo mii;
@@ -542,7 +543,7 @@ public:
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = szString;
 				mii.cch = pT->_nMaxMenuItemTextLength;
-				bRet = ::GetMenuItemInfo(m_hMenu, i, TRUE, &mii);
+				BOOL bRet = ::GetMenuItemInfo(m_hMenu, i, TRUE, &mii);
 				ATLASSERT(bRet);
 				// If we have more than the buffer, we assume we have bitmaps bits
 				if(lstrlen(szString) > pT->_nMaxMenuItemTextLength - 1)
@@ -713,8 +714,11 @@ public:
 		BOOL bRet = m_arrCommand.Add((WORD)nCommandID);
 		ATLASSERT(::ImageList_GetImageCount(m_hImageList) == m_arrCommand.GetSize());
 #if _WTL_CMDBAR_VISTA_MENUS
-		pT->_AddVistaBitmapFromImageList(m_arrCommand.GetSize() - 1);
-		ATLASSERT(m_arrVistaBitmap.GetSize() == m_arrCommand.GetSize());
+		if(RunTimeHelper::IsVista())
+		{
+			pT->_AddVistaBitmapFromImageList(m_arrCommand.GetSize() - 1);
+			ATLASSERT(m_arrVistaBitmap.GetSize() == m_arrCommand.GetSize());
+		}
 #endif // _WTL_CMDBAR_VISTA_MENUS
 		return bRet;
 	}
@@ -745,8 +749,11 @@ public:
 		BOOL bRet = m_arrCommand.Add((WORD)nCommandID);
 		ATLASSERT(::ImageList_GetImageCount(m_hImageList) == m_arrCommand.GetSize());
 #if _WTL_CMDBAR_VISTA_MENUS
-		pT->_AddVistaBitmapFromImageList(m_arrCommand.GetSize() - 1);
-		ATLASSERT(m_arrVistaBitmap.GetSize() == m_arrCommand.GetSize());
+		if(RunTimeHelper::IsVista())
+		{
+			pT->_AddVistaBitmapFromImageList(m_arrCommand.GetSize() - 1);
+			ATLASSERT(m_arrVistaBitmap.GetSize() == m_arrCommand.GetSize());
+		}
 #endif // _WTL_CMDBAR_VISTA_MENUS
 		return bRet;
 	}
@@ -774,9 +781,12 @@ public:
 				{
 					m_arrCommand.RemoveAt(i);
 #if _WTL_CMDBAR_VISTA_MENUS
-					if(m_arrVistaBitmap[i] != NULL)
-						::DeleteObject(m_arrVistaBitmap[i]);
-					m_arrVistaBitmap.RemoveAt(i);
+					if(RunTimeHelper::IsVista())
+					{
+						if(m_arrVistaBitmap[i] != NULL)
+							::DeleteObject(m_arrVistaBitmap[i]);
+						m_arrVistaBitmap.RemoveAt(i);
+					}
 #endif // _WTL_CMDBAR_VISTA_MENUS
 				}
 				break;
@@ -806,7 +816,7 @@ public:
 			{
 				bRet = (::ImageList_ReplaceIcon(m_hImageList, i, hIcon) != -1);
 #if _WTL_CMDBAR_VISTA_MENUS
-				if(bRet != FALSE)
+				if(RunTimeHelper::IsVista() && bRet != FALSE)
 				{
 					T* pT = static_cast<T*>(this);
 					pT->_ReplaceVistaBitmapFromImageList(i);
@@ -832,9 +842,12 @@ public:
 				{
 					m_arrCommand.RemoveAt(i);
 #if _WTL_CMDBAR_VISTA_MENUS
-					if(m_arrVistaBitmap[i] != NULL)
-						::DeleteObject(m_arrVistaBitmap[i]);
-					m_arrVistaBitmap.RemoveAt(i);
+					if(RunTimeHelper::IsVista())
+					{
+						if(m_arrVistaBitmap[i] != NULL)
+							::DeleteObject(m_arrVistaBitmap[i]);
+						m_arrVistaBitmap.RemoveAt(i);
+					}
 #endif // _WTL_CMDBAR_VISTA_MENUS
 				}
 				break;
@@ -1022,16 +1035,10 @@ public:
 		LRESULT lRet = DefWindowProc(uMsg, wParam, lParam);
 
 #if _WTL_CMDBAR_VISTA_MENUS
-		if(!m_bVistaMenus && (m_hMenu != NULL))
+		if(m_bVistaMenus && (m_hMenu != NULL))
 		{
-			CMenuHandle menu = m_hMenu;
-			for(int i = 0; i < m_arrCommand.GetSize(); i++)
-			{
-				CMenuItemInfo mii;
-				mii.fMask = MIIM_BITMAP;
-				mii.hbmpItem = NULL;
-				menu.SetMenuItemInfo(m_arrCommand[i], FALSE, &mii);
-			}
+			T* pT = static_cast<T*>(this);
+			pT->_RemoveVistaBitmapsFromMenu();
 		}
 
 		for(int i = 0; i < m_arrVistaBitmap.GetSize(); i++)
@@ -1280,7 +1287,7 @@ public:
 
 			T* pT = static_cast<T*>(this);
 			pT;   // avoid level 4 warning
-			TCHAR szString[pT->_nMaxMenuItemTextLength];
+			TCHAR szString[pT->_nMaxMenuItemTextLength] = { 0 };
 			BOOL bRet = FALSE;
 			for(int i = 0; i < menuPopup.GetMenuItemCount(); i++)
 			{
@@ -1316,11 +1323,7 @@ public:
 						ATLTRY(pMI->lpstrText = new TCHAR[cchLen]);
 						ATLASSERT(pMI->lpstrText != NULL);
 						if(pMI->lpstrText != NULL)
-#if _SECURE_ATL
-							ATL::Checked::tcscpy_s(pMI->lpstrText, cchLen, szString);
-#else
-							lstrcpy(pMI->lpstrText, szString);
-#endif
+							SecureHelper::strcpy_x(pMI->lpstrText, cchLen, szString);
 						mii.dwItemData = (ULONG_PTR)pMI;
 						bRet = menuPopup.SetMenuItemInfo(i, TRUE, &mii);
 						ATLASSERT(bRet);
@@ -1466,7 +1469,7 @@ public:
 			int nCount = ::GetMenuItemCount(menu);
 			int nRetCode = MNC_EXECUTE;
 			BOOL bRet = FALSE;
-			TCHAR szString[pT->_nMaxMenuItemTextLength];
+			TCHAR szString[pT->_nMaxMenuItemTextLength] = { 0 };
 			WORD wMnem = 0;
 			bool bFound = false;
 			for(int i = 0; i < nCount; i++)
@@ -1899,7 +1902,7 @@ public:
 		ATLTRACE2(atlTraceUI, 0, _T("CmdBar - Hook WM_SYSKEYDOWN (0x%2.2X)\n"), wParam);
 #endif
 
-		if(wParam == VK_MENU && m_bUseKeyboardCues && !m_bShowKeyboardCues && m_bAllowKeyboardCues)
+		if(wParam == VK_MENU && m_bParentActive && m_bUseKeyboardCues && !m_bShowKeyboardCues && m_bAllowKeyboardCues)
 			ShowKeyboardCues(true);
 
 		if(wParam != VK_SPACE && !m_bMenuActive && ::GetFocus() == m_hWnd)
@@ -2984,11 +2987,17 @@ public:
 		dc.SelectFont(hFontOld);
 
 		// get Windows version
+#ifndef _versionhelpers_H_INCLUDED_
 		OSVERSIONINFO ovi = { sizeof(OSVERSIONINFO) };
 		::GetVersionEx(&ovi);
+#endif // !_versionhelpers_H_INCLUDED_
 
 		// query keyboard cues mode (Windows 2000 or later)
-		if(ovi.dwMajorVersion >= 5)
+#ifdef _versionhelpers_H_INCLUDED_
+		if(::IsWindowsVersionOrGreater(5, 0, 0))
+#else // !_versionhelpers_H_INCLUDED_
+		if (ovi.dwMajorVersion >= 5)
+#endif // _versionhelpers_H_INCLUDED_
 		{
 #ifndef SPI_GETKEYBOARDCUES
 			const UINT SPI_GETKEYBOARDCUES = 0x100A;
@@ -3001,7 +3010,11 @@ public:
 		}
 
 		// query flat menu mode (Windows XP or later)
-		if((ovi.dwMajorVersion == 5 && ovi.dwMinorVersion >= 1) || (ovi.dwMajorVersion > 5))
+#ifdef _versionhelpers_H_INCLUDED_
+		if(::IsWindowsXPOrGreater())
+#else // !_versionhelpers_H_INCLUDED_
+		if ((ovi.dwMajorVersion == 5 && ovi.dwMinorVersion >= 1) || (ovi.dwMajorVersion > 5))
+#endif // _versionhelpers_H_INCLUDED_
 		{
 #ifndef SPI_GETFLATMENU
 			const UINT SPI_GETFLATMENU = 0x1022;
@@ -3036,14 +3049,8 @@ public:
 
 		if(!bVistaMenus && m_bVistaMenus && (m_hMenu != NULL) && (m_arrCommand.GetSize() > 0))
 		{
-			CMenuHandle menu = m_hMenu;
-			for(int i = 0; i < m_arrCommand.GetSize(); i++)
-			{
-				CMenuItemInfo mii;
-				mii.fMask = MIIM_BITMAP;
-				mii.hbmpItem = NULL;
-				menu.SetMenuItemInfo(m_arrCommand[i], FALSE, &mii);
-			}
+			T* pT = static_cast<T*>(this);
+			pT->_RemoveVistaBitmapsFromMenu();
 		}
 
 		m_bVistaMenus = bVistaMenus;
@@ -3146,16 +3153,16 @@ public:
 	void _AddVistaBitmapsFromImageList(int nStartIndex, int nCount)
 	{
 		// Create display compatible memory DC
-		HDC hDC = ::GetDC(NULL);
+		CClientDC dc(NULL);
 		CDC dcMem;
-		dcMem.CreateCompatibleDC(hDC);
+		dcMem.CreateCompatibleDC(dc);
 		HBITMAP hBitmapSave = dcMem.GetCurrentBitmap();
 
 		T* pT = static_cast<T*>(this);
 		// Create bitmaps for all menu items
 		for(int i = 0; i < nCount; i++)
 		{
-			HBITMAP hBitmap = pT->_CreateVistaBitmapHelper(nStartIndex + i, hDC, dcMem);
+			HBITMAP hBitmap = pT->_CreateVistaBitmapHelper(nStartIndex + i, dc, dcMem);
 			dcMem.SelectBitmap(hBitmapSave);
 			m_arrVistaBitmap.Add(hBitmap);
 		}
@@ -3163,19 +3170,15 @@ public:
 
 	void _AddVistaBitmapFromImageList(int nIndex)
 	{
-		// Delete existing bitmap
-		if(m_arrVistaBitmap[nIndex] != NULL)
-			::DeleteObject(m_arrVistaBitmap[nIndex]);
-
 		// Create display compatible memory DC
-		HDC hDC = ::GetDC(NULL);
+		CClientDC dc(NULL);
 		CDC dcMem;
-		dcMem.CreateCompatibleDC(hDC);
+		dcMem.CreateCompatibleDC(dc);
 		HBITMAP hBitmapSave = dcMem.GetCurrentBitmap();
 
 		// Create bitmap for menu item
 		T* pT = static_cast<T*>(this);
-		HBITMAP hBitmap = pT->_CreateVistaBitmapHelper(nIndex, hDC, dcMem);
+		HBITMAP hBitmap = pT->_CreateVistaBitmapHelper(nIndex, dc, dcMem);
 
 		// Select saved bitmap back and add bitmap to the array
 		dcMem.SelectBitmap(hBitmapSave);
@@ -3189,14 +3192,14 @@ public:
 			::DeleteObject(m_arrVistaBitmap[nIndex]);
 
 		// Create display compatible memory DC
-		HDC hDC = ::GetDC(NULL);
+		CClientDC dc(NULL);
 		CDC dcMem;
-		dcMem.CreateCompatibleDC(hDC);
+		dcMem.CreateCompatibleDC(dc);
 		HBITMAP hBitmapSave = dcMem.GetCurrentBitmap();
 
 		// Create bitmap for menu item
 		T* pT = static_cast<T*>(this);
-		HBITMAP hBitmap = pT->_CreateVistaBitmapHelper(nIndex, hDC, dcMem);
+		HBITMAP hBitmap = pT->_CreateVistaBitmapHelper(nIndex, dc, dcMem);
 
 		// Select saved bitmap back and replace bitmap in the array
 		dcMem.SelectBitmap(hBitmapSave);
@@ -3244,6 +3247,18 @@ public:
 		}
 
 		return hBitmap;
+	}
+
+	void _RemoveVistaBitmapsFromMenu()
+	{
+		CMenuHandle menu = m_hMenu;
+		for(int i = 0; i < m_arrCommand.GetSize(); i++)
+		{
+			CMenuItemInfo mii;
+			mii.fMask = MIIM_BITMAP;
+			mii.hbmpItem = NULL;
+			menu.SetMenuItemInfo(m_arrCommand[i], FALSE, &mii);
+		}
 	}
 #endif // _WTL_CMDBAR_VISTA_MENUS
 };
@@ -3322,15 +3337,18 @@ public:
 		ATLASSERT(::IsWindow(hWndMDIClient));
 		if(!::IsWindow(hWndMDIClient))
 			return FALSE;
+
 #ifdef _DEBUG
-		LPCTSTR lpszMDIClientClass = _T("MDICLIENT");
-		int nNameLen = lstrlen(lpszMDIClientClass) + 1;
-		LPTSTR lpstrClassName = (LPTSTR)_alloca(nNameLen * sizeof(TCHAR));
-		::GetClassName(hWndMDIClient, lpstrClassName, nNameLen);
-		ATLASSERT(lstrcmpi(lpstrClassName, lpszMDIClientClass) == 0);
-		if(lstrcmpi(lpstrClassName, lpszMDIClientClass) != 0)
-			return FALSE;   // not an "MDIClient" window
+		// BLOCK: Test if the passed window is MDICLIENT
+		{
+			LPCTSTR lpszMDIClientClass = _T("MDICLIENT");
+			const int nNameLen = 9 + 1;   // "MDICLIENT" + NULL
+			TCHAR szClassName[nNameLen] = { 0 };
+			::GetClassName(hWndMDIClient, szClassName, nNameLen);
+			ATLASSERT(lstrcmpi(szClassName, lpszMDIClientClass) == 0);
+		}
 #endif // _DEBUG
+
 		if(m_wndMDIClient.IsWindow())
 /*scary!*/		m_wndMDIClient.UnsubclassWindow();
 
@@ -3760,17 +3778,20 @@ public:
 
 	LRESULT OnCaptureChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
 	{
-		if(m_bChildMaximized && m_nBtnPressed != -1)
+		if(m_bChildMaximized)
 		{
-			ATLASSERT(m_nBtnPressed == m_nBtnWasPressed);   // must be
-			m_nBtnPressed = -1;
-			RECT rect = { 0 };
-			GetWindowRect(&rect);
-			RECT arrRect[3] = { 0 };
-			T* pT = static_cast<T*>(this);
-			pT->_CalcBtnRects(rect.right - rect.left, rect.bottom - rect.top, arrRect);
-			CWindowDC dc(m_hWnd);
-			pT->_DrawMDIButton(dc, arrRect, m_nBtnWasPressed);
+			if(m_nBtnPressed != -1)
+			{
+				ATLASSERT(m_nBtnPressed == m_nBtnWasPressed);   // must be
+				m_nBtnPressed = -1;
+				RECT rect = { 0 };
+				GetWindowRect(&rect);
+				RECT arrRect[3] = { 0 };
+				T* pT = static_cast<T*>(this);
+				pT->_CalcBtnRects(rect.right - rect.left, rect.bottom - rect.top, arrRect);
+				CWindowDC dc(m_hWnd);
+				pT->_DrawMDIButton(dc, arrRect, m_nBtnWasPressed);
+			}
 			m_nBtnWasPressed = -1;
 		}
 		else

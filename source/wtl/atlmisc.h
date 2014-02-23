@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,10 +13,6 @@
 #define __ATLMISC_H__
 
 #pragma once
-
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
 
 #ifndef __ATLAPP_H__
 	#error atlmisc.h requires atlapp.h to be included first
@@ -39,10 +35,6 @@
   #if defined(_ATL_USE_CSTRING_FLOAT) && defined(_ATL_MIN_CRT)
 	#error Cannot use CString floating point formatting with _ATL_MIN_CRT defined
   #endif // defined(_ATL_USE_CSTRING_FLOAT) && defined(_ATL_MIN_CRT)
-
-  #ifndef _DEBUG
-    #include <stdio.h>
-  #endif // !_DEBUG
 #endif // !_WTL_NO_CSTRING
 
 
@@ -59,22 +51,6 @@
 // CFindFile
 //
 // Global functions:
-//   AtlLoadAccelerators()
-//   AtlLoadMenu()
-//   AtlLoadBitmap()
-//   AtlLoadSysBitmap()
-//   AtlLoadCursor()
-//   AtlLoadSysCursor()
-//   AtlLoadIcon()
-//   AtlLoadSysIcon()
-//   AtlLoadBitmapImage()
-//   AtlLoadCursorImage()
-//   AtlLoadIconImage()
-//   AtlLoadSysBitmapImage()
-//   AtlLoadSysCursorImage()
-//   AtlLoadSysIconImage()
-//   AtlLoadString()
-//
 //   AtlGetStockPen()
 //   AtlGetStockBrush()
 //   AtlGetStockFont()
@@ -839,11 +815,7 @@ public:
 			if (nLen != 0)
 			{
 				if(AllocBuffer(nLen))
-#if _SECURE_ATL
-					ATL::Checked::memcpy_s(m_pchData, (nLen + 1) * sizeof(TCHAR), lpsz, nLen * sizeof(TCHAR));
-#else
-					memcpy(m_pchData, lpsz, nLen * sizeof(TCHAR));
-#endif
+					SecureHelper::memcpy_x(m_pchData, (nLen + 1) * sizeof(TCHAR), lpsz, nLen * sizeof(TCHAR));
 			}
 		}
 	}
@@ -888,11 +860,7 @@ public:
 		if (nLength != 0)
 		{
 			if(AllocBuffer(nLength))
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(m_pchData, (nLength + 1) * sizeof(TCHAR), lpch, nLength * sizeof(TCHAR));
-#else
-				memcpy(m_pchData, lpch, nLength * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(m_pchData, (nLength + 1) * sizeof(TCHAR), lpch, nLength * sizeof(TCHAR));
 		}
 	}
 
@@ -1245,11 +1213,7 @@ public:
 
 		// fix up data and length
 		int nDataLength = GetData()->nDataLength - (int)(DWORD_PTR)(lpsz - m_pchData);
-#if _SECURE_ATL
-		ATL::Checked::memmove_s(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpsz, (nDataLength + 1) * sizeof(TCHAR));
-#else
-		memmove(m_pchData, lpsz, (nDataLength + 1) * sizeof(TCHAR));
-#endif
+		SecureHelper::memmove_x(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpsz, (nDataLength + 1) * sizeof(TCHAR));
 		GetData()->nDataLength = nDataLength;
 	}
 
@@ -1346,11 +1310,7 @@ public:
 		{
 			// fix up data and length
 			int nDataLength = GetData()->nDataLength - (int)(DWORD_PTR)(lpsz - m_pchData);
-#if _SECURE_ATL
-			ATL::Checked::memmove_s(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpsz, (nDataLength + 1) * sizeof(TCHAR));
-#else
-			memmove(m_pchData, lpsz, (nDataLength + 1) * sizeof(TCHAR));
-#endif
+			SecureHelper::memmove_x(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpsz, (nDataLength + 1) * sizeof(TCHAR));
 			GetData()->nDataLength = nDataLength;
 		}
 	}
@@ -1385,11 +1345,7 @@ public:
 		{
 			// fix up data and length
 			int nDataLength = GetData()->nDataLength - (int)(DWORD_PTR)(lpsz - m_pchData);
-#if _SECURE_ATL
-			ATL::Checked::memmove_s(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpsz, (nDataLength + 1) * sizeof(TCHAR));
-#else
-			memmove(m_pchData, lpsz, (nDataLength + 1) * sizeof(TCHAR));
-#endif
+			SecureHelper::memmove_x(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpsz, (nDataLength + 1) * sizeof(TCHAR));
 			GetData()->nDataLength = nDataLength;
 		}
 	}
@@ -1461,11 +1417,7 @@ public:
 				LPTSTR pstr = m_pchData;
 				if(!AllocBuffer(nNewLength))
 					return -1;
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(m_pchData, (nNewLength + 1) * sizeof(TCHAR), pstr, pOldData->nDataLength * sizeof(TCHAR));
-#else
-				memcpy(m_pchData, pstr, pOldData->nDataLength * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(m_pchData, (nNewLength + 1) * sizeof(TCHAR), pstr, pOldData->nDataLength * sizeof(TCHAR));
 				CString::Release(pOldData);
 			}
 			// else, we just do it in-place
@@ -1478,14 +1430,9 @@ public:
 				while ((lpszTarget = (TCHAR*)_cstrstr(lpszStart, lpszOld)) != NULL)
 				{
 					int nBalance = nOldLength - ((int)(DWORD_PTR)(lpszTarget - m_pchData) + nSourceLen);
-#if _SECURE_ATL
 					int cchBuffLen = GetData()->nAllocLength - (int)(DWORD_PTR)(lpszTarget - m_pchData);
-					ATL::Checked::memmove_s(lpszTarget + nReplacementLen, (cchBuffLen - nReplacementLen + 1) * sizeof(TCHAR), lpszTarget + nSourceLen, nBalance * sizeof(TCHAR));
-					ATL::Checked::memcpy_s(lpszTarget, (cchBuffLen + 1) * sizeof(TCHAR), lpszNew, nReplacementLen * sizeof(TCHAR));
-#else
-					memmove(lpszTarget + nReplacementLen, lpszTarget + nSourceLen, nBalance * sizeof(TCHAR));
-					memcpy(lpszTarget, lpszNew, nReplacementLen * sizeof(TCHAR));
-#endif
+					SecureHelper::memmove_x(lpszTarget + nReplacementLen, (cchBuffLen - nReplacementLen + 1) * sizeof(TCHAR), lpszTarget + nSourceLen, nBalance * sizeof(TCHAR));
+					SecureHelper::memcpy_x(lpszTarget, (cchBuffLen + 1) * sizeof(TCHAR), lpszNew, nReplacementLen * sizeof(TCHAR));
 					lpszStart = lpszTarget + nReplacementLen;
 					lpszStart[nBalance] = _T('\0');
 					nOldLength += (nReplacementLen - nSourceLen);
@@ -1543,20 +1490,12 @@ public:
 			LPTSTR pstr = m_pchData;
 			if(!AllocBuffer(nNewLength))
 				return -1;
-#if _SECURE_ATL
-			ATL::Checked::memcpy_s(m_pchData, (nNewLength + 1) * sizeof(TCHAR), pstr, (pOldData->nDataLength + 1) * sizeof(TCHAR));
-#else
-			memcpy(m_pchData, pstr, (pOldData->nDataLength + 1) * sizeof(TCHAR));
-#endif
+			SecureHelper::memcpy_x(m_pchData, (nNewLength + 1) * sizeof(TCHAR), pstr, (pOldData->nDataLength + 1) * sizeof(TCHAR));
 			CString::Release(pOldData);
 		}
 
 		// move existing bytes down
-#if _SECURE_ATL
-		ATL::Checked::memmove_s(m_pchData + nIndex + 1, (GetData()->nAllocLength - nIndex) * sizeof(TCHAR), m_pchData + nIndex, (nNewLength - nIndex) * sizeof(TCHAR));
-#else
-		memmove(m_pchData + nIndex + 1, m_pchData + nIndex, (nNewLength - nIndex) * sizeof(TCHAR));
-#endif
+		SecureHelper::memmove_x(m_pchData + nIndex + 1, (GetData()->nAllocLength - nIndex) * sizeof(TCHAR), m_pchData + nIndex, (nNewLength - nIndex) * sizeof(TCHAR));
 		m_pchData[nIndex] = ch;
 		GetData()->nDataLength = nNewLength;
 
@@ -1584,22 +1523,13 @@ public:
 				LPTSTR pstr = m_pchData;
 				if(!AllocBuffer(nNewLength))
 					return -1;
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(m_pchData, (nNewLength + 1) * sizeof(TCHAR), pstr, (pOldData->nDataLength + 1) * sizeof(TCHAR));
-#else
-				memcpy(m_pchData, pstr, (pOldData->nDataLength + 1) * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(m_pchData, (nNewLength + 1) * sizeof(TCHAR), pstr, (pOldData->nDataLength + 1) * sizeof(TCHAR));
 				CString::Release(pOldData);
 			}
 
 			// move existing bytes down
-#if _SECURE_ATL
-			ATL::Checked::memmove_s(m_pchData + nIndex + nInsertLength, (GetData()->nAllocLength + 1 - nIndex - nInsertLength) * sizeof(TCHAR), m_pchData + nIndex, (nNewLength - nIndex - nInsertLength + 1) * sizeof(TCHAR));
-			ATL::Checked::memcpy_s(m_pchData + nIndex, (GetData()->nAllocLength + 1 - nIndex) * sizeof(TCHAR), pstr, nInsertLength * sizeof(TCHAR));
-#else
-			memmove(m_pchData + nIndex + nInsertLength, m_pchData + nIndex, (nNewLength - nIndex - nInsertLength + 1) * sizeof(TCHAR));
-			memcpy(m_pchData + nIndex, pstr, nInsertLength * sizeof(TCHAR));
-#endif
+			SecureHelper::memmove_x(m_pchData + nIndex + nInsertLength, (GetData()->nAllocLength + 1 - nIndex - nInsertLength) * sizeof(TCHAR), m_pchData + nIndex, (nNewLength - nIndex - nInsertLength + 1) * sizeof(TCHAR));
+			SecureHelper::memcpy_x(m_pchData + nIndex, (GetData()->nAllocLength + 1 - nIndex) * sizeof(TCHAR), pstr, nInsertLength * sizeof(TCHAR));
 			GetData()->nDataLength = nNewLength;
 		}
 
@@ -1619,11 +1549,7 @@ public:
 			CopyBeforeWrite();
 			int nBytesToCopy = nLength - (nIndex + nCount) + 1;
 
-#if _SECURE_ATL
-			ATL::Checked::memmove_s(m_pchData + nIndex, (GetData()->nAllocLength + 1 - nIndex) * sizeof(TCHAR), m_pchData + nIndex + nCount, nBytesToCopy * sizeof(TCHAR));
-#else
-			memmove(m_pchData + nIndex, m_pchData + nIndex + nCount, nBytesToCopy * sizeof(TCHAR));
-#endif
+			SecureHelper::memmove_x(m_pchData + nIndex, (GetData()->nAllocLength + 1 - nIndex) * sizeof(TCHAR), m_pchData + nIndex + nCount, nBytesToCopy * sizeof(TCHAR));
 			nLength -= nCount;
 			GetData()->nDataLength = nLength;
 		}
@@ -1694,11 +1620,7 @@ public:
 	{
 		const int cchBuff = 12;
 		TCHAR szBuffer[cchBuff] = { 0 };
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT) && !defined(_WIN32_WCE)
-		_stprintf_s(szBuffer, cchBuff, _T("%d"), n);
-#else
-		wsprintf(szBuffer, _T("%d"), n);
-#endif
+		SecureHelper::wsprintf_x(szBuffer, cchBuff, _T("%d"), n);
 		ConcatInPlace(SafeStrlen(szBuffer), szBuffer);
 		return *this;
 	}
@@ -1988,20 +1910,23 @@ public:
 					break;
 				case _T('f'):
 					{
+						double f = va_arg(argList, double);
 						// 312 == strlen("-1+(309 zeroes).")
 						// 309 zeroes == max precision of a double
 						// 6 == adjustment in case precision is not specified,
 						//   which means that the precision defaults to 6
 						int cchLen = max(nWidth, 312 + nPrecision + 6);
-						LPTSTR pszTemp = (LPTSTR)_alloca(cchLen * sizeof(TCHAR));
-
-						double f = va_arg(argList, double);
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT) && !defined(_WIN32_WCE)
-						_stprintf_s(pszTemp, cchLen, _T("%*.*f"), nWidth, nPrecision + 6, f);
-#else
-						_stprintf(pszTemp, _T("%*.*f"), nWidth, nPrecision + 6, f);
-#endif
-						nItemLen = (int)_tcslen(pszTemp);
+						CTempBuffer<TCHAR, _WTL_STACK_ALLOC_THRESHOLD> buff;
+						LPTSTR pszTemp = buff.Allocate(cchLen);
+						if(pszTemp != NULL)
+						{
+							SecureHelper::sprintf_x(pszTemp, cchLen, _T("%*.*f"), nWidth, nPrecision + 6, f);
+							nItemLen = (int)_tcslen(pszTemp);
+						}
+						else
+						{
+							nItemLen = cchLen;
+						}
 					}
 					break;
 #endif // _ATL_USE_CSTRING_FLOAT
@@ -2029,17 +1954,9 @@ public:
 		if(GetBuffer(nMaxLen) == NULL)
 			return FALSE;
 #ifndef _ATL_USE_CSTRING_FLOAT
-  #if _SECURE_ATL && !defined(_ATL_MIN_CRT) && !defined(_WIN32_WCE)
-		int nRet = _vstprintf_s(m_pchData, GetAllocLength() + 1, lpszFormat, argListSave);
-  #else
-		int nRet = ::wvsprintf(m_pchData, lpszFormat, argListSave);
-  #endif
+		int nRet = SecureHelper::wvsprintf_x(m_pchData, GetAllocLength() + 1, lpszFormat, argListSave);
 #else // _ATL_USE_CSTRING_FLOAT
-  #if _SECURE_ATL && !defined(_ATL_MIN_CRT) && !defined(_WIN32_WCE)
-		int nRet = _vstprintf_s(m_pchData, GetAllocLength() + 1, lpszFormat, argListSave);
-  #else
-		int nRet = _vstprintf(m_pchData, lpszFormat, argListSave);
-  #endif
+		int nRet = SecureHelper::vsprintf_x(m_pchData, GetAllocLength() + 1, lpszFormat, argListSave);
 #endif // _ATL_USE_CSTRING_FLOAT
 		nRet;   // ref
 		ATLASSERT(nRet <= GetAllocLength());
@@ -2105,7 +2022,7 @@ public:
 #endif
 
 		// try fixed buffer first (to avoid wasting space in the heap)
-		TCHAR szTemp[256];
+		TCHAR szTemp[256] = { 0 };
 		int nCount =  sizeof(szTemp) / sizeof(szTemp[0]);
 		int nLen = _LoadString(nID, szTemp, nCount);
 		if (nCount - nLen > CHAR_FUDGE)
@@ -2194,11 +2111,7 @@ public:
 			if(!AllocBuffer(nMinBufLength))
 				return NULL;
 
-#if _SECURE_ATL
-			ATL::Checked::memcpy_s(m_pchData, (nMinBufLength + 1) * sizeof(TCHAR), pOldData->data(), (nOldLen + 1) * sizeof(TCHAR));
-#else
-			memcpy(m_pchData, pOldData->data(), (nOldLen + 1) * sizeof(TCHAR));
-#endif
+			SecureHelper::memcpy_x(m_pchData, (nMinBufLength + 1) * sizeof(TCHAR), pOldData->data(), (nOldLen + 1) * sizeof(TCHAR));
 			GetData()->nDataLength = nOldLen;
 			CString::Release(pOldData);
 		}
@@ -2241,11 +2154,7 @@ public:
 			CStringData* pOldData = GetData();
 			if(AllocBuffer(GetData()->nDataLength))
 			{
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), pOldData->data(), pOldData->nDataLength * sizeof(TCHAR));
-#else
-				memcpy(m_pchData, pOldData->data(), pOldData->nDataLength * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), pOldData->data(), pOldData->nDataLength * sizeof(TCHAR));
 				ATLASSERT(m_pchData[GetData()->nDataLength] == _T('\0'));
 				CString::Release(pOldData);
 			}
@@ -2323,11 +2232,7 @@ protected:
 		{
 			if(dest.AllocBuffer(nNewLen))
 			{
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(dest.m_pchData, (nNewLen + 1) * sizeof(TCHAR), m_pchData + nCopyIndex, nCopyLen * sizeof(TCHAR));
-#else
-				memcpy(dest.m_pchData, m_pchData + nCopyIndex, nCopyLen * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(dest.m_pchData, (nNewLen + 1) * sizeof(TCHAR), m_pchData + nCopyIndex, nCopyLen * sizeof(TCHAR));
 				bRet = TRUE;
 			}
 		}
@@ -2376,11 +2281,7 @@ protected:
 	{
 		if(AllocBeforeWrite(nSrcLen))
 		{
-#if _SECURE_ATL
-			ATL::Checked::memcpy_s(m_pchData, (nSrcLen + 1) * sizeof(TCHAR), lpszSrcData, nSrcLen * sizeof(TCHAR));
-#else
-			memcpy(m_pchData, lpszSrcData, nSrcLen * sizeof(TCHAR));
-#endif
+			SecureHelper::memcpy_x(m_pchData, (nSrcLen + 1) * sizeof(TCHAR), lpszSrcData, nSrcLen * sizeof(TCHAR));
 			GetData()->nDataLength = nSrcLen;
 			m_pchData[nSrcLen] = _T('\0');
 		}
@@ -2410,13 +2311,8 @@ protected:
 			bRet = AllocBuffer(nNewLen);
 			if (bRet)
 			{
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(m_pchData, (nNewLen + 1) * sizeof(TCHAR), lpszSrc1Data, nSrc1Len * sizeof(TCHAR));
-				ATL::Checked::memcpy_s(m_pchData + nSrc1Len, (nNewLen + 1 - nSrc1Len) * sizeof(TCHAR), lpszSrc2Data, nSrc2Len * sizeof(TCHAR));
-#else
-				memcpy(m_pchData, lpszSrc1Data, nSrc1Len * sizeof(TCHAR));
-				memcpy(m_pchData + nSrc1Len, lpszSrc2Data, nSrc2Len * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(m_pchData, (nNewLen + 1) * sizeof(TCHAR), lpszSrc1Data, nSrc1Len * sizeof(TCHAR));
+				SecureHelper::memcpy_x(m_pchData + nSrc1Len, (nNewLen + 1 - nSrc1Len) * sizeof(TCHAR), lpszSrc2Data, nSrc2Len * sizeof(TCHAR));
 			}
 		}
 		return bRet;
@@ -2445,11 +2341,7 @@ protected:
 		else
 		{
 			// fast concatenation when buffer big enough
-#if _SECURE_ATL
-			ATL::Checked::memcpy_s(m_pchData + GetData()->nDataLength, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpszSrcData, nSrcLen * sizeof(TCHAR));
-#else
-			memcpy(m_pchData + GetData()->nDataLength, lpszSrcData, nSrcLen * sizeof(TCHAR));
-#endif
+			SecureHelper::memcpy_x(m_pchData + GetData()->nDataLength, (GetData()->nAllocLength + 1) * sizeof(TCHAR), lpszSrcData, nSrcLen * sizeof(TCHAR));
 			GetData()->nDataLength += nSrcLen;
 			ATLASSERT(GetData()->nDataLength <= GetData()->nAllocLength);
 			m_pchData[GetData()->nDataLength] = _T('\0');
@@ -2463,11 +2355,7 @@ protected:
 			CStringData* pData = GetData();
 			Release();
 			if(AllocBuffer(pData->nDataLength))
-#if _SECURE_ATL
-				ATL::Checked::memcpy_s(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), pData->data(), (pData->nDataLength + 1) * sizeof(TCHAR));
-#else
-				memcpy(m_pchData, pData->data(), (pData->nDataLength + 1) * sizeof(TCHAR));
-#endif
+				SecureHelper::memcpy_x(m_pchData, (GetData()->nAllocLength + 1) * sizeof(TCHAR), pData->data(), (pData->nDataLength + 1) * sizeof(TCHAR));
 		}
 		ATLASSERT(GetData()->nRefs <= 1);
 	}
@@ -2571,18 +2459,6 @@ protected:
 			p = ::CharNext(p);
 		}
 		return (*p == ch) ? p : NULL;
-	}
-
-	static const TCHAR* _cstrrchr(const TCHAR* p, TCHAR ch)
-	{
-		const TCHAR* lpsz = NULL;
-		while (*p != 0)
-		{
-			if (*p == ch)
-				lpsz = p;
-			p = ::CharNext(p);
-		}
-		return lpsz;
 	}
 
 	static TCHAR* _cstrrev(TCHAR* pStr)
@@ -2693,20 +2569,6 @@ protected:
 		return (p[n] != 0) ? &p[n] : NULL;
 	}
 
-	static int _cstrisdigit(TCHAR ch)
-	{
-		WORD type;
-		GetStringTypeEx(GetThreadLocale(), CT_CTYPE1, &ch, 1, &type);
-		return (type & C1_DIGIT) == C1_DIGIT;
-	}
-
-	static int _cstrisspace(TCHAR ch)
-	{
-		WORD type;
-		GetStringTypeEx(GetThreadLocale(), CT_CTYPE1, &ch, 1, &type);
-		return (type & C1_SPACE) == C1_SPACE;
-	}
-
 	static int _cstrcmp(const TCHAR* pstrOne, const TCHAR* pstrOther)
 	{
 		return lstrcmp(pstrOne, pstrOther);
@@ -2730,43 +2592,10 @@ protected:
 		ATLASSERT(nRet != 0);
 		return nRet - 2;   // convert to strcmp convention
 	}
-
-	static int _cstrtoi(const TCHAR* nptr)
-	{
-		int c;       // current char
-		int total;   // current total
-		int sign;    // if '-', then negative, otherwise positive
-
-		while (_cstrisspace(*nptr))
-			++nptr;
-
-		c = (int)(_TUCHAR)*nptr++;
-		sign = c;   // save sign indication
-		if (c == _T('-') || c == _T('+'))
-			c = (int)(_TUCHAR)*nptr++;   // skip sign
-
-		total = 0;
-
-		while (_cstrisdigit((TCHAR)c))
-		{
-			total = 10 * total + (c - '0');   // accumulate digit
-			c = (int)(_TUCHAR)*nptr++;        // get next char
-		}
-
-		if (sign == '-')
-			return -total;
-		else
-			return total;   // return result, negated if necessary
-	}
 #else // !_ATL_MIN_CRT
 	static const TCHAR* _cstrchr(const TCHAR* p, TCHAR ch)
 	{
 		return _tcschr(p, ch);
-	}
-
-	static const TCHAR* _cstrrchr(const TCHAR* p, TCHAR ch)
-	{
-		return _tcsrchr(p, ch);
 	}
 
 	static TCHAR* _cstrrev(TCHAR* pStr)
@@ -2794,16 +2623,6 @@ protected:
 		return _tcspbrk(p, lpszCharSet);
 	}
 
-	static int _cstrisdigit(TCHAR ch)
-	{
-		return _istdigit(ch);
-	}
-
-	static int _cstrisspace(TCHAR ch)
-	{
-		return _istspace((_TUCHAR)ch);
-	}
-
 	static int _cstrcmp(const TCHAR* pstrOne, const TCHAR* pstrOther)
 	{
 		return _tcscmp(pstrOne, pstrOther);
@@ -2825,12 +2644,27 @@ protected:
 		return _tcsicoll(pstrOne, pstrOther);
 	}
 #endif // !_WIN32_WCE
+#endif // !_ATL_MIN_CRT
+
+	static const TCHAR* _cstrrchr(const TCHAR* p, TCHAR ch)
+	{
+		return MinCrtHelper::_strrchr(p, ch);
+	}
+
+	static int _cstrisdigit(TCHAR ch)
+	{
+		return MinCrtHelper::_isdigit(ch);
+	}
+
+	static int _cstrisspace(TCHAR ch)
+	{
+		return MinCrtHelper::_isspace(ch);
+	}
 
 	static int _cstrtoi(const TCHAR* nptr)
 	{
-		return _ttoi(nptr);
+		return MinCrtHelper::_atoi(nptr);
 	}
-#endif // !_ATL_MIN_CRT
 
 	static const TCHAR* _cstrchr_db(const TCHAR* p, TCHAR ch1, TCHAR ch2)
 	{
@@ -3024,11 +2858,7 @@ public:
 		{
 			T* pT = static_cast<T*>(this);
 			pT;   // avoid level 4 warning
-#if _SECURE_ATL
-			ATL::Checked::tcsncpy_s(m_szNoEntries, _countof(m_szNoEntries), pT->GetMRUEmptyText(), _TRUNCATE);
-#else
-			lstrcpyn(m_szNoEntries, pT->GetMRUEmptyText(), t_cchItemLen);
-#endif
+			SecureHelper::strncpy_x(m_szNoEntries, _countof(m_szNoEntries), pT->GetMRUEmptyText(), _TRUNCATE);
 		}
 	}
 
@@ -3071,12 +2901,9 @@ public:
 	BOOL AddToList(LPCTSTR lpstrDocName)
 	{
 		_DocEntry de;
-#if _SECURE_ATL
-		ATL::Checked::tcsncpy_s(de.szDocName, _countof(de.szDocName), lpstrDocName, _TRUNCATE);
-#else
-		if(lstrcpyn(de.szDocName, lpstrDocName, t_cchItemLen) == NULL)
+		errno_t nRet = SecureHelper::strncpy_x(de.szDocName, _countof(de.szDocName), lpstrDocName, _TRUNCATE);
+		if(nRet != 0 && nRet != STRUNCATE)
 			return FALSE;
-#endif
 
 		for(int i = 0; i < m_arrDocs.GetSize(); i++)
 		{
@@ -3115,14 +2942,11 @@ public:
 		int nIndex = m_arrDocs.GetSize() - (nItemID - t_nFirstID) - 1;
 		if(nIndex < 0 || nIndex >= m_arrDocs.GetSize())
 			return FALSE;
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(lpstrDocName, cchLength, m_arrDocs[nIndex].szDocName);
-		return TRUE;
-#else
 		if(lstrlen(m_arrDocs[nIndex].szDocName) >= cchLength)
 			return FALSE;
-		return (lstrcpy(lpstrDocName, m_arrDocs[nIndex].szDocName) != NULL);
-#endif
+		SecureHelper::strcpy_x(lpstrDocName, cchLength, m_arrDocs[nIndex].szDocName);
+
+		return TRUE;
 	}
 
 #if defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
@@ -3168,8 +2992,8 @@ public:
 	BOOL ReadFromRegistry(LPCTSTR lpstrRegKey)
 	{
 		T* pT = static_cast<T*>(this);
-		ATL::CRegKey rkParent;
-		ATL::CRegKey rk;
+		CRegKeyEx rkParent;
+		CRegKeyEx rk;
 
 		LONG lRet = rkParent.Open(HKEY_CURRENT_USER, lpstrRegKey);
 		if(lRet != ERROR_SUCCESS)
@@ -3179,11 +3003,7 @@ public:
 			return FALSE;
 
 		DWORD dwRet = 0;
-#if (_ATL_VER >= 0x0700)
 		lRet = rk.QueryDWORDValue(pT->GetRegCountName(), dwRet);
-#else
-		lRet = rk.QueryValue(dwRet, pT->GetRegCountName());
-#endif
 		if(lRet != ERROR_SUCCESS)
 			return FALSE;
 		SetMaxEntries(dwRet);
@@ -3196,28 +3016,14 @@ public:
 		for(int nItem = m_nMaxEntries; nItem > 0; nItem--)
 		{
 			TCHAR szBuff[m_cchItemNameLen] = { 0 };
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT)
-			_stprintf_s(szBuff, m_cchItemNameLen, pT->GetRegItemName(), nItem);
-#else
-			wsprintf(szBuff, pT->GetRegItemName(), nItem);
-#endif
-#if (_ATL_VER >= 0x0700)
+			SecureHelper::wsprintf_x(szBuff, m_cchItemNameLen, pT->GetRegItemName(), nItem);
 			ULONG ulCount = t_cchItemLen;
 			lRet = rk.QueryStringValue(szBuff, szRetString, &ulCount);
-#else
-			DWORD dwCount = t_cchItemLen * sizeof(TCHAR);
-			lRet = rk.QueryValue(szRetString, szBuff, &dwCount);
-#endif
-#if _SECURE_ATL
 			if(lRet == ERROR_SUCCESS)
 			{
-				ATL::Checked::tcscpy_s(de.szDocName, _countof(de.szDocName), szRetString);
+				SecureHelper::strcpy_x(de.szDocName, _countof(de.szDocName), szRetString);
 				m_arrDocs.Add(de);
 			}
-#else
-			if(lRet == ERROR_SUCCESS && (lstrcpy(de.szDocName, szRetString) != NULL))
-				m_arrDocs.Add(de);
-#endif
 		}
 
 		rk.Close();
@@ -3230,8 +3036,8 @@ public:
 	{
 		T* pT = static_cast<T*>(this);
 		pT;   // avoid level 4 warning
-		ATL::CRegKey rkParent;
-		ATL::CRegKey rk;
+		CRegKeyEx rkParent;
+		CRegKeyEx rk;
 
 		LONG lRet = rkParent.Create(HKEY_CURRENT_USER, lpstrRegKey);
 		if(lRet != ERROR_SUCCESS)
@@ -3240,11 +3046,7 @@ public:
 		if(lRet != ERROR_SUCCESS)
 			return FALSE;
 
-#if (_ATL_VER >= 0x0700)
 		lRet = rk.SetDWORDValue(pT->GetRegCountName(), m_nMaxEntries);
-#else
-		lRet = rk.SetValue(m_nMaxEntries, pT->GetRegCountName());
-#endif
 		ATLASSERT(lRet == ERROR_SUCCESS);
 
 		// set new values
@@ -3252,18 +3054,10 @@ public:
 		for(nItem = m_arrDocs.GetSize(); nItem > 0; nItem--)
 		{
 			TCHAR szBuff[m_cchItemNameLen] = { 0 };
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT)
-			_stprintf_s(szBuff, m_cchItemNameLen, pT->GetRegItemName(), nItem);
-#else
-			wsprintf(szBuff, pT->GetRegItemName(), nItem);
-#endif
+			SecureHelper::wsprintf_x(szBuff, m_cchItemNameLen, pT->GetRegItemName(), nItem);
 			TCHAR szDocName[t_cchItemLen] = { 0 };
 			GetFromList(t_nFirstID + nItem - 1, szDocName, t_cchItemLen);
-#if (_ATL_VER >= 0x0700)
 			lRet = rk.SetStringValue(szBuff, szDocName);
-#else
-			lRet = rk.SetValue(szDocName, szBuff);
-#endif
 			ATLASSERT(lRet == ERROR_SUCCESS);
 		}
 
@@ -3271,11 +3065,7 @@ public:
 		for(nItem = m_arrDocs.GetSize() + 1; nItem < m_nMaxEntries_Max; nItem++)
 		{
 			TCHAR szBuff[m_cchItemNameLen] = { 0 };
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT)
-			_stprintf_s(szBuff, m_cchItemNameLen, pT->GetRegItemName(), nItem);
-#else
-			wsprintf(szBuff, pT->GetRegItemName(), nItem);
-#endif
+			SecureHelper::wsprintf_x(szBuff, m_cchItemNameLen, pT->GetRegItemName(), nItem);
 			rk.DeleteValue(szBuff);
 		}
 
@@ -3321,11 +3111,7 @@ public:
 			{
 				if(m_cchMaxItemLen == -1)
 				{
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT)
-					_stprintf_s(szItemText, t_cchItemLen + 6, _T("&%i %s"), nItem + 1, m_arrDocs[nSize - 1 - nItem].szDocName);
-#else
-					wsprintf(szItemText, _T("&%i %s"), nItem + 1, m_arrDocs[nSize - 1 - nItem].szDocName);
-#endif
+					SecureHelper::wsprintf_x(szItemText, t_cchItemLen + 6, _T("&%i %s"), nItem + 1, m_arrDocs[nSize - 1 - nItem].szDocName);
 				}
 				else
 				{
@@ -3335,11 +3121,7 @@ public:
 					bool bRet = pT->CompactDocumentName(szBuff, m_arrDocs[nSize - 1 - nItem].szDocName, m_cchMaxItemLen);
 					bRet;   // avoid level 4 warning
 					ATLASSERT(bRet);
-#if _SECURE_ATL && !defined(_ATL_MIN_CRT)
-					_stprintf_s(szItemText, t_cchItemLen + 6, _T("&%i %s"), nItem + 1, szBuff);
-#else
-					wsprintf(szItemText, _T("&%i %s"), nItem + 1, szBuff);
-#endif
+					SecureHelper::wsprintf_x(szItemText, t_cchItemLen + 6, _T("&%i %s"), nItem + 1, szBuff);
 				}
 				::InsertMenu(m_hMenu, nInsertPoint + nItem, MF_BYPOSITION | MF_STRING, t_nFirstID + nItem, szItemText);
 			}
@@ -3442,13 +3224,11 @@ public:
 		ATLASSERT(m_hFind != NULL);
 		if(lstrlen(m_fd.cFileName) >= cchLength)
 			return FALSE;
-#if _SECURE_ATL
+
 		if(m_bFound)
-			ATL::Checked::tcscpy_s(lpstrFileName, cchLength, m_fd.cFileName);
+			SecureHelper::strcpy_x(lpstrFileName, cchLength, m_fd.cFileName);
+
 		return m_bFound;
-#else
-		return (m_bFound && (lstrcpy(lpstrFileName, m_fd.cFileName) != NULL));
-#endif
 	}
 
 	BOOL GetFilePath(LPTSTR lpstrFilePath, int cchLength) const
@@ -3470,35 +3250,17 @@ public:
 		if((lstrlen(m_lpszRoot) + (bAddSep ?  1 : 0)) >= cchLength)
 			return FALSE;
 
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(lpstrFilePath, cchLength, m_lpszRoot);
-		BOOL bRet = TRUE;
-#else
-		BOOL bRet = (lstrcpy(lpstrFilePath, m_lpszRoot) != NULL);
-#endif
-		if(bRet)
-		{
-			if(bAddSep)
-			{
-				TCHAR szSeparator[2] = { m_chDirSeparator, 0 };
-#if _SECURE_ATL
-				ATL::Checked::tcscat_s(lpstrFilePath, cchLength, szSeparator);
-#else
-				bRet = (lstrcat(lpstrFilePath, szSeparator) != NULL);
-#endif
-			}
+		SecureHelper::strcpy_x(lpstrFilePath, cchLength, m_lpszRoot);
 
-			if(bRet)
-			{
-#if _SECURE_ATL
-				ATL::Checked::tcscat_s(lpstrFilePath, cchLength, m_fd.cFileName);
-#else
-				bRet = (lstrcat(lpstrFilePath, m_fd.cFileName) != NULL);
-#endif
-			}
+		if(bAddSep)
+		{
+			TCHAR szSeparator[2] = { m_chDirSeparator, 0 };
+			SecureHelper::strcat_x(lpstrFilePath, cchLength, szSeparator);
 		}
 
-		return bRet;
+		SecureHelper::strcat_x(lpstrFilePath, cchLength, m_fd.cFileName);
+
+		return TRUE;
 	}
 
 #ifndef _WIN32_WCE
@@ -3514,15 +3276,11 @@ public:
 			return FALSE;
 
 		// find the last dot
-		LPTSTR pstrDot  = (LPTSTR)_cstrrchr(szBuff, _T('.'));
+		LPTSTR pstrDot  = MinCrtHelper::_strrchr(szBuff, _T('.'));
 		if(pstrDot != NULL)
 			*pstrDot = 0;
 
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(lpstrFileTitle, cchLength, szBuff);
-#else
-		lstrcpy(lpstrFileTitle, szBuff);
-#endif
+		SecureHelper::strcpy_x(lpstrFileTitle, cchLength, szBuff);
 
 		return TRUE;
 	}
@@ -3538,15 +3296,10 @@ public:
 		LPCTSTR lpstrFileURLPrefix = _T("file://");
 		if(lstrlen(szBuff) + lstrlen(lpstrFileURLPrefix) >= cchLength)
 			return FALSE;
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(lpstrFileURL, cchLength, lpstrFileURLPrefix);
-		ATL::Checked::tcscat_s(lpstrFileURL, cchLength, szBuff);
+		SecureHelper::strcpy_x(lpstrFileURL, cchLength, lpstrFileURLPrefix);
+		SecureHelper::strcat_x(lpstrFileURL, cchLength, szBuff);
+
 		return TRUE;
-#else
-		if(lstrcpy(lpstrFileURL, lpstrFileURLPrefix) == NULL)
-			return FALSE;
-		return (lstrcat(lpstrFileURL, szBuff) != NULL);
-#endif
 	}
 
 	BOOL GetRoot(LPTSTR lpstrRoot, int cchLength) const
@@ -3554,12 +3307,10 @@ public:
 		ATLASSERT(m_hFind != NULL);
 		if(lstrlen(m_lpszRoot) >= cchLength)
 			return FALSE;
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(lpstrRoot, cchLength, m_lpszRoot);
+
+		SecureHelper::strcpy_x(lpstrRoot, cchLength, m_lpszRoot);
+
 		return TRUE;
-#else
-		return (lstrcpy(lpstrRoot, m_lpszRoot) != NULL);
-#endif
 	}
 
 #if defined(_WTL_USE_CSTRING) || defined(__ATLSTR_H__)
@@ -3749,11 +3500,7 @@ public:
 			return FALSE;
 		}
 
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(m_fd.cFileName, _countof(m_fd.cFileName), pstrName);
-#else
-		lstrcpy(m_fd.cFileName, pstrName);
-#endif
+		SecureHelper::strcpy_x(m_fd.cFileName, _countof(m_fd.cFileName), pstrName);
 
 		m_hFind = ::FindFirstFile(pstrName, &m_fd);
 
@@ -3763,12 +3510,8 @@ public:
 #ifndef _WIN32_WCE
 		bool bFullPath = (::GetFullPathName(pstrName, MAX_PATH, m_lpszRoot, NULL) != 0);
 #else // CE specific
-  #if _SECURE_ATL
-		ATL::Checked::tcsncpy_s(m_lpszRoot, _countof(m_lpszRoot), pstrName, _TRUNCATE);
-		bool bFullPath = true;
-  #else
-		bool bFullPath = (lstrcpyn(m_lpszRoot, pstrName, MAX_PATH) != NULL);
-  #endif
+		errno_t nRet = SecureHelper::strncpy_x(m_lpszRoot, _countof(m_lpszRoot), pstrName, _TRUNCATE);
+		bool bFullPath = (nRet == 0 || nRet == STRUNCATE);
 #endif // _WIN32_WCE
 
 		// passed name isn't a valid path but was found by the API
@@ -3782,8 +3525,8 @@ public:
 		else
 		{
 			// find the last forward or backward whack
-			LPTSTR pstrBack  = (LPTSTR)_cstrrchr(m_lpszRoot, _T('\\'));
-			LPTSTR pstrFront = (LPTSTR)_cstrrchr(m_lpszRoot, _T('/'));
+			LPTSTR pstrBack  = MinCrtHelper::_strrchr(m_lpszRoot, _T('\\'));
+			LPTSTR pstrFront = MinCrtHelper::_strrchr(m_lpszRoot, _T('/'));
 
 			if(pstrFront != NULL || pstrBack != NULL)
 			{
@@ -3831,178 +3574,7 @@ public:
 			m_hFind = NULL;
 		}
 	}
-
-// Helper
-	static const TCHAR* _cstrrchr(const TCHAR* p, TCHAR ch)
-	{
-#ifdef _ATL_MIN_CRT
-		const TCHAR* lpsz = NULL;
-		while (*p != 0)
-		{
-			if (*p == ch)
-				lpsz = p;
-			p = ::CharNext(p);
-		}
-		return lpsz;
-#else // !_ATL_MIN_CRT
-		return _tcsrchr(p, ch);
-#endif // !_ATL_MIN_CRT
-	}
 };
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Global functions for loading resources
-
-inline HACCEL AtlLoadAccelerators(ATL::_U_STRINGorID table)
-{
-	return ::LoadAccelerators(ModuleHelper::GetResourceInstance(), table.m_lpstr);
-}
-
-inline HMENU AtlLoadMenu(ATL::_U_STRINGorID menu)
-{
-	return ::LoadMenu(ModuleHelper::GetResourceInstance(), menu.m_lpstr);
-}
-
-inline HBITMAP AtlLoadBitmap(ATL::_U_STRINGorID bitmap)
-{
-	return ::LoadBitmap(ModuleHelper::GetResourceInstance(), bitmap.m_lpstr);
-}
-
-#ifdef OEMRESOURCE
-inline HBITMAP AtlLoadSysBitmap(ATL::_U_STRINGorID bitmap)
-{
-#ifdef _DEBUG
-	WORD wID = (WORD)bitmap.m_lpstr;
-	ATLASSERT(wID >= 32734 && wID <= 32767);
-#endif // _DEBUG
-	return ::LoadBitmap(NULL, bitmap.m_lpstr);
-}
-#endif // OEMRESOURCE
-
-inline HCURSOR AtlLoadCursor(ATL::_U_STRINGorID cursor)
-{
-	return ::LoadCursor(ModuleHelper::GetResourceInstance(), cursor.m_lpstr);
-}
-
-inline HCURSOR AtlLoadSysCursor(LPCTSTR lpCursorName)
-{
-#if (WINVER >= 0x0500)
-	ATLASSERT(lpCursorName == IDC_ARROW || lpCursorName == IDC_IBEAM || lpCursorName == IDC_WAIT ||
-		lpCursorName == IDC_CROSS || lpCursorName == IDC_UPARROW || lpCursorName == IDC_SIZE ||
-		lpCursorName == IDC_ICON || lpCursorName == IDC_SIZENWSE || lpCursorName == IDC_SIZENESW ||
-		lpCursorName == IDC_SIZEWE || lpCursorName == IDC_SIZENS || lpCursorName == IDC_SIZEALL ||
-		lpCursorName == IDC_NO || lpCursorName == IDC_APPSTARTING || lpCursorName == IDC_HELP ||
-		lpCursorName == IDC_HAND);
-#else // !(WINVER >= 0x0500)
-	ATLASSERT(lpCursorName == IDC_ARROW || lpCursorName == IDC_IBEAM || lpCursorName == IDC_WAIT ||
-		lpCursorName == IDC_CROSS || lpCursorName == IDC_UPARROW || lpCursorName == IDC_SIZE ||
-		lpCursorName == IDC_ICON || lpCursorName == IDC_SIZENWSE || lpCursorName == IDC_SIZENESW ||
-		lpCursorName == IDC_SIZEWE || lpCursorName == IDC_SIZENS || lpCursorName == IDC_SIZEALL ||
-		lpCursorName == IDC_NO || lpCursorName == IDC_APPSTARTING || lpCursorName == IDC_HELP);
-#endif // !(WINVER >= 0x0500)
-	return ::LoadCursor(NULL, lpCursorName);
-}
-
-inline HICON AtlLoadIcon(ATL::_U_STRINGorID icon)
-{
-	return ::LoadIcon(ModuleHelper::GetResourceInstance(), icon.m_lpstr);
-}
-
-#ifndef _WIN32_WCE
-inline HICON AtlLoadSysIcon(LPCTSTR lpIconName)
-{
-#if (WINVER >= 0x0600)
-	ATLASSERT(lpIconName == IDI_APPLICATION || lpIconName == IDI_ASTERISK || lpIconName == IDI_EXCLAMATION ||
-	          lpIconName == IDI_HAND || lpIconName == IDI_QUESTION || lpIconName == IDI_WINLOGO ||
-	          lpIconName == IDI_SHIELD);
-#else // !(WINVER >= 0x0600)
-	ATLASSERT(lpIconName == IDI_APPLICATION || lpIconName == IDI_ASTERISK || lpIconName == IDI_EXCLAMATION ||
-	          lpIconName == IDI_HAND || lpIconName == IDI_QUESTION || lpIconName == IDI_WINLOGO);
-#endif // !(WINVER >= 0x0600)
-	return ::LoadIcon(NULL, lpIconName);
-}
-#endif // !_WIN32_WCE
-
-inline HBITMAP AtlLoadBitmapImage(ATL::_U_STRINGorID bitmap, UINT fuLoad = LR_DEFAULTCOLOR)
-{
-	return (HBITMAP)::LoadImage(ModuleHelper::GetResourceInstance(), bitmap.m_lpstr, IMAGE_BITMAP, 0, 0, fuLoad);
-}
-
-inline HCURSOR AtlLoadCursorImage(ATL::_U_STRINGorID cursor, UINT fuLoad = LR_DEFAULTCOLOR | LR_DEFAULTSIZE, int cxDesired = 0, int cyDesired = 0)
-{
-	return (HCURSOR)::LoadImage(ModuleHelper::GetResourceInstance(), cursor.m_lpstr, IMAGE_CURSOR, cxDesired, cyDesired, fuLoad);
-}
-
-inline HICON AtlLoadIconImage(ATL::_U_STRINGorID icon, UINT fuLoad = LR_DEFAULTCOLOR | LR_DEFAULTSIZE, int cxDesired = 0, int cyDesired = 0)
-{
-	return (HICON)::LoadImage(ModuleHelper::GetResourceInstance(), icon.m_lpstr, IMAGE_ICON, cxDesired, cyDesired, fuLoad);
-}
-
-#ifdef OEMRESOURCE
-inline HBITMAP AtlLoadSysBitmapImage(WORD wBitmapID, UINT fuLoad = LR_DEFAULTCOLOR)
-{
-	ATLASSERT(wBitmapID >= 32734 && wBitmapID <= 32767);
-	ATLASSERT((fuLoad & LR_LOADFROMFILE) == 0);   // this one doesn't load from a file
-	return (HBITMAP)::LoadImage(NULL, MAKEINTRESOURCE(wBitmapID), IMAGE_BITMAP, 0, 0, fuLoad);
-}
-#endif // OEMRESOURCE
-
-inline HCURSOR AtlLoadSysCursorImage(ATL::_U_STRINGorID cursor, UINT fuLoad = LR_DEFAULTCOLOR | LR_DEFAULTSIZE, int cxDesired = 0, int cyDesired = 0)
-{
-#ifdef _DEBUG
-	WORD wID = (WORD)cursor.m_lpstr;
-	ATLASSERT((wID >= 32512 && wID <= 32516) || (wID >= 32640 && wID <= 32648) || (wID == 32650) || (wID == 32651));
-	ATLASSERT((fuLoad & LR_LOADFROMFILE) == 0);   // this one doesn't load from a file
-#endif // _DEBUG
-	return (HCURSOR)::LoadImage(NULL, cursor.m_lpstr, IMAGE_CURSOR, cxDesired, cyDesired, fuLoad);
-}
-
-inline HICON AtlLoadSysIconImage(ATL::_U_STRINGorID icon, UINT fuLoad = LR_DEFAULTCOLOR | LR_DEFAULTSIZE, int cxDesired = 0, int cyDesired = 0)
-{
-#ifdef _DEBUG
-	WORD wID = (WORD)icon.m_lpstr;
-	ATLASSERT(wID >= 32512 && wID <= 32517);
-	ATLASSERT((fuLoad & LR_LOADFROMFILE) == 0);   // this one doesn't load from a file
-#endif // _DEBUG
-	return (HICON)::LoadImage(NULL, icon.m_lpstr, IMAGE_ICON, cxDesired, cyDesired, fuLoad);
-}
-
-#if (_ATL_VER < 0x0700)
-inline int AtlLoadString(UINT uID, LPTSTR lpBuffer, int nBufferMax)
-{
-	return ::LoadString(_Module.GetResourceInstance(), uID, lpBuffer, nBufferMax);
-}
-#endif // (_ATL_VER < 0x0700)
-
-inline bool AtlLoadString(UINT uID, BSTR& bstrText)
-{
-	USES_CONVERSION;
-	ATLASSERT(bstrText == NULL);
-
-	LPTSTR lpstrText = NULL;
-	int nRes = 0;
-	for(int nLen = 256; ; nLen *= 2)
-	{
-		ATLTRY(lpstrText = new TCHAR[nLen]);
-		if(lpstrText == NULL)
-			break;
-		nRes = ::LoadString(ModuleHelper::GetResourceInstance(), uID, lpstrText, nLen);
-		if(nRes < nLen - 1)
-			break;
-		delete [] lpstrText;
-		lpstrText = NULL;
-	}
-
-	if(lpstrText != NULL)
-	{
-		if(nRes != 0)
-			bstrText = ::SysAllocString(T2OLE(lpstrText));
-		delete [] lpstrText;
-	}
-
-	return (bstrText != NULL) ? true : false;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4077,12 +3649,8 @@ inline bool AtlCompactPath(LPTSTR lpstrOut, LPCTSTR lpstrIn, int cchLen)
 
 	if(lstrlen(lpstrIn) < cchLen)
 	{
-#if _SECURE_ATL
-		ATL::Checked::tcscpy_s(lpstrOut, cchLen, lpstrIn);
+		SecureHelper::strcpy_x(lpstrOut, cchLen, lpstrIn);
 		return true;
-#else
-		return (lstrcpy(lpstrOut, lpstrIn) != NULL);
-#endif
 	}
 
 	lpstrOut[0] = 0;
@@ -4108,22 +3676,14 @@ inline bool AtlCompactPath(LPTSTR lpstrOut, LPCTSTR lpstrIn, int cchLen)
 	// handle just the filename without a path
 	if(lpstrFileName == lpstrIn && cchLen > cchEndEllipsis)
 	{
-#if _SECURE_ATL
-		bool bRet = (ATL::Checked::tcsncpy_s(lpstrOut, cchLen, lpstrIn, cchLen - cchEndEllipsis - 1) == 0);
-#else
-		bool bRet = (lstrcpyn(lpstrOut, lpstrIn, cchLen - cchEndEllipsis) != NULL);
-#endif
+		bool bRet = (SecureHelper::strncpy_x(lpstrOut, cchLen, lpstrIn, cchLen - cchEndEllipsis - 1) == 0);
 		if(bRet)
 		{
 #ifndef _UNICODE
 			if(_IsDBCSTrailByte(lpstrIn, cchLen - cchEndEllipsis))
 				lpstrOut[cchLen - cchEndEllipsis - 1] = 0;
 #endif // _UNICODE
-#if _SECURE_ATL
-			ATL::Checked::tcscat_s(lpstrOut, cchLen, szEllipsis);
-#else
-			bRet = (lstrcat(lpstrOut, szEllipsis) != NULL);
-#endif
+			SecureHelper::strcat_x(lpstrOut, cchLen, szEllipsis);
 		}
 		return bRet;
 	}
@@ -4148,39 +3708,23 @@ inline bool AtlCompactPath(LPTSTR lpstrOut, LPCTSTR lpstrIn, int cchLen)
 		cchToCopy--;
 #endif // _UNICODE
 
-#if _SECURE_ATL
-	bool bRet = (ATL::Checked::tcsncpy_s(lpstrOut, cchLen, lpstrIn, cchToCopy) == 0);
-#else
-	bool bRet = (lstrcpyn(lpstrOut, lpstrIn, cchToCopy + 1) != NULL);
-#endif
+	bool bRet = (SecureHelper::strncpy_x(lpstrOut, cchLen, lpstrIn, cchToCopy) == 0);
 	if(!bRet)
 		return false;
 
 	// add ellipsis
-#if _SECURE_ATL
-	ATL::Checked::tcscat_s(lpstrOut, cchLen, szEllipsis);
-#else
-	bRet = (lstrcat(lpstrOut, szEllipsis) != NULL);
-#endif
+	SecureHelper::strcat_x(lpstrOut, cchLen, szEllipsis);
 	if(!bRet)
 		return false;
 	TCHAR szSlash[2] = { chSlash, 0 };
-#if _SECURE_ATL
-	ATL::Checked::tcscat_s(lpstrOut, cchLen, szSlash);
-#else
-	bRet = (lstrcat(lpstrOut, szSlash) != NULL);
-#endif
+	SecureHelper::strcat_x(lpstrOut, cchLen, szSlash);
 	if(!bRet)
 		return false;
 
 	// add filename (and ellipsis, if needed)
 	if(cchLen > (cchMidEllipsis + cchFileName))
 	{
-#if _SECURE_ATL
-		ATL::Checked::tcscat_s(lpstrOut, cchLen, lpstrFileName);
-#else
-		bRet = (lstrcat(lpstrOut, lpstrFileName) != NULL);
-#endif
+		SecureHelper::strcat_x(lpstrOut, cchLen, lpstrFileName);
 	}
 	else
 	{
@@ -4189,17 +3733,9 @@ inline bool AtlCompactPath(LPTSTR lpstrOut, LPCTSTR lpstrIn, int cchLen)
 		if(cchToCopy > 0 && _IsDBCSTrailByte(lpstrFileName, cchToCopy))
 			cchToCopy--;
 #endif // _UNICODE
-#if _SECURE_ATL
-		bRet = (ATL::Checked::tcsncpy_s(&lpstrOut[cchMidEllipsis], cchLen - cchMidEllipsis, lpstrFileName, cchToCopy) == 0);
-#else
-		bRet = (lstrcpyn(&lpstrOut[cchMidEllipsis], lpstrFileName, cchToCopy + 1) != NULL);
-#endif
+		bRet = (SecureHelper::strncpy_x(&lpstrOut[cchMidEllipsis], cchLen - cchMidEllipsis, lpstrFileName, cchToCopy) == 0);
 		if(bRet)
-#if _SECURE_ATL
-			ATL::Checked::tcscat_s(lpstrOut, cchLen, szEllipsis);
-#else
-			bRet = (lstrcat(lpstrOut, szEllipsis) != NULL);
-#endif
+			SecureHelper::strcat_x(lpstrOut, cchLen, szEllipsis);
 	}
 
 	return bRet;

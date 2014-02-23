@@ -1,9 +1,9 @@
-// Windows Template Library - WTL version 8.0
-// Copyright (C) Microsoft Corporation. All rights reserved.
+// Windows Template Library - WTL version 9.0
+// Copyright (C) Microsoft Corporation, WTL Team. All rights reserved.
 //
 // This file is a part of the Windows Template Library.
 // The use and distribution terms for this software are covered by the
-// Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+// Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 // which can be found in the file CPL.TXT at the root of this distribution.
 // By using this software in any fashion, you are agreeing to be bound by
 // the terms of this license. You must not remove this notice, or
@@ -13,10 +13,6 @@
 #define __ATLSCRL_H__
 
 #pragma once
-
-#ifndef __cplusplus
-	#error ATL requires C++ compilation (use a .cpp suffix)
-#endif
 
 #ifndef __ATLAPP_H__
 	#error atlscrl.h requires atlapp.h to be included first
@@ -32,10 +28,6 @@
 
 #ifndef GET_WHEEL_DELTA_WPARAM
   #define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
-#endif
-
-#ifndef WM_MOUSEHWHEEL
-  #define WM_MOUSEHWHEEL                  0x020E
 #endif
 
 
@@ -613,8 +605,10 @@ public:
 		if(wParam != NULL)
 		{
 			CDCHandle dc = (HDC)wParam;
-			dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y);
+			POINT ptViewportOrg = { 0, 0 };
+			dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y, &ptViewportOrg);
 			pT->DoPaint(dc);
+			dc.SetViewportOrg(ptViewportOrg);
 		}
 		else
 		{
@@ -1138,13 +1132,21 @@ public:
 		if(wParam != NULL)
 		{
 			CDCHandle dc = (HDC)wParam;
+			int nMapModeSav = dc.GetMapMode();
 			dc.SetMapMode(m_nMapMode);
+			POINT ptViewportOrg = { 0, 0 };
 			if(m_nMapMode == MM_TEXT)
-				dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y);
+				dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y, &ptViewportOrg);
 			else
-				dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y + m_sizeAll.cy);
-			dc.SetWindowOrg(m_rectLogAll.left, m_rectLogAll.top);
+				dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y + m_sizeAll.cy, &ptViewportOrg);
+			POINT ptWindowOrg = { 0, 0 };
+			dc.SetWindowOrg(m_rectLogAll.left, m_rectLogAll.top, &ptWindowOrg);
+
 			pT->DoPaint(dc);
+
+			dc.SetMapMode(nMapModeSav);
+			dc.SetViewportOrg(ptViewportOrg);
+			dc.SetWindowOrg(ptWindowOrg);
 		}
 		else
 		{
@@ -1434,28 +1436,32 @@ public:
 
 		fZoomScale = max(fZoomScale, m_fZoomScaleMin);
 
+		T* pT = static_cast<T*>(this);
 		POINT pt = { x, y };
-		if(!PtInDevRect(pt))
+		if(!pT->PtInDevRect(pt))
 			return;
-		ViewDPtoLP(&pt);
-		Zoom(fZoomScale, FALSE);
-		CenterOnLogicalPoint(pt);
+
+		pT->ViewDPtoLP(&pt);
+		pT->Zoom(fZoomScale, false);
+		pT->CenterOnLogicalPoint(pt);
 	}
 
 	void Zoom(POINT pt, float fZoomScale)
 	{
-		Zoom(pt.x, pt.y, fZoomScale);
+		T* pT = static_cast<T*>(this);
+		pT->Zoom(pt.x, pt.y, fZoomScale);
 	}
 
 	void Zoom(RECT& rc)
 	{
+		T* pT = static_cast<T*>(this);
 		RECT rcZoom = rc;
-		NormalizeRect(rcZoom);
+		pT->NormalizeRect(rcZoom);
 		SIZE size = { rcZoom.right - rcZoom.left, rcZoom.bottom - rcZoom.top };
 		POINT pt = { rcZoom.left + size.cx / 2, rcZoom.top + size.cy / 2 };
 		if(size.cx < m_cxyMinZoomRect || size.cy < m_cxyMinZoomRect)
 		{
-			Zoom(pt, m_fZoomScale + m_fZoomDelta);
+			pT->Zoom(pt, m_fZoomScale + m_fZoomDelta);
 			return;
 		}
 
@@ -1464,7 +1470,7 @@ public:
 		float fScaleH = (float)(m_sizeClient.cx  + 1) / (float)size.cx;
 		float fScaleV = (float)(m_sizeClient.cy + 1) / (float)size.cy;
 		float fZoomScale = min(fScaleH, fScaleV) * m_fZoomScale;
-		Zoom(pt, fZoomScale);		
+		pT->Zoom(pt, fZoomScale);		
 	}
 
 	void Zoom(float fZoomScale, bool bCenter = true)
@@ -1475,15 +1481,15 @@ public:
 		fZoomScale = max(fZoomScale, m_fZoomScaleMin);
 
 
+		T* pT = static_cast<T*>(this);
 		POINT pt = { 0 };
 		if(bCenter)
 		{
-			T* pT = static_cast<T*>(this);
 			RECT rc;
 			::GetClientRect(pT->m_hWnd, &rc);
 			pt.x = rc.right / 2;
 			pt.y = rc.bottom / 2;
-			ViewDPtoLP(&pt);
+			pT->ViewDPtoLP(&pt);
 		}
 
 		// Modify the Viewport extent
@@ -1496,7 +1502,7 @@ public:
 		CScrollImpl< T >::SetScrollSize(sizeAll);
 
 		if(bCenter)
-			CenterOnLogicalPoint(pt);
+			pT->CenterOnLogicalPoint(pt);
 	}
 
 	// Helper functions
@@ -1516,7 +1522,7 @@ public:
 		ATLASSERT(::IsWindow(pT->m_hWnd));
 
 		CWindowDC dc(pT->m_hWnd);
-		PrepareDC(dc.m_hDC);
+		pT->PrepareDC(dc.m_hDC);
 		dc.DPtoLP(lpPoints, nCount);
 	}
 
@@ -1527,7 +1533,7 @@ public:
 		ATLASSERT(::IsWindow(pT->m_hWnd));
 	
 		CWindowDC dc(pT->m_hWnd);
-		PrepareDC(dc.m_hDC);
+		pT->PrepareDC(dc.m_hDC);
 		dc.LPtoDP(lpPoints, nCount);
 	}
 
@@ -1578,9 +1584,10 @@ public:
 
 	void CenterOnLogicalPoint(POINT ptLog)
 	{
-		ViewLPtoDP(&ptLog);
-		DeviceToClient(ptLog);
-		CenterOnPoint(ptLog);
+		T* pT = static_cast<T*>(this);
+		pT->ViewLPtoDP(&ptLog);
+		pT->DeviceToClient(ptLog);
+		pT->CenterOnPoint(ptLog);
 	}
 
 	BOOL PtInDevRect(POINT pt)
@@ -1608,12 +1615,12 @@ public:
 
 	void DrawTrackRect()
 	{
+		T* pT = static_cast<T*>(this);
 		const SIZE sizeLines = { 2, 2 };
 		RECT rc = m_rcTrack;
-		NormalizeRect(rc);
+		pT->NormalizeRect(rc);
 		if(!::IsRectEmpty(&rc))
 		{
-			T* pT = static_cast<T*>(this);
 			::MapWindowPoints(pT->m_hWnd, NULL, (LPPOINT)&rc, 2);
 			CWindowDC dc(NULL);
 			dc.DrawDragRect(&rc, sizeLines, NULL, sizeLines);
@@ -1670,13 +1677,26 @@ public:
 		if(wParam != NULL)
 		{
 			CDCHandle dc = (HDC)wParam;
-			PrepareDC(dc);
+			int nMapModeSav = dc.GetMapMode();
+			dc.SetMapMode(MM_ANISOTROPIC);
+			SIZE szWindowExt = { 0, 0 };
+			dc.SetWindowExt(m_sizeLogAll, &szWindowExt);
+			SIZE szViewportExt = { 0, 0 };
+			dc.SetViewportExt(m_sizeAll, &szViewportExt);
+			POINT ptViewportOrg = { 0, 0 };
+			dc.SetViewportOrg(-m_ptOffset.x, -m_ptOffset.y, &ptViewportOrg);
+
 			pT->DoPaint(dc);
+
+			dc.SetMapMode(nMapModeSav);
+			dc.SetWindowExt(szWindowExt);
+			dc.SetViewportExt(szViewportExt);
+			dc.SetViewportOrg(ptViewportOrg);
 		}
 		else
 		{
 			CPaintDC dc(pT->m_hWnd);
-			PrepareDC(dc.m_hDC);
+			pT->PrepareDC(dc.m_hDC);
 			pT->DoPaint(dc.m_hDC);
 		}
 		return 0;
@@ -1686,10 +1706,10 @@ public:
 	{
 		if(m_nZoomMode == ZOOMMODE_IN && !m_bTracking)
 		{
+			T* pT = static_cast<T*>(this);
 			POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-			if(PtInDevRect(pt))
+			if(pT->PtInDevRect(pt))
 			{
-				T* pT = static_cast<T*>(this);
 				pT->SetCapture();
 				m_bTracking = true;
 				::SetRect(&m_rcTrack, pt.x, pt.y, pt.x, pt.y);
@@ -1703,13 +1723,14 @@ public:
 	{
 		if(m_bTracking)
 		{
+			T* pT = static_cast<T*>(this);
 			POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-			if(PtInDevRect(pt))
+			if(pT->PtInDevRect(pt))
 			{
-				DrawTrackRect();
+				pT->DrawTrackRect();
 				m_rcTrack.right = pt.x;
 				m_rcTrack.bottom = pt.y;
-				DrawTrackRect();
+				pT->DrawTrackRect();
 			}
 		}
 		bHandled = FALSE;
@@ -1721,8 +1742,9 @@ public:
 		::ReleaseCapture();
 		if(m_nZoomMode == ZOOMMODE_OUT)
 		{
-			Zoom(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), m_fZoomScale - m_fZoomDelta);
-			NotifyParentZoomChanged();
+			T* pT = static_cast<T*>(this);
+			pT->Zoom(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), m_fZoomScale - m_fZoomDelta);
+			pT->NotifyParentZoomChanged();
 		}
 		bHandled = FALSE;
 		return 0;
@@ -1733,9 +1755,10 @@ public:
 		if(m_bTracking)
 		{
 			m_bTracking = false;
-			DrawTrackRect();
-			Zoom(m_rcTrack);
-			NotifyParentZoomChanged();
+			T* pT = static_cast<T*>(this);
+			pT->DrawTrackRect();
+			pT->Zoom(m_rcTrack);
+			pT->NotifyParentZoomChanged();
 			::SetRectEmpty(&m_rcTrack);
 		}
 		bHandled = FALSE;
@@ -1752,7 +1775,7 @@ public:
 				DWORD dwPos = ::GetMessagePos();
 				POINT pt = { GET_X_LPARAM(dwPos), GET_Y_LPARAM(dwPos) };
 				pT->ScreenToClient(&pt);
-				if(PtInDevRect(pt))
+				if(pT->PtInDevRect(pt))
 				{
 					::SetCursor(::LoadCursor(NULL, IDC_CROSS));
 					return 1;
@@ -1762,7 +1785,6 @@ public:
 		bHandled = FALSE;
 		return 0;
 	}
-
 };
 
 ///////////////////////////////////////////////////////////////////////////////
