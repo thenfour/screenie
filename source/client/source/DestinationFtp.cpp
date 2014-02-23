@@ -32,7 +32,7 @@ bool ProcessFtpDestination(DestinationArgs& args)
 	EventID msgid = args.statusDlg.RegisterEvent(args.screenshotID, EI_PROGRESS, ET_FTP, args.dest.general.name, _T("Initiating FTP transfer"));
 	args.statusDlg.EventSetProgress(msgid, 0, 1);// set it to 0%
 
-	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
+	std::shared_ptr<Gdiplus::Bitmap> transformedImage;
 	if (!GetTransformedScreenshot(args.dest.image, args.image, transformedImage))
 	{
 		args.statusDlg.EventSetText(msgid, L"FTP: Can't resize screenshot");

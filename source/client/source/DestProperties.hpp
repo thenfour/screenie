@@ -49,7 +49,7 @@ public:
 	ScreenshotDestination::Type GetCurrentType();
 	void Update(const ScreenshotDestination::Type type);
 private:
-	typedef std::vector< util::shared_ptr<DestinationPropertyPage> > PropertyPageContainer;
+	typedef std::vector< std::shared_ptr<DestinationPropertyPage> > PropertyPageContainer;
 
 	PropertyPageContainer m_propertyPages;
 	ScreenshotDestination::Type m_currentType;

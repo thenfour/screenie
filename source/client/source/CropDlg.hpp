@@ -122,7 +122,7 @@ public:
 		ID_TOGGLEINFOUPDATE = WM_APP + 1
 	};
 
-	CCropDlg(util::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
+	CCropDlg(std::shared_ptr<Gdiplus::Bitmap> bitmap, ScreenshotOptions& options) :
     m_bitmap(bitmap),
     m_editWnd(bitmap, this),
     m_zoomWnd(bitmap, 0),
@@ -217,7 +217,7 @@ public:
   void OnZoomFactorChanged()
   {
   }
-  void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n)
+  void OnPaste(std::shared_ptr<Gdiplus::Bitmap> n)
 	{
 	}
 
@@ -230,7 +230,7 @@ public:
 
   // other crap
 
-	bool GetCroppedScreenshot(util::shared_ptr<Gdiplus::Bitmap>& croppedScreenshot)
+	bool GetCroppedScreenshot(std::shared_ptr<Gdiplus::Bitmap>& croppedScreenshot)
 	{
 		if(!m_didCropping)
     {
@@ -545,7 +545,7 @@ public:
 			if(s != Gdiplus::Ok)
 				return false;
 
-			m_bitmap = util::shared_ptr<Gdiplus::Bitmap>(p);
+			m_bitmap = std::shared_ptr<Gdiplus::Bitmap>(p);
 			//m_zoomWnd.SetBitmap(m_bitmap);
 			m_editWnd.SetBitmap(m_bitmap);
 
@@ -760,8 +760,8 @@ public:
 	}
 private:
 	bool m_didCropping;
-	util::shared_ptr<Gdiplus::Bitmap> m_croppedBitmap;
-  util::shared_ptr<Gdiplus::Bitmap> m_bitmap;
+	std::shared_ptr<Gdiplus::Bitmap> m_croppedBitmap;
+  std::shared_ptr<Gdiplus::Bitmap> m_bitmap;
 	CImageEditWindow m_zoomWnd;
 	CImageEditWindow m_editWnd;
   ScreenshotOptions& m_options;

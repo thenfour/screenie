@@ -40,9 +40,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\BitlyURL.cpp">
-      <Filter>Application Sources</Filter>
-    </ClCompile>
     <ClCompile Include="source\codec.cpp">
       <Filter>Application Sources</Filter>
     </ClCompile>
@@ -127,11 +124,11 @@
     <ClCompile Include="source\jsonxx\jsonxx.cc">
       <Filter>jsonxx</Filter>
     </ClCompile>
+    <ClCompile Include="source\BitlyURL.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\BitlyURL.h">
-      <Filter>Application Sources</Filter>
-    </ClInclude>
     <ClInclude Include="source\codec.hpp">
       <Filter>Application Sources</Filter>
     </ClInclude>
@@ -353,6 +350,9 @@
     </ClInclude>
     <ClInclude Include="source\jsonxx\jsonxx.h">
       <Filter>jsonxx</Filter>
+    </ClInclude>
+    <ClInclude Include="source\BitlyURL.h">
+      <Filter>Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

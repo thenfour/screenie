@@ -137,7 +137,7 @@ public:
 		return TRUE == IsClipboardFormatAvailable(CF_BITMAP);
 	}
 
-	LibCC::Result GetBitmap(util::shared_ptr<Gdiplus::Bitmap>& out)
+	LibCC::Result GetBitmap(std::shared_ptr<Gdiplus::Bitmap>& out)
 	{
     LibCC::Result r;
 	  if (!::OpenClipboard(m_hOwner))

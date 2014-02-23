@@ -35,7 +35,7 @@ ATL::CWndClassInfo& CImageEditWindow::GetWndClassInfo()
 	return wc;
 }
 
-CImageEditWindow::CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify) :
+CImageEditWindow::CImageEditWindow(std::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify) :
   m_bitmap(bitmap),
 	m_actuallyDidPanning(false),
   m_notify(this),
@@ -72,12 +72,12 @@ ViewPortSubPixel CImageEditWindow::GetZoomFactor() const
   return m_display.GetViewport().GetZoomFactor();
 }
 
-util::shared_ptr<Gdiplus::Bitmap> CImageEditWindow::GetBitmapRect(const RECT& rectToCopy)
+std::shared_ptr<Gdiplus::Bitmap> CImageEditWindow::GetBitmapRect(const RECT& rectToCopy)
 {
 	Gdiplus::Bitmap* bitmapClone = m_dibRenderSource.GetGdiplusBitmap()->Clone(rectToCopy.left, rectToCopy.top,
 		rectToCopy.right - rectToCopy.left, rectToCopy.bottom - rectToCopy.top, PixelFormatDontCare);
 
-	return util::shared_ptr<Gdiplus::Bitmap>(bitmapClone);
+	return std::shared_ptr<Gdiplus::Bitmap>(bitmapClone);
 }
 
 // returns the amount to move the virtual cursor during a constrained move, based on a pixel mouse cursor delta
@@ -530,7 +530,7 @@ LRESULT CImageEditWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam, BOOL&
 
 LRESULT CImageEditWindow::OnPaste(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	util::shared_ptr<Gdiplus::Bitmap> n;
+	std::shared_ptr<Gdiplus::Bitmap> n;
 	Clipboard x(*this);
 	LibCC::Result r = x.GetBitmap(n);
 	if(r.Failed())
@@ -547,7 +547,7 @@ LRESULT CImageEditWindow::OnPaste(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWn
 
 LRESULT CImageEditWindow::OnCopy(WORD /*wNotifyCode*/, WORD /* wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	util::shared_ptr<Gdiplus::Bitmap> n(m_bitmap);
+	std::shared_ptr<Gdiplus::Bitmap> n(m_bitmap);
 	if(HasSelection())
 	{
 		CRect selectionRect = GetSelection();
@@ -667,7 +667,7 @@ void CImageEditWindow::PopCursor(bool set)
 }
 
 
-void CImageEditWindow::SetBitmap(util::shared_ptr<Gdiplus::Bitmap> n)
+void CImageEditWindow::SetBitmap(std::shared_ptr<Gdiplus::Bitmap> n)
 {
 	m_bitmap = n;
   CopyImage(m_dibDocument, *n);

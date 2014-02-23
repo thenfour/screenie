@@ -124,7 +124,7 @@ void TestMain()
 	{
 		HBITMAP hbm;
 		GetScreenshotBitmap(hbm, FALSE, FALSE);
-		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
+		std::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(hbm, NULL));
 		ScreenshotOptions options;
 		options.LoadSettings();
 		CCropDlg cropDialog(screenshot, options);

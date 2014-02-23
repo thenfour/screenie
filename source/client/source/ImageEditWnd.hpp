@@ -22,7 +22,7 @@ public:
   virtual void OnSelectionChanged() = 0;
   virtual void OnCursorPositionChanged(const PointF&) = 0;
   virtual void OnZoomFactorChanged() = 0;
-  virtual void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n) = 0;
+  virtual void OnPaste(std::shared_ptr<Gdiplus::Bitmap> n) = 0;
 	virtual void OnToolChanging(ToolBase* tool) = 0;
 };
 
@@ -68,7 +68,7 @@ public:
   void OnCursorPositionChanged(const PointF&) { }
   void OnSelectionChanged() { }
   void OnZoomFactorChanged() { }
-	void OnPaste(util::shared_ptr<Gdiplus::Bitmap> n) { }
+	void OnPaste(std::shared_ptr<Gdiplus::Bitmap> n) { }
 	virtual void OnToolChanging(ToolBase* tool) { }
 
   // IToolOperations methods
@@ -118,7 +118,7 @@ public:
 	}
 
   // Our own shit
-	CImageEditWindow(util::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
+	CImageEditWindow(std::shared_ptr<Gdiplus::Bitmap> bitmap, IImageEditWindowEvents* pNotify);
 
 	void Render(HDC target, CRect rc);
 	void RenderOffscreen();
@@ -178,9 +178,9 @@ public:
 	//void SetEnableTools(bool b) { m_enableTools = b; }
 
   // gets the specified section of the original image.
-	util::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
+	std::shared_ptr<Gdiplus::Bitmap> GetBitmapRect(const RECT& rectToCopy);
 
-	void SetBitmap(util::shared_ptr<Gdiplus::Bitmap> n);
+	void SetBitmap(std::shared_ptr<Gdiplus::Bitmap> n);
 
 	RgbPixel32 GetPixel_(CPoint p)
 	{
@@ -247,7 +247,7 @@ protected:
 	bool m_isLeftClickDragging;
 
   // members
-	util::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap. never modified.
+	std::shared_ptr<Gdiplus::Bitmap> m_bitmap;// the incoming bitmap. never modified.
 	ImageEditRenderer m_display;
   AnimBitmap<32> m_dibDocument;// a cached image of the original bitmap. this is the "working" bitmap that tools can draw onto.
   AnimBitmap<32> m_dibRenderSource;// a cached image of the original bitmap. this is the "working" bitmap that tools can draw onto.

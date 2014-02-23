@@ -27,23 +27,23 @@ std::wstring QuoteSql(const std::wstring& in)
 	return ret;
 }
 
-util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveImage()
+std::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveImage()
 {
 	return m_owner->RetrieveImage(id);
 }
 
 
-util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveThumbnail()
+std::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveThumbnail()
 {
 	Gdiplus::Bitmap* p = 0;
 	if(!m_owner->ArchiveEnabled())
-		return util::shared_ptr<Gdiplus::Bitmap>(p);
+		return std::shared_ptr<Gdiplus::Bitmap>(p);
 
 	try
 	{
 		sqlite3x::sqlite3_connection conn;
 		if(!m_owner->OpenDatabase(conn))
-			return util::shared_ptr<Gdiplus::Bitmap>(p);
+			return std::shared_ptr<Gdiplus::Bitmap>(p);
 
 		{// necessary for cmd to close
 			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [thumbnailData] from Screenshots where [id] = %").i((int)id).Str());
@@ -77,7 +77,7 @@ util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::Screenshot::RetrieveThumbna
 	{
 		LibCC::g_pLog->Message(LibCC::Format("Database exception in ScreenshotArchive::Screenshot::RetrieveThumbnail. %").qs(er.what()));
 	}
-	return util::shared_ptr<Gdiplus::Bitmap>(p);
+	return std::shared_ptr<Gdiplus::Bitmap>(p);
 }
 
 
@@ -173,17 +173,17 @@ std::vector<ScreenshotArchive::Screenshot> ScreenshotArchive::RetreiveScreenshot
 	return ret;
 }
 
-util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::RetrieveImage(ScreenshotID id)
+std::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::RetrieveImage(ScreenshotID id)
 {
 	Gdiplus::Bitmap* p = 0;
 	if(!ArchiveEnabled())
-		return util::shared_ptr<Gdiplus::Bitmap>(p);
+		return std::shared_ptr<Gdiplus::Bitmap>(p);
 
 	try
 	{
 		sqlite3x::sqlite3_connection conn;
 		if(!OpenDatabase(conn))
-			return util::shared_ptr<Gdiplus::Bitmap>(p);
+			return std::shared_ptr<Gdiplus::Bitmap>(p);
 
 		{// necessary for cmd to close
 			sqlite3x::sqlite3_command cmd(conn, LibCC::Format("select [bitmapData] from Screenshots where [id] = %").i((int)id).Str());
@@ -219,7 +219,7 @@ util::shared_ptr<Gdiplus::Bitmap> ScreenshotArchive::RetrieveImage(ScreenshotID 
 	{
 		LibCC::g_pLog->Message(LibCC::Format("Database exception in ScreenshotArchive::Screenshot::RetrieveImage. %").qs(er.what()));
 	}
-	return util::shared_ptr<Gdiplus::Bitmap>(p);
+	return std::shared_ptr<Gdiplus::Bitmap>(p);
 }
 
 

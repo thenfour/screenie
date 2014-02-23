@@ -136,7 +136,7 @@ private:
   {
     CMainWindow* pThis;
     ScreenshotOptions options;
-    util::shared_ptr<Gdiplus::Bitmap> screenshot;
+    std::shared_ptr<Gdiplus::Bitmap> screenshot;
 		tstd::tstring windowTitle;
 		ScreenshotID screenshotID;
   };

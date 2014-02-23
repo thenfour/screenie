@@ -15,19 +15,19 @@
 #include "ScreenshotDestination.hpp"
 
 bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
-							  util::shared_ptr<Gdiplus::Bitmap> screenshot, util::shared_ptr<Gdiplus::Bitmap>& transformed);
+							  std::shared_ptr<Gdiplus::Bitmap> screenshot, std::shared_ptr<Gdiplus::Bitmap>& transformed);
 
 struct DestinationArgs
 {
 	HWND hwnd;
 	CStatusDlg& statusDlg;
 	ScreenshotDestination dest;
-	util::shared_ptr<Gdiplus::Bitmap> image;
+	std::shared_ptr<Gdiplus::Bitmap> image;
 	bool bUsedClipboard;
 	ScreenshotID screenshotID;
 	ScreenshotNamingData namingData;
 
-	DestinationArgs(HWND wnd, CStatusDlg& dlg, util::shared_ptr<Gdiplus::Bitmap> pImage,
+	DestinationArgs(HWND wnd, CStatusDlg& dlg, std::shared_ptr<Gdiplus::Bitmap> pImage,
 		tstd::tstring title, bool usedClipboard, ScreenshotID id)
 		: hwnd(wnd), statusDlg(dlg), image(pImage), bUsedClipboard(usedClipboard), screenshotID(id)
 	{

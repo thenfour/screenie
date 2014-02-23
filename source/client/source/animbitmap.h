@@ -922,10 +922,10 @@ public:
 		return m_bmp;
 	}
 
-	util::shared_ptr<Gdiplus::Bitmap> GetGdiplusBitmap()
+	std::shared_ptr<Gdiplus::Bitmap> GetGdiplusBitmap()
 	{
 		Gdiplus::Bitmap* ret = new Gdiplus::Bitmap(m_bmp, NULL);
-		return util::shared_ptr<Gdiplus::Bitmap>(ret);
+		return std::shared_ptr<Gdiplus::Bitmap>(ret);
 	}
 
 private:

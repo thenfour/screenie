@@ -6,6 +6,8 @@
 
 #include "stdafx.hpp"
 
+#include <algorithm>
+
 #include "codec.hpp"
 #include "image.hpp"
 #include "utility.hpp"
@@ -238,7 +240,7 @@ bool GetScreenshotBitmap(HBITMAP& bitmap, BOOL AltPressed, BOOL drawCursor)
 	return success;
 }
 
-bool ScaleBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap& source, float scale)
+bool ScaleBitmap(std::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap& source, float scale)
 {
 	if (scale < 0)
 		return false;
@@ -248,7 +250,7 @@ bool ScaleBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap
 	int height = int(source.GetHeight() * scale);
 	if(height == 0) height = 1;
 
-	util::shared_ptr<Gdiplus::Bitmap> bitmap(new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB));
+	std::shared_ptr<Gdiplus::Bitmap> bitmap(new Gdiplus::Bitmap(width, height, PixelFormat32bppARGB));
 
 	if (!bitmap)
 		return false;
@@ -263,14 +265,14 @@ bool ScaleBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap
 	return true;
 }
 
-bool ResizeBitmap(util::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap& source, int dimensionLimit)
+bool ResizeBitmap(std::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap& source, int dimensionLimit)
 {
 	int maxDimension = std::max<int>(source.GetHeight(), source.GetWidth());
 
 	// if this image doesn't even reach the limit, just return a clone of the bitmap.
 	if (dimensionLimit >= maxDimension)
 	{
-		destination = util::shared_ptr<Gdiplus::Bitmap>(source.Clone(0, 0,
+		destination = std::shared_ptr<Gdiplus::Bitmap>(source.Clone(0, 0,
 			source.GetWidth(), source.GetHeight(), PixelFormatDontCare));
 
 		return true;

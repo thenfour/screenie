@@ -49,7 +49,7 @@ BOOL CMainWindow::TakeScreenshot(const POINT& cursorPos, BOOL altDown)
 	CBitmap screenshotBitmap;
 	if (GetScreenshotBitmap(screenshotBitmap.m_hBitmap, altDown, m_screenshotOptions.IncludeCursor()))
 	{
-		util::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
+		std::shared_ptr<Gdiplus::Bitmap> screenshot(new Gdiplus::Bitmap(screenshotBitmap, NULL));
 		return ProcessScreenshot(screenshot, true, false, altDown != 0);
 	}
 	return FALSE;
@@ -70,7 +70,7 @@ BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool register
 			if (cropDialog.DoModal(0) == IDOK)
 			{
 				// if there is a selection, make that our screenshot
-				util::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
+				std::shared_ptr<Gdiplus::Bitmap> croppedScreenshot;
 				if (cropDialog.GetCroppedScreenshot(croppedScreenshot))
 				{
 					// shared_ptr's value semantics take care of the destruction
@@ -97,7 +97,7 @@ BOOL CMainWindow::ProcessScreenshot(Gdiplus::BitmapPtr screenshot, bool register
   }
 
 	// create a thumbnail for the history window
-	util::shared_ptr<Gdiplus::Bitmap> thumbnail;
+	std::shared_ptr<Gdiplus::Bitmap> thumbnail;
 	ResizeBitmap(thumbnail, *screenshot, 100);
 	ScreenshotID screenshotID = m_statusDialog.RegisterScreenshot(screenshot, thumbnail);
 

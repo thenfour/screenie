@@ -107,14 +107,14 @@ public:
 		int width;
 		int height;
 
-		util::shared_ptr<Gdiplus::Bitmap> RetrieveImage();
-		util::shared_ptr<Gdiplus::Bitmap> RetrieveThumbnail();
+		std::shared_ptr<Gdiplus::Bitmap> RetrieveImage();
+		std::shared_ptr<Gdiplus::Bitmap> RetrieveThumbnail();
 		std::vector<Event> RetreiveEvents();// returns a list of events
 	};
 
 	std::vector<Screenshot> RetreiveScreenshots();
 	
-	util::shared_ptr<Gdiplus::Bitmap> RetrieveImage(ScreenshotID id);
+	std::shared_ptr<Gdiplus::Bitmap> RetrieveImage(ScreenshotID id);
 
 	void DeleteAll();
 

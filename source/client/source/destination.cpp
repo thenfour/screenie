@@ -32,7 +32,7 @@ typedef MSXML2::IXMLDOMElementPtr Element;
 typedef MSXML2::IXMLDOMNodePtr Node;
 
 bool GetTransformedScreenshot(const ScreenshotDestination::Image& options,
-	util::shared_ptr<Gdiplus::Bitmap> screenshot, util::shared_ptr<Gdiplus::Bitmap>& transformed)
+	std::shared_ptr<Gdiplus::Bitmap> screenshot, std::shared_ptr<Gdiplus::Bitmap>& transformed)
 {
 	if (!screenshot)
 		return false;
@@ -58,7 +58,7 @@ bool ProcessImageShackDestination(DestinationArgs& args)
 	EventID msgid = args.statusDlg.RegisterEvent(args.screenshotID, EI_PROGRESS, ET_IMAGESHACK, args.dest.general.name, _T("Initiating ImageShack transfer"));
 	args.statusDlg.EventSetProgress(msgid, 0, 1);// set it to 0%
 
-	util::shared_ptr<Gdiplus::Bitmap> transformedImage;
+	std::shared_ptr<Gdiplus::Bitmap> transformedImage;
 	if (!GetTransformedScreenshot(args.dest.image, args.image, transformedImage))
 	{
 		args.statusDlg.EventSetText(msgid, L"ImageShack: Can't resize screenshot");
@@ -184,7 +184,7 @@ bool ProcessFileDestination(DestinationArgs& args)
 	bool success = false;
 
 	// try to get the transformed screenshot.
-	util::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
+	std::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
 	if (!GetTransformedScreenshot(args.dest.image, args.image, transformedScreenshot))
 	{
 		args.statusDlg.RegisterEvent(args.screenshotID, EI_ERROR, ET_GENERAL, args.dest.general.name,
@@ -234,7 +234,7 @@ bool ProcessClipboardDestination(DestinationArgs& args)
   LibCC::Result r;
 
 	// try to get the transformed screenshot.
-	util::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
+	std::shared_ptr<Gdiplus::Bitmap> transformedScreenshot;
 	if(!GetTransformedScreenshot(args.dest.image, args.image, transformedScreenshot))
   {
 		r.Fail(TEXT("File: error getting screenshot data"));

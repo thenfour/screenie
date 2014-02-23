@@ -161,7 +161,7 @@ private:
 	int m_itemWidth;
 	int m_itemHeight;
 
-	std::tr1::shared_ptr<Gdiplus::Bitmap> m_thumb;
+	std::shared_ptr<Gdiplus::Bitmap> m_thumb;
 
 	CDC m_offscreen;
 	CBitmap m_offscreenbm;
