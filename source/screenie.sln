@@ -1,16 +1,14 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "screenie", "client\screenie.vcproj", "{C842F6FF-88EE-4F49-A446-74A504643F8F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33} = {B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}
-		{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9} = {FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "screenie", "client\screenie.vcxproj", "{C842F6FF-88EE-4F49-A446-74A504643F8F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcurl", "libcurl\libcurl.vcproj", "{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcurl", "libcurl\libcurl.vcxproj", "{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite", "sqlite\sqlite.vcproj", "{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite", "sqlite\sqlite.vcxproj", "{B6D76B30-F4CC-4971-B9FB-CCF9D9775A33}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgrumble", "libgrumble\libgrumble.vcproj", "{1AE5F22A-5A31-4440-89B2-659C13228CF3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgrumble", "libgrumble\libgrumble.vcxproj", "{1AE5F22A-5A31-4440-89B2-659C13228CF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

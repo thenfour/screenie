@@ -1,0 +1,299 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C842F6FF-88EE-4F49-A446-74A504643F8F}</ProjectGuid>
+    <RootNamespace>screenie</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>..\..\bin-debug\</OutDir>
+    <IntDir>obj-debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>..\..\bin-release\</OutDir>
+    <IntDir>obj-release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <GenerateStublessProxies>true</GenerateStublessProxies>
+      <TypeLibraryName>$(IntDir)screenie.tlb</TypeLibraryName>
+      <HeaderFileName>screenie.h</HeaderFileName>
+      <DllDataFileName />
+      <InterfaceIdentifierFileName>screenie_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>screenie_p.c</ProxyFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\libcurl\include;..\wtl80;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;_DEBUG;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>StdAfx.hpp</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>$(IntDir);..\wtl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>wininet.lib;gdiplus.lib;Crypt32.lib;version.lib;..\libcurl\output\libcurl-debug.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Manifest>
+      <AdditionalManifestFiles>source\resources\screenie.exe.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <VerboseOutput>false</VerboseOutput>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <GenerateStublessProxies>true</GenerateStublessProxies>
+      <TypeLibraryName>$(IntDir)screenie.tlb</TypeLibraryName>
+      <HeaderFileName>screenie.h</HeaderFileName>
+      <DllDataFileName />
+      <InterfaceIdentifierFileName>screenie_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>screenie_p.c</ProxyFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>..\libcurl\include;..\wtl80;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>StdAfx.hpp</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat />
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>$(IntDir);..\wtl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>wininet.lib;gdiplus.lib;Crypt32.lib;version.lib;..\libcurl\output\libcurl.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>NotSet</ShowProgress>
+      <IgnoreSpecificDefaultLibraries>msvcrtd.lib;libcd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+      <Profile>true</Profile>
+    </Link>
+    <Manifest>
+      <AdditionalManifestFiles>source\resources\screenie.exe.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="source\BitlyURL.cpp" />
+    <ClCompile Include="source\codec.cpp" />
+    <ClCompile Include="source\destination.cpp" />
+    <ClCompile Include="source\GrumbleSupport.cpp" />
+    <ClCompile Include="source\image.cpp" />
+    <ClCompile Include="source\screenie.cpp" />
+    <ClCompile Include="source\ScreenshotOptions.cpp" />
+    <ClCompile Include="source\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="source\tests.cpp" />
+    <ClCompile Include="source\utility.cpp" />
+    <ClCompile Include="source\DestinationDlg.cpp" />
+    <ClCompile Include="source\DestinationProperties.cpp" />
+    <ClCompile Include="source\DestinationPropertiesFtp.cpp" />
+    <ClCompile Include="source\DestinationPropertiesGeneral.cpp" />
+    <ClCompile Include="source\DestinationPropertiesImage.cpp" />
+    <ClCompile Include="source\DestinationPropertiesImageShack.cpp" />
+    <ClCompile Include="source\MainWindow.cpp" />
+    <ClCompile Include="source\ImageEditWnd.cpp" />
+    <ClCompile Include="source\ActivityList.cpp" />
+    <ClCompile Include="source\ActivityListItem.cpp" />
+    <ClCompile Include="source\ProgressImages.cpp" />
+    <ClCompile Include="source\ScreenshotArchive.cpp" />
+    <ClCompile Include="source\StatusDlg.cpp" />
+    <ClCompile Include="source\CurlRequest.cpp" />
+    <ClCompile Include="source\curlutil.cpp" />
+    <ClCompile Include="source\DestinationFtp.cpp" />
+    <ClCompile Include="source\FtpRequest.cpp" />
+    <ClCompile Include="source\HttpRequest.cpp" />
+    <ClCompile Include="source\jsonxx\jsonxx.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\BitlyURL.h" />
+    <ClInclude Include="source\codec.hpp" />
+    <ClInclude Include="source\destination.hpp" />
+    <ClInclude Include="source\GrumbleSupport.h" />
+    <ClInclude Include="source\image.hpp" />
+    <ClInclude Include="source\resource.h" />
+    <ClInclude Include="source\ScreenshotDestination.hpp" />
+    <ClInclude Include="source\ScreenshotOptions.hpp" />
+    <ClInclude Include="source\stdafx.hpp" />
+    <ClInclude Include="source\viewport.h" />
+    <ClInclude Include="source\animbitmap.h" />
+    <ClInclude Include="source\autogdi.hpp" />
+    <ClInclude Include="source\clipboard.hpp" />
+    <ClInclude Include="source\exception.hpp" />
+    <ClInclude Include="source\fundamental.h" />
+    <ClInclude Include="source\geom.h" />
+    <ClInclude Include="source\internet.hpp" />
+    <ClInclude Include="source\path.hpp" />
+    <ClInclude Include="source\polarlut.h" />
+    <ClInclude Include="source\serialization.h" />
+    <ClInclude Include="source\utility.hpp" />
+    <ClInclude Include="source\xversion.h" />
+    <ClInclude Include="source\DestinationDlg.hpp" />
+    <ClInclude Include="source\DestinationProperties.hpp" />
+    <ClInclude Include="source\DestinationPropertiesFtp.hpp" />
+    <ClInclude Include="source\DestinationPropertiesGeneral.hpp" />
+    <ClInclude Include="source\DestinationPropertiesImage.hpp" />
+    <ClInclude Include="source\DestinationPropertiesImageShack.hpp" />
+    <ClInclude Include="source\DestProperties.hpp" />
+    <ClInclude Include="source\MainWindow.hpp" />
+    <ClInclude Include="source\HighlightTool.hpp" />
+    <ClInclude Include="source\ImageEditRenderer.h" />
+    <ClInclude Include="source\ImageEditWnd.hpp" />
+    <ClInclude Include="source\SelectionTool.h" />
+    <ClInclude Include="source\ToolBase.h" />
+    <ClInclude Include="source\AboutDlg.hpp" />
+    <ClInclude Include="source\CropDlg.hpp" />
+    <ClInclude Include="source\TextPromptDlg.h" />
+    <ClInclude Include="source\ActivityList.hpp" />
+    <ClInclude Include="source\ActivityListItem.hpp" />
+    <ClInclude Include="source\ProgressImages.hpp" />
+    <ClInclude Include="source\ScreenshotArchive.hpp" />
+    <ClInclude Include="source\StatusDlg.hpp" />
+    <ClInclude Include="..\wtl\atlapp.h" />
+    <ClInclude Include="..\wtl\atlcrack.h" />
+    <ClInclude Include="..\wtl\atlctrls.h" />
+    <ClInclude Include="..\wtl\atlctrlw.h" />
+    <ClInclude Include="..\wtl\atlctrlx.h" />
+    <ClInclude Include="..\wtl\atlddx.h" />
+    <ClInclude Include="..\wtl\atldlgs.h" />
+    <ClInclude Include="..\wtl\atlframe.h" />
+    <ClInclude Include="..\wtl\atlgdi.h" />
+    <ClInclude Include="..\wtl\atlmisc.h" />
+    <ClInclude Include="..\wtl\atlprint.h" />
+    <ClInclude Include="..\wtl\atlres.h" />
+    <ClInclude Include="..\wtl\atlresce.h" />
+    <ClInclude Include="..\wtl\atlscrl.h" />
+    <ClInclude Include="..\wtl\atlsplit.h" />
+    <ClInclude Include="..\wtl\atltheme.h" />
+    <ClInclude Include="..\wtl\atluser.h" />
+    <ClInclude Include="..\wtl\atlwince.h" />
+    <ClInclude Include="..\wtl\atlwinx.h" />
+    <ClInclude Include="source\CurlRequest.h" />
+    <ClInclude Include="source\curlutil.h" />
+    <ClInclude Include="source\FtpRequest.h" />
+    <ClInclude Include="source\HttpRequest.h" />
+    <ClInclude Include="source\libcc\blob.hpp" />
+    <ClInclude Include="source\libcc\float.hpp" />
+    <ClInclude Include="source\libcc\log.hpp" />
+    <ClInclude Include="source\libcc\registry.hpp" />
+    <ClInclude Include="source\libcc\result.hpp" />
+    <ClInclude Include="source\libcc\stringutil.hpp" />
+    <ClInclude Include="source\libcc\timer.hpp" />
+    <ClInclude Include="source\libcc\winapi.hpp" />
+    <ClInclude Include="source\jsonxx\jsonxx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source\tr1\memory" />
+    <None Include="source\screenie.rc2" />
+    <None Include="source\ArchiveSchema.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="source\resources\check.ico" />
+    <Image Include="source\resources\header.bmp" />
+    <Image Include="source\resources\screenie.ico" />
+    <Image Include="source\resources\toolbar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="source\screenie.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libcurl\libcurl.vcxproj">
+      <Project>{ffad0f42-ba9c-4c42-adfd-6acf38b667f9}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\sqlite\sqlite.vcxproj">
+      <Project>{b6d76b30-f4cc-4971-b9fb-ccf9d9775a33}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="source\screenie.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

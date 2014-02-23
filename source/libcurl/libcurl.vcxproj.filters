@@ -1,0 +1,378 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{2f130e07-f01f-4347-8fae-44a5c65ee9dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\curl">
+      <UniqueIdentifier>{2c85322a-2676-43de-a76f-bb7c2db74e65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{09333bfc-f23b-4d24-833a-cb2dd3e1b451}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\curl\curl.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\curl\curlver.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\curl\easy.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\curl\mprintf.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\curl\multi.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\curl\stdcheaders.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\curl\types.h">
+      <Filter>include\curl</Filter>
+    </ClInclude>
+    <ClInclude Include="source\arpa_telnet.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\base64.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ca-bundle.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\config-win32.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\connect.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\content_encoding.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\cookie.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\curlx.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\dict.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\easyif.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\escape.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\file.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\formdata.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ftp.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\getinfo.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\gtls.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\hash.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\hostip.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\http.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\http_chunks.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\http_digest.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\http_negotiate.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\http_ntlm.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\if2ip.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\inet_ntoa_r.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\inet_ntop.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\inet_pton.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\krb4.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ldap.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\llist.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\md5.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\memdebug.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\memory.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\multiif.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\netrc.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\parsedate.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\progress.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\select.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\sendf.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\setup.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\share.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\sockaddr.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\speedcheck.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\splay.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\sslgen.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ssluse.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\strequal.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\strerror.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\strtok.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\strtoofft.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\telnet.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\tftp.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\timeval.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\transfer.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\url.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\urldata.h">
+      <Filter>source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\base64.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\connect.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\content_encoding.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\cookie.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\dict.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\easy.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\escape.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\file.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\formdata.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ftp.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\getenv.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\getinfo.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\gtls.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hash.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostares.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostasyn.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostip.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostip4.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostip6.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostsyn.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\hostthre.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\http.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\http_chunks.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\http_digest.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\http_negotiate.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\http_ntlm.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\if2ip.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\inet_ntop.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\inet_pton.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\krb4.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ldap.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\llist.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\md5.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\memdebug.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\mprintf.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\multi.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\netrc.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\parsedate.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\progress.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\security.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\select.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\sendf.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\share.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\speedcheck.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\splay.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\sslgen.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ssluse.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\strequal.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\strerror.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\strtok.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\strtoofft.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\telnet.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\tftp.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\timeval.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\transfer.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\url.c">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\version.c">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FFAD0F42-BA9C-4C42-ADFD-6ACF38B667F9}</ProjectGuid>
+    <RootNamespace>libcurl</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\output\</OutDir>
+    <IntDir>.\output\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\output\</OutDir>
+    <IntDir>.\output\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;CURL_STATICLIB;BUILDING_LIBCURL;_WIN32_WINNT=0x0501;_CRT_SECURE_NO_WARNINGS;CURLDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)libcurl-debug.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>.\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;CURL_STATICLIB;BUILDING_LIBCURL;_WIN32_WINNT=0x0501;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat />
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)libcurl.lib</OutputFile>
+      <IgnoreSpecificDefaultLibraries>msvcrtd.lib;libcd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="include\curl\curl.h" />
+    <ClInclude Include="include\curl\curlver.h" />
+    <ClInclude Include="include\curl\easy.h" />
+    <ClInclude Include="include\curl\mprintf.h" />
+    <ClInclude Include="include\curl\multi.h" />
+    <ClInclude Include="include\curl\stdcheaders.h" />
+    <ClInclude Include="include\curl\types.h" />
+    <ClInclude Include="source\arpa_telnet.h" />
+    <ClInclude Include="source\base64.h" />
+    <ClInclude Include="source\ca-bundle.h" />
+    <ClInclude Include="source\config-win32.h" />
+    <ClInclude Include="source\connect.h" />
+    <ClInclude Include="source\content_encoding.h" />
+    <ClInclude Include="source\cookie.h" />
+    <ClInclude Include="source\curlx.h" />
+    <ClInclude Include="source\dict.h" />
+    <ClInclude Include="source\easyif.h" />
+    <ClInclude Include="source\escape.h" />
+    <ClInclude Include="source\file.h" />
+    <ClInclude Include="source\formdata.h" />
+    <ClInclude Include="source\ftp.h" />
+    <ClInclude Include="source\getinfo.h" />
+    <ClInclude Include="source\gtls.h" />
+    <ClInclude Include="source\hash.h" />
+    <ClInclude Include="source\hostip.h" />
+    <ClInclude Include="source\http.h" />
+    <ClInclude Include="source\http_chunks.h" />
+    <ClInclude Include="source\http_digest.h" />
+    <ClInclude Include="source\http_negotiate.h" />
+    <ClInclude Include="source\http_ntlm.h" />
+    <ClInclude Include="source\if2ip.h" />
+    <ClInclude Include="source\inet_ntoa_r.h" />
+    <ClInclude Include="source\inet_ntop.h" />
+    <ClInclude Include="source\inet_pton.h" />
+    <ClInclude Include="source\krb4.h" />
+    <ClInclude Include="source\ldap.h" />
+    <ClInclude Include="source\llist.h" />
+    <ClInclude Include="source\md5.h" />
+    <ClInclude Include="source\memdebug.h" />
+    <ClInclude Include="source\memory.h" />
+    <ClInclude Include="source\multiif.h" />
+    <ClInclude Include="source\netrc.h" />
+    <ClInclude Include="source\parsedate.h" />
+    <ClInclude Include="source\progress.h" />
+    <ClInclude Include="source\select.h" />
+    <ClInclude Include="source\sendf.h" />
+    <ClInclude Include="source\setup.h" />
+    <ClInclude Include="source\share.h" />
+    <ClInclude Include="source\sockaddr.h" />
+    <ClInclude Include="source\speedcheck.h" />
+    <ClInclude Include="source\splay.h" />
+    <ClInclude Include="source\sslgen.h" />
+    <ClInclude Include="source\ssluse.h" />
+    <ClInclude Include="source\strequal.h" />
+    <ClInclude Include="source\strerror.h" />
+    <ClInclude Include="source\strtok.h" />
+    <ClInclude Include="source\strtoofft.h" />
+    <ClInclude Include="source\telnet.h" />
+    <ClInclude Include="source\tftp.h" />
+    <ClInclude Include="source\timeval.h" />
+    <ClInclude Include="source\transfer.h" />
+    <ClInclude Include="source\url.h" />
+    <ClInclude Include="source\urldata.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\base64.c" />
+    <ClCompile Include="source\connect.c" />
+    <ClCompile Include="source\content_encoding.c" />
+    <ClCompile Include="source\cookie.c" />
+    <ClCompile Include="source\dict.c" />
+    <ClCompile Include="source\easy.c" />
+    <ClCompile Include="source\escape.c" />
+    <ClCompile Include="source\file.c" />
+    <ClCompile Include="source\formdata.c" />
+    <ClCompile Include="source\ftp.c" />
+    <ClCompile Include="source\getenv.c" />
+    <ClCompile Include="source\getinfo.c" />
+    <ClCompile Include="source\gtls.c" />
+    <ClCompile Include="source\hash.c" />
+    <ClCompile Include="source\hostares.c" />
+    <ClCompile Include="source\hostasyn.c" />
+    <ClCompile Include="source\hostip.c" />
+    <ClCompile Include="source\hostip4.c" />
+    <ClCompile Include="source\hostip6.c" />
+    <ClCompile Include="source\hostsyn.c" />
+    <ClCompile Include="source\hostthre.c" />
+    <ClCompile Include="source\http.c" />
+    <ClCompile Include="source\http_chunks.c" />
+    <ClCompile Include="source\http_digest.c" />
+    <ClCompile Include="source\http_negotiate.c" />
+    <ClCompile Include="source\http_ntlm.c" />
+    <ClCompile Include="source\if2ip.c" />
+    <ClCompile Include="source\inet_ntop.c" />
+    <ClCompile Include="source\inet_pton.c" />
+    <ClCompile Include="source\krb4.c" />
+    <ClCompile Include="source\ldap.c" />
+    <ClCompile Include="source\llist.c" />
+    <ClCompile Include="source\md5.c" />
+    <ClCompile Include="source\memdebug.c" />
+    <ClCompile Include="source\mprintf.c" />
+    <ClCompile Include="source\multi.c" />
+    <ClCompile Include="source\netrc.c" />
+    <ClCompile Include="source\parsedate.c" />
+    <ClCompile Include="source\progress.c" />
+    <ClCompile Include="source\security.c" />
+    <ClCompile Include="source\select.c" />
+    <ClCompile Include="source\sendf.c" />
+    <ClCompile Include="source\share.c" />
+    <ClCompile Include="source\speedcheck.c" />
+    <ClCompile Include="source\splay.c" />
+    <ClCompile Include="source\sslgen.c" />
+    <ClCompile Include="source\ssluse.c" />
+    <ClCompile Include="source\strequal.c" />
+    <ClCompile Include="source\strerror.c" />
+    <ClCompile Include="source\strtok.c" />
+    <ClCompile Include="source\strtoofft.c" />
+    <ClCompile Include="source\telnet.c" />
+    <ClCompile Include="source\tftp.c" />
+    <ClCompile Include="source\timeval.c" />
+    <ClCompile Include="source\transfer.c" />
+    <ClCompile Include="source\url.c" />
+    <ClCompile Include="source\version.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

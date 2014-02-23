@@ -1,0 +1,384 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Application Sources">
+      <UniqueIdentifier>{4834bb2f-e689-4961-9a03-ad2240649c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility Sources">
+      <UniqueIdentifier>{d38e733b-d542-4d27-8f06-9d27c832a20c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{9a853d20-29f4-4040-bf34-fed3bbd92057}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest</Extensions>
+    </Filter>
+    <Filter Include="Config Dialog Sources">
+      <UniqueIdentifier>{ddf83346-5e02-4953-8560-dc2e794d4c33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI Control Sources">
+      <UniqueIdentifier>{5e95bbf5-0a05-44ac-b93c-e962fa4af7bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI Control Sources\Image Editor">
+      <UniqueIdentifier>{29e9a1c9-9126-4670-b974-133b44ce3637}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc Dialog Sources">
+      <UniqueIdentifier>{ed9eae08-e2df-4ff4-99a6-9bab7e0b8b37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archiving">
+      <UniqueIdentifier>{141a64fe-0abc-45aa-ac63-c99f2f9e952e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="wtl">
+      <UniqueIdentifier>{22cf7101-2b31-4e5f-85fc-a48ac0e47a3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{c1e5c774-5507-493f-a724-7398e3568601}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LibCC">
+      <UniqueIdentifier>{7dd031d4-3b26-4e95-b8b0-e5c928e8c538}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="jsonxx">
+      <UniqueIdentifier>{11613fe1-883e-4555-a39d-2988b25c36c5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\BitlyURL.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\codec.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\destination.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GrumbleSupport.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\image.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\screenie.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ScreenshotOptions.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\stdafx.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\tests.cpp">
+      <Filter>Application Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utility.cpp">
+      <Filter>Utility Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationDlg.cpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationProperties.cpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationPropertiesFtp.cpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationPropertiesGeneral.cpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationPropertiesImage.cpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationPropertiesImageShack.cpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\MainWindow.cpp">
+      <Filter>UI Control Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ImageEditWnd.cpp">
+      <Filter>UI Control Sources\Image Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ActivityList.cpp">
+      <Filter>Archiving</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ActivityListItem.cpp">
+      <Filter>Archiving</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ProgressImages.cpp">
+      <Filter>Archiving</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ScreenshotArchive.cpp">
+      <Filter>Archiving</Filter>
+    </ClCompile>
+    <ClCompile Include="source\StatusDlg.cpp">
+      <Filter>Archiving</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CurlRequest.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="source\curlutil.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="source\DestinationFtp.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FtpRequest.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="source\HttpRequest.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="source\jsonxx\jsonxx.cc">
+      <Filter>jsonxx</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\BitlyURL.h">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\codec.hpp">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\destination.hpp">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\GrumbleSupport.h">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\image.hpp">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\resource.h">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ScreenshotDestination.hpp">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ScreenshotOptions.hpp">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\stdafx.hpp">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\viewport.h">
+      <Filter>Application Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\animbitmap.h">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\autogdi.hpp">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\clipboard.hpp">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\exception.hpp">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\fundamental.h">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\geom.h">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\internet.hpp">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\path.hpp">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\polarlut.h">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\serialization.h">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utility.hpp">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\xversion.h">
+      <Filter>Utility Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestinationDlg.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestinationProperties.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestinationPropertiesFtp.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestinationPropertiesGeneral.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestinationPropertiesImage.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestinationPropertiesImageShack.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DestProperties.hpp">
+      <Filter>Config Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\MainWindow.hpp">
+      <Filter>UI Control Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\HighlightTool.hpp">
+      <Filter>UI Control Sources\Image Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImageEditRenderer.h">
+      <Filter>UI Control Sources\Image Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ImageEditWnd.hpp">
+      <Filter>UI Control Sources\Image Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\SelectionTool.h">
+      <Filter>UI Control Sources\Image Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ToolBase.h">
+      <Filter>UI Control Sources\Image Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\AboutDlg.hpp">
+      <Filter>Misc Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CropDlg.hpp">
+      <Filter>Misc Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\TextPromptDlg.h">
+      <Filter>Misc Dialog Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ActivityList.hpp">
+      <Filter>Archiving</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ActivityListItem.hpp">
+      <Filter>Archiving</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ProgressImages.hpp">
+      <Filter>Archiving</Filter>
+    </ClInclude>
+    <ClInclude Include="source\ScreenshotArchive.hpp">
+      <Filter>Archiving</Filter>
+    </ClInclude>
+    <ClInclude Include="source\StatusDlg.hpp">
+      <Filter>Archiving</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlapp.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlcrack.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlctrls.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlctrlw.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlctrlx.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlddx.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atldlgs.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlframe.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlgdi.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlmisc.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlprint.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlres.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlresce.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlscrl.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlsplit.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atltheme.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atluser.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlwince.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\wtl\atlwinx.h">
+      <Filter>wtl</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CurlRequest.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="source\curlutil.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="source\FtpRequest.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="source\HttpRequest.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\blob.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\float.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\log.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\registry.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\result.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\stringutil.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\timer.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\libcc\winapi.hpp">
+      <Filter>LibCC</Filter>
+    </ClInclude>
+    <ClInclude Include="source\jsonxx\jsonxx.h">
+      <Filter>jsonxx</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source\tr1\memory">
+      <Filter>Utility Sources</Filter>
+    </None>
+    <None Include="source\screenie.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="source\ArchiveSchema.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="source\resources\check.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\resources\header.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\resources\screenie.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="source\resources\toolbar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="source\screenie.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
