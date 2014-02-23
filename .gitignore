@@ -1,0 +1,21 @@
+# Windows
+Thumbs.db
+
+# Visual Studio
+*.suo
+*.suo.old
+UpgradeLog.XML
+UpgradeLog.htm
+*.ncb
+*.sdf
+Debug
+Release
+*.user
+*.opensdf
+
+# output dirs
+obj-debug
+obj-release
+output
+bin-debug
+bin-release
