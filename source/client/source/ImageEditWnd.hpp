@@ -268,7 +268,7 @@ protected:
 	{
 		RECT rcClient;
 		GetClientRect(&rcClient);
-		InflateRect(&rcClient, -max(10, rcClient.right / 10), -max(10, rcClient.bottom / 10));
+		InflateRect(&rcClient, -std::max(10, (int)(rcClient.right / 10)), -std::max(10, (int)(rcClient.bottom / 10)));
 
 		PointF v = m_display.GetViewport().GetViewOrigin();
 		PointF a(rcClient.right - v.x, rcClient.bottom - v.y);// size of the rect from view_origin to the BR corner of the screen.

@@ -203,11 +203,11 @@ public:
       bi.bmiHeader.biYPelsPerMeter = 0;
       bi.bmiHeader.biClrUsed  = 0;
       bi.bmiHeader.biClrImportant = 0;
-      bi.bmiHeader.biWidth = max(x,1);
-      bi.bmiHeader.biHeight = -(max(y,1));
+      bi.bmiHeader.biWidth = std::max((int)x,1);
+      bi.bmiHeader.biHeight = -(std::max((int)y,1));
 
       m_bmp = CreateDIBSection(m_offscreen, &bi, DIB_RGB_COLORS, (void**)&m_pbuf, 0, 0);
-      bi.bmiHeader.biHeight = (max(y,1));
+      bi.bmiHeader.biHeight = (std::max((int)y,1));
       if(m_bmp)
       {
         r = true;

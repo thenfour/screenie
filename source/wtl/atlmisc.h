@@ -1783,7 +1783,7 @@ public:
 				else
 				{
 					nItemLen = lstrlen(pstrNextArg);
-					nItemLen = max(1, nItemLen);
+					nItemLen = std::max(1, nItemLen);
 				}
 				break;
 			}
@@ -1814,7 +1814,7 @@ public:
 #else
 					nItemLen = lstrlenA(pstrNextArg);
 #endif
-					nItemLen = max(1, nItemLen);
+					nItemLen = std::max(1, nItemLen);
 				}
 #endif // _UNICODE
 				break;
@@ -1835,7 +1835,7 @@ public:
 #else
 					nItemLen = lstrlenA(pstrNextArg);
 #endif
-					nItemLen = max(1, nItemLen);
+					nItemLen = std::max(1, nItemLen);
 				}
 				break;
 			}
@@ -1851,7 +1851,7 @@ public:
 				else
 				{
 					nItemLen = (int)wcslen(pstrNextArg);
-					nItemLen = max(1, nItemLen);
+					nItemLen = std::max(1, nItemLen);
 				}
 				break;
 			}
@@ -1860,9 +1860,9 @@ public:
 			// adjust nItemLen for strings
 			if (nItemLen != 0)
 			{
-				nItemLen = max(nItemLen, nWidth);
+				nItemLen = std::max(nItemLen, nWidth);
 				if (nPrecision != 0)
-					nItemLen = min(nItemLen, nPrecision);
+					nItemLen = std::min(nItemLen, nPrecision);
 			}
 			else
 			{
@@ -1880,7 +1880,7 @@ public:
 					else
 						va_arg(argList, int);
 					nItemLen = 32;
-					nItemLen = max(nItemLen, nWidth + nPrecision);
+					nItemLen = std::max(nItemLen, nWidth + nPrecision);
 					break;
 
 #ifndef _ATL_USE_CSTRING_FLOAT
@@ -1934,7 +1934,7 @@ public:
 				case _T('p'):
 					va_arg(argList, void*);
 					nItemLen = 32;
-					nItemLen = max(nItemLen, nWidth + nPrecision);
+					nItemLen = std::max(nItemLen, nWidth + nPrecision);
 					break;
 
 				// no output

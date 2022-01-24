@@ -789,117 +789,54 @@ private:
 	//CRect m_infoSelection;
 	std::wstring m_infoText;
 
-
 	void UpdateInfoBox()
 	{
-		if(!m_infoUpdate)
+		if (!m_infoUpdate)
 			return;
 
-		bool first = true;
-		float minh, mins, minv, maxh, maxs, maxv;
+		RgbPixel32 pixel = m_editWnd.GetPixel_(m_infoCursorPos);
+		CRect m_infoSelection = m_editWnd.GetSelection();
 
-		std::vector<WTL::CPoint> samples;
-		samples.push_back(WTL::CPoint(-1, -1));
-		samples.push_back(WTL::CPoint(0, -1));
-		samples.push_back(WTL::CPoint(1, -1));
-		samples.push_back(WTL::CPoint(-1, 0));
-		samples.push_back(WTL::CPoint(0, 0));
-		samples.push_back(WTL::CPoint(1, 0));
-		samples.push_back(WTL::CPoint(-1, 1));
-		samples.push_back(WTL::CPoint(0, 1));
-		samples.push_back(WTL::CPoint(1, 1));
+		float h = 0, s = 0, v = 0;
+		RGBtoHSV((float)R(pixel) / 255, (float)G(pixel) / 255, (float)B(pixel) / 255, &h, &s, &v);
 
-		std::set<float> hues;
-		bool foundNonGrayHue = false;
-
-		for(std::vector<WTL::CPoint>::iterator it = samples.begin(); it != samples.end(); ++ it)
+		std::wstring hue;
+		if (LibCC::SinglePrecisionFloat(h).IsQNaN())
 		{
-			RgbPixel32 rgb = m_editWnd.GetPixel_(m_infoCursorPos + *it);
-			float h = 0, s = 0, v = 0;
-			RGBtoHSV((float)R(rgb) / 255, (float)G(rgb) / 255,(float)B(rgb) / 255, &h, &s, &v);
-
-			hues.insert(h);
-
-			if(h != -1)
-			{
-				if(!foundNonGrayHue || (h < minh))
-					minh = h;
-
-				if(!foundNonGrayHue || (h > maxh))
-					maxh = h;
-				foundNonGrayHue = true;
-			}
-			if(first || (s < mins))
-				mins = s;
-
-			if(first || (s > maxs))
-				maxs = s;
-
-			if(first || (v < minv))
-				minv = v;
-
-			if(first || (v > maxv))
-				maxv = v;
-
-			first = false;
-		}
-
-		if(foundNonGrayHue)
-		{
-			// there are two hue scenarios - one where everything is contained in the range 0-360, and then the scenario
-			// where the best way to represent min/max will spill below 0 or above 360. the best way is to figure out the
-			// biggest "hole" in the circle, and base min/max on that.
-			float biggestHole = 360.0f - (maxh - minh);// start with the exceptional hole - the one that spans across bonudaries
-			float previousH = *hues.begin();
-			for(std::set<float>::iterator it = hues.begin(); it != hues.end(); ++ it)
-			{
-				float dist = *it - previousH;
-				if(dist > biggestHole)
-				{
-					biggestHole = dist;
-					minh = *it;
-					maxh = previousH;
-				}
-				previousH = *it;
-			}
+			hue = L"n/a";
 		}
 		else
 		{
-			// only gray.
-			minh = -1;
-			maxh = -1;
+			hue = LibCC::Format(L"%%").i((int)h).c(0x00B0).Str();
 		}
 
 		LibCC::Format info = LibCC::Format(
 			"Zoom:|%^%||"
 			"Pos:|(%,%)||"
-			"min:|%,%,%||"
-			"max:|%,%,%||"
-
-			"%\t%\t%\t"
-			"%\t%\t%"
-			)
-			.f<0>(m_infoZoomFactor*100)
+			"Sel:|TL(%,%)|BR(%,%)|% x %||"
+			"RGB:|#%%%|(%,%,%)||"
+			"H:%|S:%^%|V:%^%||"
+		)
+			.f<0>(m_infoZoomFactor * 100)
 			.i(m_infoCursorPos.x)
 			.i(m_infoCursorPos.y)
-
-			.i((int)floor(minh))
-			.i((int)floor(mins * 100))
-			.i((int)floor(minv * 100))
-
-			.i((int)ceil(maxh))
-			.i((int)ceil(maxs * 100))
-			.i((int)ceil(maxv * 100))
-
-			.i((int)floor(minh))
-			.i((int)floor(mins * 100))
-			.i((int)floor(minv * 100))
-
-			.i((int)ceil(maxh))
-			.i((int)ceil(maxs * 100))
-			.i((int)ceil(maxv * 100))
+			.i(m_infoSelection.left)
+			.i(m_infoSelection.top)
+			.i(m_infoSelection.right)
+			.i(m_infoSelection.bottom)
+			.i(m_infoSelection.Width())
+			.i(m_infoSelection.Height())
+			.i<16, 2>(R(pixel))
+			.i<16, 2>(G(pixel))
+			.i<16, 2>(B(pixel))
+			.i(R(pixel))
+			.i(G(pixel))
+			.i(B(pixel))
+			(hue)
+			.i((int)(s * 100.0f))
+			.i((int)(v * 100.0f))
 			;
-		if(m_infoText != info.CStr())
+		if (m_infoText != info.CStr())
 		{
 			m_infoText = info.CStr();
 			SetDlgItemText(IDC_INFOBOX, m_infoText.c_str());
@@ -907,7 +844,7 @@ private:
 	}
 
 public:
-  LRESULT OnStnClickedZoomCaption(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnStnClickedZoomCaption(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };
 
 #endif

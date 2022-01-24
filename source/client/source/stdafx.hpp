@@ -4,19 +4,23 @@
 #ifndef SCREENIE_STDAFX_HPP
 #define SCREENIE_STDAFX_HPP
 
+#define NOMINMAX
+
 #define UNICODE
 #define _UNICODE
 
 #define _CRT_SECURE_NO_DEPRECATE
 
-#define WINVER				0x0501
-#define _WIN32_WINNT		0x0501
-#define _WIN32_IE			0x0500
-#define _RICHEDIT_VER		0x0100
+#define WINVER				0x0600
+#define _WIN32_WINNT		0x0600
 
 #include <windows.h>
 #include <shellapi.h>
 #include <shlwapi.h>
+#include <algorithm>
+
+using std::max;
+using std::min;
 
 #include <atlbase.h>
 #include "..\wtl\atlapp.h"

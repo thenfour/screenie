@@ -63,181 +63,167 @@ tstd::tstring GetImageCodecExtension(Gdiplus::ImageCodecInfo* codecInfo, bool do
 	return tstd::tstring();
 }
 
-struct GetVirtualScreenBitmap_Info
-{
-  std::vector<std::pair<tstd::tstring, CRect> > monitors;
-  HDC memoryDC;
-  // primary monitor's offset from upper-left virtual screen.  Primary monitor is always (0,0) even if it
-  // is in the middle of the virtual screen.  so to eliminate negative coords, use this shift.
-  int orgx;
-  int orgy;// LOL
-  int vwidth;
-  int vheight;
-};
 
 
-BOOL CALLBACK GetDesktopWindowCaptureAsBitmap_MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT rcMon, LPARAM dwData)
-{
-  GetVirtualScreenBitmap_Info& info(*((GetVirtualScreenBitmap_Info*)dwData));
-  MONITORINFOEX mi;
-  mi.cbSize = sizeof(mi);
-  GetMonitorInfo(hMonitor, &mi);
-  info.monitors.push_back(std::pair<tstd::tstring, CRect>(mi.szDevice, *rcMon));
-  return TRUE;
+
+std::vector<DISPLAY_DEVICEW> GetDisplayDeviceNames() {
+	std::vector<DISPLAY_DEVICEW> ret;
+	for (int i = 0; i < 30000; ++i) { // insanity checking
+		DISPLAY_DEVICEW dd = { 0 };
+		dd.cb = sizeof(dd);
+		if (!::EnumDisplayDevicesW(NULL, i, &dd, EDD_GET_DEVICE_INTERFACE_NAME)) {
+			break;
+		}
+		ret.push_back(dd);
+	}
+	return ret;
+}
+
+std::vector<std::pair<DISPLAY_DEVICEW, DEVMODEW>> GetDisplaySettings() {
+	auto dns = GetDisplayDeviceNames();
+	std::vector<std::pair<DISPLAY_DEVICEW, DEVMODEW>> ret;
+	for (auto& dn : dns) {
+		DEVMODEW dm = { 0 };
+		dm.dmSize = sizeof(dm);
+		if (!EnumDisplaySettings(dn.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
+			return ret; // no idea why this is would happen.
+		}
+		ret.push_back(std::make_pair(dn, dm));
+	}
+	return ret;
 }
 
 
-bool GetDesktopWindowCaptureAsBitmap(HBITMAP& bitmap)
+
+bool GetCaptureAsBitmap(int x, int y, int width, int height, HBITMAP& bitmap, bool drawCursor)
 {
-  GetVirtualScreenBitmap_Info info;
+	HDC screenDC = ::GetDC(0);
+	auto memoryDC = ::CreateCompatibleDC(screenDC);
 
-  HDC screenDC = ::GetDC(0);
-  info.memoryDC = ::CreateCompatibleDC(screenDC);
+	// create a bitmap large enough for the virtual screen
+	bitmap = CreateCompatibleBitmap(screenDC, width, height);
 
-  // create a bitmap large enough for the virtual screen
-  info.vwidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-  info.vheight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-  bitmap = CreateCompatibleBitmap(screenDC, info.vwidth, info.vheight);
+	HBITMAP hOld = (HBITMAP)SelectObject(memoryDC, bitmap);
 
-  HBITMAP hOld = (HBITMAP)SelectObject(info.memoryDC, bitmap);
+	// fill with desktop background color
+	RECT rc;
+	SetRect(&rc, 0, 0, width, height);
+	FillRect(memoryDC, &rc, (HBRUSH)(COLOR_DESKTOP + 1));
 
-  // fill with desktop background color
-  RECT rc;
-  SetRect(&rc, 0, 0, info.vwidth, info.vheight);
-  FillRect(info.memoryDC, &rc, (HBRUSH)(COLOR_DESKTOP+1));
+	BitBlt(memoryDC,
+		0,
+		0,
+		width, height,
+		screenDC,
+		0, 0, SRCCOPY | CAPTUREBLT);
 
-  info.orgx = GetSystemMetrics(SM_XVIRTUALSCREEN);
-  info.orgy = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	if (drawCursor)
+	{
+		POINT cursorPos;
+		GetCursorPos(&cursorPos);
 
-  // get monitor info
-  EnumDisplayMonitors(NULL, NULL, GetDesktopWindowCaptureAsBitmap_MonitorEnumProc, (LPARAM)&info);  
+		CURSORINFO cursorInfo = { 0 };
+		cursorInfo.cbSize = sizeof(cursorInfo);
 
-  int i = 0;
-  for(std::vector<std::pair<tstd::tstring, CRect> >::iterator it = info.monitors.begin(); it != info.monitors.end(); ++ it)
-  {
-    HDC dcSource = CreateDC(0, it->first.c_str(), 0, 0);
-    CRect& rcScreen = it->second;
+		if (::GetCursorInfo(&cursorInfo)) // Requires per-monitor DPI awareness.
+		{
+			ICONINFO ii = { 0 };
+			GetIconInfo(cursorInfo.hCursor, &ii);
+			DeleteObject(ii.hbmColor);
+			DeleteObject(ii.hbmMask);
+			::DrawIcon(memoryDC, cursorPos.x - ii.xHotspot, cursorPos.y - ii.yHotspot, cursorInfo.hCursor);
+		}
+	}
 
-    BitBlt(info.memoryDC,
-      rcScreen.left - info.orgx,
-      rcScreen.top - info.orgy,
-      rcScreen.Width(),
-      rcScreen.Height(),
-      dcSource,
-      0, 0, SRCCOPY | CAPTUREBLT);
+	SelectObject(memoryDC, hOld);
 
-    DeleteDC(dcSource);
-    i++;
-  }
+	DeleteDC(memoryDC);
+	ReleaseDC(0, screenDC);
 
-  SelectObject(info.memoryDC, hOld);
-
-  DeleteDC(info.memoryDC);
-  ReleaseDC(0, screenDC);
-
-  return true;
+	return true;
 }
+
+
+
+
+bool GetDesktopWindowCaptureAsBitmap(HBITMAP& bitmap, bool drawCursor)
+{
+	auto screenInfo = GetDisplaySettings();
+	int totalWidth = 0;
+	int totalHeight = 0;
+	for (auto& si : screenInfo) {
+		//LibCC::g_pLog->Message(LibCC::Format("Monitor % size(%,%) @ pos(%,%)").qs(si.first.DeviceName).i(si.second.dmPelsWidth).i(si.second.dmPelsHeight).i(si.second.dmPosition.x).i(si.second.dmPosition.y));
+		ATLASSERT(si.second.dmFields & DM_POSITION);
+		ATLASSERT(si.second.dmFields & DM_PELSHEIGHT);
+		ATLASSERT(si.second.dmFields & DM_PELSWIDTH);
+		totalWidth = std::max(totalWidth, (int)(si.second.dmPosition.x + si.second.dmPelsWidth));
+		totalHeight = std::max(totalHeight, (int)(si.second.dmPosition.y + si.second.dmPelsHeight));
+	}
+
+	return GetCaptureAsBitmap(0, 0, totalWidth, totalHeight, bitmap, drawCursor);
+}
+
+bool GetWindowCaptureAsBitmap(HWND hwnd, HBITMAP& bitmap, bool drawCursor)
+{
+	RECT rcWindow;
+
+	// NB: This will ONLY give correct size if the application is per-monitor DPI-aware.
+	// Otherwise it will return a value that's adapted to primary monitor or calling app etc.
+	GetWindowRect(hwnd, &rcWindow);
+	int width = rcWindow.right - rcWindow.left;
+	int height = rcWindow.bottom - rcWindow.top;
+
+	HDC screenDC = ::GetDC(hwnd);
+	auto memoryDC = ::CreateCompatibleDC(screenDC);
+
+	// create a bitmap large enough for the virtual screen
+	bitmap = CreateCompatibleBitmap(screenDC, width, height);
+
+	HBITMAP hOld = (HBITMAP)SelectObject(memoryDC, bitmap);
+
+	// fill with desktop background color
+	RECT rc;
+	SetRect(&rc, 0, 0, width, height);
+	FillRect(memoryDC, &rc, (HBRUSH)(COLOR_DESKTOP + 1));
+
+	PrintWindow(hwnd, memoryDC, 0);
+
+	if (drawCursor)
+	{
+		POINT cursorPos;
+		GetCursorPos(&cursorPos);
+		cursorPos.x -= rcWindow.left;
+		cursorPos.y -= rcWindow.top;
+
+		CURSORINFO cursorInfo = { 0 };
+		cursorInfo.cbSize = sizeof(cursorInfo);
+
+		if (::GetCursorInfo(&cursorInfo))
+		{
+			ICONINFO ii = { 0 };
+			GetIconInfo(cursorInfo.hCursor, &ii);
+			DeleteObject(ii.hbmColor);
+			DeleteObject(ii.hbmMask);
+			::DrawIcon(memoryDC, cursorPos.x - ii.xHotspot, cursorPos.y - ii.yHotspot, cursorInfo.hCursor);
+		}
+	}
+
+	SelectObject(memoryDC, hOld);
+
+	DeleteDC(memoryDC);
+	ReleaseDC(hwnd, screenDC);
+
+	return true;
+}
+
 
 bool GetScreenshotBitmap(HBITMAP& bitmap, BOOL AltPressed, BOOL drawCursor)
 {
-	bool success = false;
-
-  // get this stuff immediately
-  POINT cursorPos = { 0 };
-  ::GetCursorPos(&cursorPos);
-  // adjust cursor pos so it's always positive
-  cursorPos.x -= GetSystemMetrics(SM_XVIRTUALSCREEN);
-  cursorPos.y -= GetSystemMetrics(SM_YVIRTUALSCREEN);
-
-  HWND hWnd = GetForegroundWindow();
-
-  GetDesktopWindowCaptureAsBitmap(bitmap);
-
   if(AltPressed)
   {
-    // crop it down to the window.
-    HBITMAP full = bitmap;
-    RECT rc;
-    GetWindowRect(hWnd, &rc);
-    rc.left -= GetSystemMetrics(SM_XVIRTUALSCREEN);
-    rc.right -= GetSystemMetrics(SM_XVIRTUALSCREEN);
-    rc.bottom -= GetSystemMetrics(SM_YVIRTUALSCREEN);
-    rc.top -= GetSystemMetrics(SM_YVIRTUALSCREEN);
-
-	WINDOWPLACEMENT wndpl = {sizeof(WINDOWPLACEMENT)};
-	GetWindowPlacement(hWnd, &wndpl);
-	
-	if(wndpl.showCmd == SW_SHOWMAXIMIZED)
-	{
-		// maximised windows have magic non-visible borders, trim them off
-
-		WINDOWINFO wndinf = {sizeof(WINDOWINFO)};
-		GetWindowInfo(hWnd, &wndinf);
-
-		rc.left += wndinf.cxWindowBorders;
-		rc.right -= wndinf.cxWindowBorders;
-		rc.top += wndinf.cyWindowBorders;
-		rc.bottom -= wndinf.cyWindowBorders;
-	}
-
-    HDC screenDC = ::GetDC(0);
-    HDC sourceDC = ::CreateCompatibleDC(screenDC);
-    HBITMAP sourceOld = (HBITMAP)SelectObject(sourceDC, full);
-    HDC destDC = ::CreateCompatibleDC(screenDC);
-    bitmap = CreateCompatibleBitmap(screenDC, rc.right - rc.left, rc.bottom - rc.top);
-    HBITMAP destOld = (HBITMAP)SelectObject(destDC, bitmap);
-
-    // do the copy.
-    BitBlt(destDC, 0, 0, rc.right - rc.left, rc.bottom - rc.top, sourceDC, rc.left, rc.top, SRCCOPY);
-
-    SelectObject(destDC, destOld);
-    DeleteDC(destDC);
-    SelectObject(sourceDC, sourceOld);
-    DeleteDC(sourceDC);
-
-    ReleaseDC(0, screenDC);
-
-    DeleteObject(full);
-
-    // adjust mouse cursor position.
-    cursorPos.x -= rc.left;
-    cursorPos.y -= rc.top;
+	 return GetWindowCaptureAsBitmap(GetForegroundWindow(), bitmap, !!drawCursor);
   }
-
-  if (drawCursor)
-  {
-    BITMAP bm = {0};
-    GetObject(bitmap, sizeof(bm), &bm);
-
-    // let's see if the cursor would even be displayed in the
-    // rectangle they gave us
-    if(cursorPos.x >= 0 && cursorPos.y >= 0 && cursorPos.y < bm.bmHeight && cursorPos.x < bm.bmWidth)
-    {
-	    HDC screenDC = ::GetDC(0);
-	    HDC memoryDC = ::CreateCompatibleDC(screenDC);
-      ReleaseDC(0, screenDC);
-      HBITMAP hOld = (HBITMAP)SelectObject(memoryDC, bitmap);
-
-      CURSORINFO cursorInfo = { 0 };
-      cursorInfo.cbSize = sizeof(cursorInfo);
-
-      if (::GetCursorInfo(&cursorInfo))
-      {
-        ICONINFO ii = {0};
-        GetIconInfo(cursorInfo.hCursor, &ii);
-        DeleteObject(ii.hbmColor);
-        DeleteObject(ii.hbmMask);
-        ::DrawIcon(memoryDC, cursorPos.x - ii.xHotspot, cursorPos.y - ii.yHotspot, cursorInfo.hCursor);
-      }
-
-      SelectObject(memoryDC, hOld);
-      DeleteDC(memoryDC);
-    }
-  }
-
-	success = true;
-
-	return success;
+  return GetDesktopWindowCaptureAsBitmap(bitmap, !!drawCursor);
 }
 
 bool ScaleBitmap(std::shared_ptr<Gdiplus::Bitmap>& destination, Gdiplus::Bitmap& source, float scale)
@@ -346,36 +332,5 @@ void DumpIcon(HICON img, int x, int y)
 
   DrawIcon(dc, x, y, img);
   ::ReleaseDC(0,dc);
-}
-
-
-bool GdiplusBitmapToAnimBitmap(Gdiplus::BitmapPtr src, AnimBitmap<32>& dest)
-{
-	ATLASSERT(!"I can't figure out how to get this to work.");
-	//if(!dest.SetSize(src->GetWidth(), src->GetHeight()))
-	//	return false;
-
-	//// the easy / fast way. BUT it doesn't fucking work. I think Gdiplus::Graphics() doesn't like the DC i pass in
-	////Gdiplus::Graphics* gfx = new Gdiplus::Graphics(dest.GetDC());
-	////Gdiplus::Status s = gfx->GetLastStatus();
-	////s = gfx->DrawImage(src.get(), 0, 0);
-	////delete gfx;
-
- // HBITMAP himg;
- // src->GetHBITMAP(0, &himg);
-
-	//HDC dcDesktop = GetDC(0);
-	//HDC dcc = CreateCompatibleDC(dcDesktop);
-	//ReleaseDC(0, dcDesktop);
-
-	//HBITMAP hOld = (HBITMAP)SelectObject(dcc, himg);
-
-	//dest.BlitFrom(dcc, 0, 0, src->GetWidth(), src->GetHeight());
-
-	//SelectObject(dcc, hOld);
- // DeleteDC(dcc);
- // DeleteObject(himg);
-
-	return true;
 }
 

@@ -182,9 +182,31 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 //	}
 //};
 
+
+#ifndef DPI_ENUMS_DECLARED
+typedef enum PROCESS_DPI_AWARENESS
+{
+	PROCESS_DPI_UNAWARE = 0,
+	PROCESS_SYSTEM_DPI_AWARE = 1,
+	PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
+#endif
+
+typedef BOOL(WINAPI* SETPROCESSDPIAWARE_T)(void);
+typedef HRESULT(WINAPI* SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
+
+
+
 int WINAPI _tWinMain(HINSTANCE instance, HINSTANCE, LPTSTR cmdLine, int showCmd)
 {
-//	AutoCrashMan crash(ScreenieCrashHandler);
+	HMODULE shcore = ::LoadLibraryA("Shcore.dll");
+	SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
+	if (shcore) {
+		SetProcessDpiAwareness = (SETPROCESSDPIAWARENESS_T)GetProcAddress(shcore, "SetProcessDpiAwareness");
+		if (SetProcessDpiAwareness) {
+			SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+		}
+	}
 
 #ifdef TESTMODE
 	LibCC::g_pLog = new LibCC::Log(GetPathRelativeToApp(_T("screenie.log")), _Module.GetResourceInstance());
