@@ -1,13 +1,13 @@
 <Version>
   <StringFileInfo
-    FileVersion = "1, $WCREV$, $WCMODS?1:0$, 0"
-    ProductVersion = "1, $WCREV$, $WCMODS?1:0$, 0"
-		FileDescription = "Built on $WCNOW$"
+    FileVersion = "1, $WCLOGCOUNT$, $WCMODS?1:0$, 0"
+    ProductVersion = "1, $WCLOGCOUNT$, $WCMODS?1:0$, 0"
+		FileDescription = "https://screenie.net Built on $WCNOW$, commit $WCREV$, branch $WCBRANCH$"
   />
   <FixedFileInfo
-    dwFileVersionMS = "{0001 $WCREV$}"
+    dwFileVersionMS = "{0001 $WCLOGCOUNT$}"
     dwFileVersionLS = "{$WCMODS?1:0$ 0}"
-    dwProductVersionMS = "{0001 $WCREV$}"
+    dwProductVersionMS = "{0001 $WCLOGCOUNT$}"
     dwProductVersionLS = "{$WCMODS?1:0$ 0}"
   />
 </Version>

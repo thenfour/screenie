@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -55,7 +53,9 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_SCREENIE            ICON                    "resources\\screenie.ico"
+
 IDI_CHECK               ICON                    "resources\\check.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -69,10 +69,10 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,203,186,50,14
     GROUPBOX        "",IDC_STATIC,7,7,258,176
-    CONTROL         246,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,WS_EX_STATICEDGE
+    CONTROL         IDB_BITMAP1,IDC_STATIC,"Static",SS_BITMAP,18,18,33,31,WS_EX_STATICEDGE
     LTEXT           "Screenie v1.0.0",IDC_PRODUCTVERSION,60,19,108,12
-    LTEXT           "Copyright (c) 2003 Carl Corcoran\nCopyright (c) 2005 Roger Clark",IDC_COPYRIGHT,60,30,124,18
-    LTEXT           "http://www.screenie.net/",IDC_HYPERLINK,60,52,85,12
+    LTEXT           "Copyright (c) 2003-2022 Carl Corcoran & Roger Clark",IDC_COPYRIGHT,60,30,124,18
+    LTEXT           "https://www.screenie.net/",IDC_HYPERLINK,60,52,85,12
     LTEXT           "Technical information:",IDC_STATIC,60,93,71,8
     LTEXT           "Thanks to: Brook Miles and Gareth Lewin",IDC_STATIC,60,69,193,23
     EDITTEXT        IDC_INFO,60,105,193,70,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
@@ -259,7 +259,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
@@ -427,7 +427,7 @@ END
 // Menu
 //
 
-IDM_CONTEXTMENU MENU 
+IDM_CONTEXTMENU MENU
 BEGIN
     POPUP "Tray Context Menu"
     BEGIN
@@ -452,7 +452,7 @@ BEGIN
     END
 END
 
-IDR_CROPMENU MENU 
+IDR_CROPMENU MENU
 BEGIN
     POPUP "Edit"
     BEGIN
@@ -469,12 +469,14 @@ END
 
 IDB_HEADER              BITMAP                  "resources\\header.bmp"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // TEXT
 //
 
 IDR_SCHEMA              TEXT                    "ArchiveSchema.sql"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -483,17 +485,29 @@ IDR_SCHEMA              TEXT                    "ArchiveSchema.sql"
 
 IDB_TOOLBAR             PNG                     "resources\\toolbar.png"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_FORMATDESCRIPTION   "%h = 2-digit hour, 24-hour format (e.g., 19 for 7:00PM)\r\n%H = 2-digit hour, 12-hour format (e.g., 07 for 7:00PM)\r\n%a = AM or PM\r\n%i = 2-digit minute\r\n%s = 2-digit second\r\n%D = textual day of the week (e.g., Sunday)\r\n%d = 2-digit day of the month\r\n%M = textual month of the year (e.g., November)\r\n%m = 2-digit month of the year\r\n%Y = 4-digit year (e.g., 2005)\r\n%y = 2-digit year (e.g., 05)\r\n%t = prompt for user text\r\n%w = window title\r\n%u = unix time\r\n%g = 128-bit GUID"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

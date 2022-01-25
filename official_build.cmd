@@ -12,7 +12,7 @@ echo.
   set path=%ProgramFiles%\nsis;%ProgramFiles(X86)%\nsis;%path%
 
 echo Confirming arguments / variables...
-  set svnroot=%cd%
+  set gitroot=%cd%
 
   set bindir=%1
   if "%1" == "" set bindir=bin-release
@@ -22,7 +22,7 @@ echo Confirming arguments / variables...
   if "%2" == "" set installname=Screenie
   if "%2" == "" set /P installname=Enter the installer name, or leave it blank to use "Screenie":
   
-  echo   svnroot     =%svnroot%
+  echo   gitroot     =%gitroot%
   echo   bindir      =%bindir%
   echo   installname =%installname%
   echo.
@@ -30,24 +30,24 @@ echo Confirming arguments / variables...
 echo Checking for tools / files...
   tools\where.exe makensis.exe >nul
   if %errorlevel% gtr 0 goto NsisNotFound
-  if not exist "%svnroot%\%bindir%\screenie.exe" goto NotBuilt
+  if not exist "%gitroot%\%bindir%\screenie.exe" goto NotBuilt
 
 echo Generating output directory...
-  md "%svnroot%\distro" 2>nul
-  set outdir=%svnroot%\distro\Out
+  md "%gitroot%\distro" 2>nul
+  set outdir=%gitroot%\distro\Out
   md "%outdir%" 2>nul
 
 echo Copying program binaries...
-  copy "%svnroot%\%bindir%\screenie.exe" "%outdir%" >nul
+  copy "%gitroot%\%bindir%\screenie.exe" "%outdir%" >nul
 
-echo Generating version information for "%svnroot%\source\client"
-  "%svnroot%\tools\32bit\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\source\installer\screenie.nsi" "%outdir%\installer.nsi"
-  "%svnroot%\tools\32bit\SubWCRev.exe" "%svnroot%\source\client" "%svnroot%\distro\ver_in.xml" "%outdir%\ver_out.xml"
+echo Generating version information for "%gitroot%\source\client"
+  "C:\Program Files\TortoiseGit\bin\GitWCRev.exe" "%gitroot%\source\client" "%gitroot%\source\installer\screenie.nsi" "%outdir%\installer.nsi"
+  "C:\Program Files\TortoiseGit\bin\GitWCRev.exe" "%gitroot%\source\client" "%gitroot%\distro\ver_in.xml" "%outdir%\ver_out.xml"
   REM The thing will return an error if there are local modifications.
   REM if %errorlevel% == 0 goto SubWCRevError
 
 echo Setting up version info...
-  "%svnroot%\tools\veredit.exe" "%outdir%\screenie.exe" /xml "%outdir%\ver_out.xml"
+  "%gitroot%\tools\veredit.exe" "%outdir%\screenie.exe" /xml "%outdir%\ver_out.xml"
   if %errorlevel% gtr 0 goto VereditError
 
 echo Building Installer...
@@ -64,7 +64,7 @@ echo Opening the output folder
   explorer "%outdir%"
 
 echo All done!  SUCCESS.
-  cd /d %svnroot%
+  cd /d %gitroot%
   goto End
 
 

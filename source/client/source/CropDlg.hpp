@@ -599,7 +599,7 @@ public:
 
 	LRESULT OnHelp(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
-		::ShellExecute(0, _T("open"), _T("http://screenie.net/help"), 0, 0, SW_SHOWNORMAL);
+		::ShellExecute(0, _T("open"), _T("https://screenie.net/help"), 0, 0, SW_SHOWNORMAL);
 		return 0;
 	}
 

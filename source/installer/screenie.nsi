@@ -22,13 +22,13 @@ Name "${installname}"
 InstallDir "$PROGRAMFILES\Screenie"
 OutFile "${outfile}"
 
-VIProductVersion 1.$WCREV$.$WCMODS?1:0$.0
+VIProductVersion 1.$WCLOGCOUNT$.$WCMODS?1:0$.0
 VIAddVersionKey "ProductName" "${installname}"
 VIAddVersionKey "CompanyName" "Carl Corcoran & Roger Clark"
-VIAddVersionKey "LegalCopyright" "© 2004-2010 Carl Corcoran & Roger Clark.  All Rights Reserved."
-VIAddVersionKey "FileDescription" "Screenie Installer.  http://screenie.net. Built on $WCNOW$"
-VIAddVersionKey "FileVersion" 0.$WCREV$.$WCMODS?1:0$.0
-VIAddVersionKey "FileProduct" 0.$WCREV$.$WCMODS?1:0$.0
+VIAddVersionKey "LegalCopyright" "Â©2004-2022 Carl Corcoran & Roger Clark.  All Rights Reserved."
+VIAddVersionKey "FileDescription" "Screenie Installer.  https://screenie.net. Built on $WCNOW$, commit $WCREV$, branch $WCBRANCH$"
+VIAddVersionKey "FileVersion" 0.$WCLOGCOUNT$.$WCMODS?1:0$.0
+VIAddVersionKey "FileProduct" 0.$WCLOGCOUNT$.$WCMODS?1:0$.0
 
 ;Interface Settings
 !define MUI_HEADERIMAGE
@@ -136,7 +136,7 @@ Section "Uninstall"
 SectionEnd
 
 LangString Desc_Program_Files ${LANG_ENGLISH} "Screenie program files.  This component is required."
-LangString Desc_SMS ${LANG_ENGLISH} "Places shortcut(s) to installed program files in your Windows® Start menu."
+LangString Desc_SMS ${LANG_ENGLISH} "Places shortcut(s) to installed program files in your Windows Start menu."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 !insertmacro MUI_DESCRIPTION_TEXT ${program_files} $(Desc_Program_Files)
